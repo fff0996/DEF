@@ -1,0 +1,216 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+# =============================================================================
+# bx_organellar_filter / DEF version 1.0
+#
+# [PURPOSE AND TARGET SCRIPT]
+#   Target: organellar_filter.1.0.sh (the supplied script).
+#   Identifies mitochondrial, chloroplast, and other organellar contigs by
+#   matching contig names against a regular expression, then extracts
+#   alignments on the remaining contigs from coordinate-sorted BAM files.
+#   The analysis script is supplied through CLOSHA's external bind paths,
+#   rather than embedded in the image. This DEF provides its runtime environment.
+#
+# [INPUT AND OUTPUT STRUCTURE]
+#   Input: *.bam files under input_dir; *.unsorted.bam files are excluded.
+#   Input BAM files must be coordinate-sorted. Missing BAI files are created
+#   beside the original BAM files, so the input location must be writable.
+#   Output: BAM/BAI files with organellar alignments removed, idxstats,
+#   flagstat before and after filtering, contig lists, a summary TSV,
+#   and stdout/stderr logs.
+#   The script first removes existing output_dir contents except logs/.
+#   output_dir must not be input_dir or any parent directory of input_dir.
+#
+# [REQUIRED RUNTIME DEPENDENCIES]
+#   SAMtools 1.23.1: index / idxstats / flagstat / view.
+#   HTSlib 1.23.1: built from the copy bundled with the official SAMtools release.
+#   Bash: required for mapfile, arrays, process substitution, and key=value
+#   argument handling.
+#   GNU awk (gawk): explicitly installed and selected as the default awk
+#   implementation to support the script's IGNORECASE=1 behavior.
+#   coreutils / findutils / grep: file discovery, list comparison, copying,
+#   and log handling.
+#   The supplied script has no R or Python package dependencies.
+#
+# [BASE IMAGE AND INSTALLATION RULES FOR THIS DEF]
+#   Base image: the official ubuntu:24.04 image from Docker Hub.
+#   OS packages and build dependencies: installed from Ubuntu APT repositories.
+#   SAMtools: built directly from the official GitHub release source for 1.23.1.
+#   No Conda / Miniconda / Miniforge / Mamba / Micromamba installation is used.
+#   No installation step uses repo.anaconda.com or the Anaconda defaults channel.
+#   The source archive is checked against the SHA256 value below before building.
+#   Building requires internet access; analysis of local BAM files does not.
+#
+# [HPC BUILD REQUIREMENTS]
+#   Use a designated build environment and an unprivileged build account.
+#   Do not run the build as the host root user or through sudo.
+#   Do not bind production data or service directories into the build container.
+#   Host-side %pre and %setup sections are not used.
+#   Package installation, compilation, and cleanup run inside %post.
+#   Cleanup is limited to the container's dedicated source directory,
+#   /usr/local/src/bx_organellar_filter-build, APT archive cache, and APT lists.
+#   These paths and their parents must not be backed by host directory binds.
+#   A path inside the container can still refer to host data through a bind.
+#   No broad cleanup of /tmp, /var/tmp, /root, or user home directories is used.
+#   %test performs checks without creating or deleting data files.
+#   The Apptainer output SIF, image cache, and build temporary files are host
+#   artifacts; place them in an approved build workspace, separate from services.
+#   This DEF does not clean the host's Apptainer cache or build workspace.
+#   The build service must enforce account, workspace, and mount restrictions;
+#   comments in this DEF cannot enforce the host's bind configuration.
+#
+# [CHANGES FROM THE PREVIOUS SIF]
+#   Previous image: bx_samtools_1.23.1.sif
+#   Previous From: quay.io/biocontainers/samtools:1.23.1--ha83d96e_0
+#   Replaces the imported Bioconda-based environment with Ubuntu + APT
+#   dependencies + a source build.
+#   Retains SAMtools 1.23.1. The existing SIF is not modified automatically.
+#   Build a separate SIF from this DEF and validate the analysis before deployment.
+#
+# [VALIDATION STATUS AND REPRODUCIBILITY]
+#   Checked: supplied-script dependencies, DEF shell syntax, official source,
+#   and SHA256.
+#   Not performed: an actual Apptainer SIF build or analysis validation using
+#   the user's BAM files.
+#   The production HPC build command and bind configuration were not inspected.
+#   %test checks command availability, SAMtools/HTSlib versions, GNU awk and
+#   Bash behavior, and whether conda/mamba/micromamba are on PATH.
+#   These checks do not audit the entire filesystem or historical installation
+#   activity.
+#   SAMtools/HTSlib source is pinned, but the Ubuntu tag and APT packages may
+#   change. Package versions at build time are therefore recorded in the image.
+#
+# [CHANGELOG]
+#   2026-09-29 / 1.0: Created the configuration without Conda and added the
+#   documentation above.
+#   2026-09-29 / 1.0: Removed explicit cleanup and test-data writes; documented
+#   HPC build requirements and adopted the bx_organellar_filter name.
+#   2026-09-29 / 1.0: Restored container-only source and APT cleanup; clarified
+#   that host service paths must not be modified.
+# =============================================================================
+
+%labels
+    Name bx_organellar_filter
+    Version 1.0
+    SamtoolsVersion 1.23.1
+    HTSlibVersion 1.23.1
+    BaseImage ubuntu:24.04
+    InstallMethod "Ubuntu APT dependencies and official SAMtools source"
+    Description "SAMtools environment for the CLOSHA organellar-filter script"
+
+%environment
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+
+%post
+    set -eu
+    export DEBIAN_FRONTEND=noninteractive
+    export LC_ALL=C.UTF-8
+
+    # Use the official Ubuntu base; do not install Conda/Miniconda/Mamba.
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        bash coreutils findutils gawk grep sed \
+        ca-certificates curl tar bzip2 \
+        build-essential pkg-config perl \
+        zlib1g-dev libbz2-dev liblzma-dev libdeflate-dev \
+        libncurses-dev libcurl4-openssl-dev libssl-dev
+
+    # The supplied script uses GNU awk's IGNORECASE extension.
+    update-alternatives --set awk /usr/bin/gawk
+
+    # Official release archive includes HTSlib 1.23.1.
+    # SHA256 was calculated from the official release asset.
+    mkdir -p /usr/local/src
+    mkdir /usr/local/src/bx_organellar_filter-build
+    cd /usr/local/src/bx_organellar_filter-build
+    curl --fail --location --retry 3 \
+        --connect-timeout 30 --max-time 600 \
+        --output samtools-1.23.1.tar.bz2 \
+        https://github.com/samtools/samtools/releases/download/1.23.1/samtools-1.23.1.tar.bz2
+    printf '%s  %s\n' \
+        32266198a4bc6a6df395d8526688c9697d9c8e472f888c749fdde2e08ea88dd2 \
+        samtools-1.23.1.tar.bz2 | sha256sum --check -
+
+    tar -xjf samtools-1.23.1.tar.bz2
+    cd /usr/local/src/bx_organellar_filter-build/samtools-1.23.1
+    ./configure --prefix=/usr/local --with-htslib=htslib-1.23.1
+    make -j4
+    make install
+
+    # Retain licenses and installed-version information with the image.
+    mkdir -p /usr/local/share/licenses/samtools /usr/local/share/bx-organellar-filter
+    cp LICENSE /usr/local/share/licenses/samtools/LICENSE
+    cp htslib-1.23.1/LICENSE /usr/local/share/licenses/samtools/HTSlib-LICENSE
+    /usr/local/bin/samtools --version > /usr/local/share/bx-organellar-filter/version.txt
+    grep -Fx 'samtools 1.23.1' /usr/local/share/bx-organellar-filter/version.txt
+    grep -Fx 'Using htslib 1.23.1' /usr/local/share/bx-organellar-filter/version.txt
+    dpkg-query -W -f='${Package}\t${Version}\n' \
+        > /usr/local/share/bx-organellar-filter/ubuntu-packages.tsv
+
+    # Container-only cleanup. Never bind host directories over these targets
+    # or their parent directories. Do not copy these commands into a host shell.
+    cd /
+    rm -rf -- /usr/local/src/bx_organellar_filter-build
+    apt-get clean
+    rm -rf -- /var/lib/apt/lists/*
+
+%runscript
+    exec /usr/local/bin/samtools "$@"
+
+%test
+    set -eu
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LC_ALL=C.UTF-8
+
+    for cmd in bash samtools awk grep sort comm cut wc head find xargs \
+        basename date tee cp cat mkdir; do
+        command -v "$cmd" >/dev/null 2>&1
+    done
+
+    # Check installed versions without creating files.
+    samtools_info=$(samtools --version)
+    printf '%s\n' "$samtools_info" | grep -Fx 'samtools 1.23.1'
+    printf '%s\n' "$samtools_info" | grep -Fx 'Using htslib 1.23.1'
+    test "$(printf 'CHRM\nchr1\n' | awk 'BEGIN { IGNORECASE=1 } /^chrM$/')" = 'CHRM'
+    bash -c 'mapfile -t a < <(printf "ok\n"); test "${a[0]}" = ok'
+
+    for cmd in conda mamba micromamba; do
+        if command -v "$cmd" >/dev/null 2>&1; then
+            echo "Unexpected package manager in image: $cmd" >&2
+            exit 1
+        fi
+    done
+
+    echo 'SAMtools 1.23.1: runtime dependency checks passed.'
+
+%help
+    CLOSHA organellar-filter environment: Ubuntu 24.04 + SAMtools/HTSlib 1.23.1.
+    Build dependencies are installed with APT; SAMtools is built from its
+    official release archive. No Conda/Miniconda/Mamba installation is used.
+
+    Build as an unprivileged user on a designated, internet-connected build
+    machine matching the compute-node architecture. Do not bind production paths:
+        apptainer build --fakeroot bx_organellar_filter.1.0.sif bx_organellar_filter.1.0.def
+
+    Store the SIF, Apptainer cache, and build temporary files in an approved host
+    build workspace. APPTAINER_CACHEDIR and APPTAINER_TMPDIR select the cache and
+    temporary directories. Container cleanup must never target host-backed binds.
+
+    Check the image:
+        apptainer exec --cleanenv bx_organellar_filter.1.0.sif samtools --version
+        apptainer test --cleanenv bx_organellar_filter.1.0.sif
+
+    organellar_filter.1.0.sh is supplied externally through approved runtime
+    binds. This DEF does not run that script during image construction.
+
+    Input: coordinate-sorted BAM files. If an input BAI is absent, the script
+    creates one beside the input BAM, so that location must be writable.
+    The output directory must be separate from the input and its parents,
+    because the analysis script removes previous output except logs/.
+    That existing deletion behavior must be reviewed separately before service use.
+    Writable runtime binds can expose host data to the analysis script.
+    Save the external Bash script with LF line endings.
+    Runtime analysis of local BAM files requires no network access.
