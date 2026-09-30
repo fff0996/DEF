@@ -1,9 +1,12 @@
-CLOSHA DEF Project Instructions
-Use the following document as the project specification and DEF generation policy:
+# CLOSHA DEF 프로젝트 지침
+
+다음 문서를 프로젝트 명세 및 DEF 생성 정책으로 사용한다:
+
 docs/CLOSHA_DEF_Generator_Agent_v1.md
-- Inspect the repository structure and supplied scripts before proposing edits.
-- Explain your work in Korean and write DEF comments in English.
-- Keep generation, validation, build, and deployment statuses separate.
-- Do not connect to production HPC systems, execute image builds, or deploy SIFs.
-- Do not assume that a policy catalog, renderer, or validator already exists.
-- This file supplies instructions; host isolation must be enforced separately.
+
+- 수정을 제안하기 전에 저장소 구조와 제공된 스크립트를 먼저 검토한다.
+- 작업 설명은 한국어로 하고, DEF 주석은 영어로 작성한다.
+- 생성, 검증, 빌드, 배포 상태를 서로 구분해서 다룬다.
+- 운영 HPC 시스템에 접속하거나, 이미지 빌드를 실행하거나, SIF를 배포하지 않는다.
+- 정책 카탈로그, 렌더러, 검증기가 이미 존재한다고 가정하지 않는다.
+- 이 파일은 지침만 제공하며, 호스트 격리는 별도로 강제해야 한다.
