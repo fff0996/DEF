@@ -48,10 +48,21 @@ From: ubuntu:24.04
 #   Do not bind production data or service directories into the build container.
 #   Host-side %pre and %setup sections are not used.
 #   Package installation, compilation, and cleanup run inside %post.
-#   Cleanup is limited to the container's dedicated source directory,
-#   /usr/local/src/bx_organellar_filter-build, APT archive cache, and APT lists.
-#   These paths and their parents must not be backed by host directory binds.
-#   A path inside the container can still refer to host data through a bind.
+#   Build workspace: the fixed container-private path /__closha_build/work.
+#   /__closha_build and the workspace are created with plain mkdir (no -p),
+#   so the build stops if either already exists, including as a symlink or
+#   a bind mount point. The APT package cache (Dir::Cache), APT index lists
+#   (Dir::State::lists), and the SAMtools source tree are all placed below it.
+#   Cleanup removes only that exact workspace, after separate checks of the
+#   path constant, symlinks, canonical path, and root-filesystem device, and
+#   then removes the empty /__closha_build with rmdir. Any failed check stops
+#   the build without deleting anything.
+#   No wildcard cleanup of default paths is used; apt-get clean and
+#   /var/lib/apt/lists/* cleanup are unnecessary and not used.
+#   The base image may ship APT cleanup hooks (for example docker-clean);
+#   they were not inspected and must be reviewed with the base image.
+#   These checks reduce accidents but do not prove host isolation. The build
+#   service must keep host binds off /__closha_build, its parents, and children.
 #   No broad cleanup of /tmp, /var/tmp, /root, or user home directories is used.
 #   %test performs checks without creating or deleting data files.
 #   The Apptainer output SIF, image cache, and build temporary files are host
@@ -78,8 +89,11 @@ From: ubuntu:24.04
 #   Bash behavior, and whether conda/mamba/micromamba are on PATH.
 #   These checks do not audit the entire filesystem or historical installation
 #   activity.
+#   The 2026-09-30 %post revision was checked only with a shell syntax check
+#   (sh -n); it has not been built or run.
 #   SAMtools/HTSlib source is pinned, but the Ubuntu tag and APT packages may
 #   change. Package versions at build time are therefore recorded in the image.
+#   Unresolved: the approved ubuntu:24.04 digest is not pinned yet.
 #
 # [CHANGELOG]
 #   2026-09-29 / 1.0: Created the configuration without Conda and added the
@@ -88,6 +102,9 @@ From: ubuntu:24.04
 #   HPC build requirements and adopted the bx_organellar_filter name.
 #   2026-09-29 / 1.0: Restored container-only source and APT cleanup; clarified
 #   that host service paths must not be modified.
+#   2026-09-30 / 1.0: Moved APT caches, APT lists, and the source build into
+#   the fixed workspace /__closha_build/work; replaced apt-get clean and
+#   /var/lib/apt/lists/* cleanup with a checked removal of that one path.
 # =============================================================================
 
 %labels
@@ -109,9 +126,22 @@ From: ubuntu:24.04
     export DEBIAN_FRONTEND=noninteractive
     export LC_ALL=C.UTF-8
 
+    fail() { echo "Cleanup check failed: $*" >&2; exit 1; }
+
+    # Fixed container-private workspace from the approved profile.
+    # Plain mkdir (no -p) fails if a path already exists, including a symlink
+    # or a bind mount point, so the build stops instead of reusing it.
+    BUILD_ROOT=/__closha_build
+    WORK=/__closha_build/work
+    mkdir -m 0700 -- "$BUILD_ROOT"
+    mkdir -m 0700 -- "$WORK"
+    mkdir -p -- "$WORK/src" "$WORK/apt-cache/archives/partial" "$WORK/apt-lists/partial"
+
     # Use the official Ubuntu base; do not install Conda/Miniconda/Mamba.
-    apt-get update
-    apt-get install -y --no-install-recommends \
+    # APT package cache and index lists are redirected into the workspace.
+    apt-get -o Dir::Cache="$WORK/apt-cache" -o Dir::State::lists="$WORK/apt-lists" update
+    apt-get -o Dir::Cache="$WORK/apt-cache" -o Dir::State::lists="$WORK/apt-lists" \
+        install -y --no-install-recommends \
         bash coreutils findutils gawk grep sed \
         ca-certificates curl tar bzip2 \
         build-essential pkg-config perl \
@@ -123,9 +153,7 @@ From: ubuntu:24.04
 
     # Official release archive includes HTSlib 1.23.1.
     # SHA256 was calculated from the official release asset.
-    mkdir -p /usr/local/src
-    mkdir /usr/local/src/bx_organellar_filter-build
-    cd /usr/local/src/bx_organellar_filter-build
+    cd "$WORK/src"
     curl --fail --location --retry 3 \
         --connect-timeout 30 --max-time 600 \
         --output samtools-1.23.1.tar.bz2 \
@@ -135,7 +163,7 @@ From: ubuntu:24.04
         samtools-1.23.1.tar.bz2 | sha256sum --check -
 
     tar -xjf samtools-1.23.1.tar.bz2
-    cd /usr/local/src/bx_organellar_filter-build/samtools-1.23.1
+    cd "$WORK/src/samtools-1.23.1"
     ./configure --prefix=/usr/local --with-htslib=htslib-1.23.1
     make -j4
     make install
@@ -150,12 +178,17 @@ From: ubuntu:24.04
     dpkg-query -W -f='${Package}\t${Version}\n' \
         > /usr/local/share/bx-organellar-filter/ubuntu-packages.tsv
 
-    # Container-only cleanup. Never bind host directories over these targets
-    # or their parent directories. Do not copy these commands into a host shell.
+    # Remove only the exact workspace created above; stop on any doubt.
+    # Each check is a separate command so that set -e cannot skip a failure.
     cd /
-    rm -rf -- /usr/local/src/bx_organellar_filter-build
-    apt-get clean
-    rm -rf -- /var/lib/apt/lists/*
+    [ "$WORK" = /__closha_build/work ] || fail "unexpected workspace path"
+    [ ! -L "$BUILD_ROOT" ] || fail "parent is a symlink"
+    [ ! -L "$WORK" ] || fail "workspace is a symlink"
+    [ -d "$WORK" ] || fail "workspace is missing"
+    [ "$(realpath -e -- "$WORK")" = "$WORK" ] || fail "canonical path changed"
+    [ "$(stat -c %d -- "$WORK")" = "$(stat -c %d -- /)" ] || fail "workspace is on another filesystem"
+    rm -rf --one-file-system -- "$WORK"
+    rmdir -- "$BUILD_ROOT"
 
 %runscript
     exec /usr/local/bin/samtools "$@"
@@ -176,6 +209,12 @@ From: ubuntu:24.04
     printf '%s\n' "$samtools_info" | grep -Fx 'Using htslib 1.23.1'
     test "$(printf 'CHRM\nchr1\n' | awk 'BEGIN { IGNORECASE=1 } /^chrM$/')" = 'CHRM'
     bash -c 'mapfile -t a < <(printf "ok\n"); test "${a[0]}" = ok'
+
+    # The build workspace must not remain in the image.
+    if [ -e /__closha_build ]; then
+        echo 'Build workspace /__closha_build remains in the image' >&2
+        exit 1
+    fi
 
     for cmd in conda mamba micromamba; do
         if command -v "$cmd" >/dev/null 2>&1; then
