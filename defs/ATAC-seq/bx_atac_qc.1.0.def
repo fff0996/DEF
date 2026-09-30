@@ -1,0 +1,362 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+# =============================================================================
+# bx_atac_qc / DEF version 1.0
+#
+# [PURPOSE AND TARGET SCRIPTS]
+#   Targets: ATAC_QC.1.0.R and ATAC_QC_plot.1.0.R (the supplied scripts).
+#   Both scripts share one R/Bioconductor runtime, so one image serves both.
+#   ATAC_QC.1.0.R: fragment size distribution, ATACseqQC::bamQC, Tn5 shift
+#   (shiftGAlignmentsList), and nucleosome-position splitting
+#   (splitGAlignmentsByCut) of pre-shift, organellar-filtered BAM files.
+#   ATAC_QC_plot.1.0.R: TSS enrichment heatmaps and profiles from the split
+#   BAM files and split objects written by ATAC_QC.1.0.R.
+#   The analysis scripts are supplied through CLOSHA's external bind paths,
+#   rather than embedded in the image. This DEF provides their runtime.
+#
+# [INPUT AND OUTPUT STRUCTURE]
+#   ATAC_QC.1.0.R
+#     Input: input_dir with pre-shift BAM files (preferably
+#     *_organellar_removed.bam), sample_data CSV (SampleID, Condition,
+#     Replicate), txs_bed (BED, 3+ columns), genome_fasta, optional seqlev.
+#     Missing BAI files are created beside the input BAM files, and a missing
+#     FASTA index (.fai) is created beside genome_fasta, so those locations
+#     must be writable unless the indexes already exist.
+#     Output: 01_fragment_size, 02_bam_qc, 03_shifted_bam, 04_split_bam,
+#     05_metadata (resolved sample sheet, atac_qc_manifest.tsv), 06_rds,
+#     and logs/.
+#   ATAC_QC_plot.1.0.R
+#     Input: an ATAC_QC output directory (05_metadata/atac_qc_manifest.tsv,
+#     or legacy 04_metadata) and tss_bed; optional upstream, downstream,
+#     ntile, tss_filter, and harmonize_mode. BAM and RDS paths are read from
+#     the manifest, so the runtime bind must expose the same paths.
+#     Output: 01_tss_signal (PDF/TSV), 02_signal_matrices (RDS),
+#     03_summary (TSV), and logs/.
+#   Both scripts first remove existing output_dir contents except logs/.
+#   output_dir must not be an input directory or any parent of an input.
+#
+# [REQUIRED RUNTIME DEPENDENCIES]
+#   R 4.6.1 (Rscript).
+#   Bioconductor 3.23, with direct dependencies loaded by the scripts:
+#     ATACseqQC (1.36.x), ChIPpeakAnno (3.46.x), Rsamtools, GenomicAlignments,
+#     GenomicRanges, GenomeInfoDb, IRanges.
+#   All pkg::function calls used by the scripts were checked statically
+#   against the NAMESPACE files of the Bioconductor 3.23 source packages.
+#   Base R only otherwise (utils, stats, graphics, grDevices pdf device).
+#   The recursive dependency set is about 160 CRAN/Bioconductor packages,
+#   built from source. System libraries were selected from that set:
+#   libcurl, OpenSSL, libxml2, libpng, ICU, GSL, libuv, zlib, bzip2, xz,
+#   libdeflate, zstd, and cmake (used by Rhdf5lib through biocmake).
+#   The supplied scripts have no command-line tool or Python dependencies.
+#   Runtime analysis needs no network access; no annotation downloads occur.
+#
+# [BASE IMAGE AND INSTALLATION RULES FOR THIS DEF]
+#   Base image: the official ubuntu:24.04 image from Docker Hub.
+#   OS packages: Ubuntu APT repositories.
+#   R: the CRAN Ubuntu APT repository (noble-cran40), pinned to
+#   r-base-core/r-base-dev 4.6.1-6.2404.0. The repository key is
+#   Michael Rutter's CRAN key, fingerprint
+#   E298A3A825C0D65DFD57CBB651716619E084DAB9 (expires 2027-09-30). The key
+#   file is checked against the SHA256 value below before it is trusted.
+#   R packages: BiocManager from CRAN, then Bioconductor 3.23 packages and
+#   their CRAN dependencies from bioconductor.org and cloud.r-project.org.
+#   No Conda / Miniconda / Miniforge / Mamba / Micromamba installation is used.
+#   No installation step uses repo.anaconda.com or the Anaconda defaults channel.
+#   Building requires internet access to Ubuntu, CRAN, and Bioconductor.
+#
+# [HPC BUILD REQUIREMENTS]
+#   Use a designated build environment and an unprivileged build account.
+#   Do not run the build as the host root user or through sudo.
+#   Do not bind production data or service directories into the build container.
+#   Host-side %pre and %setup sections are not used.
+#   Package installation, compilation, and cleanup run inside %post.
+#   Build workspace: the fixed container-private path /__closha_build/work.
+#   /__closha_build and the workspace are created with plain mkdir (no -p),
+#   so the build stops if either already exists, including as a symlink or
+#   a bind mount point. The APT package cache (Dir::Cache), APT index lists
+#   (Dir::State::lists), the CRAN key download, R temporary files (TMPDIR),
+#   R user cache/data/config directories, the biocmake cache, and HOME for
+#   the install steps are all placed below it.
+#   Cleanup removes only that exact workspace, after separate checks of the
+#   path constant, symlinks, canonical path, and root-filesystem device, and
+#   then removes the empty /__closha_build with rmdir. Any failed check stops
+#   the build without deleting anything.
+#   No wildcard cleanup of default paths is used; apt-get clean and
+#   /var/lib/apt/lists/* cleanup are unnecessary and not used.
+#   The base image may ship APT cleanup hooks (for example docker-clean);
+#   they were not inspected and must be reviewed with the base image.
+#   These checks reduce accidents but do not prove host isolation. The build
+#   service must keep host binds off /__closha_build, its parents, and children.
+#   No broad cleanup of /tmp, /var/tmp, /root, or user home directories is used.
+#   %test performs checks without creating or deleting data files.
+#   The Apptainer output SIF, image cache, and build temporary files are host
+#   artifacts; place them in an approved build workspace, separate from services.
+#   This DEF does not clean the host's Apptainer cache or build workspace.
+#   The build service must enforce account, workspace, and mount restrictions;
+#   comments in this DEF cannot enforce the host's bind configuration.
+#   Compiling about 160 R packages from source takes substantial CPU time;
+#   the build service should apply its CPU, memory, and time limits.
+#
+# [RUNTIME ENVIRONMENT ISOLATION]
+#   Apptainer binds the user's home directory by default. %environment points
+#   R_LIBS_USER at the image site library and sets R_PROFILE_USER and
+#   R_ENVIRON_USER to /dev/null, and unsets R_LIBS, so that a host
+#   ~/R library, ~/.Rprofile, or ~/.Renviron is not loaded into this runtime.
+#
+# [CHANGES FROM THE PREVIOUS SIF]
+#   No previous SIF or DEF for these scripts was supplied.
+#   This is a new image; nothing existing is modified or overwritten.
+#
+# [VALIDATION STATUS AND REPRODUCIBILITY]
+#   Checked: supplied-script dependencies (library/requireNamespace/::),
+#   exports of every pkg::function call in the Bioconductor 3.23 NAMESPACE
+#   files, the recursive R dependency set and its Ubuntu 24.04 system
+#   requirements, the CRAN key fingerprint and SHA256, and availability of
+#   the pinned r-base-core/r-base-dev versions in noble-cran40.
+#   Checked: DEF %post and %test shell syntax (sh -n) only.
+#   Not performed: an actual Apptainer SIF build, %test run, or analysis
+#   validation using the user's BAM files.
+#   The production HPC build command and bind configuration were not inspected.
+#   %test checks R 4.6.1, Bioconductor 3.23, package loading, the exports
+#   used by the scripts, a file-less PDF device, and conda/mamba on PATH.
+#   These checks do not audit the entire filesystem or historical installation
+#   activity.
+#   The R version and Bioconductor release are pinned. Bioconductor patch
+#   versions within 3.23, CRAN package versions, the Ubuntu tag, and APT
+#   packages may change between builds. Installed R and Ubuntu package
+#   versions are therefore recorded in the image. Full reproducibility needs
+#   a CRAN snapshot/lock policy, which is not applied here.
+#   Unresolved: the approved ubuntu:24.04 digest is not pinned yet; the CRAN
+#   APT repository and Bioconductor are not yet registered approved recipes.
+#
+# [CHANGELOG]
+#   2026-09-30 / 1.0: Created for ATAC_QC.1.0.R and ATAC_QC_plot.1.0.R
+#   without Conda, using the fixed build workspace /__closha_build/work.
+# =============================================================================
+
+%labels
+    Name bx_atac_qc
+    Version 1.0
+    RVersion 4.6.1
+    BioconductorVersion 3.23
+    BaseImage ubuntu:24.04
+    InstallMethod "Ubuntu APT, CRAN Ubuntu APT R, BiocManager source packages"
+    Description "R/Bioconductor environment for the CLOSHA ATAC_QC and ATAC_QC_plot scripts"
+
+%environment
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    # Keep host-side user R libraries and profiles out of this runtime.
+    unset R_LIBS
+    export R_LIBS_USER=/usr/local/lib/R/site-library
+    export R_PROFILE_USER=/dev/null
+    export R_ENVIRON_USER=/dev/null
+
+%post
+    set -eu
+    export DEBIAN_FRONTEND=noninteractive
+    export LC_ALL=C.UTF-8
+
+    fail() { echo "Build check failed: $*" >&2; exit 1; }
+
+    # Fixed container-private workspace from the approved profile.
+    # Plain mkdir (no -p) fails if a path already exists, including a symlink
+    # or a bind mount point, so the build stops instead of reusing it.
+    BUILD_ROOT=/__closha_build
+    WORK=/__closha_build/work
+    mkdir -m 0700 -- "$BUILD_ROOT"
+    mkdir -m 0700 -- "$WORK"
+    mkdir -p -- "$WORK/apt-cache/archives/partial" "$WORK/apt-lists/partial" \
+        "$WORK/keys" "$WORK/tmp" "$WORK/home" "$WORK/r-cache" "$WORK/r-data" \
+        "$WORK/r-config" "$WORK/biocmake-cache"
+
+    # APT package cache and index lists are redirected into the workspace.
+    apt_ws() {
+        apt-get -o Dir::Cache="$WORK/apt-cache" -o Dir::State::lists="$WORK/apt-lists" "$@"
+    }
+
+    # Use the official Ubuntu base; do not install Conda/Miniconda/Mamba.
+    apt_ws update
+    apt_ws install -y --no-install-recommends ca-certificates curl
+
+    # CRAN Ubuntu repository key (fingerprint E298A3A825C0D65DFD57CBB651716619E084DAB9).
+    # SHA256 was calculated from the key file published by CRAN.
+    curl --fail --location --retry 3 \
+        --connect-timeout 30 --max-time 120 \
+        --output "$WORK/keys/marutter_pubkey.asc" \
+        https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc
+    printf '%s  %s\n' \
+        ffa734347fd95fd7393f575448ba5e52cf3137067db77224d4857863351e4e8f \
+        "$WORK/keys/marutter_pubkey.asc" | sha256sum --check -
+    install -d -m 0755 /etc/apt/keyrings
+    install -m 0644 "$WORK/keys/marutter_pubkey.asc" /etc/apt/keyrings/cran-ubuntu-marutter.asc
+    printf '%s\n' \
+        'deb [signed-by=/etc/apt/keyrings/cran-ubuntu-marutter.asc] https://cloud.r-project.org/bin/linux/ubuntu noble-cran40/' \
+        > /etc/apt/sources.list.d/cran-r.list
+
+    # R 4.6.1 from CRAN, plus system libraries required by the R package set.
+    apt_ws update
+    apt_ws install -y --no-install-recommends \
+        bash coreutils findutils grep sed \
+        r-base-core=4.6.1-6.2404.0 r-base-dev=4.6.1-6.2404.0 \
+        build-essential gfortran make cmake pkgconf \
+        libcurl4-openssl-dev libssl-dev libxml2-dev libpng-dev libicu-dev \
+        libgsl-dev libuv1-dev zlib1g-dev libbz2-dev liblzma-dev \
+        libdeflate-dev libzstd-dev
+
+    R --version | head -n 1 | grep -F 'R version 4.6.1'
+
+    # R temporary files, user caches, and HOME stay in the workspace.
+    # biocmake must use the APT cmake (>= 3.24) and not download its own.
+    export HOME="$WORK/home"
+    export TMPDIR="$WORK/tmp"
+    export R_USER_CACHE_DIR="$WORK/r-cache"
+    export R_USER_DATA_DIR="$WORK/r-data"
+    export R_USER_CONFIG_DIR="$WORK/r-config"
+    export BIOCMAKE_CMAKE_COMMAND=/usr/bin/cmake
+    export BIOCMAKE_CMAKE_CACHE_DIRECTORY="$WORK/biocmake-cache"
+
+    # Install Bioconductor 3.23 packages into the image site library.
+    # install.packages() only warns on failure, so loading is checked after.
+    Rscript --no-init-file -e '
+        options(repos = c(CRAN = "https://cloud.r-project.org"), Ncpus = 4L, warn = 1)
+        lib <- "/usr/local/lib/R/site-library"
+        if (!identical(normalizePath(.libPaths()[1]), lib)) {
+            stop("unexpected first library path: ", .libPaths()[1])
+        }
+        install.packages("BiocManager", lib = lib)
+        BiocManager::install(version = "3.23", ask = FALSE, update = FALSE, lib = lib)
+        pkgs <- c("ATACseqQC", "ChIPpeakAnno", "Rsamtools", "GenomicAlignments",
+                  "GenomicRanges", "GenomeInfoDb", "IRanges")
+        BiocManager::install(pkgs, ask = FALSE, update = FALSE, lib = lib)
+        ok <- vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)
+        if (!all(ok)) {
+            stop("R packages failed to install: ", paste(pkgs[!ok], collapse = ", "))
+        }
+        if (!startsWith(as.character(packageVersion("BiocVersion")), "3.23.")) {
+            stop("unexpected Bioconductor version: ", packageVersion("BiocVersion"))
+        }
+    '
+
+    # Retain installed-version information with the image.
+    mkdir -p /usr/local/share/bx-atac-qc
+    R --version | head -n 1 > /usr/local/share/bx-atac-qc/r-version.txt
+    Rscript --no-init-file -e '
+        ip <- installed.packages()[, c("Package", "Version", "LibPath")]
+        write.table(ip, "/usr/local/share/bx-atac-qc/r-packages.tsv",
+                    sep = "\t", quote = FALSE, row.names = FALSE)
+    '
+    dpkg-query -W -f='${Package}\t${Version}\n' \
+        > /usr/local/share/bx-atac-qc/ubuntu-packages.tsv
+
+    # Remove only the exact workspace created above; stop on any doubt.
+    # Each check is a separate command so that set -e cannot skip a failure.
+    cd /
+    [ "$WORK" = /__closha_build/work ] || fail "unexpected workspace path"
+    [ ! -L "$BUILD_ROOT" ] || fail "parent is a symlink"
+    [ ! -L "$WORK" ] || fail "workspace is a symlink"
+    [ -d "$WORK" ] || fail "workspace is missing"
+    [ "$(realpath -e -- "$WORK")" = "$WORK" ] || fail "canonical path changed"
+    [ "$(stat -c %d -- "$WORK")" = "$(stat -c %d -- /)" ] || fail "workspace is on another filesystem"
+    rm -rf --one-file-system -- "$WORK"
+    rmdir -- "$BUILD_ROOT"
+
+%runscript
+    exec /usr/bin/Rscript "$@"
+
+%test
+    set -eu
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LC_ALL=C.UTF-8
+
+    for cmd in R Rscript; do
+        command -v "$cmd" >/dev/null 2>&1
+    done
+
+    R --version | head -n 1 | grep -F 'R version 4.6.1'
+
+    # Load packages and check every pkg::function used by the scripts.
+    # pdf(NULL) exercises the PDF device without writing a file.
+    Rscript --no-init-file -e '
+        pkgs <- c("ATACseqQC", "ChIPpeakAnno", "Rsamtools", "GenomicAlignments",
+                  "GenomicRanges", "GenomeInfoDb", "IRanges")
+        for (p in pkgs) suppressPackageStartupMessages(library(p, character.only = TRUE))
+        if (!startsWith(as.character(packageVersion("BiocVersion")), "3.23.")) {
+            stop("unexpected Bioconductor version: ", packageVersion("BiocVersion"))
+        }
+        if (!startsWith(as.character(packageVersion("ATACseqQC")), "1.36.")) {
+            stop("unexpected ATACseqQC version: ", packageVersion("ATACseqQC"))
+        }
+        used <- c(
+            "ATACseqQC::bamQC", "ATACseqQC::enrichedFragments",
+            "ATACseqQC::fragSizeDist", "ATACseqQC::readBamFile",
+            "ATACseqQC::shiftGAlignmentsList", "ATACseqQC::splitGAlignmentsByCut",
+            "ChIPpeakAnno::estLibSize", "ChIPpeakAnno::featureAlignedDistribution",
+            "ChIPpeakAnno::featureAlignedHeatmap", "ChIPpeakAnno::reCenterPeaks",
+            "GenomeInfoDb::keepSeqlevels", "GenomeInfoDb::seqnames",
+            "GenomicRanges::GRanges", "GenomicRanges::mcols", "GenomicRanges::seqnames",
+            "IRanges::IRanges",
+            "Rsamtools::BamFile", "Rsamtools::FaFile", "Rsamtools::ScanBamParam",
+            "Rsamtools::close.FaFile", "Rsamtools::idxstatsBam", "Rsamtools::indexBam",
+            "Rsamtools::indexFa", "Rsamtools::open.FaFile", "Rsamtools::scanBam",
+            "Rsamtools::scanFaIndex"
+        )
+        for (u in used) {
+            x <- strsplit(u, "::", fixed = TRUE)[[1]]
+            invisible(getExportedValue(x[1], x[2]))
+        }
+        pdf(NULL)
+        plot(1)
+        invisible(dev.off())
+        cat("ATACseqQC", as.character(packageVersion("ATACseqQC")), "\n")
+    '
+
+    # The build workspace must not remain in the image.
+    if [ -e /__closha_build ]; then
+        echo 'Build workspace /__closha_build remains in the image' >&2
+        exit 1
+    fi
+
+    for cmd in conda mamba micromamba; do
+        if command -v "$cmd" >/dev/null 2>&1; then
+            echo "Unexpected package manager in image: $cmd" >&2
+            exit 1
+        fi
+    done
+
+    echo 'R 4.6.1 / Bioconductor 3.23: runtime dependency checks passed.'
+
+%help
+    CLOSHA ATAC QC environment: Ubuntu 24.04 + R 4.6.1 + Bioconductor 3.23
+    (ATACseqQC, ChIPpeakAnno, Rsamtools, GenomicAlignments, GenomicRanges,
+    GenomeInfoDb, IRanges). R comes from the CRAN Ubuntu APT repository;
+    R packages are built from source. No Conda/Miniconda/Mamba is used.
+
+    Build as an unprivileged user on a designated, internet-connected build
+    machine matching the compute-node architecture. Do not bind production paths:
+        apptainer build --fakeroot bx_atac_qc.1.0.sif bx_atac_qc.1.0.def
+
+    Store the SIF, Apptainer cache, and build temporary files in an approved host
+    build workspace. APPTAINER_CACHEDIR and APPTAINER_TMPDIR select the cache and
+    temporary directories. Container cleanup must never target host-backed binds.
+
+    Check the image:
+        apptainer exec --cleanenv bx_atac_qc.1.0.sif R --version
+        apptainer test --cleanenv bx_atac_qc.1.0.sif
+
+    ATAC_QC.1.0.R and ATAC_QC_plot.1.0.R are supplied externally through
+    approved runtime binds. This DEF does not run them during image construction:
+        apptainer exec bx_atac_qc.1.0.sif Rscript ATAC_QC.1.0.R key=value ...
+        apptainer exec bx_atac_qc.1.0.sif Rscript ATAC_QC_plot.1.0.R key=value ...
+
+    ATAC_QC.1.0.R creates missing BAI files beside input BAM files and a missing
+    .fai beside genome_fasta, so those locations must be writable unless the
+    indexes already exist. ATAC_QC_plot.1.0.R reads BAM/RDS paths recorded in
+    the ATAC_QC manifest, so the same paths must be bound at runtime.
+    Both scripts remove previous output except logs/, so output_dir must be
+    separate from the inputs and their parents. That existing deletion behavior
+    must be reviewed separately before service use.
+    Writable runtime binds can expose host data to the analysis scripts.
+    Runtime analysis requires no network access.

@@ -1,0 +1,346 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+# =============================================================================
+# bx_macs3_callpeak_atac / DEF version 1.0
+#
+# [PURPOSE AND TARGET SCRIPT]
+#   Target: MACS3_callpeak_ATAC.1.0.sh (the supplied script).
+#   Calls ATAC-seq peaks with MACS3 callpeak in paired-end mode (-f BAMPE)
+#   for treatment-only samples or CONTROL_* / treatment pairs, using the
+#   atac, narrow, tf, or broad presets.
+#   The analysis script is supplied through CLOSHA's external bind paths,
+#   rather than embedded in the image. This DEF provides its runtime environment.
+#
+# [INPUT AND OUTPUT STRUCTURE]
+#   Input: input_dir with paired-end BAM files matching *<alignment_suffix>
+#   (script default: .shifted.bam). If input_dir contains 03_shifted_bam
+#   (ATAC_QC output), only that directory is searched. *.unsorted.bam files
+#   are excluded. Required: genome_size (hs, mm, ce, dm, or a number).
+#   Optional: peak_type, alignment_suffix, qvalue, broad_cutoff.
+#   Missing BAI files are created with samtools beside the input BAM files,
+#   so the input location must be writable unless the indexes already exist.
+#   Output: <sample>_peaks.narrowPeak or _peaks.broadPeak with the other
+#   MACS3 outputs, per-sample MACS3 logs, and logs/.
+#   The script first removes existing output_dir contents except logs/.
+#   output_dir must not be input_dir or any parent directory of input_dir.
+#
+# [REQUIRED RUNTIME DEPENDENCIES]
+#   MACS3 3.0.4: callpeak. The version follows the example in the script's
+#   error message (macs3_3.0.4.sif).
+#   Python 3.12 (Ubuntu 24.04) in a dedicated venv at /opt/macs3, with a
+#   hash-locked set: numpy 2.5.3, scipy 1.18.1, scikit-learn 1.9.1,
+#   hmmlearn 0.3.3, cykhash 2.0.1, joblib 1.6.0, threadpoolctl 3.7.0,
+#   narwhals 2.26.0, cloudpickle 3.1.2; build-only: Cython 3.0.12
+#   (MACS3 3.0.4 requires Cython >=3.0,<3.1), setuptools 84.0.0,
+#   wheel 0.48.0, packaging 26.3.
+#   SAMtools 1.23.1: index (optional in the script, used for missing BAI).
+#   HTSlib 1.23.1: built from the copy bundled with the official SAMtools release.
+#   Bash: required for mapfile, arrays, process substitution, and key=value
+#   argument handling.
+#   coreutils / findutils / grep / sed: file discovery, sorting, counting,
+#   and log handling.
+#   The supplied script has no R package dependencies.
+#
+# [BASE IMAGE AND INSTALLATION RULES FOR THIS DEF]
+#   Base image: the official ubuntu:24.04 image from Docker Hub.
+#   OS packages and build dependencies: installed from Ubuntu APT repositories.
+#   SAMtools: built directly from the official GitHub release source for 1.23.1
+#   (same recipe as bx_organellar_filter.1.0.def).
+#   Python packages: binary wheels from PyPI, installed with pip
+#   --require-hashes --only-binary=:all: from the lock list below.
+#   cykhash 2.0.1 and MACS3 3.0.4 have no wheels on PyPI; their official
+#   PyPI source archives are checked against SHA256 and built offline with
+#   --no-build-isolation --no-deps --no-index against the locked set.
+#   The wheel hashes are for linux x86_64 (cp312) only, so the build stops
+#   on other architectures.
+#   No Conda / Miniconda / Miniforge / Mamba / Micromamba installation is used.
+#   No installation step uses repo.anaconda.com or the Anaconda defaults channel.
+#   Building requires internet access; analysis of local BAM files does not.
+#
+# [HPC BUILD REQUIREMENTS]
+#   Use a designated build environment and an unprivileged build account.
+#   Do not run the build as the host root user or through sudo.
+#   Do not bind production data or service directories into the build container.
+#   Host-side %pre and %setup sections are not used.
+#   Package installation, compilation, and cleanup run inside %post.
+#   Build workspace: the fixed container-private path /__closha_build/work.
+#   /__closha_build and the workspace are created with plain mkdir (no -p),
+#   so the build stops if either already exists, including as a symlink or
+#   a bind mount point. The APT package cache (Dir::Cache), APT index lists
+#   (Dir::State::lists), the SAMtools source tree, the Python lock file and
+#   source archives, pip temporary files (TMPDIR), and HOME for the install
+#   steps are all placed below it. pip runs with --no-cache-dir.
+#   Cleanup removes only that exact workspace, after separate checks of the
+#   path constant, symlinks, canonical path, and root-filesystem device, and
+#   then removes the empty /__closha_build with rmdir. Any failed check stops
+#   the build without deleting anything.
+#   No wildcard cleanup of default paths is used; apt-get clean and
+#   /var/lib/apt/lists/* cleanup are unnecessary and not used.
+#   The base image may ship APT cleanup hooks (for example docker-clean);
+#   they were not inspected and must be reviewed with the base image.
+#   These checks reduce accidents but do not prove host isolation. The build
+#   service must keep host binds off /__closha_build, its parents, and children.
+#   No broad cleanup of /tmp, /var/tmp, /root, or user home directories is used.
+#   %test performs checks without creating or deleting data files.
+#   The Apptainer output SIF, image cache, and build temporary files are host
+#   artifacts; place them in an approved build workspace, separate from services.
+#   This DEF does not clean the host's Apptainer cache or build workspace.
+#   The build service must enforce account, workspace, and mount restrictions;
+#   comments in this DEF cannot enforce the host's bind configuration.
+#
+# [RUNTIME ENVIRONMENT ISOLATION]
+#   Only the macs3 entry point is linked into /usr/local/bin; the venv Python
+#   is not placed on PATH. %environment unsets PYTHONPATH and PYTHONHOME and
+#   sets PYTHONNOUSERSITE=1, so host ~/.local packages from the default home
+#   bind are not imported into this runtime.
+#
+# [CHANGES FROM THE PREVIOUS SIF]
+#   No previous SIF or DEF was supplied. The script's error message mentions
+#   macs3_3.0.4.sif; its origin and contents were not inspected.
+#   This is a new image; nothing existing is modified or overwritten.
+#
+# [VALIDATION STATUS AND REPRODUCIBILITY]
+#   Checked: supplied-script dependencies, DEF shell syntax (sh -n), the
+#   official SAMtools source SHA256, and every Python archive SHA256 against
+#   the PyPI JSON metadata. The Python lock set was resolved for cp312
+#   manylinux x86_64 from the MACS3 3.0.4 build and runtime requirements.
+#   Not performed: an actual Apptainer SIF build, a build of cykhash/MACS3
+#   against numpy 2.5.3, or analysis validation using the user's BAM files.
+#   The production HPC build command and bind configuration were not inspected.
+#   %test checks command availability, MACS3/SAMtools/HTSlib versions,
+#   Python imports, pip dependency consistency, Bash behavior, and whether
+#   conda/mamba/micromamba are on PATH.
+#   These checks do not audit the entire filesystem or historical installation
+#   activity.
+#   MACS3 notes that different numpy/scipy/scikit-learn versions may give
+#   slightly different results; compare with the previous environment first.
+#   SAMtools/HTSlib and Python packages are pinned, but the Ubuntu tag and APT
+#   packages may change. Package versions at build time are recorded in the image.
+#   Unresolved: the approved ubuntu:24.04 digest is not pinned yet; the PyPI
+#   lock set is not yet a registered approved recipe.
+#
+# [CHANGELOG]
+#   2026-09-30 / 1.0: Created for MACS3_callpeak_ATAC.1.0.sh without Conda,
+#   using the fixed build workspace /__closha_build/work.
+# =============================================================================
+
+%labels
+    Name bx_macs3_callpeak_atac
+    Version 1.0
+    Macs3Version 3.0.4
+    SamtoolsVersion 1.23.1
+    HTSlibVersion 1.23.1
+    PythonVersion 3.12
+    BaseImage ubuntu:24.04
+    InstallMethod "Ubuntu APT, hash-locked PyPI venv, official SAMtools source"
+    Description "MACS3 and SAMtools environment for the CLOSHA MACS3_callpeak_ATAC script"
+
+%environment
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    # Keep host-side Python paths and user site-packages out of this runtime.
+    unset PYTHONPATH PYTHONHOME
+    export PYTHONNOUSERSITE=1
+
+%post
+    set -eu
+    export DEBIAN_FRONTEND=noninteractive
+    export LC_ALL=C.UTF-8
+
+    fail() { echo "Build check failed: $*" >&2; exit 1; }
+
+    # Fixed container-private workspace from the approved profile.
+    # Plain mkdir (no -p) fails if a path already exists, including a symlink
+    # or a bind mount point, so the build stops instead of reusing it.
+    BUILD_ROOT=/__closha_build
+    WORK=/__closha_build/work
+    mkdir -m 0700 -- "$BUILD_ROOT"
+    mkdir -m 0700 -- "$WORK"
+    mkdir -p -- "$WORK/src" "$WORK/py" "$WORK/tmp" "$WORK/home" \
+        "$WORK/apt-cache/archives/partial" "$WORK/apt-lists/partial"
+
+    # The locked wheel hashes below are for x86_64 only.
+    [ "$(dpkg --print-architecture)" = amd64 ] || fail "unsupported architecture"
+
+    # Use the official Ubuntu base; do not install Conda/Miniconda/Mamba.
+    # APT package cache and index lists are redirected into the workspace.
+    apt-get -o Dir::Cache="$WORK/apt-cache" -o Dir::State::lists="$WORK/apt-lists" update
+    apt-get -o Dir::Cache="$WORK/apt-cache" -o Dir::State::lists="$WORK/apt-lists" \
+        install -y --no-install-recommends \
+        bash coreutils findutils grep sed \
+        ca-certificates curl tar bzip2 \
+        build-essential pkg-config perl \
+        zlib1g-dev libbz2-dev liblzma-dev libdeflate-dev \
+        libncurses-dev libcurl4-openssl-dev libssl-dev \
+        python3 python3-venv python3-dev
+
+    # pip temporary files and HOME stay in the workspace; pip keeps no cache.
+    export HOME="$WORK/home"
+    export TMPDIR="$WORK/tmp"
+    export PIP_DISABLE_PIP_VERSION_CHECK=1
+    export PIP_NO_CACHE_DIR=1
+
+    # Official release archive includes HTSlib 1.23.1.
+    # SHA256 was calculated from the official release asset.
+    cd "$WORK/src"
+    curl --fail --location --retry 3 \
+        --connect-timeout 30 --max-time 600 \
+        --output samtools-1.23.1.tar.bz2 \
+        https://github.com/samtools/samtools/releases/download/1.23.1/samtools-1.23.1.tar.bz2
+    printf '%s  %s\n' \
+        32266198a4bc6a6df395d8526688c9697d9c8e472f888c749fdde2e08ea88dd2 \
+        samtools-1.23.1.tar.bz2 | sha256sum --check -
+
+    tar -xjf samtools-1.23.1.tar.bz2
+    cd "$WORK/src/samtools-1.23.1"
+    ./configure --prefix=/usr/local --with-htslib=htslib-1.23.1
+    make -j4
+    make install
+
+    # Dedicated Python venv for MACS3; the system Python is left unchanged.
+    python3 -c 'import sys; assert sys.version_info[:2] == (3, 12), sys.version'
+    python3 -m venv /opt/macs3
+
+    # Hash-locked binary wheels (cp312, manylinux x86_64). Hashes match PyPI.
+    printf '%s\n' \
+        'Cython==3.0.12 --hash=sha256:0faa5e39e5c8cdf6f9c3b1c3f24972826e45911e7f5b99cf99453fca5432f45e' \
+        'cloudpickle==3.1.2 --hash=sha256:9acb47f6afd73f60dc1df93bb801b472f05ff42fa6c84167d25cb206be1fbf4a' \
+        'hmmlearn==0.3.3 --hash=sha256:6cd27dc66bfe7f6ff77804f7dbfe42b35d18e21403eb2bdfef0de6ad3bd2368f' \
+        'joblib==1.6.0 --hash=sha256:3dbbf9f6e4b592a2357b854608e980fe6390d131d7a82f011a377ef2ebef7aba' \
+        'narwhals==2.26.0 --hash=sha256:29326d74f107c347fd1009bd58e38d9f7c7c5b51e6de97bc93dbc325d9038b54' \
+        'numpy==2.5.3 --hash=sha256:b7e18c623bb5c95acb3b3328861272816ba199fb531921c5d6d0b675f1fde9e3' \
+        'packaging==26.3 --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c' \
+        'scikit-learn==1.9.1 --hash=sha256:e5d7b18a5b9dca241a74695f3275fa4c895a9dadc72b3d8df5fa9d1083c9b83e' \
+        'scipy==1.18.1 --hash=sha256:f55fa87b6c612ecd6b058f167c53231b1d14e412efe361d3d6e38b3631c73218' \
+        'setuptools==84.0.0 --hash=sha256:51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670' \
+        'threadpoolctl==3.7.0 --hash=sha256:cd8b60b5641b45c67bbf73c64c843235fc2d8a480c87389f52f5dbee893b86be' \
+        'wheel==0.48.0 --hash=sha256:3217dcc807155e45db462d7ef2431f5ddda0d7273b700d05a67b271ceb1287ab' \
+        > "$WORK/py/requirements.lock"
+    /opt/macs3/bin/pip install --require-hashes --only-binary=:all: \
+        --index-url https://pypi.org/simple \
+        -r "$WORK/py/requirements.lock"
+
+    # cykhash and MACS3 are published as source archives only.
+    # SHA256 values match the PyPI metadata; builds run offline in the venv.
+    cd "$WORK/py"
+    curl --fail --location --retry 3 \
+        --connect-timeout 30 --max-time 300 \
+        --output cykhash-2.0.1.tar.gz \
+        https://files.pythonhosted.org/packages/source/c/cykhash/cykhash-2.0.1.tar.gz
+    curl --fail --location --retry 3 \
+        --connect-timeout 30 --max-time 300 \
+        --output macs3-3.0.4.tar.gz \
+        https://files.pythonhosted.org/packages/source/m/macs3/macs3-3.0.4.tar.gz
+    printf '%s  %s\n' \
+        b4794bc9f549114d8cf1d856d9f64e08ff5f246bf043cf369fdb414e9ceb97f7 cykhash-2.0.1.tar.gz \
+        1c2c9cc219d136b026b5e517dcbc518c3f76b9c864b8b52f00c7902f11070aef macs3-3.0.4.tar.gz \
+        | sha256sum --check -
+    /opt/macs3/bin/pip install --no-build-isolation --no-deps --no-index \
+        "$WORK/py/cykhash-2.0.1.tar.gz"
+    /opt/macs3/bin/pip install --no-build-isolation --no-deps --no-index \
+        "$WORK/py/macs3-3.0.4.tar.gz"
+    /opt/macs3/bin/pip check
+
+    # Expose only the macs3 entry point; the venv Python stays off PATH.
+    ln -s /opt/macs3/bin/macs3 /usr/local/bin/macs3
+
+    # Retain licenses and installed-version information with the image.
+    cd "$WORK/src/samtools-1.23.1"
+    mkdir -p /usr/local/share/licenses/samtools /usr/local/share/licenses/macs3 \
+        /usr/local/share/bx-macs3-callpeak-atac
+    cp LICENSE /usr/local/share/licenses/samtools/LICENSE
+    cp htslib-1.23.1/LICENSE /usr/local/share/licenses/samtools/HTSlib-LICENSE
+    tar -xzf "$WORK/py/macs3-3.0.4.tar.gz" -C "$WORK/py" macs3-3.0.4/LICENSE
+    cp "$WORK/py/macs3-3.0.4/LICENSE" /usr/local/share/licenses/macs3/LICENSE
+
+    /usr/local/bin/samtools --version > /usr/local/share/bx-macs3-callpeak-atac/samtools-version.txt
+    grep -Fx 'samtools 1.23.1' /usr/local/share/bx-macs3-callpeak-atac/samtools-version.txt
+    grep -Fx 'Using htslib 1.23.1' /usr/local/share/bx-macs3-callpeak-atac/samtools-version.txt
+    /usr/local/bin/macs3 --version > /usr/local/share/bx-macs3-callpeak-atac/macs3-version.txt 2>&1
+    grep -Fx 'macs3 3.0.4' /usr/local/share/bx-macs3-callpeak-atac/macs3-version.txt
+    /opt/macs3/bin/pip freeze --all > /usr/local/share/bx-macs3-callpeak-atac/python-packages.txt
+    dpkg-query -W -f='${Package}\t${Version}\n' \
+        > /usr/local/share/bx-macs3-callpeak-atac/ubuntu-packages.tsv
+
+    # Remove only the exact workspace created above; stop on any doubt.
+    # Each check is a separate command so that set -e cannot skip a failure.
+    cd /
+    [ "$WORK" = /__closha_build/work ] || fail "unexpected workspace path"
+    [ ! -L "$BUILD_ROOT" ] || fail "parent is a symlink"
+    [ ! -L "$WORK" ] || fail "workspace is a symlink"
+    [ -d "$WORK" ] || fail "workspace is missing"
+    [ "$(realpath -e -- "$WORK")" = "$WORK" ] || fail "canonical path changed"
+    [ "$(stat -c %d -- "$WORK")" = "$(stat -c %d -- /)" ] || fail "workspace is on another filesystem"
+    rm -rf --one-file-system -- "$WORK"
+    rmdir -- "$BUILD_ROOT"
+
+%runscript
+    exec /usr/local/bin/macs3 "$@"
+
+%test
+    set -eu
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LC_ALL=C.UTF-8
+
+    for cmd in bash macs3 samtools find sort sed grep wc xargs tee date \
+        basename head mkdir rm; do
+        command -v "$cmd" >/dev/null 2>&1
+    done
+
+    # Check installed versions without creating files.
+    test "$(macs3 --version 2>&1)" = 'macs3 3.0.4'
+    macs3 callpeak --help >/dev/null
+    samtools_info=$(samtools --version)
+    printf '%s\n' "$samtools_info" | grep -Fx 'samtools 1.23.1'
+    printf '%s\n' "$samtools_info" | grep -Fx 'Using htslib 1.23.1'
+    /opt/macs3/bin/python -c 'import MACS3, numpy, scipy, sklearn, hmmlearn, cykhash'
+    /opt/macs3/bin/pip check
+    bash -c 'mapfile -t a < <(printf "ok\n"); test "${a[0]}" = ok'
+
+    # The build workspace must not remain in the image.
+    if [ -e /__closha_build ]; then
+        echo 'Build workspace /__closha_build remains in the image' >&2
+        exit 1
+    fi
+
+    for cmd in conda mamba micromamba; do
+        if command -v "$cmd" >/dev/null 2>&1; then
+            echo "Unexpected package manager in image: $cmd" >&2
+            exit 1
+        fi
+    done
+
+    echo 'MACS3 3.0.4 / SAMtools 1.23.1: runtime dependency checks passed.'
+
+%help
+    CLOSHA MACS3 peak-calling environment: Ubuntu 24.04 + MACS3 3.0.4
+    (Python 3.12 venv, hash-locked PyPI wheels) + SAMtools/HTSlib 1.23.1.
+    SAMtools is built from its official release archive.
+    No Conda/Miniconda/Mamba installation is used.
+
+    Build as an unprivileged user on a designated, internet-connected x86_64
+    build machine. Do not bind production paths:
+        apptainer build --fakeroot bx_macs3_callpeak_atac.1.0.sif bx_macs3_callpeak_atac.1.0.def
+
+    Store the SIF, Apptainer cache, and build temporary files in an approved host
+    build workspace. APPTAINER_CACHEDIR and APPTAINER_TMPDIR select the cache and
+    temporary directories. Container cleanup must never target host-backed binds.
+
+    Check the image:
+        apptainer exec --cleanenv bx_macs3_callpeak_atac.1.0.sif macs3 --version
+        apptainer test --cleanenv bx_macs3_callpeak_atac.1.0.sif
+
+    MACS3_callpeak_ATAC.1.0.sh is supplied externally through approved runtime
+    binds. This DEF does not run that script during image construction:
+        apptainer exec bx_macs3_callpeak_atac.1.0.sif bash MACS3_callpeak_ATAC.1.0.sh key=value ...
+
+    Input: paired-end BAM files (BAMPE). If an input BAI is absent, the script
+    creates one beside the input BAM, so that location must be writable.
+    The output directory must be separate from the input and its parents,
+    because the analysis script removes previous output except logs/.
+    That existing deletion behavior must be reviewed separately before service use.
+    Writable runtime binds can expose host data to the analysis script.
+    Save the external Bash script with LF line endings.
+    Runtime analysis of local BAM files requires no network access.
