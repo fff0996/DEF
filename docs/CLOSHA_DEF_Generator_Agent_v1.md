@@ -1,7 +1,8 @@
-CLOSHA DEF 생성 에이전트 — 설계 및 지침 1.2
+CLOSHA DEF 생성 에이전트 — 설계 및 지침 1.3
 
 작성일: 2026-09-29
 
+개정 1.3 (2026-09-30): 운영 apptainer.conf와 Apptainer 1.4.5 빌드 동작 확인 결과를 반영해 빌드 컨테이너의 호스트 연결 차단 규칙(6.1절), %post·%test 시작 순서, 로컬 검증 빌드 절차를 추가.
 개정 1.2 (2026-09-30): 빌드 작업 경로를 프로필 고정 경로와 mkdir 신규 생성 확인 방식으로 단순화하고, APT/DNF 캐시를 작업 경로로 모아 단일 경로만 정리하는 규칙과 참고 템플릿 추가.
 개정 1.1: 빌드별 고유 작업 디렉터리, 도구별 캐시 지정, 정리 범위 검증 규칙 추가. 기존 파일명은 참조 경로 유지를 위해 보존한다.
 이 문서는 에이전트의 역할과 자동 생성·검증·빌드 경계를 정의하는 초안이다. 실제 에이전트, 검사기, 빌드 서비스가 구현되거나 배포된 상태는 아니다. 기존 서비스 설정을 변경하지 않는다.
@@ -87,7 +88,33 @@ Conda 관련 경로·실행 파일 검사만으로 설치 이력이나 기반 �
 참고 템플릿(Ubuntu APT + 소스 빌드, %post 일부). 패키지 목록·URL·해시는 승인 레시피에서 채운다.
 ```sh
     set -eu
+    # Fixed container PATH; ignore any inherited PATH.
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     export DEBIAN_FRONTEND=noninteractive
+    export LC_ALL=C.UTF-8
+
+    # Cover the host-bound /tmp and /var/tmp with private tmpfs (section 6.1).
+    mount -t tmpfs -o mode=1777,nosuid,nodev closha-tmp /tmp
+    mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
+    [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
+    [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+    # Record the mount table in the build log for review.
+    cat /proc/self/mountinfo
+
+    # Stop before any install step if a mount other than the build defaults
+    # is present (section 6.1 allowlist).
+    awk '
+        { split($0, sep, " - "); split(sep[2], f, " "); mp = $5; fs = f[1]; src = $4 }
+        mp == "/" || mp == "/tmp" || mp == "/var/tmp" { next }
+        (mp == "/etc/hosts" || mp == "/etc/resolv.conf") &&
+            src ~ /\/bundle-temp-[0-9]+\/(hosts|resolv\.conf)$/ { next }
+        (mp == "/dev" || mp ~ /^\/dev\//) && fs ~ /^(tmpfs|devpts|mqueue)$/ { next }
+        (mp == "/proc" || mp ~ /^\/proc\//) && fs ~ /^(proc|binfmt_misc|autofs)$/ { next }
+        (mp == "/sys" || mp ~ /^\/sys\//) &&
+            fs ~ /^(sysfs|cgroup|cgroup2|securityfs|selinuxfs|debugfs|tracefs|bpf|fusectl|configfs|pstore|efivarfs)$/ { next }
+        { print "Unexpected mount in build container: " mp " (" fs ")" > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /proc/self/mountinfo || { echo "Build stopped: remove extra bind settings and rebuild" >&2; exit 1; }
 
     fail() { echo "Cleanup check failed: $*" >&2; exit 1; }
 
@@ -98,7 +125,15 @@ Conda 관련 경로·실행 파일 검사만으로 설치 이력이나 기반 �
     WORK=/__closha_build/work
     mkdir -m 0700 -- "$BUILD_ROOT"
     mkdir -m 0700 -- "$WORK"
-    mkdir -p -- "$WORK/src" "$WORK/apt-cache/archives/partial" "$WORK/apt-lists/partial"
+    mkdir -p -- "$WORK/src" "$WORK/tmp" "$WORK/home" \
+        "$WORK/apt-cache/archives/partial" "$WORK/apt-lists/partial"
+
+    # Redirect HOME, TMPDIR, and XDG directories before any other command.
+    export HOME="$WORK/home"
+    export TMPDIR="$WORK/tmp"
+    export XDG_CACHE_HOME="$WORK/home/.cache"
+    export XDG_CONFIG_HOME="$WORK/home/.config"
+    export XDG_DATA_HOME="$WORK/home/.local/share"
 
     # Redirect APT package cache and index lists into the workspace.
     apt-get -o Dir::Cache="$WORK/apt-cache" -o Dir::State::lists="$WORK/apt-lists" update
@@ -119,6 +154,59 @@ Conda 관련 경로·실행 파일 검사만으로 설치 이력이나 기반 �
     rmdir -- "$BUILD_ROOT"
 ```
 
+## 6.1 빌드 컨테이너의 호스트 연결 차단
+빌드 워커의 격리가 아직 없는 동안에는 DEF가 스스로 막을 수 있는 호스트 연결을 최대한 차단한다. 아래 사실은 운영 apptainer.conf(사용자 제공)와 Apptainer 1.4.5 소스(`internal/pkg/build/stage.go`, `util.go`, `pkg/util/apptainerconf/config.go`의 `ApplyBuildConfig`, `internal/pkg/runtime/engine/fakeroot/engine_linux.go`), 그리고 2026-09-30 로컬 검증 빌드로 확인했다. Apptainer 버전이나 관리자 설정이 바뀌면 다시 확인한다.
+
+확인된 빌드 동작 (Apptainer 1.4.5):
+- %post는 `apptainer --build-config exec --writable`로, %test는 `apptainer --build-config test`로 각각 따로 실행된다.
+- `--build-config`는 관리자 설정 파일 대신 내장 기본 설정을 쓰고, 그중 `bind path`, `mount home`, `config resolv_conf`, `mount devpts`만 끈다. 따라서 관리자 설정의 `bind path = /etc/localtime, /etc/hosts`와 `mount home = yes`는 빌드에 적용되지 않는다.
+- `mount tmp`, `mount proc`, `mount sys`, `mount dev`는 켜진 채 남는다. 호스트 /tmp와 /var/tmp가 %post와 %test 모두에 쓰기 가능하게 연결된다.
+- /etc/hosts와 /etc/resolv.conf에는 빌드 임시 디렉터리(`bundle-temp-*`)에 만든 복사본이 연결된다. 호스트 원본이 아니다.
+- 빌드를 실행한 셸의 `APPTAINER_BINDPATH`, `APPTAINER_MOUNT`는 %post와 %test에 그대로 전달된다. 명령에 --bind가 없어도 임의의 호스트 경로가 연결될 수 있다(root·fakeroot 모두 실측).
+- --fakeroot 빌드는 %post 전에 Apptainer의 fakeroot 엔진이 호스트 /tmp에 빈 `bind-mount-*` 디렉터리를 만들었다가 바로 지운다. TMPDIR로 옮겨지지 않으며 DEF로 막을 수 없다. Apptainer 자체 동작으로 기록한다.
+
+DEF 작성 규칙:
+- %post 첫 부분은 다음 순서를 지킨다. 어떤 설치·다운로드 명령보다 먼저 실행한다.
+  1. `set -eu`와 컨테이너 전용 `PATH` 고정. 상속된 PATH를 쓰지 않는다.
+  2. /tmp와 /var/tmp에 전용 tmpfs를 mount하고 `stat -f -c %T` 결과가 tmpfs인지 확인한다. mount에 실패하면 빌드를 중단한다. 이 mount는 컨테이너 전용 mount namespace 안에서만 유효하며 호스트에 영향을 주지 않는다.
+  3. `/proc/self/mountinfo`를 빌드 로그에 출력한다.
+  4. mount 허용 목록을 검사해, 목록 밖의 mount가 있으면 설치 전에 빌드를 중단한다. 허용 대상은 rootfs `/`, /tmp와 /var/tmp, `bundle-temp-*` 복사본인 /etc/hosts와 /etc/resolv.conf, 그리고 /dev·/proc·/sys 아래의 커널 가상 파일시스템이다(참고 템플릿의 fstype 목록). 새 환경에서 정상 mount가 거부되면 실측한 mount와 근거를 확인한 뒤 목록을 검토해 늘린다. 검사를 끄지 않는다.
+  5. 작업 경로 생성(6절) 직후 `HOME`, `TMPDIR`, `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME`을 작업 경로 아래로 옮긴다. 도구별 캐시 설정은 그 다음에 추가한다.
+- %test 첫 부분에서도 `id -u`가 0이면(root 또는 fakeroot 빌드) /tmp와 /var/tmp에 같은 tmpfs를 mount하고 확인한다. R은 시작할 때마다 /tmp에 세션 디렉터리를 만들고, Python은 임시 디렉터리를 고를 때 /tmp에 시험 파일을 만든다. 비특권 런타임 검사는 mount 권한이 없으므로 이 단계를 건너뛴다.
+- %post와 %test에서 /etc/hosts, /etc/localtime, /etc/resolv.conf, /proc, /sys, /dev 아래에 쓰지 않는다. 시간대 설정을 위해 /etc/localtime을 교체하는 레시피는 별도 검토 없이 쓰지 않는다.
+- %environment에는 home 경로가 없는 고정 `PATH`를 둔다. 런타임에는 사용자 home이 연결되므로 R은 `R_LIBS` 해제, `R_LIBS_USER`를 이미지 라이브러리로 지정, `R_PROFILE_USER=/dev/null`, `R_ENVIRON_USER=/dev/null`을 설정한다. Python은 `PYTHONPATH`와 `PYTHONHOME`을 해제하고 `PYTHONNOUSERSITE=1`을 설정한다.
+- 외부 분석 스크립트는 `command -v 도구` 형태로 이름만 호출한다. 도구 위치는 %environment의 PATH가 정하므로 스크립트에 이미지 내부 절대경로를 넣지 않는다. 스크립트가 ~, $HOME, /tmp에 결과를 쓰지 않는지는 런타임 검토 항목으로 따로 기록한다.
+
+참고 템플릿(%test 첫 부분):
+```sh
+    set -eu
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LC_ALL=C.UTF-8
+
+    # The build runs %test separately from %post, again with the host /tmp and
+    # /var/tmp bound. When running as root (a root or fakeroot build), cover
+    # both with private tmpfs mounts first; if mounting fails, the build stops.
+    # Unprivileged runtime checks cannot mount and skip this step.
+    if [ "$(id -u)" = 0 ]; then
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-tmp /tmp
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
+        [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
+        [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+    fi
+```
+
+로컬 검증 빌드 절차:
+- 운영 HPC가 아닌 일회용 개발 환경(예: GitHub Codespace)에서, 사용자가 명시적으로 승인한 경우에만 수행한다. 만든 SIF는 배포하지 않는다.
+- 운영과 같은 Apptainer 버전(현재 1.4.5, setuid 설치)과 운영 apptainer.conf와 같은 설정을 사용한다.
+- `env -i`로 환경을 비우고 `APPTAINER_TMPDIR`, `APPTAINER_CACHEDIR`, SIF 출력은 작업용 디렉터리에 둔다. root 빌드와 --fakeroot 빌드의 캐시 디렉터리는 소유자가 달라지므로 분리한다.
+- root 빌드와 --fakeroot 빌드를 모두 수행하고, 각 빌드에서 다음을 기록한다.
+  - 호스트 /tmp, /var/tmp: `inotifywait -m -r` 이벤트와 빌드 전후 파일 목록(경로·크기·수정 시각) 비교. 검증 도구 자신이 만드는 파일은 제외 대상으로 명시한다.
+  - root 빌드: `strace -f --seccomp-bpf`로 /proc와 /sys 경로를 쓰기 모드(O_WRONLY, O_RDWR, O_CREAT, O_TRUNC)로 연 프로세스를 기록하고, 호스트 `sysctl -a`(자동으로 변하는 카운터 제외)를 전후 비교한다. 추적 방식이 쓰기를 잡는지는 /proc에 일부러 쓰는 시험 DEF로 먼저 확인한다.
+  - 음성 시험: `APPTAINER_BINDPATH`에 호스트 디렉터리를 지정해 빌드하고, mount 검사가 설치 전에 빌드를 중단하는지 확인한다.
+- 이벤트가 나오면 시각·프로세스·소스 코드로 원인을 확인한다. DEF에서 나온 것이면 DEF를 고치고 다시 빌드한다. Apptainer 자체 동작이면 근거와 함께 DEF 주석에 기록한다.
+- 결과는 DEF의 [VALIDATION STATUS]에 날짜·환경·버전·빌드 방식·확인 항목·미수행 항목으로 적는다. 검증 후 명령 부분을 바꾸면 다시 검증한다(8절).
+- 이 절차는 DEF의 위험을 찾는 수단이다. 운영 빌드 머신의 격리(7절)를 대신하지 않으며, 로컬 검증 통과를 운영 빌드 통과로 표시하지 않는다.
+
 ## 7. 빌드 워커가 강제할 조건
 다음 조건은 프롬프트의 문장으로 대신하지 않는다.
 - 서비스와 분리된 빌드 실행 환경을 사용한다. 서비스 계정, SSH 키, 클라우드 자격 증명, Docker 소켓, 서비스 스토리지와 production 네트워크 접근을 주지 않는다.
@@ -126,6 +214,7 @@ Conda 관련 경로·실행 파일 검사만으로 설치 이력이나 기반 �
 - 빌드 명령은 서버 코드가 고정된 인자 목록으로 실행한다. 모델이 만든 명령을 호스트 shell에 넘기지 않는다.
 - 실제 Apptainer 버전의 옵션과 관리자 설정을 확인한다. 런타임 전용 옵션을 build 옵션으로 가정하지 않는다.
 - 명시적 bind뿐 아니라 환경 변수의 bind 설정, 관리자 설정, 기본 home/cwd/tmp 연결, 중첩 실행에서 물려받는 설정을 확인한다. 승인된 자산 이외의 호스트 데이터는 노출하지 않는다.
+- 빌드 명령은 `APPTAINER_*`, `SINGULARITY_*` 변수가 없는 환경(예: `env -i`와 필요한 변수만 지정)에서 실행한다. Apptainer 1.4.5는 `APPTAINER_BINDPATH`, `APPTAINER_MOUNT`를 %post까지 전달한다(6.1절). DEF의 mount 검사는 이를 발견하면 빌드를 멈출 뿐이다.
 - 서비스의 /BiO/K-BDS, /opt/apps, /script_public, /bio-hub, /bio-workflow 등의 트리를 빌드에 연결하지 않는다. 필요한 스크립트·자산은 별도 staging 영역의 복사본으로 제공한다.
 - APPTAINER_CACHEDIR, APPTAINER_TMPDIR, SIF 출력과 로그를 빌드 전용 저장소의 작업별 새 디렉터리에 둔다. 경로 생성·보존·정리는 신뢰된 빌드 서비스가 담당하며 DEF에 위임하지 않는다. 홈과 별도 도구 캐시도 일회용 계정/VM 범위로 제한한다.
 - CPU, 메모리, 작업 시간, 디스크와 동시 작업 수를 제한한다. 서비스 노드의 여유 자원에 의존하지 않는다.
@@ -233,6 +322,32 @@ build asset bind must be configured by the build service from an approved stagin
 source, preferably read-only. Define runtime data binds separately from build binds.
 Omitting --bind alone does not prove that no host paths are exposed.
 
+BUILD-TIME HOST MOUNTS (Apptainer 1.4.5, section 6.1)
+%post and %test run as separate container invocations with a built-in build
+config: admin bind paths and the home mount are dropped, but the host /tmp and
+/var/tmp stay bound and writable, /proc, /sys, and /dev are mounted, and
+/etc/hosts and /etc/resolv.conf are private copies. APPTAINER_BINDPATH and
+APPTAINER_MOUNT from the caller's environment still reach %post and %test.
+Start every %post, before any install or download command, with: set -eu and a
+fixed container PATH; private tmpfs mounts over /tmp and /var/tmp, verified with
+stat -f and stopping on failure; the mount table printed to the build log; the
+approved mount allowlist check, stopping before any install step on any other
+mount; then the workspace, followed at once by HOME, TMPDIR, and XDG directories
+set below it. Start every %test with the same tmpfs mounts when id -u is 0.
+Never write /etc/hosts, /etc/localtime, /etc/resolv.conf, /proc, /sys, or /dev.
+Do not disable the mount check; widen the allowlist only after reviewing the
+observed mount and its source.
+Pin PATH without home entries in %environment, and keep host user R and Python
+settings out of the runtime. Analysis scripts call tools by name through PATH.
+The --fakeroot engine itself creates and removes an empty /tmp/bind-mount-*
+directory on the host before %post; record it, do not claim a DEF prevents it.
+A local verification build, when the user explicitly approves one in a
+disposable non-production environment, uses the production Apptainer version and
+config, both root and --fakeroot modes, host /tmp and /var/tmp monitoring, a
+strace check for write-mode opens under /proc and /sys with a sysctl diff, and an
+APPTAINER_BINDPATH negative test. Record the results in the DEF validation status;
+they do not replace production build isolation or production build results.
+
 INSTALLATION POLICY
 Follow the selected Conda policy for both the base image and later installations.
 For the current no-Conda profile, do not install or inherit Conda, Miniconda,
@@ -263,4 +378,7 @@ Runtime analysis-script safety and service deployment remain separate checks.
 - Bind paths and mounts: https://apptainer.org/docs/user/latest/bind_paths_and_mounts.html
 - GNU mktemp: https://www.gnu.org/software/coreutils/manual/html_node/mktemp-invocation.html
 - Ubuntu APT directory configuration: https://manpages.ubuntu.com/manpages/noble/man5/apt.conf.5.html
+- Apptainer 1.4.5 build stages (%post/%test invocation, environment pass-through): https://github.com/apptainer/apptainer/blob/v1.4.5/internal/pkg/build/stage.go
+- Apptainer 1.4.5 build config (ApplyBuildConfig): https://github.com/apptainer/apptainer/blob/v1.4.5/pkg/util/apptainerconf/config.go
+- Apptainer 1.4.5 fakeroot engine (bind-mount-* temporary directory): https://github.com/apptainer/apptainer/blob/v1.4.5/internal/pkg/runtime/engine/fakeroot/engine_linux.go
 위 문서는 Apptainer와 관련 도구 동작의 근거다. 이 초안의 레시피 카탈로그, 역할 분리, 자동 통과 조건은 CLOSHA용 설계 제안이며 실제 운영 정책 확정·구현을 대신하지 않는다.
