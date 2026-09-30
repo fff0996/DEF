@@ -117,7 +117,27 @@ From: ubuntu:24.04
 #   Checked: DEF %post and %test shell syntax (sh -n) only.
 #   Not performed: an actual Apptainer SIF build, %test run, or analysis
 #   validation using the user's BAM files.
-#   The production HPC build command and bind configuration were not inspected.
+#   Production /etc/apptainer/apptainer.conf (supplied by the user):
+#   mount home/tmp/proc/sys/dev = yes, bind path = /etc/localtime and
+#   /etc/hosts, user bind control = yes, allow setuid = yes.
+#   Per Apptainer source (main branch, internal/pkg/build and
+#   apptainerconf.ApplyBuildConfig), %post runs with a default config that
+#   drops bind path, home, resolv.conf, and devpts, uses private copies of
+#   /etc/hosts and /etc/resolv.conf, but keeps mount tmp, proc, sys, and dev.
+#   APPTAINER_BINDPATH and APPTAINER_MOUNT from the caller's environment are
+#   still passed to %post.
+#   This DEF therefore mounts private tmpfs over /tmp and /var/tmp first
+#   (in %post, and in %test when it runs as root, as it does during builds),
+#   fixes PATH, and sets HOME, TMPDIR, and XDG directories to the workspace
+#   before any install step. It does not write /etc/hosts, /etc/localtime,
+#   /dev, or /sys. The mount table is printed to the build log.
+#   Production Apptainer version: 1.4.5 (supplied by the user). A local test
+#   build (2026-09-30, GitHub Codespace, Apptainer 1.4.5 with the same
+#   apptainer.conf, root build) succeeded, including %test. While building,
+#   inotify and before/after listings showed no build-caused change in the
+#   host /tmp or /var/tmp. Not performed: a build on the production build
+#   machine or a --fakeroot build.
+#   Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
 #   %test checks R 4.6.1, Bioconductor 3.23, package loading, the exports
 #   used by the scripts, a file-less PDF device, and conda/mamba on PATH.
 #   These checks do not audit the entire filesystem or historical installation
@@ -133,6 +153,13 @@ From: ubuntu:24.04
 # [CHANGELOG]
 #   2026-09-30 / 1.0: Created for ATAC_QC.1.0.R and ATAC_QC_plot.1.0.R
 #   without Conda, using the fixed build workspace /__closha_build/work.
+#   2026-09-30 / 1.0: Recorded the reported Apptainer admin bind settings
+#   (home, /etc/localtime, /etc/hosts, user bind control) and moved the HOME,
+#   TMPDIR, and XDG redirection to the start of %post, fixed PATH in %post,
+#   and mounted private tmpfs over /tmp and /var/tmp so that no build step
+#   can write to the host /tmp or /var/tmp. %test mounts the same private
+#   tmpfs when run as root, because the build runs %test separately with
+#   the host /tmp bound.
 # =============================================================================
 
 %labels
@@ -156,8 +183,22 @@ From: ubuntu:24.04
 
 %post
     set -eu
+    # Fixed container PATH; ignore any inherited PATH that may point into a
+    # host-bound home directory.
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     export DEBIAN_FRONTEND=noninteractive
     export LC_ALL=C.UTF-8
+
+    # Apptainer builds keep the admin "mount tmp = yes" setting, so %post sees
+    # the host /tmp and /var/tmp. Cover both with private tmpfs mounts in this
+    # container's mount namespace before any other command runs; the host
+    # directories are then unreachable. If mounting fails, the build stops.
+    mount -t tmpfs -o mode=1777,nosuid,nodev closha-tmp /tmp
+    mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
+    [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
+    [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+    # Record the mount table in the build log for review.
+    cat /proc/self/mountinfo
 
     fail() { echo "Build check failed: $*" >&2; exit 1; }
 
@@ -171,6 +212,15 @@ From: ubuntu:24.04
     mkdir -p -- "$WORK/apt-cache/archives/partial" "$WORK/apt-lists/partial" \
         "$WORK/keys" "$WORK/tmp" "$WORK/home" "$WORK/r-cache" "$WORK/r-data" \
         "$WORK/r-config" "$WORK/biocmake-cache"
+
+    # The admin config may bind the host home, and /tmp may be host-backed.
+    # Redirect HOME, TMPDIR, and XDG directories into the workspace before any
+    # other command runs, so no tool reads or writes host user files or /tmp.
+    export HOME="$WORK/home"
+    export TMPDIR="$WORK/tmp"
+    export XDG_CACHE_HOME="$WORK/home/.cache"
+    export XDG_CONFIG_HOME="$WORK/home/.config"
+    export XDG_DATA_HOME="$WORK/home/.local/share"
 
     # APT package cache and index lists are redirected into the workspace.
     apt_ws() {
@@ -208,10 +258,8 @@ From: ubuntu:24.04
 
     R --version | head -n 1 | grep -F 'R version 4.6.1'
 
-    # R temporary files, user caches, and HOME stay in the workspace.
+    # R user caches stay in the workspace (HOME and TMPDIR are set above).
     # biocmake must use the APT cmake (>= 3.24) and not download its own.
-    export HOME="$WORK/home"
-    export TMPDIR="$WORK/tmp"
     export R_USER_CACHE_DIR="$WORK/r-cache"
     export R_USER_DATA_DIR="$WORK/r-data"
     export R_USER_CONFIG_DIR="$WORK/r-config"
@@ -270,6 +318,18 @@ From: ubuntu:24.04
     set -eu
     export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     export LC_ALL=C.UTF-8
+
+    # The build runs %test separately from %post, again with the host /tmp and
+    # /var/tmp bound (mount tmp = yes), and R and Python create temporary
+    # files there. When running as root (a root or fakeroot build), cover both
+    # with private tmpfs mounts first; if mounting fails, the build stops.
+    # Unprivileged runtime checks cannot mount and skip this step.
+    if [ "$(id -u)" = 0 ]; then
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-tmp /tmp
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
+        [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
+        [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+    fi
 
     for cmd in R Rscript; do
         command -v "$cmd" >/dev/null 2>&1
