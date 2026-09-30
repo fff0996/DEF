@@ -130,13 +130,21 @@ From: ubuntu:24.04
 #   (in %post, and in %test when it runs as root, as it does during builds),
 #   fixes PATH, and sets HOME, TMPDIR, and XDG directories to the workspace
 #   before any install step. It does not write /etc/hosts, /etc/localtime,
-#   /dev, or /sys. The mount table is printed to the build log.
-#   Production Apptainer version: 1.4.5 (supplied by the user). A local test
-#   build (2026-09-30, GitHub Codespace, Apptainer 1.4.5 with the same
-#   apptainer.conf, root build) succeeded, including %test. While building,
-#   inotify and before/after listings showed no build-caused change in the
-#   host /tmp or /var/tmp. Not performed: a build on the production build
-#   machine or a --fakeroot build.
+#   /dev, or /sys. The mount table is printed to the build log, and %post
+#   stops before installing anything if any mount other than the build
+#   defaults is present (for example a host path from APPTAINER_BINDPATH).
+#   Production Apptainer version: 1.4.5 (supplied by the user). Local test
+#   builds (2026-09-30, GitHub Codespace, Apptainer 1.4.5 with the same
+#   apptainer.conf) succeeded as root and with --fakeroot, including %test.
+#   Root builds were traced with strace: no process opened any /proc or
+#   /sys path for writing, and host sysctl values did not change. inotify
+#   and before/after listings showed no DEF-caused change in the host /tmp
+#   or /var/tmp. With --fakeroot, Apptainer itself (fakeroot engine, before
+#   %post) creates and immediately removes an empty /tmp/bind-mount-*
+#   directory on the host; TMPDIR does not move it, and a DEF cannot
+#   prevent it. With APPTAINER_BINDPATH set, the mount check stopped %post
+#   before any install step, in both modes.
+#   Not performed: a build on the production build machine.
 #   Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
 #   %test checks R 4.6.1, Bioconductor 3.23, package loading, the exports
 #   used by the scripts, a file-less PDF device, and conda/mamba on PATH.
@@ -160,6 +168,9 @@ From: ubuntu:24.04
 #   can write to the host /tmp or /var/tmp. %test mounts the same private
 #   tmpfs when run as root, because the build runs %test separately with
 #   the host /tmp bound.
+#   2026-09-30 / 1.0: Added a %post mount check that stops the build before
+#   installing anything if an extra host bind (for example from
+#   APPTAINER_BINDPATH) is present; recorded root/fakeroot test results.
 # =============================================================================
 
 %labels
@@ -199,6 +210,25 @@ From: ubuntu:24.04
     [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
     # Record the mount table in the build log for review.
     cat /proc/self/mountinfo
+
+    # Stop before any install step if the build container has a mount other
+    # than those Apptainer creates for builds: the rootfs, /tmp and /var/tmp
+    # (now covered above), private /etc/hosts and /etc/resolv.conf copies, and
+    # kernel pseudo-filesystems under /dev, /proc, and /sys. This rejects host
+    # paths added through APPTAINER_BINDPATH or APPTAINER_MOUNT, which the
+    # build passes into %post from the caller's environment.
+    awk '
+        { split($0, sep, " - "); split(sep[2], f, " "); mp = $5; fs = f[1]; src = $4 }
+        mp == "/" || mp == "/tmp" || mp == "/var/tmp" { next }
+        (mp == "/etc/hosts" || mp == "/etc/resolv.conf") &&
+            src ~ /\/bundle-temp-[0-9]+\/(hosts|resolv\.conf)$/ { next }
+        (mp == "/dev" || mp ~ /^\/dev\//) && fs ~ /^(tmpfs|devpts|mqueue)$/ { next }
+        (mp == "/proc" || mp ~ /^\/proc\//) && fs ~ /^(proc|binfmt_misc|autofs)$/ { next }
+        (mp == "/sys" || mp ~ /^\/sys\//) &&
+            fs ~ /^(sysfs|cgroup|cgroup2|securityfs|selinuxfs|debugfs|tracefs|bpf|fusectl|configfs|pstore|efivarfs)$/ { next }
+        { print "Unexpected mount in build container: " mp " (" fs ")" > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /proc/self/mountinfo || { echo "Build stopped: remove extra bind settings and rebuild" >&2; exit 1; }
 
     fail() { echo "Build check failed: $*" >&2; exit 1; }
 
