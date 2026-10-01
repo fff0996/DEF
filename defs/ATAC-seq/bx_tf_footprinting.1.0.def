@@ -2,11 +2,10 @@ Bootstrap: docker
 From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f
 
 # =============================================================================
-# bx_atac_qc.1.0
+# bx_tf_footprinting.1.0
 #
-#   Target scripts:
-#     - ATAC_QC.1.0.R
-#     - ATAC_QC_plot.1.0.R
+#   Target script:
+#     - tf_footprinting.1.0.sh
 #
 #   [MANDATORY BUILD RULES]
 #   1) Base OS must be Rocky Linux 9. Rocky 8 is not allowed: it causes
@@ -32,45 +31,38 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   change. Do not bind any host path over /opt/bio at runtime.
 #
 # [PURPOSE]
-#   Both scripts share one R/Bioconductor runtime, so one image serves both.
-#   ATAC_QC.1.0.R: fragment size distribution, ATACseqQC::bamQC, Tn5 shift
-#   (shiftGAlignmentsList), and nucleosome-position splitting
-#   (splitGAlignmentsByCut) of pre-shift, organellar-filtered BAM files.
-#   ATAC_QC_plot.1.0.R: TSS enrichment heatmaps and profiles from the split
-#   BAM files and split objects written by ATAC_QC.1.0.R.
-#   The analysis scripts are supplied through CLOSHA's external bind paths,
-#   rather than embedded in the image. This DEF provides their runtime.
+#   TOBIAS transcription-factor footprinting with sample metadata: resolves
+#   BAM files by SampleID, merges them per condition (samtools merge/sort/
+#   index), builds a merged peak set from MACS outputs with bedtools merge
+#   when peak_file is not given, runs TOBIAS ATACorrect and ScoreBigwig per
+#   condition, and runs comparative TOBIAS BINDetect.
+#   The analysis script is supplied through CLOSHA's external bind paths,
+#   rather than embedded in the image. This DEF provides its runtime.
 #
 # [INPUT AND OUTPUT STRUCTURE]
-#   ATAC_QC.1.0.R
-#     Input: input_dir with pre-shift BAM files (preferably
-#     *_organellar_removed.bam), sample_data CSV (SampleID, Condition,
-#     Replicate), txs_bed (BED, 3+ columns), genome_fasta, optional seqlev.
-#     Missing BAI files are created beside the input BAM files, and a missing
-#     FASTA index (.fai) is created beside genome_fasta, so those locations
-#     must be writable unless the indexes already exist.
-#     Output: 01_fragment_size, 02_bam_qc, 03_shifted_bam, 04_split_bam,
-#     05_metadata (resolved sample sheet, atac_qc_manifest.tsv), 06_rds,
-#     and logs/.
-#   ATAC_QC_plot.1.0.R
-#     Input: an ATAC_QC output directory (05_metadata/atac_qc_manifest.tsv,
-#     or legacy 04_metadata) and tss_bed; optional upstream, downstream,
-#     ntile, tss_filter, and harmonize_mode. BAM and RDS paths are read from
-#     the manifest, so the runtime bind must expose the same paths.
-#     Output: 01_tss_signal (PDF/TSV), 02_signal_matrices (RDS),
-#     03_summary (TSV), and logs/.
-#   Both scripts first remove existing output_dir contents except logs/.
+#   Input: input_dir with BAM files whose names contain the SampleID (if
+#   input_dir contains 03_shifted_bam, only *.shifted.bam there is used),
+#   metadata (TSV/CSV with SampleID and Condition columns, at least two
+#   conditions), genome_fasta, motif_db, and macs_dir or peak_file;
+#   optional sample_col, condition_col, cores.
+#   A missing FASTA index (.fai) is created beside genome_fasta and missing
+#   BAI files beside the input BAM files, so those locations must be
+#   writable unless the indexes already exist.
+#   Output: 00_metadata, 01_peak_merge, 02_merged_bam_by_condition,
+#   03_tobias_tracks (bigWig), 04_BINDetect, summary/, and logs/.
+#   The script first removes existing output_dir contents except logs/.
 #   output_dir must not be an input directory or any parent of an input.
 #
 # [REQUIRED RUNTIME DEPENDENCIES]
-#   R 4.5.3 (conda-forge r-base) and Bioconductor 3.22 packages (bioconda):
-#     ATACseqQC 1.34.0, ChIPpeakAnno 3.44.0, Rsamtools 2.26.0,
-#     GenomicAlignments 1.46.0, GenomicRanges 1.62.1, GenomeInfoDb 1.46.2,
-#     IRanges 2.44.0. Base R otherwise (utils, stats, graphics, pdf device).
-#   The supplied scripts have no command-line tool or Python dependencies,
-#   and no annotation data package is downloaded at build or run time.
-#   Every pkg::function call and every unqualified function used after the
-#   script's library() calls is checked in %test after the packages load.
+#   TOBIAS 0.17.5 (bioconda): ATACorrect, ScoreBigwig, BINDetect, with
+#   Python 3.13 and its conda-forge/bioconda dependencies (moods 1.9.4.2,
+#   pysam 0.24.1, pyBigWig 0.3.26, pybedtools 0.12.1, numpy 2.5.3,
+#   pandas 3.0.6, matplotlib, scikit-learn, ...).
+#   SAMtools 1.24 / HTSlib 1.24 (bioconda): faidx, index, view, merge, sort.
+#   bedtools 2.31.1 (bioconda): merge, and the binary used by pybedtools.
+#   Bash, coreutils, findutils, grep, sed, gawk (Rocky Linux 9 base image):
+#   mapfile, arrays, key=value parsing, file discovery, and tables.
+#   The supplied script has no R package dependencies.
 #   Runtime analysis needs no network access.
 #
 # [BASE IMAGE AND INSTALLATION RULES FOR THIS DEF]
@@ -81,8 +73,8 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   Packages: conda-forge and bioconda only, with --override-channels and
 #   strict channel priority. Top-level packages are pinned to exact versions;
 #   the full resolved set with SHA256 values is recorded in
-#   /opt/bio/share/bx-atac-qc/conda-explicit.txt and checked so that every URL
-#   is under conda.anaconda.org/conda-forge or /bioconda.
+#   /opt/bio/share/bx-tf-footprinting/conda-explicit.txt and checked so that
+#   every URL is under conda.anaconda.org/conda-forge or /bioconda.
 #   Building requires internet access to github.com and conda.anaconda.org.
 #
 # [HPC BUILD REQUIREMENTS]
@@ -99,9 +91,8 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   (CONDARC), temporary files (TMPDIR), and HOME for the install steps are
 #   all placed below it, so conda itself does not remain in the image; only
 #   the /opt/bio environment does.
-#   Only the Rocky 9 BaseOS which package is installed with DNF
-#   (R's utils package needs /usr/bin/which), with the DNF cache
-#   (cachedir) in the workspace and keepcache disabled.
+#   No DNF installation is needed: the Rocky Linux 9
+#   base image already provides every command the DEF and the script use.
 #   Cleanup removes only that exact workspace, after separate checks of the
 #   path constant, symlinks, canonical path, and root-filesystem device, and
 #   then removes the empty /__closha_build with rmdir. Any failed check stops
@@ -118,26 +109,24 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   comments in this DEF cannot enforce the host's bind configuration.
 #
 # [RUNTIME ENVIRONMENT ISOLATION]
-#   Apptainer binds the user's home directory by default. %environment puts
-#   /opt/bio/bin first on a PATH without home entries, points R_LIBS_USER at
-#   the image library, sets R_PROFILE_USER and R_ENVIRON_USER to /dev/null,
-#   and unsets R_LIBS, so that a host ~/R library, ~/.Rprofile, or
-#   ~/.Renviron is not loaded into this runtime.
+#   %environment puts /opt/bio/bin first on a PATH without home entries,
+#   unsets PYTHONPATH and PYTHONHOME, sets PYTHONNOUSERSITE=1 so host
+#   ~/.local packages from the default home bind are not imported, and sets
+#   MPLBACKEND=Agg so that a host matplotlibrc cannot select a GUI backend.
+#   Matplotlib still keeps its font cache under the caller's home at runtime.
 #
 # [CHANGES FROM THE PREVIOUS SIF]
-#   The committed 1.0 draft of this DEF (Ubuntu 24.04, CRAN APT R 4.6.1,
-#   Bioconductor 3.23 built from source, ATACseqQC 1.36.x) is replaced by
-#   this Rocky Linux 9 / Miniforge version after conda use was approved
-#   (IT review, 2026-10-01). Bioconda currently provides R 4.5.3 and
-#   Bioconductor 3.22 (ATACseqQC 1.34.0, ChIPpeakAnno 3.44.0); every function
-#   the scripts call is still checked in %test.
-#   No SIF was built from the draft; nothing existing is modified.
+#   No previous SIF or DEF for this script was supplied. An earlier draft
+#   of this DEF (Ubuntu 24.04, hash-locked PyPI venv, SAMtools and
+#   MOODS-python from source) was replaced before release by this Rocky
+#   Linux 9 / Miniforge version.
+#   This is a new image; nothing existing is modified or overwritten.
 #
 # [VALIDATION STATUS AND REPRODUCIBILITY]
-#   Checked: supplied-script dependencies (library/requireNamespace/::), a
-#   dry-run solve of the package set from conda-forge and bioconda only
-#   (260 packages), the Miniforge installer SHA256, the Rocky 9.8 base
-#   image contents, and DEF %post and %test shell syntax (sh -n).
+#   Checked: supplied-script dependencies, a dry-run solve of the package
+#   set from conda-forge and bioconda only (263 packages), the Miniforge
+#   installer SHA256, the Rocky 9.8 base image contents, and DEF %post and
+#   %test shell syntax (sh -n).
 #   Production /etc/apptainer/apptainer.conf (supplied by the user):
 #   mount home/tmp/proc/sys/dev = yes, bind path = /etc/localtime and
 #   /etc/hosts, user bind control = yes, allow setuid = yes; Apptainer 1.4.5.
@@ -162,42 +151,46 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   change in the host /tmp or /var/tmp. With --fakeroot, Apptainer itself
 #   (fakeroot engine, before %post) creates and immediately removes an empty
 #   /tmp/bind-mount-* directory on the host; a DEF cannot prevent it. Built SIF
-#   size: 766.9 MiB. The APPTAINER_BINDPATH negative test was run on 2026-09-30
+#   size: 518.6 MiB. The APPTAINER_BINDPATH negative test was run on 2026-09-30
 #   with the same isolation blocks (the build stopped before any install step)
 #   and was not repeated for this DEF. Not performed: a build on the production
 #   build machine, or analysis of user data.
-#   %test checks R 4.5.3, package versions and loading, the functions used by
-#   the script, a file-less PDF device, and the recorded package channels.
+#   %test checks command locations, TOBIAS/MOODS/SAMtools/bedtools versions,
+#   Python imports, the TOBIAS subcommands used by the script, Bash
+#   behavior, and the recorded package channels.
+#   Importing matplotlib in an unprivileged runtime %test may create its font
+#   cache under the caller's home.
 #   These checks do not audit the entire filesystem or historical installation
 #   activity.
 #   Unresolved: the Miniforge and conda package recipe is not yet a
 #   registered approved recipe.
 #
 # [CHANGELOG]
-#   2026-10-01 / 1.0: Created for ATAC_QC.1.0.R and ATAC_QC_plot.1.0.R on Rocky
-#   Linux 9 with Miniforge (conda-forge/bioconda only), following policy 1.4.
+#   2026-10-01 / 1.0: Created for tf_footprinting.1.0.sh on Rocky Linux 9
+#   with Miniforge (conda-forge/bioconda only), following policy 1.4.
 # =============================================================================
 
 %labels
     Maintainer       KOBIC Bio-Express
     Pipeline         ATAC-seq
-    Component        bx_atac_qc
+    Component        bx_tf_footprinting
     Version          1.0
     BaseOS           RockyLinux9
     CondaInstaller   Miniforge3-26.7.2-0
     AnacondaRepoFree true
-    RVersion         4.5.3
-    Description      "ATACseqQC environment for the CLOSHA ATAC-seq ATAC_QC and ATAC_QC_plot scripts"
+    TobiasVersion    0.17.5
+    SamtoolsVersion  1.24
+    BedtoolsVersion  2.31.1
+    Description      "TOBIAS, SAMtools, and bedtools environment for the CLOSHA ATAC-seq tf_footprinting script"
 
 %environment
     export PATH=/opt/bio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     export LANG=C.UTF-8
     export LC_ALL=C.UTF-8
-    # Keep host-side user R libraries and profiles out of this runtime.
-    unset R_LIBS
-    export R_LIBS_USER=/opt/bio/lib/R/library
-    export R_PROFILE_USER=/dev/null
-    export R_ENVIRON_USER=/dev/null
+    # Keep host-side Python paths, user site-packages, and GUI backends out.
+    unset PYTHONPATH PYTHONHOME
+    export PYTHONNOUSERSITE=1
+    export MPLBACKEND=Agg
 
 %post
     set -eu
@@ -260,13 +253,6 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     [ "$(uname -m)" = x86_64 ] || fail "unsupported architecture"
     grep -q '^Rocky Linux release 9\.' /etc/rocky-release || fail "base OS is not Rocky Linux 9"
 
-    # R's utils package runs /usr/bin/which when it loads, and the Rocky 9 base
-    # image has no which. Install only that package from Rocky 9 BaseOS, with
-    # the DNF cache in the workspace.
-    dnf --assumeyes --setopt=cachedir="$WORK/dnf-cache" --setopt=keepcache=0 \
-        --setopt=install_weak_deps=False install which
-    [ -x /usr/bin/which ] || fail "which was not installed"
-
     # Miniforge from the conda-forge project's GitHub release (never Miniconda
     # or the Anaconda Distribution). SHA256 matches the published .sha256 file.
     # It is installed into the workspace and removed with it after use.
@@ -300,28 +286,28 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     "$CONDA" create --yes --prefix /opt/bio \
         --override-channels --channel conda-forge --channel bioconda \
         --strict-channel-priority \
-        r-base=4.5.3 \
-        bioconductor-atacseqqc=1.34.0 \
-        bioconductor-chippeakanno=3.44.0 \
-        bioconductor-rsamtools=2.26.0 \
-        bioconductor-genomicalignments=1.46.0 \
-        bioconductor-genomicranges=1.62.1 \
-        bioconductor-genomeinfodb=1.46.2 \
-        bioconductor-iranges=2.44.0
+        tobias=0.17.5 \
+        moods=1.9.4.2 \
+        samtools=1.24 \
+        htslib=1.24 \
+        bedtools=2.31.1 \
+        python=3.13
 
     # Record the exact package set with SHA256 values, then check that every
     # package came from conda-forge or bioconda.
-    mkdir -p /opt/bio/share/bx-atac-qc
-    "$CONDA" list --prefix /opt/bio --explicit --sha256 > /opt/bio/share/bx-atac-qc/conda-explicit.txt
+    mkdir -p /opt/bio/share/bx-tf-footprinting
+    "$CONDA" list --prefix /opt/bio --explicit --sha256 > /opt/bio/share/bx-tf-footprinting/conda-explicit.txt
     awk '
         /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
         END { exit bad }
-    ' /opt/bio/share/bx-atac-qc/conda-explicit.txt || fail "package from a disallowed channel"
-    "$CONDA" list --prefix /opt/bio > /opt/bio/share/bx-atac-qc/conda-packages.txt
-    cp /etc/rocky-release /opt/bio/share/bx-atac-qc/base-os-release.txt
-    rpm -qa --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' | sort > /opt/bio/share/bx-atac-qc/rocky-packages.tsv
-    /opt/bio/bin/R --version | head -n 1 > /opt/bio/share/bx-atac-qc/r-version.txt
-    grep -F 'R version 4.5.3' /opt/bio/share/bx-atac-qc/r-version.txt
+    ' /opt/bio/share/bx-tf-footprinting/conda-explicit.txt || fail "package from a disallowed channel"
+    "$CONDA" list --prefix /opt/bio > /opt/bio/share/bx-tf-footprinting/conda-packages.txt
+    cp /etc/rocky-release /opt/bio/share/bx-tf-footprinting/base-os-release.txt
+    rpm -qa --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' | sort > /opt/bio/share/bx-tf-footprinting/rocky-packages.tsv
+    /opt/bio/bin/samtools --version > /opt/bio/share/bx-tf-footprinting/samtools-version.txt
+    grep -Fx 'samtools 1.24' /opt/bio/share/bx-tf-footprinting/samtools-version.txt
+    /opt/bio/bin/bedtools --version > /opt/bio/share/bx-tf-footprinting/bedtools-version.txt
+    grep -Fx 'bedtools v2.31.1' /opt/bio/share/bx-tf-footprinting/bedtools-version.txt
 
     # Remove only the exact workspace created above; stop on any doubt.
     # Each check is a separate command so that set -e cannot skip a failure.
@@ -336,11 +322,13 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     rmdir -- "$BUILD_ROOT"
 
 %runscript
-    exec /opt/bio/bin/Rscript "$@"
+    exec /opt/bio/bin/TOBIAS "$@"
 
 %test
     set -eu
     export PATH=/opt/bio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export PYTHONNOUSERSITE=1
+    export MPLBACKEND=Agg
     export LC_ALL=C.UTF-8
 
     # The build runs %test separately from %post, again with the host /tmp and
@@ -355,68 +343,39 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
         [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
     fi
 
-    for cmd in R Rscript; do
+    for cmd in TOBIAS samtools bedtools python; do
         [ "$(command -v "$cmd")" = "/opt/bio/bin/$cmd" ]
     done
-    [ -x /usr/bin/which ]
+    for cmd in bash awk sed sort cut head wc find du basename dirname tr grep \
+        xargs cp mv rm mkdir date tee cat; do
+        command -v "$cmd" >/dev/null 2>&1
+    done
 
-    R --version | head -n 1 | grep -F 'R version 4.5.3'
-
-    # Attach packages in the script order, then check every pkg::function
-    # and every unqualified function the script uses. pdf(NULL) exercises the PDF device
-    # without writing a file.
-    Rscript --no-init-file -e '
-        pkgs <- c("ATACseqQC", "Rsamtools", "GenomicAlignments", "GenomicRanges",
-                  "GenomeInfoDb", "IRanges", "ChIPpeakAnno")
-        for (p in pkgs) suppressPackageStartupMessages(library(p, character.only = TRUE))
-        if (!startsWith(as.character(packageVersion("ATACseqQC")), "1.34.")) {
-            stop("unexpected ATACseqQC version: ", packageVersion("ATACseqQC"))
-        }
-        if (!startsWith(as.character(packageVersion("ChIPpeakAnno")), "3.44.")) {
-            stop("unexpected ChIPpeakAnno version: ", packageVersion("ChIPpeakAnno"))
-        }
-        if (!startsWith(as.character(packageVersion("Rsamtools")), "2.26.")) {
-            stop("unexpected Rsamtools version: ", packageVersion("Rsamtools"))
-        }
-        used <- c(
-            "ATACseqQC::bamQC", "ATACseqQC::enrichedFragments",
-            "ATACseqQC::fragSizeDist", "ATACseqQC::readBamFile",
-            "ATACseqQC::shiftGAlignmentsList", "ATACseqQC::splitGAlignmentsByCut",
-            "ChIPpeakAnno::estLibSize", "ChIPpeakAnno::featureAlignedDistribution",
-            "ChIPpeakAnno::featureAlignedHeatmap", "ChIPpeakAnno::reCenterPeaks",
-            "GenomeInfoDb::keepSeqlevels", "GenomeInfoDb::seqnames",
-            "GenomicRanges::GRanges", "GenomicRanges::mcols",
-            "GenomicRanges::seqnames", "IRanges::IRanges",
-            "Rsamtools::BamFile", "Rsamtools::FaFile",
-            "Rsamtools::ScanBamParam", "Rsamtools::close.FaFile",
-            "Rsamtools::idxstatsBam", "Rsamtools::indexBam",
-            "Rsamtools::indexFa", "Rsamtools::open.FaFile",
-            "Rsamtools::scanBam", "Rsamtools::scanFaIndex"
-        )
-        for (u in used) {
-            x <- strsplit(u, "::", fixed = TRUE)[[1]]
-            invisible(getExportedValue(x[1], x[2]))
-        }
-        unqualified <- c(
-            "GRanges", "IRanges", "keepSeqlevels", "renameSeqlevels",
-            "seqlevels", "seqnames"
-        )
-        missing <- unqualified[!vapply(unqualified, exists, logical(1))]
-        if (length(missing) > 0) {
-            stop("functions not found on the search path: ", paste(missing, collapse = ", "))
-        }
-        pdf(NULL)
-        plot(1)
-        invisible(dev.off())
-        cat("ATACseqQC", as.character(packageVersion("ATACseqQC")), "\n")
-    '
+    # Check installed versions and the TOBIAS subcommands without creating
+    # data files.
+    samtools_info=$(samtools --version)
+    printf '%s\n' "$samtools_info" | grep -Fx 'samtools 1.24'
+    printf '%s\n' "$samtools_info" | grep -Fx 'Using htslib 1.24'
+    bedtools --version | grep -Fx 'bedtools v2.31.1'
+    python -c '
+import importlib.metadata as md
+assert md.version("tobias") == "0.17.5", md.version("tobias")
+import tobias, MOODS.scan, MOODS.tools, MOODS.parsers
+import numpy, scipy, pandas, matplotlib, sklearn, pysam, pyBigWig, pybedtools
+assert matplotlib.get_backend().lower() == "agg", matplotlib.get_backend()
+assert pyBigWig.numpy == 1, "pyBigWig was built without numpy support"
+'
+    for sub in ATACorrect ScoreBigwig BINDetect; do
+        TOBIAS "$sub" --help >/dev/null
+    done
+    bash -c 'mapfile -t a < <(printf "ok\n"); test "${a[0]}" = ok'
 
     # Every recorded package URL must come from conda-forge or bioconda.
     awk '
         /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
         END { exit bad }
-    ' /opt/bio/share/bx-atac-qc/conda-explicit.txt
-    [ "$(grep -c -E '^https://' /opt/bio/share/bx-atac-qc/conda-explicit.txt)" -gt 0 ]
+    ' /opt/bio/share/bx-tf-footprinting/conda-explicit.txt
+    [ "$(grep -c -E '^https://' /opt/bio/share/bx-tf-footprinting/conda-explicit.txt)" -gt 0 ]
 
     # The build workspace must not remain in the image.
     if [ -e /__closha_build ]; then
@@ -424,18 +383,17 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
         exit 1
     fi
 
-    echo 'R 4.5.3 / Bioconductor 3.22 (bioconda): bx_atac_qc runtime dependency checks passed.'
+    echo 'TOBIAS 0.17.5 / SAMtools 1.24 / bedtools 2.31.1: runtime dependency checks passed.'
 
 %help
-    CLOSHA ATAC QC environment: R 4.5.3 + Bioconductor 3.22 (ATACseqQC,
-    ChIPpeakAnno, Rsamtools, GenomicAlignments, GenomicRanges, GenomeInfoDb,
-    IRanges).
+    CLOSHA TF footprinting environment: TOBIAS 0.17.5 + SAMtools/HTSlib 1.24 +
+    bedtools 2.31.1 (bioconda).
     Base OS: Rocky Linux 9. Tools are installed in /opt/bio from conda-forge and
     bioconda with Miniforge; no Anaconda Inc. repository or Miniconda is used.
 
     Build as an unprivileged user on a designated, internet-connected x86_64
     build machine. Do not bind production paths:
-        apptainer build --fakeroot bx_atac_qc.1.0.sif bx_atac_qc.1.0.def
+        apptainer build --fakeroot bx_tf_footprinting.1.0.sif bx_tf_footprinting.1.0.def
 
     Store the SIF, Apptainer cache, and build temporary files in an approved host
     build workspace. APPTAINER_CACHEDIR and APPTAINER_TMPDIR select the cache and
@@ -443,19 +401,19 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
 
     Check the image:
-        apptainer test --cleanenv bx_atac_qc.1.0.sif
+        apptainer test --cleanenv bx_tf_footprinting.1.0.sif
 
-    ATAC_QC.1.0.R is supplied externally through approved runtime binds.
+    tf_footprinting.1.0.sh is supplied externally through approved runtime binds.
     This DEF does not run it during image construction:
-        apptainer exec bx_atac_qc.1.0.sif Rscript ATAC_QC.1.0.R key=value ...
+        apptainer exec bx_tf_footprinting.1.0.sif bash tf_footprinting.1.0.sh key=value ...
 
-    ATAC_QC_plot.1.0.R runs the same way. ATAC_QC.1.0.R creates missing BAI
-    files beside input BAM files and a missing .fai beside genome_fasta, so
-    those locations must be writable unless the indexes already exist.
-    ATAC_QC_plot.1.0.R reads BAM/RDS paths recorded in the ATAC_QC manifest,
-    so the same paths must be bound at runtime.
-    Both scripts remove previous output except logs/, so output_dir must be
-    separate from the inputs and their parents. That existing deletion behavior
-    must be reviewed separately before service use.
+    The script creates a missing .fai beside genome_fasta and missing BAI files
+    beside the input BAM files, so those locations must be writable unless the
+    indexes already exist. The output directory must be separate from the
+    inputs and their parents, because the script removes previous output
+    except logs/. That existing deletion behavior must be reviewed separately
+    before service use.
+    Matplotlib (used by TOBIAS) keeps its font cache under the caller's home.
+    Save the external Bash script with LF line endings.
     Writable runtime binds can expose host data to the analysis script.
     Runtime analysis requires no network access.

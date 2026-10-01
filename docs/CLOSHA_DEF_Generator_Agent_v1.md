@@ -1,7 +1,8 @@
-CLOSHA DEF 생성 에이전트 — 설계 및 지침 1.3
+CLOSHA DEF 생성 에이전트 — 설계 및 지침 1.4
 
 작성일: 2026-09-29
 
+개정 1.4 (2026-10-01): Conda 정책을 Anaconda Inc. 저장소 금지로 정정하고, Miniforge + conda-forge/bioconda 레시피 규칙, conda DEF 머리 주석 블록, Rocky 9 R의 which 설치, 설치 기록 파일·라벨 규칙을 추가(ATAC-seq conda DEF 4종 로컬 root 빌드 확인 반영). 전산팀 검토 결과(2026-10-01)에 따른 conda 사용 조건(라이선스 확인, 재빌드 재현성, 이미지 크기)과 제출물을 추가.
 개정 1.3 (2026-09-30): 운영 apptainer.conf와 Apptainer 1.4.5 빌드 동작 확인 결과를 반영해 빌드 컨테이너의 호스트 연결 차단 규칙(6.1절), %post·%test 시작 순서, 로컬 검증 빌드 절차를 추가.
 개정 1.2 (2026-09-30): 빌드 작업 경로를 프로필 고정 경로와 mkdir 신규 생성 확인 방식으로 단순화하고, APT/DNF 캐시를 작업 경로로 모아 단일 경로만 정리하는 규칙과 참고 템플릿 추가.
 개정 1.1: 빌드별 고유 작업 디렉터리, 도구별 캐시 지정, 정리 범위 검증 규칙 추가. 기존 파일명은 참조 경로 유지를 위해 보존한다.
@@ -30,7 +31,7 @@ AI 분석기	스크립트의 입출력·의존성·위험한 동작을 읽고 �
 정책 항목	내용
 기반 이미지	승인된 정확한 OCI 참조·digest·아키텍처와 검토 이력
 OS 프로필	Ubuntu, Rocky 등의 승인 여부와 패키지 관리자. AI가 임의로 교체하지 않음
-Conda 정책	현재 작업의 기본안은 Conda/Miniconda/Miniforge/Mamba/Micromamba 미사용. 기반 이미지의 포함 여부도 검토
+Conda 정책	금지 대상은 conda 자체가 아니라 Anaconda Inc. 저장소다(라이선스). repo.anaconda.com, defaults·main·r·anaconda 채널, Anaconda Distribution, Miniconda 설치 파일은 사용하지 않는다. conda는 conda-forge 프로젝트가 GitHub에 배포하는 Miniforge로 제공하고, conda-forge·bioconda 채널만 사용한다. 기반 이미지의 포함 여부도 검토
 설치 레시피	도구명·버전·OS·아키텍처별 검토된 설치 템플릿과 고유 ID
 소스 출처	허용된 저장소·릴리스 URL·검증된 SHA256 또는 서명·확인 근거
 패키지 저장소	승인된 OS/Python/R 등의 저장소와 잠금·버전 관리 방식
@@ -39,6 +40,22 @@ Conda 정책	현재 작업의 기본안은 Conda/Miniconda/Miniforge/Mamba/Micro
 실행 제한	빌드 시간, CPU, 메모리, 디스크, 네트워크 목적지
 배포 정책	검증된 산출물을 전달할 별도 절차
 Rocky가 필요한 모듈은 해당 프로필에 따라 생성한다.
+Miniforge 레시피 규칙: 설치 파일은 GitHub 릴리스에서 받아 공개된 SHA256으로 확인한다. 모든 conda 명령에 `--override-channels`와 conda-forge·bioconda 채널만 지정하고 strict channel priority를 사용한다. CONDARC, CONDA_PKGS_DIRS, HOME은 빌드 작업 경로에 둔다. 도구는 공통 접두 경로 /opt/bio 환경에 설치하고 PATH 맨 앞에 둔다. Miniforge 자체는 작업 경로에 설치해 빌드 후 함께 제거할 수 있다. 상위 패키지는 정확한 버전으로 고정하고, 설치 후 `conda list --explicit --sha256` 결과를 이미지에 기록하며, 모든 URL이 conda.anaconda.org/conda-forge 또는 /bioconda인지 검사해 아니면 빌드를 중단한다. 기존에 conda 없이 만든 DEF(CRAN APT R, PyPI 해시 고정 venv, 소스 빌드)도 이 정책을 만족한다.
+Miniforge 레시피 세부 규칙:
+- conda를 쓰는 DEF는 머리 주석에 `[MANDATORY BUILD RULES]`(Rocky Linux 9 필수·Rocky 8 불가, Anaconda Inc. 저장소 금지와 Miniforge·conda-forge·bioconda·`--override-channels` 사용 이유)와 `[TOOL LOCATION]`(/opt/bio 공통 접두 경로, PATH 맨 앞, 실행 때 /opt/bio 위로 호스트 경로 바인드 금지) 블록을 승인된 문구 그대로 넣는다. 문구는 모듈마다 바꾸지 않는다.
+- %post 앞부분에서 `uname -m`이 x86_64인지, /etc/rocky-release가 Rocky Linux 9인지 확인한다. 고정한 conda 패키지는 linux-64 전용이다.
+- CONDARC 파일에는 conda-forge·bioconda 채널, `default_channels: []`, `channel_priority: strict`, 자동 업데이트·알림·오류 보고 끄기만 쓴다.
+- Rocky 9 기반 이미지에는 /usr/bin/which가 없고, R utils 패키지는 로드할 때 which를 실행한다. R을 쓰는 DEF는 Rocky 9 BaseOS의 `which` 패키지만 DNF로 설치하고(`cachedir`는 작업 경로, `keepcache=0`, `install_weak_deps=False`) 설치 여부를 확인한다.
+- 설치 기록은 /opt/bio/share/{모듈명}/ 아래에 둔다: conda-explicit.txt(URL·SHA256), conda-packages.txt, base-os-release.txt, rocky-packages.tsv, 주요 런타임 버전. %test에서 채널 URL 검사를 다시 수행한다.
+- bioconda 주석 데이터 패키지(GO.db, TxDb 등)는 post-link 단계에서 Bioconductor 미러로부터 데이터를 받는다. 빌드 네트워크 목적지(github.com, conda.anaconda.org, Bioconductor 미러)를 DEF 주석에 적는다.
+- %labels에 BaseOS, CondaInstaller(예: Miniforge3-26.7.2-0), AnacondaRepoFree true를 기록한다.
+
+conda 사용 조건 (전산팀 검토 결과, 2026-10-01):
+전산팀은 위 Miniforge 방식이면 conda 사용에 큰 문제가 없다고 판단했고, 사용 여부는 아래 사항을 고려해 개발팀이 정한다. conda를 쓰는 DEF는 다음 조건을 모두 지킨다.
+- 라이선스: 새 이미지를 만들 때마다 Anaconda Inc. 저장소 금지 조건을 지켰는지 작성자(업체 포함)가 확인하고, 제출 시 확인 결과를 함께 낸다. conda.anaconda.org의 conda-forge·bioconda 채널은 비용 조항 대상이 아니지만 대량 상업적 사용·상업적 미러링 금지 등 일반 약관은 적용된다. 이미지 빌드 때만 내려받고 별도 미러는 구축하지 않는다.
+- 재빌드 재현성: 상위 패키지만 고정하면 하위 의존성은 빌드 시점에 결정되므로, 같은 DEF로 나중에 다시 빌드하면 하위 패키지 버전이 달라지거나 패키지 변경·삭제로 설치가 실패할 수 있다. 운영은 한 번 빌드한 SIF를 저장소(Harbor)에 보관해 그대로 쓰므로 영향은 내용 변경(버전 업데이트, 패키지 추가, 보안 패치)으로 다시 빌드할 때로 한정된다. 이를 위해 설치 후 `conda list --explicit --sha256` 결과를 이미지 안 /opt/bio/share/{모듈명}/conda-explicit.txt에 저장하고, 같은 파일을 DEF와 함께 제출한다. 같은 환경을 다시 만들어야 할 때는 이 목록으로 설치한다(`conda create --file`).
+- 이미지 크기: SIF는 사내 SIF 저장소(Harbor)에 보관되므로 크기를 최소화한다. 분석 스크립트에 필요한 패키지만 설치하고, conda 패키지 캐시와 Miniforge 자체는 빌드 작업 경로에 두어 빌드 후 함께 삭제해 이미지에는 /opt/bio 환경만 남긴다. 제출 시 빌드한 SIF 크기를 함께 알린다.
+- 제출물: DEF, conda-explicit.txt, SIF 크기, 라이선스 조건 확인 결과.
 Conda 관련 경로·실행 파일 검사만으로 설치 이력이나 기반 이미지의 모든 계층을 증명할 수 없다. 자동 경로에는 검토된 기반 이미지와 레시피만 사용하고, 빌드 시 설치 내역을 기록한다. 이 정책 준수 여부와 개별 소프트웨어의 라이선스 검토는 구분한다.
 
 ## 4. 입력 계약
@@ -239,6 +256,7 @@ BUILD_VERIFIED	지정된 환경의 빌드·테스트가 통과함. 서비스 배
 - 전체 DEF: 자동 생성 조건을 충족한 경우에만 실행 가능한 최종본으로 제공.
 - 검사 결과: 검사항목, 수행 여부, 결과, 근거, 제한 사항.
 - 빌드가 수행된 경우: SIF, SIF/DEF 해시, 사용한 정책·레시피 버전, 빌드 로그, 테스트 결과, 실제 설치 목록.
+- conda를 쓴 경우: conda-explicit.txt(URL·SHA256), SIF 크기, Anaconda Inc. 저장소 금지 조건 확인 결과(3절 conda 사용 조건).
 검증 결과는 검사한 DEF/SIF의 해시와 연결한다. 검사가 끝난 뒤 내용을 바꾸면 이전 결과를 재사용하지 않는다.
 원본 스크립트의 output_dir 삭제나 입력 옆 인덱스 생성은 별도 실행 단계의 동작이다. DEF가 정책을 통과해도 그 스크립트의 런타임 경로 안전성이 검증된 것으로 표시하지 않는다.
 
@@ -350,8 +368,28 @@ they do not replace production build isolation or production build results.
 
 INSTALLATION POLICY
 Follow the selected Conda policy for both the base image and later installations.
-For the current no-Conda profile, do not install or inherit Conda, Miniconda,
-Miniforge, Mamba, or Micromamba, and do not use Anaconda repositories/channels.
+Anaconda Inc. repositories are prohibited for licensing reasons: never use
+repo.anaconda.com, the defaults/main/r/anaconda channels, the Anaconda
+Distribution, or the Miniconda installer. When conda is needed, use Miniforge
+from the conda-forge GitHub release (SHA256-checked), only the conda-forge and
+bioconda channels, --override-channels on every conda command, and strict
+channel priority. Install tools into /opt/bio, record the explicit package list
+with SHA256 values, and stop the build if any package URL is outside
+conda.anaconda.org/conda-forge or /bioconda.
+In every conda DEF, copy the approved [MANDATORY BUILD RULES] and
+[TOOL LOCATION] comment blocks verbatim. Check x86_64 and Rocky Linux 9 at the
+start of %post. Keep the Miniforge installation, CONDARC, CONDA_PKGS_DIRS, and
+HOME in the build workspace so that only /opt/bio remains. When the image uses
+R on Rocky 9, install only the BaseOS which package with the DNF cache in the
+workspace. Store install records under /opt/bio/share/{module}/, re-check the
+channel URLs in %test, and add the BaseOS, CondaInstaller, and
+AnacondaRepoFree labels.
+Install only the packages the analysis script needs, and keep the image small:
+the built SIF is stored in the internal SIF registry. Submit conda-explicit.txt
+with the DEF, report the SIF size, and confirm the Anaconda repository
+prohibition for every new image. The explicit list is what reproduces the same
+environment if the image must be rebuilt later; the SIF itself is kept and
+reused, not rebuilt routinely.
 Only a separately approved policy may change that requirement.
 Treat command-availability scans as limited evidence, not complete provenance.
 Distinguish build-time network access from runtime network access.

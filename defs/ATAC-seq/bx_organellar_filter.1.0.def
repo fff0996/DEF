@@ -1,16 +1,41 @@
 Bootstrap: docker
-From: ubuntu:24.04
+From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f
 
 # =============================================================================
-# bx_organellar_filter / DEF version 1.0
+# bx_organellar_filter.1.0
 #
-# [PURPOSE AND TARGET SCRIPT]
-#   Target: organellar_filter.1.0.sh (the supplied script).
+#   Target script:
+#     - organellar_filter.1.0.sh
+#
+#   [MANDATORY BUILD RULES]
+#   1) Base OS must be Rocky Linux 9. Rocky 8 is not allowed: it causes
+#      environment conflicts on the customer's servers.
+#   2) Anaconda Inc. repositories are strictly prohibited. Specifically:
+#        - repo.anaconda.com and the defaults / main / r / anaconda channels
+#          are never used.
+#        - The Anaconda Distribution and the Miniconda installer are never
+#          used, because the Miniconda installer is served from
+#          repo.anaconda.com and ships defaults-channel packages.
+#      conda is therefore provided by Miniforge, which is published by the
+#      conda-forge project on GitHub and defaults to the conda-forge channel.
+#      Only conda-forge and bioconda (community channels, free-licence, merely
+#      hosted on conda.anaconda.org) plus Rocky 9 BaseOS / AppStream are used.
+#      Every conda command below passes --override-channels so that no channel
+#      outside this list can ever be consulted.
+#
+#   [TOOL LOCATION]
+#   This image installs its tools into the shared prefix /opt/bio (a conda
+#   environment), so a tool that appears in more than one image resolves to
+#   /opt/bio/bin/<tool>. /opt/bio/bin is first on PATH in %environment. The
+#   supplied script calls its tools by name through PATH and needs no
+#   change. Do not bind any host path over /opt/bio at runtime.
+#
+# [PURPOSE]
 #   Identifies mitochondrial, chloroplast, and other organellar contigs by
 #   matching contig names against a regular expression, then extracts
 #   alignments on the remaining contigs from coordinate-sorted BAM files.
 #   The analysis script is supplied through CLOSHA's external bind paths,
-#   rather than embedded in the image. This DEF provides its runtime environment.
+#   rather than embedded in the image. This DEF provides its runtime.
 #
 # [INPUT AND OUTPUT STRUCTURE]
 #   Input: *.bam files under input_dir; *.unsorted.bam files are excluded.
@@ -23,45 +48,47 @@ From: ubuntu:24.04
 #   output_dir must not be input_dir or any parent directory of input_dir.
 #
 # [REQUIRED RUNTIME DEPENDENCIES]
-#   SAMtools 1.23.1: index / idxstats / flagstat / view.
-#   HTSlib 1.23.1: built from the copy bundled with the official SAMtools release.
-#   Bash: required for mapfile, arrays, process substitution, and key=value
-#   argument handling.
-#   GNU awk (gawk): explicitly installed and selected as the default awk
-#   implementation to support the script's IGNORECASE=1 behavior.
-#   coreutils / findutils / grep: file discovery, list comparison, copying,
-#   and log handling.
+#   SAMtools 1.23.1 / HTSlib 1.23.1 (bioconda): index, idxstats, flagstat,
+#   view.
+#   Bash, GNU awk 5.1.0, coreutils, findutils, grep (Rocky Linux 9 base
+#   image): mapfile, arrays, process substitution, key=value parsing, the
+#   script's IGNORECASE=1 awk filter, file discovery, and list comparison.
 #   The supplied script has no R or Python package dependencies.
+#   Runtime analysis needs no network access.
 #
 # [BASE IMAGE AND INSTALLATION RULES FOR THIS DEF]
-#   Base image: the official ubuntu:24.04 image from Docker Hub.
-#   OS packages and build dependencies: installed from Ubuntu APT repositories.
-#   SAMtools: built directly from the official GitHub release source for 1.23.1.
-#   No Conda / Miniconda / Miniforge / Mamba / Micromamba installation is used.
-#   No installation step uses repo.anaconda.com or the Anaconda defaults channel.
-#   The source archive is checked against the SHA256 value below before building.
-#   Building requires internet access; analysis of local BAM files does not.
+#   Base image: the official Rocky Linux 9.8 image
+#   rockylinux/rockylinux:9.8.20260525.0, pinned by its index digest in From.
+#   conda: Miniforge3-26.7.2-0 (conda-forge project GitHub release),
+#   SHA256-checked, used only during the build.
+#   Packages: conda-forge and bioconda only, with --override-channels and
+#   strict channel priority. Top-level packages are pinned to exact versions;
+#   the full resolved set with SHA256 values is recorded in
+#   /opt/bio/share/bx-organellar-filter/conda-explicit.txt and checked so that
+#   every URL is under conda.anaconda.org/conda-forge or /bioconda.
+#   Building requires internet access to github.com and conda.anaconda.org.
 #
 # [HPC BUILD REQUIREMENTS]
 #   Use a designated build environment and an unprivileged build account.
 #   Do not run the build as the host root user or through sudo.
 #   Do not bind production data or service directories into the build container.
 #   Host-side %pre and %setup sections are not used.
-#   Package installation, compilation, and cleanup run inside %post.
+#   Package installation and cleanup run inside %post.
 #   Build workspace: the fixed container-private path /__closha_build/work.
 #   /__closha_build and the workspace are created with plain mkdir (no -p),
 #   so the build stops if either already exists, including as a symlink or
-#   a bind mount point. The APT package cache (Dir::Cache), APT index lists
-#   (Dir::State::lists), the SAMtools source tree, TMPDIR, and HOME for the
-#   install steps are all placed below it.
+#   a bind mount point. The Miniforge installer and its base installation,
+#   the conda package cache (CONDA_PKGS_DIRS), the conda configuration file
+#   (CONDARC), temporary files (TMPDIR), and HOME for the install steps are
+#   all placed below it, so conda itself does not remain in the image; only
+#   the /opt/bio environment does.
+#   No DNF installation is needed: the Rocky Linux 9
+#   base image already provides every command the DEF and the script use.
 #   Cleanup removes only that exact workspace, after separate checks of the
 #   path constant, symlinks, canonical path, and root-filesystem device, and
 #   then removes the empty /__closha_build with rmdir. Any failed check stops
 #   the build without deleting anything.
-#   No wildcard cleanup of default paths is used; apt-get clean and
-#   /var/lib/apt/lists/* cleanup are unnecessary and not used.
-#   The base image may ship APT cleanup hooks (for example docker-clean);
-#   they were not inspected and must be reviewed with the base image.
+#   No wildcard cleanup of default paths is used.
 #   These checks reduce accidents but do not prove host isolation. The build
 #   service must keep host binds off /__closha_build, its parents, and children.
 #   No broad cleanup of /tmp, /var/tmp, /root, or user home directories is used.
@@ -72,91 +99,79 @@ From: ubuntu:24.04
 #   The build service must enforce account, workspace, and mount restrictions;
 #   comments in this DEF cannot enforce the host's bind configuration.
 #
+# [RUNTIME ENVIRONMENT ISOLATION]
+#   %environment puts /opt/bio/bin first on a PATH without home entries.
+#   The script calls samtools and the base-image tools by name.
+#
 # [CHANGES FROM THE PREVIOUS SIF]
 #   Previous image: bx_samtools_1.23.1.sif
 #   Previous From: quay.io/biocontainers/samtools:1.23.1--ha83d96e_0
-#   Replaces the imported Bioconda-based environment with Ubuntu + APT
-#   dependencies + a source build.
-#   Retains SAMtools 1.23.1. The existing SIF is not modified automatically.
-#   Build a separate SIF from this DEF and validate the analysis before deployment.
+#   This DEF installs the same bioconda build (samtools 1.23.1 ha83d96e_0,
+#   htslib 1.23.1) into /opt/bio on Rocky Linux 9. The committed 1.0 draft
+#   (Ubuntu 24.04, SAMtools built from source) is replaced by this version
+#   after conda use was approved (IT review, 2026-10-01).
+#   The existing SIF is not modified. Build a separate SIF from this DEF and
+#   validate the analysis before deployment.
 #
 # [VALIDATION STATUS AND REPRODUCIBILITY]
-#   Checked: supplied-script dependencies, DEF shell syntax, official source,
-#   and SHA256.
-#   Not performed: an actual Apptainer SIF build or analysis validation using
-#   the user's BAM files.
+#   Checked: supplied-script dependencies, a dry-run solve of the package set
+#   from conda-forge and bioconda only (24 packages), the Miniforge installer
+#   SHA256, the Rocky 9.8 base image contents (GNU awk 5.1.0, coreutils,
+#   findutils), and DEF %post and %test shell syntax (sh -n).
 #   Production /etc/apptainer/apptainer.conf (supplied by the user):
 #   mount home/tmp/proc/sys/dev = yes, bind path = /etc/localtime and
-#   /etc/hosts, user bind control = yes, allow setuid = yes.
-#   Per Apptainer source (main branch, internal/pkg/build and
-#   apptainerconf.ApplyBuildConfig), %post runs with a default config that
-#   drops bind path, home, resolv.conf, and devpts, uses private copies of
-#   /etc/hosts and /etc/resolv.conf, but keeps mount tmp, proc, sys, and dev.
-#   APPTAINER_BINDPATH and APPTAINER_MOUNT from the caller's environment are
-#   still passed to %post.
-#   This DEF therefore mounts private tmpfs over /tmp and /var/tmp first
-#   (in %post, and in %test when it runs as root, as it does during builds),
-#   fixes PATH, and sets HOME, TMPDIR, and XDG directories to the workspace
-#   before any install step. It does not write /etc/hosts, /etc/localtime,
-#   /dev, or /sys. The mount table is printed to the build log, and %post
-#   stops before installing anything if any mount other than the build
-#   defaults is present (for example a host path from APPTAINER_BINDPATH).
-#   Production Apptainer version: 1.4.5 (supplied by the user). Local test
-#   builds (2026-09-30, GitHub Codespace, Apptainer 1.4.5 with the same
-#   apptainer.conf) succeeded as root and with --fakeroot, including %test.
-#   Root builds were traced with strace: no process opened any /proc or
-#   /sys path for writing, and host sysctl values did not change. inotify
-#   and before/after listings showed no DEF-caused change in the host /tmp
-#   or /var/tmp. With --fakeroot, Apptainer itself (fakeroot engine, before
-#   %post) creates and immediately removes an empty /tmp/bind-mount-*
-#   directory on the host; TMPDIR does not move it, and a DEF cannot
-#   prevent it. With APPTAINER_BINDPATH set, the mount check stopped %post
-#   before any install step, in both modes.
-#   Not performed: a build on the production build machine.
+#   /etc/hosts, user bind control = yes, allow setuid = yes; Apptainer 1.4.5.
+#   Per Apptainer 1.4.5 source (internal/pkg/build, ApplyBuildConfig), %post
+#   and %test run with a build config that drops bind path, home,
+#   resolv.conf, and devpts but keeps mount tmp, proc, sys, and dev, and
+#   APPTAINER_BINDPATH and APPTAINER_MOUNT from the caller still reach them.
+#   This DEF therefore fixes PATH, mounts private tmpfs over /tmp and
+#   /var/tmp (in %post, and in %test when it runs as root, as it does during
+#   builds), prints the mount table, stops before any install step if any
+#   mount other than the build defaults is present, and sets HOME, TMPDIR,
+#   and XDG directories to the workspace before installing anything. It
+#   does not write /etc/hosts, /etc/localtime, /etc/resolv.conf, /dev,
+#   /proc, or /sys. These blocks are identical to the ones verified in
+#   the ATAC-seq DEFs verified on 2026-09-30 (policy section 6.1).
 #   Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
-#   %test checks command availability, SAMtools/HTSlib versions, GNU awk and
-#   Bash behavior, and whether conda/mamba/micromamba are on PATH.
+#   Local test builds (2026-10-01, GitHub Codespace, x86_64, Apptainer 1.4.5
+#   with the same apptainer.conf as production) succeeded as root and with
+#   --fakeroot, including %test. Root builds were traced with strace: no
+#   process opened any /proc or /sys path for writing, and host sysctl values
+#   did not change. inotify and before/after listings showed no DEF-caused
+#   change in the host /tmp or /var/tmp. With --fakeroot, Apptainer itself
+#   (fakeroot engine, before %post) creates and immediately removes an empty
+#   /tmp/bind-mount-* directory on the host; a DEF cannot prevent it. Built SIF
+#   size: 120.1 MiB. The APPTAINER_BINDPATH negative test was run on 2026-09-30
+#   with the same isolation blocks (the build stopped before any install step)
+#   and was not repeated for this DEF. Not performed: a build on the production
+#   build machine, or analysis of user data.
+#   %test checks command locations, SAMtools/HTSlib versions, GNU awk
+#   IGNORECASE and Bash behavior, and the recorded package channels.
 #   These checks do not audit the entire filesystem or historical installation
 #   activity.
-#   The 2026-09-30 %post revision was checked only with a shell syntax check
-#   (sh -n); it has not been built or run.
-#   SAMtools/HTSlib source is pinned, but the Ubuntu tag and APT packages may
-#   change. Package versions at build time are therefore recorded in the image.
-#   Unresolved: the approved ubuntu:24.04 digest is not pinned yet.
+#   Unresolved: the Miniforge and conda package recipe is not yet a
+#   registered approved recipe.
 #
 # [CHANGELOG]
-#   2026-09-29 / 1.0: Created the configuration without Conda and added the
-#   documentation above.
-#   2026-09-29 / 1.0: Removed explicit cleanup and test-data writes; documented
-#   HPC build requirements and adopted the bx_organellar_filter name.
-#   2026-09-29 / 1.0: Restored container-only source and APT cleanup; clarified
-#   that host service paths must not be modified.
-#   2026-09-30 / 1.0: Moved APT caches, APT lists, and the source build into
-#   the fixed workspace /__closha_build/work; replaced apt-get clean and
-#   /var/lib/apt/lists/* cleanup with a checked removal of that one path.
-#   2026-09-30 / 1.0: Recorded the reported Apptainer admin bind settings
-#   (home, /etc/localtime, /etc/hosts, user bind control) and moved the HOME,
-#   TMPDIR, and XDG redirection to the start of %post, fixed PATH in %post,
-#   and mounted private tmpfs over /tmp and /var/tmp so that no build step
-#   can write to the host /tmp or /var/tmp. %test mounts the same private
-#   tmpfs when run as root, because the build runs %test separately with
-#   the host /tmp bound.
-#   2026-09-30 / 1.0: Added a %post mount check that stops the build before
-#   installing anything if an extra host bind (for example from
-#   APPTAINER_BINDPATH) is present; recorded root/fakeroot test results.
+#   2026-10-01 / 1.0: Regenerated for organellar_filter.1.0.sh on Rocky Linux 9
+#   with Miniforge (conda-forge/bioconda only), following policy 1.4.
 # =============================================================================
 
 %labels
-    Name bx_organellar_filter
-    Version 1.0
-    SamtoolsVersion 1.23.1
-    HTSlibVersion 1.23.1
-    BaseImage ubuntu:24.04
-    InstallMethod "Ubuntu APT dependencies and official SAMtools source"
-    Description "SAMtools environment for the CLOSHA organellar-filter script"
+    Maintainer       KOBIC Bio-Express
+    Pipeline         ATAC-seq
+    Component        bx_organellar_filter
+    Version          1.0
+    BaseOS           RockyLinux9
+    CondaInstaller   Miniforge3-26.7.2-0
+    AnacondaRepoFree true
+    SamtoolsVersion  1.23.1
+    HTSlibVersion    1.23.1
+    Description      "SAMtools environment for the CLOSHA ATAC-seq organellar_filter script"
 
 %environment
-    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export PATH=/opt/bio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     export LANG=C.UTF-8
     export LC_ALL=C.UTF-8
 
@@ -165,7 +180,6 @@ From: ubuntu:24.04
     # Fixed container PATH; ignore any inherited PATH that may point into a
     # host-bound home directory.
     export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-    export DEBIAN_FRONTEND=noninteractive
     export LC_ALL=C.UTF-8
 
     # Apptainer builds keep the admin "mount tmp = yes" setting, so %post sees
@@ -198,7 +212,7 @@ From: ubuntu:24.04
         END { exit bad }
     ' /proc/self/mountinfo || { echo "Build stopped: remove extra bind settings and rebuild" >&2; exit 1; }
 
-    fail() { echo "Cleanup check failed: $*" >&2; exit 1; }
+    fail() { echo "Build check failed: $*" >&2; exit 1; }
 
     # Fixed container-private workspace from the approved profile.
     # Plain mkdir (no -p) fails if a path already exists, including a symlink
@@ -207,8 +221,7 @@ From: ubuntu:24.04
     WORK=/__closha_build/work
     mkdir -m 0700 -- "$BUILD_ROOT"
     mkdir -m 0700 -- "$WORK"
-    mkdir -p -- "$WORK/src" "$WORK/tmp" "$WORK/home" \
-        "$WORK/apt-cache/archives/partial" "$WORK/apt-lists/partial"
+    mkdir -p -- "$WORK/src" "$WORK/tmp" "$WORK/home" "$WORK/conda-pkgs" "$WORK/dnf-cache"
 
     # The admin config may bind the host home, and /tmp may be host-backed.
     # Redirect HOME, TMPDIR, and XDG directories into the workspace before any
@@ -219,46 +232,60 @@ From: ubuntu:24.04
     export XDG_CONFIG_HOME="$WORK/home/.config"
     export XDG_DATA_HOME="$WORK/home/.local/share"
 
-    # Use the official Ubuntu base; do not install Conda/Miniconda/Mamba.
-    # APT package cache and index lists are redirected into the workspace.
-    apt-get -o Dir::Cache="$WORK/apt-cache" -o Dir::State::lists="$WORK/apt-lists" update
-    apt-get -o Dir::Cache="$WORK/apt-cache" -o Dir::State::lists="$WORK/apt-lists" \
-        install -y --no-install-recommends \
-        bash coreutils findutils gawk grep sed \
-        ca-certificates curl tar bzip2 \
-        build-essential pkg-config perl \
-        zlib1g-dev libbz2-dev liblzma-dev libdeflate-dev \
-        libncurses-dev libcurl4-openssl-dev libssl-dev
+    # The pinned conda packages below are for linux-64 only.
+    [ "$(uname -m)" = x86_64 ] || fail "unsupported architecture"
+    grep -q '^Rocky Linux release 9\.' /etc/rocky-release || fail "base OS is not Rocky Linux 9"
 
-    # The supplied script uses GNU awk's IGNORECASE extension.
-    update-alternatives --set awk /usr/bin/gawk
-
-    # Official release archive includes HTSlib 1.23.1.
-    # SHA256 was calculated from the official release asset.
-    cd "$WORK/src"
+    # Miniforge from the conda-forge project's GitHub release (never Miniconda
+    # or the Anaconda Distribution). SHA256 matches the published .sha256 file.
+    # It is installed into the workspace and removed with it after use.
     curl --fail --location --retry 3 \
         --connect-timeout 30 --max-time 600 \
-        --output samtools-1.23.1.tar.bz2 \
-        https://github.com/samtools/samtools/releases/download/1.23.1/samtools-1.23.1.tar.bz2
+        --output "$WORK/src/Miniforge3-26.7.2-0-Linux-x86_64.sh" \
+        https://github.com/conda-forge/miniforge/releases/download/26.7.2-0/Miniforge3-26.7.2-0-Linux-x86_64.sh
     printf '%s  %s\n' \
-        32266198a4bc6a6df395d8526688c9697d9c8e472f888c749fdde2e08ea88dd2 \
-        samtools-1.23.1.tar.bz2 | sha256sum --check -
+        281b0ac7d550802efc81af633225a5e6116d29ae72f3ab4eae7168c3931a4c05 \
+        "$WORK/src/Miniforge3-26.7.2-0-Linux-x86_64.sh" | sha256sum --check -
+    bash "$WORK/src/Miniforge3-26.7.2-0-Linux-x86_64.sh" -b -p "$WORK/miniforge"
 
-    tar -xjf samtools-1.23.1.tar.bz2
-    cd "$WORK/src/samtools-1.23.1"
-    ./configure --prefix=/usr/local --with-htslib=htslib-1.23.1
-    make -j4
-    make install
+    # conda configuration, package cache, and environments list stay in the
+    # workspace. Only conda-forge and bioconda are configured, defaults is
+    # empty, and every command still passes --override-channels.
+    export CONDARC="$WORK/condarc"
+    export CONDA_PKGS_DIRS="$WORK/conda-pkgs"
+    printf '%s\n' \
+        'channels:' \
+        '  - conda-forge' \
+        '  - bioconda' \
+        'default_channels: []' \
+        'channel_priority: strict' \
+        'auto_update_conda: false' \
+        'notify_outdated_conda: false' \
+        'report_errors: false' \
+        > "$CONDARC"
+    CONDA="$WORK/miniforge/bin/conda"
 
-    # Retain licenses and installed-version information with the image.
-    mkdir -p /usr/local/share/licenses/samtools /usr/local/share/bx-organellar-filter
-    cp LICENSE /usr/local/share/licenses/samtools/LICENSE
-    cp htslib-1.23.1/LICENSE /usr/local/share/licenses/samtools/HTSlib-LICENSE
-    /usr/local/bin/samtools --version > /usr/local/share/bx-organellar-filter/version.txt
-    grep -Fx 'samtools 1.23.1' /usr/local/share/bx-organellar-filter/version.txt
-    grep -Fx 'Using htslib 1.23.1' /usr/local/share/bx-organellar-filter/version.txt
-    dpkg-query -W -f='${Package}\t${Version}\n' \
-        > /usr/local/share/bx-organellar-filter/ubuntu-packages.tsv
+    # Create the /opt/bio environment from exact package versions.
+    "$CONDA" create --yes --prefix /opt/bio \
+        --override-channels --channel conda-forge --channel bioconda \
+        --strict-channel-priority \
+        samtools=1.23.1 \
+        htslib=1.23.1
+
+    # Record the exact package set with SHA256 values, then check that every
+    # package came from conda-forge or bioconda.
+    mkdir -p /opt/bio/share/bx-organellar-filter
+    "$CONDA" list --prefix /opt/bio --explicit --sha256 > /opt/bio/share/bx-organellar-filter/conda-explicit.txt
+    awk '
+        /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /opt/bio/share/bx-organellar-filter/conda-explicit.txt || fail "package from a disallowed channel"
+    "$CONDA" list --prefix /opt/bio > /opt/bio/share/bx-organellar-filter/conda-packages.txt
+    cp /etc/rocky-release /opt/bio/share/bx-organellar-filter/base-os-release.txt
+    rpm -qa --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' | sort > /opt/bio/share/bx-organellar-filter/rocky-packages.tsv
+    /opt/bio/bin/samtools --version > /opt/bio/share/bx-organellar-filter/samtools-version.txt
+    grep -Fx 'samtools 1.23.1' /opt/bio/share/bx-organellar-filter/samtools-version.txt
+    grep -Fx 'Using htslib 1.23.1' /opt/bio/share/bx-organellar-filter/samtools-version.txt
 
     # Remove only the exact workspace created above; stop on any doubt.
     # Each check is a separate command so that set -e cannot skip a failure.
@@ -273,11 +300,11 @@ From: ubuntu:24.04
     rmdir -- "$BUILD_ROOT"
 
 %runscript
-    exec /usr/local/bin/samtools "$@"
+    exec /opt/bio/bin/samtools "$@"
 
 %test
     set -eu
-    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export PATH=/opt/bio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     export LC_ALL=C.UTF-8
 
     # The build runs %test separately from %post, again with the host /tmp and
@@ -292,17 +319,26 @@ From: ubuntu:24.04
         [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
     fi
 
-    for cmd in bash samtools awk grep sort comm cut wc head find xargs \
-        basename date tee cp cat mkdir; do
+    [ "$(command -v samtools)" = /opt/bio/bin/samtools ]
+    for cmd in bash awk grep sort comm cut wc head find xargs basename date \
+        tee cp mkdir rm; do
         command -v "$cmd" >/dev/null 2>&1
     done
 
-    # Check installed versions without creating files.
+    # Check installed versions and shell behavior without creating files.
     samtools_info=$(samtools --version)
     printf '%s\n' "$samtools_info" | grep -Fx 'samtools 1.23.1'
     printf '%s\n' "$samtools_info" | grep -Fx 'Using htslib 1.23.1'
+    awk --version | head -n 1 | grep -F 'GNU Awk'
     test "$(printf 'CHRM\nchr1\n' | awk 'BEGIN { IGNORECASE=1 } /^chrM$/')" = 'CHRM'
     bash -c 'mapfile -t a < <(printf "ok\n"); test "${a[0]}" = ok'
+
+    # Every recorded package URL must come from conda-forge or bioconda.
+    awk '
+        /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /opt/bio/share/bx-organellar-filter/conda-explicit.txt
+    [ "$(grep -c -E '^https://' /opt/bio/share/bx-organellar-filter/conda-explicit.txt)" -gt 0 ]
 
     # The build workspace must not remain in the image.
     if [ -e /__closha_build ]; then
@@ -310,40 +346,35 @@ From: ubuntu:24.04
         exit 1
     fi
 
-    for cmd in conda mamba micromamba; do
-        if command -v "$cmd" >/dev/null 2>&1; then
-            echo "Unexpected package manager in image: $cmd" >&2
-            exit 1
-        fi
-    done
-
-    echo 'SAMtools 1.23.1: runtime dependency checks passed.'
+    echo 'SAMtools 1.23.1 / HTSlib 1.23.1: runtime dependency checks passed.'
 
 %help
-    CLOSHA organellar-filter environment: Ubuntu 24.04 + SAMtools/HTSlib 1.23.1.
-    Build dependencies are installed with APT; SAMtools is built from its
-    official release archive. No Conda/Miniconda/Mamba installation is used.
+    CLOSHA organellar filter environment: SAMtools/HTSlib 1.23.1 (bioconda) on
+    Rocky Linux 9 with GNU awk.
+    Base OS: Rocky Linux 9. Tools are installed in /opt/bio from conda-forge and
+    bioconda with Miniforge; no Anaconda Inc. repository or Miniconda is used.
 
-    Build as an unprivileged user on a designated, internet-connected build
-    machine matching the compute-node architecture. Do not bind production paths:
+    Build as an unprivileged user on a designated, internet-connected x86_64
+    build machine. Do not bind production paths:
         apptainer build --fakeroot bx_organellar_filter.1.0.sif bx_organellar_filter.1.0.def
 
     Store the SIF, Apptainer cache, and build temporary files in an approved host
     build workspace. APPTAINER_CACHEDIR and APPTAINER_TMPDIR select the cache and
     temporary directories. Container cleanup must never target host-backed binds.
+    Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
 
     Check the image:
-        apptainer exec --cleanenv bx_organellar_filter.1.0.sif samtools --version
         apptainer test --cleanenv bx_organellar_filter.1.0.sif
 
-    organellar_filter.1.0.sh is supplied externally through approved runtime
-    binds. This DEF does not run that script during image construction.
+    organellar_filter.1.0.sh is supplied externally through approved runtime binds.
+    This DEF does not run it during image construction:
+        apptainer exec bx_organellar_filter.1.0.sif bash organellar_filter.1.0.sh key=value ...
 
-    Input: coordinate-sorted BAM files. If an input BAI is absent, the script
-    creates one beside the input BAM, so that location must be writable.
+    Input BAM files must be coordinate-sorted. Missing BAI files are created
+    beside the input BAM files, so that location must be writable.
     The output directory must be separate from the input and its parents,
-    because the analysis script removes previous output except logs/.
-    That existing deletion behavior must be reviewed separately before service use.
-    Writable runtime binds can expose host data to the analysis script.
+    because the script removes previous output except logs/. That existing
+    deletion behavior must be reviewed separately before service use.
     Save the external Bash script with LF line endings.
-    Runtime analysis of local BAM files requires no network access.
+    Writable runtime binds can expose host data to the analysis script.
+    Runtime analysis requires no network access.

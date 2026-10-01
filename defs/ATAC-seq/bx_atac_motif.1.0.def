@@ -2,11 +2,10 @@ Bootstrap: docker
 From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f
 
 # =============================================================================
-# bx_atac_qc.1.0
+# bx_atac_motif.1.0
 #
-#   Target scripts:
-#     - ATAC_QC.1.0.R
-#     - ATAC_QC_plot.1.0.R
+#   Target script:
+#     - atac_motif.1.0.R
 #
 #   [MANDATORY BUILD RULES]
 #   1) Base OS must be Rocky Linux 9. Rocky 8 is not allowed: it causes
@@ -32,43 +31,34 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   change. Do not bind any host path over /opt/bio at runtime.
 #
 # [PURPOSE]
-#   Both scripts share one R/Bioconductor runtime, so one image serves both.
-#   ATAC_QC.1.0.R: fragment size distribution, ATACseqQC::bamQC, Tn5 shift
-#   (shiftGAlignmentsList), and nucleosome-position splitting
-#   (splitGAlignmentsByCut) of pre-shift, organellar-filtered BAM files.
-#   ATAC_QC_plot.1.0.R: TSS enrichment heatmaps and profiles from the split
-#   BAM files and split objects written by ATAC_QC.1.0.R.
-#   The analysis scripts are supplied through CLOSHA's external bind paths,
-#   rather than embedded in the image. This DEF provides their runtime.
+#   NBIS/monaLisa motif analysis of differential accessibility results:
+#   logFC binning, binned motif enrichment against a user-supplied MEME motif
+#   database (universalmotif -> TFBSTools PWMs), motif heatmaps and seqLogo
+#   PNGs, binned k-mer enrichment, and randomized-lasso stability selection
+#   (monaLisa::randLassoStabSel, using stabs and glmnet).
+#   The analysis script is supplied through CLOSHA's external bind paths,
+#   rather than embedded in the image. This DEF provides its runtime.
 #
 # [INPUT AND OUTPUT STRUCTURE]
-#   ATAC_QC.1.0.R
-#     Input: input_dir with pre-shift BAM files (preferably
-#     *_organellar_removed.bam), sample_data CSV (SampleID, Condition,
-#     Replicate), txs_bed (BED, 3+ columns), genome_fasta, optional seqlev.
-#     Missing BAI files are created beside the input BAM files, and a missing
-#     FASTA index (.fai) is created beside genome_fasta, so those locations
-#     must be writable unless the indexes already exist.
-#     Output: 01_fragment_size, 02_bam_qc, 03_shifted_bam, 04_split_bam,
-#     05_metadata (resolved sample sheet, atac_qc_manifest.tsv), 06_rds,
-#     and logs/.
-#   ATAC_QC_plot.1.0.R
-#     Input: an ATAC_QC output directory (05_metadata/atac_qc_manifest.tsv,
-#     or legacy 04_metadata) and tss_bed; optional upstream, downstream,
-#     ntile, tss_filter, and harmonize_mode. BAM and RDS paths are read from
-#     the manifest, so the runtime bind must expose the same paths.
-#     Output: 01_tss_signal (PDF/TSV), 02_signal_matrices (RDS),
-#     03_summary (TSV), and logs/.
-#   Both scripts first remove existing output_dir contents except logs/.
+#   Input: input_dir (a differential_accessibility output directory, from
+#   which 03_results/diff_accessibility_<norm>.csv is used) or da_csv;
+#   genome_fasta with an existing .fai index; motif_db (MEME format);
+#   optional norm, chrs, fdr_filter, n_per_bin, min_abs_logfc, padj_cutoff,
+#   kmer_len, min_motif_score, stabsel_cutoff, seed, threads, run_kmer,
+#   run_regression.
+#   Output: 01_qc, 02_binned_enrichment (TSV, RDS, heatmap PDF, seqlogos/
+#   PNG), 03_kmer, 04_regression, 05_rds, session_info.txt, and logs/.
+#   The script first removes existing output_dir contents except logs/.
 #   output_dir must not be an input directory or any parent of an input.
 #
 # [REQUIRED RUNTIME DEPENDENCIES]
 #   R 4.5.3 (conda-forge r-base) and Bioconductor 3.22 packages (bioconda):
-#     ATACseqQC 1.34.0, ChIPpeakAnno 3.44.0, Rsamtools 2.26.0,
-#     GenomicAlignments 1.46.0, GenomicRanges 1.62.1, GenomeInfoDb 1.46.2,
-#     IRanges 2.44.0. Base R otherwise (utils, stats, graphics, pdf device).
-#   The supplied scripts have no command-line tool or Python dependencies,
-#   and no annotation data package is downloaded at build or run time.
+#     monaLisa 1.16.0 (with stabs 0.7-1 and glmnet 5.0), BiocParallel,
+#     ggplot2 4.0.3, ComplexHeatmap 2.26.1, circlize 0.4.18, GenomicRanges,
+#     GenomeInfoDb, IRanges, Rsamtools, TFBSTools 1.48.0 (seqLogo, toICM),
+#     universalmotif 1.28.0, SummarizedExperiment, Biostrings; grid (base R).
+#   png(type = "cairo") uses the cairo, fontconfig, and conda-forge font
+#   packages that r-base pulls in.
 #   Every pkg::function call and every unqualified function used after the
 #   script's library() calls is checked in %test after the packages load.
 #   Runtime analysis needs no network access.
@@ -81,8 +71,8 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   Packages: conda-forge and bioconda only, with --override-channels and
 #   strict channel priority. Top-level packages are pinned to exact versions;
 #   the full resolved set with SHA256 values is recorded in
-#   /opt/bio/share/bx-atac-qc/conda-explicit.txt and checked so that every URL
-#   is under conda.anaconda.org/conda-forge or /bioconda.
+#   /opt/bio/share/bx-atac-motif/conda-explicit.txt and checked so that every
+#   URL is under conda.anaconda.org/conda-forge or /bioconda.
 #   Building requires internet access to github.com and conda.anaconda.org.
 #
 # [HPC BUILD REQUIREMENTS]
@@ -125,18 +115,16 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   ~/.Renviron is not loaded into this runtime.
 #
 # [CHANGES FROM THE PREVIOUS SIF]
-#   The committed 1.0 draft of this DEF (Ubuntu 24.04, CRAN APT R 4.6.1,
-#   Bioconductor 3.23 built from source, ATACseqQC 1.36.x) is replaced by
-#   this Rocky Linux 9 / Miniforge version after conda use was approved
-#   (IT review, 2026-10-01). Bioconda currently provides R 4.5.3 and
-#   Bioconductor 3.22 (ATACseqQC 1.34.0, ChIPpeakAnno 3.44.0); every function
-#   the scripts call is still checked in %test.
-#   No SIF was built from the draft; nothing existing is modified.
+#   No previous SIF or DEF for this script was supplied. An earlier draft
+#   of this DEF (Ubuntu 24.04, CRAN APT R 4.6.1, Bioconductor 3.23 from
+#   source) was replaced before release by this Rocky Linux 9 / Miniforge
+#   version; Bioconda currently provides R 4.5.3 and Bioconductor 3.22.
+#   This is a new image; nothing existing is modified or overwritten.
 #
 # [VALIDATION STATUS AND REPRODUCIBILITY]
 #   Checked: supplied-script dependencies (library/requireNamespace/::), a
 #   dry-run solve of the package set from conda-forge and bioconda only
-#   (260 packages), the Miniforge installer SHA256, the Rocky 9.8 base
+#   (209 packages), the Miniforge installer SHA256, the Rocky 9.8 base
 #   image contents, and DEF %post and %test shell syntax (sh -n).
 #   Production /etc/apptainer/apptainer.conf (supplied by the user):
 #   mount home/tmp/proc/sys/dev = yes, bind path = /etc/localtime and
@@ -162,32 +150,33 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   change in the host /tmp or /var/tmp. With --fakeroot, Apptainer itself
 #   (fakeroot engine, before %post) creates and immediately removes an empty
 #   /tmp/bind-mount-* directory on the host; a DEF cannot prevent it. Built SIF
-#   size: 766.9 MiB. The APPTAINER_BINDPATH negative test was run on 2026-09-30
+#   size: 624.6 MiB. The APPTAINER_BINDPATH negative test was run on 2026-09-30
 #   with the same isolation blocks (the build stopped before any install step)
 #   and was not repeated for this DEF. Not performed: a build on the production
 #   build machine, or analysis of user data.
 #   %test checks R 4.5.3, package versions and loading, the functions used by
-#   the script, a file-less PDF device, and the recorded package channels.
+#   the script, stabs/glmnet, cairo PNG rendering to /dev/null, a file-less PDF
+#   device, and the recorded package channels.
 #   These checks do not audit the entire filesystem or historical installation
 #   activity.
 #   Unresolved: the Miniforge and conda package recipe is not yet a
 #   registered approved recipe.
 #
 # [CHANGELOG]
-#   2026-10-01 / 1.0: Created for ATAC_QC.1.0.R and ATAC_QC_plot.1.0.R on Rocky
-#   Linux 9 with Miniforge (conda-forge/bioconda only), following policy 1.4.
+#   2026-10-01 / 1.0: Created for atac_motif.1.0.R on Rocky Linux 9 with
+#   Miniforge (conda-forge/bioconda only), following policy 1.4.
 # =============================================================================
 
 %labels
     Maintainer       KOBIC Bio-Express
     Pipeline         ATAC-seq
-    Component        bx_atac_qc
+    Component        bx_atac_motif
     Version          1.0
     BaseOS           RockyLinux9
     CondaInstaller   Miniforge3-26.7.2-0
     AnacondaRepoFree true
     RVersion         4.5.3
-    Description      "ATACseqQC environment for the CLOSHA ATAC-seq ATAC_QC and ATAC_QC_plot scripts"
+    Description      "monaLisa environment for the CLOSHA ATAC-seq atac_motif script"
 
 %environment
     export PATH=/opt/bio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -301,27 +290,35 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
         --override-channels --channel conda-forge --channel bioconda \
         --strict-channel-priority \
         r-base=4.5.3 \
-        bioconductor-atacseqqc=1.34.0 \
-        bioconductor-chippeakanno=3.44.0 \
-        bioconductor-rsamtools=2.26.0 \
-        bioconductor-genomicalignments=1.46.0 \
-        bioconductor-genomicranges=1.62.1 \
-        bioconductor-genomeinfodb=1.46.2 \
-        bioconductor-iranges=2.44.0
+        bioconductor-monalisa=1.16.0 \
+        bioconductor-biocparallel \
+        r-ggplot2=4.0.3 \
+        bioconductor-complexheatmap=2.26.1 \
+        r-circlize=0.4.18 \
+        bioconductor-genomicranges \
+        bioconductor-genomeinfodb \
+        bioconductor-iranges \
+        bioconductor-rsamtools \
+        bioconductor-tfbstools=1.48.0 \
+        bioconductor-universalmotif=1.28.0 \
+        bioconductor-summarizedexperiment \
+        bioconductor-biostrings \
+        r-stabs=0.7_1 \
+        r-glmnet=5.0
 
     # Record the exact package set with SHA256 values, then check that every
     # package came from conda-forge or bioconda.
-    mkdir -p /opt/bio/share/bx-atac-qc
-    "$CONDA" list --prefix /opt/bio --explicit --sha256 > /opt/bio/share/bx-atac-qc/conda-explicit.txt
+    mkdir -p /opt/bio/share/bx-atac-motif
+    "$CONDA" list --prefix /opt/bio --explicit --sha256 > /opt/bio/share/bx-atac-motif/conda-explicit.txt
     awk '
         /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
         END { exit bad }
-    ' /opt/bio/share/bx-atac-qc/conda-explicit.txt || fail "package from a disallowed channel"
-    "$CONDA" list --prefix /opt/bio > /opt/bio/share/bx-atac-qc/conda-packages.txt
-    cp /etc/rocky-release /opt/bio/share/bx-atac-qc/base-os-release.txt
-    rpm -qa --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' | sort > /opt/bio/share/bx-atac-qc/rocky-packages.tsv
-    /opt/bio/bin/R --version | head -n 1 > /opt/bio/share/bx-atac-qc/r-version.txt
-    grep -F 'R version 4.5.3' /opt/bio/share/bx-atac-qc/r-version.txt
+    ' /opt/bio/share/bx-atac-motif/conda-explicit.txt || fail "package from a disallowed channel"
+    "$CONDA" list --prefix /opt/bio > /opt/bio/share/bx-atac-motif/conda-packages.txt
+    cp /etc/rocky-release /opt/bio/share/bx-atac-motif/base-os-release.txt
+    rpm -qa --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' | sort > /opt/bio/share/bx-atac-motif/rocky-packages.tsv
+    /opt/bio/bin/R --version | head -n 1 > /opt/bio/share/bx-atac-motif/r-version.txt
+    grep -F 'R version 4.5.3' /opt/bio/share/bx-atac-motif/r-version.txt
 
     # Remove only the exact workspace created above; stop on any doubt.
     # Each check is a separate command so that set -e cannot skip a failure.
@@ -363,60 +360,75 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     R --version | head -n 1 | grep -F 'R version 4.5.3'
 
     # Attach packages in the script order, then check every pkg::function
-    # and every unqualified function the script uses. pdf(NULL) exercises the PDF device
-    # without writing a file.
+    # and every unqualified function the script uses. stabs and glmnet must load
+    # (randLassoStabSel), and cairo PNG output with text is rendered to
+    # /dev/null so that no file is created.
     Rscript --no-init-file -e '
-        pkgs <- c("ATACseqQC", "Rsamtools", "GenomicAlignments", "GenomicRanges",
-                  "GenomeInfoDb", "IRanges", "ChIPpeakAnno")
+        pkgs <- c("monaLisa", "BiocParallel", "ggplot2", "ComplexHeatmap",
+                  "circlize", "GenomicRanges", "GenomeInfoDb", "IRanges",
+                  "Rsamtools", "TFBSTools", "universalmotif", "SummarizedExperiment",
+                  "Biostrings", "grid")
         for (p in pkgs) suppressPackageStartupMessages(library(p, character.only = TRUE))
-        if (!startsWith(as.character(packageVersion("ATACseqQC")), "1.34.")) {
-            stop("unexpected ATACseqQC version: ", packageVersion("ATACseqQC"))
+        if (!startsWith(as.character(packageVersion("monaLisa")), "1.16.")) {
+            stop("unexpected monaLisa version: ", packageVersion("monaLisa"))
         }
-        if (!startsWith(as.character(packageVersion("ChIPpeakAnno")), "3.44.")) {
-            stop("unexpected ChIPpeakAnno version: ", packageVersion("ChIPpeakAnno"))
+        if (!startsWith(as.character(packageVersion("TFBSTools")), "1.48.")) {
+            stop("unexpected TFBSTools version: ", packageVersion("TFBSTools"))
         }
-        if (!startsWith(as.character(packageVersion("Rsamtools")), "2.26.")) {
-            stop("unexpected Rsamtools version: ", packageVersion("Rsamtools"))
+        if (!startsWith(as.character(packageVersion("universalmotif")), "1.28.")) {
+            stop("unexpected universalmotif version: ", packageVersion("universalmotif"))
         }
         used <- c(
-            "ATACseqQC::bamQC", "ATACseqQC::enrichedFragments",
-            "ATACseqQC::fragSizeDist", "ATACseqQC::readBamFile",
-            "ATACseqQC::shiftGAlignmentsList", "ATACseqQC::splitGAlignmentsByCut",
-            "ChIPpeakAnno::estLibSize", "ChIPpeakAnno::featureAlignedDistribution",
-            "ChIPpeakAnno::featureAlignedHeatmap", "ChIPpeakAnno::reCenterPeaks",
-            "GenomeInfoDb::keepSeqlevels", "GenomeInfoDb::seqnames",
-            "GenomicRanges::GRanges", "GenomicRanges::mcols",
-            "GenomicRanges::seqnames", "IRanges::IRanges",
-            "Rsamtools::BamFile", "Rsamtools::FaFile",
-            "Rsamtools::ScanBamParam", "Rsamtools::close.FaFile",
-            "Rsamtools::idxstatsBam", "Rsamtools::indexBam",
-            "Rsamtools::indexFa", "Rsamtools::open.FaFile",
-            "Rsamtools::scanBam", "Rsamtools::scanFaIndex"
+            "Rsamtools::FaFile", "Rsamtools::scanFaIndex",
+            "Rsamtools::scanFa", "GenomicRanges::seqnames",
+            "GenomicRanges::GRanges", "GenomicRanges::trim",
+            "GenomicRanges::resize", "IRanges::width",
+            "IRanges::IRanges", "BiocParallel::MulticoreParam",
+            "GenomeInfoDb::keepSeqlevels", "GenomeInfoDb::renameSeqlevels",
+            "GenomeInfoDb::seqlevels", "GenomeInfoDb::seqlengths<-",
+            "Biostrings::alphabetFrequency", "universalmotif::read_meme",
+            "universalmotif::convert_motifs", "TFBSTools::PWMatrixList",
+            "TFBSTools::Matrix"
         )
         for (u in used) {
             x <- strsplit(u, "::", fixed = TRUE)[[1]]
             invisible(getExportedValue(x[1], x[2]))
         }
         unqualified <- c(
-            "GRanges", "IRanges", "keepSeqlevels", "renameSeqlevels",
-            "seqlevels", "seqnames"
+            "seqlevels", "seqnames", "mcols", "mcols<-",
+            "width", "bin", "plotBinDensity", "plotBinDiagnostics",
+            "calcBinnedMotifEnrR", "assay", "rowData", "colData",
+            "motifSimilarity", "plotMotifHeatmaps", "seqLogo", "toICM",
+            "calcBinnedKmerEnr", "motifKmerSimilarity", "seqLogoGrob", "rowAnnotation",
+            "annoSeqlogo", "draw", "Heatmap", "colorRamp2",
+            "findMotifHits", "oligonucleotideFrequency", "randLassoStabSel", "plotStabilityPaths",
+            "plotSelectionProb", "ggplot", "aes", "geom_histogram",
+            "xlab", "ylab", "theme_bw", "ggsave",
+            "gpar", "unit"
         )
         missing <- unqualified[!vapply(unqualified, exists, logical(1))]
         if (length(missing) > 0) {
             stop("functions not found on the search path: ", paste(missing, collapse = ", "))
         }
+        for (p in c("stabs", "glmnet")) {
+            if (!requireNamespace(p, quietly = TRUE)) stop(p, " is not installed")
+        }
+        if (!isTRUE(capabilities("cairo"))) stop("R cairo support is not available")
+        png(filename = "/dev/null", width = 300, height = 150, type = "cairo")
+        plot(1, main = "cairo text")
+        invisible(dev.off())
         pdf(NULL)
         plot(1)
         invisible(dev.off())
-        cat("ATACseqQC", as.character(packageVersion("ATACseqQC")), "\n")
+        cat("monaLisa", as.character(packageVersion("monaLisa")), "\n")
     '
 
     # Every recorded package URL must come from conda-forge or bioconda.
     awk '
         /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
         END { exit bad }
-    ' /opt/bio/share/bx-atac-qc/conda-explicit.txt
-    [ "$(grep -c -E '^https://' /opt/bio/share/bx-atac-qc/conda-explicit.txt)" -gt 0 ]
+    ' /opt/bio/share/bx-atac-motif/conda-explicit.txt
+    [ "$(grep -c -E '^https://' /opt/bio/share/bx-atac-motif/conda-explicit.txt)" -gt 0 ]
 
     # The build workspace must not remain in the image.
     if [ -e /__closha_build ]; then
@@ -424,18 +436,18 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
         exit 1
     fi
 
-    echo 'R 4.5.3 / Bioconductor 3.22 (bioconda): bx_atac_qc runtime dependency checks passed.'
+    echo 'R 4.5.3 / Bioconductor 3.22 (bioconda): bx_atac_motif runtime dependency checks passed.'
 
 %help
-    CLOSHA ATAC QC environment: R 4.5.3 + Bioconductor 3.22 (ATACseqQC,
-    ChIPpeakAnno, Rsamtools, GenomicAlignments, GenomicRanges, GenomeInfoDb,
-    IRanges).
+    CLOSHA ATAC motif environment: R 4.5.3 + Bioconductor 3.22 (monaLisa,
+    TFBSTools, universalmotif, ComplexHeatmap, circlize, Rsamtools, Biostrings,
+    BiocParallel, stabs, glmnet, ggplot2).
     Base OS: Rocky Linux 9. Tools are installed in /opt/bio from conda-forge and
     bioconda with Miniforge; no Anaconda Inc. repository or Miniconda is used.
 
     Build as an unprivileged user on a designated, internet-connected x86_64
     build machine. Do not bind production paths:
-        apptainer build --fakeroot bx_atac_qc.1.0.sif bx_atac_qc.1.0.def
+        apptainer build --fakeroot bx_atac_motif.1.0.sif bx_atac_motif.1.0.def
 
     Store the SIF, Apptainer cache, and build temporary files in an approved host
     build workspace. APPTAINER_CACHEDIR and APPTAINER_TMPDIR select the cache and
@@ -443,18 +455,14 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
 
     Check the image:
-        apptainer test --cleanenv bx_atac_qc.1.0.sif
+        apptainer test --cleanenv bx_atac_motif.1.0.sif
 
-    ATAC_QC.1.0.R is supplied externally through approved runtime binds.
+    atac_motif.1.0.R is supplied externally through approved runtime binds.
     This DEF does not run it during image construction:
-        apptainer exec bx_atac_qc.1.0.sif Rscript ATAC_QC.1.0.R key=value ...
+        apptainer exec bx_atac_motif.1.0.sif Rscript atac_motif.1.0.R key=value ...
 
-    ATAC_QC_plot.1.0.R runs the same way. ATAC_QC.1.0.R creates missing BAI
-    files beside input BAM files and a missing .fai beside genome_fasta, so
-    those locations must be writable unless the indexes already exist.
-    ATAC_QC_plot.1.0.R reads BAM/RDS paths recorded in the ATAC_QC manifest,
-    so the same paths must be bound at runtime.
-    Both scripts remove previous output except logs/, so output_dir must be
+    genome_fasta must already have a .fai index (the script stops otherwise).
+    The script removes previous output except logs/, so output_dir must be
     separate from the inputs and their parents. That existing deletion behavior
     must be reviewed separately before service use.
     Writable runtime binds can expose host data to the analysis script.
