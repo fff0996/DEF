@@ -370,9 +370,10 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     Base OS: Rocky Linux 9. Tools are installed in /opt/bio from conda-forge and
     bioconda with Miniforge; no Anaconda Inc. repository or Miniconda is used.
 
-    Build as an unprivileged user on a designated, internet-connected x86_64
-    build machine. Do not bind production paths:
-        apptainer build --fakeroot bx_macs3_callpeak_atac.1.0.sif bx_macs3_callpeak_atac.1.0.def
+    The CLOSHA build service builds this DEF with its fixed Slurm job (policy
+    section 6.2), on an internet-connected x86_64 node, without extra binds:
+        apptainer build bx_macs3_callpeak_atac.1.0.sif bx_macs3_callpeak_atac.1.0.def
+    It must pass both as root and with fakeroot.
 
     Store the SIF, Apptainer cache, and build temporary files in an approved host
     build workspace. APPTAINER_CACHEDIR and APPTAINER_TMPDIR select the cache and
