@@ -1,7 +1,8 @@
-CLOSHA DEF 생성 에이전트 — 설계 및 지침 1.4
+CLOSHA DEF 생성 에이전트 — 설계 및 지침 1.5
 
 작성일: 2026-09-29
 
+개정 1.5 (2026-10-06): 운영 빌드 실행 명령(6.2절) 추가.
 개정 1.4 (2026-10-01): Conda 정책을 Anaconda Inc. 저장소 금지로 정정하고, Miniforge + conda-forge/bioconda 레시피 규칙, conda DEF 머리 주석 블록, Rocky 9 R의 which 설치, 설치 기록 파일·라벨 규칙을 추가(ATAC-seq conda DEF 4종 로컬 root 빌드 확인 반영). 전산팀 검토 결과(2026-10-01)에 따른 conda 사용 조건(라이선스 확인, 재빌드 재현성, 이미지 크기)과 제출물을 추가.
 개정 1.3 (2026-09-30): 운영 apptainer.conf와 Apptainer 1.4.5 빌드 동작 확인 결과를 반영해 빌드 컨테이너의 호스트 연결 차단 규칙(6.1절), %post·%test 시작 순서, 로컬 검증 빌드 절차를 추가.
 개정 1.2 (2026-09-30): 빌드 작업 경로를 프로필 고정 경로와 mkdir 신규 생성 확인 방식으로 단순화하고, APT/DNF 캐시를 작업 경로로 모아 단일 경로만 정리하는 규칙과 참고 템플릿 추가.
@@ -223,6 +224,34 @@ DEF 작성 규칙:
 - 이벤트가 나오면 시각·프로세스·소스 코드로 원인을 확인한다. DEF에서 나온 것이면 DEF를 고치고 다시 빌드한다. Apptainer 자체 동작이면 근거와 함께 DEF 주석에 기록한다.
 - 결과는 DEF의 [VALIDATION STATUS]에 날짜·환경·버전·빌드 방식·확인 항목·미수행 항목으로 적는다. 검증 후 명령 부분을 바꾸면 다시 검증한다(8절).
 - 이 절차는 DEF의 위험을 찾는 수단이다. 운영 빌드 머신의 격리(7절)를 대신하지 않으며, 로컬 검증 통과를 운영 빌드 통과로 표시하지 않는다.
+
+## 6.2 운영 빌드 실행 명령
+운영 빌드 서비스는 DEF를 아래 Slurm 작업으로 빌드한다(2026-10-06 확인).
+```
+#!/bin/bash
+#SBATCH --job-name=kbds-ct
+#SBATCH --partition=kobic
+#SBATCH --time=480
+#SBATCH --ntasks=1
+#SBATCH --mem=16384
+#SBATCH --chdir=/BiO/K-BDS/BiO-EXPRESS/tmp
+#SBATCH --output=/BiO/K-BDS/BiO-EXPRESS/container/{memberID}/log/kbds-ct.o%j
+#SBATCH --error=/BiO/K-BDS/BiO-EXPRESS/container/{memberID}/log/kbds-ct.e%j
+apptainer build '<sif>' '<def>' 2>&1 && echo 'successful' || { echo 'failed'; exit 1; }
+```
+항목	의미
+--job-name=kbds-ct	Slurm 작업 이름
+--partition=kobic	작업을 실행할 Slurm 파티션(계산 노드 그룹)
+--time=480	최대 실행 시간 480분. 넘으면 작업이 강제 종료된다
+--ntasks=1	작업(프로세스) 1개로 실행
+--mem=16384	메모리 16,384 MB(16 GiB) 할당
+--chdir=/BiO/K-BDS/BiO-EXPRESS/tmp	작업이 시작되는 디렉터리. 바인딩이 아니며 빌드 컨테이너에 연결되지 않는다. 상대 경로(예: %files)는 이 디렉터리를 기준으로 찾는다
+--output=…/container/{memberID}/log/kbds-ct.o%j	표준 출력 로그 파일. {memberID}는 사용자 ID, %j는 Slurm 작업 번호
+--error=…/container/{memberID}/log/kbds-ct.e%j	표준 오류 로그 파일. 명령에서 2>&1로 오류도 표준 출력에 합치므로 빌드 로그는 주로 .o 파일에 남는다
+apptainer build '<sif>' '<def>'	DEF로 SIF를 빌드한다. --fakeroot, --notest, --bind 옵션이 없고, APPTAINER_TMPDIR·APPTAINER_CACHEDIR도 지정하지 않는다
+2>&1	오류 출력을 표준 출력으로 합친다
+&& echo 'successful'	빌드 종료 코드가 0이면 successful을 출력한다
+|| { echo 'failed'; exit 1; }	빌드가 실패하면 failed를 출력하고 작업을 실패(종료 코드 1)로 끝낸다
 
 ## 7. 빌드 워커가 강제할 조건
 다음 조건은 프롬프트의 문장으로 대신하지 않는다.
