@@ -6,6 +6,8 @@ CLOSHA 분석 스크립트 작성 규칙 1.0
 
 참고 예: Bash는 `organellar_filter.1.0.sh`, R은 `ATAC_QC.1.0.R`, `differential_accessibility.1.0.R`.
 
+기존 1.0 스크립트 중 일부는 이 문서의 7절(stdout/stderr 구분: R의 경고가 stdout으로 나가고 `.error.log`가 없음)과 11절(스레드 기본값 4 고정)을 아직 따르지 않는다. 규칙에 맞추는 수정은 1.1절에 따라 새 버전으로 만든다.
+
 ## 1. 위치, 이름, 버전
 - 위치: `scripts/{파이프라인명}/`. 예: `scripts/ATAC-seq/`.
 - 이름: `{모듈명}.{주버전}.{부버전}.{확장자}`. 예: `ATAC_QC.1.0.R`, `organellar_filter.1.0.sh`, `retip_predict.1.0.py`.
@@ -56,7 +58,7 @@ CLOSHA 분석 스크립트 작성 규칙 1.0
 - 키는 `^[a-zA-Z_][a-zA-Z0-9_]*$`만 허용한다.
 - Bash는 `declare "$key=$value"`로 변수를 만들되 보호 변수(`IFS`, `UID`, `EUID`, `PPID`, `BASHOPTS`, `BASHPID`)를 막는다. R은 `assign(key, value)`.
 - 필수 인자가 없으면 `Error: Required parameter '<key>' is missing`(R은 `ERROR: ...`)로 멈춘다.
-- 선택 인자는 기본값을 준다(Bash `threads="${threads:-4}"`, R `if (!exists("seqlev")) seqlev <- "auto"`).
+- 선택 인자는 기본값을 준다(Bash `pvalue="${pvalue:-0.05}"`, R `if (!exists("seqlev")) seqlev <- "auto"`). 스레드 수는 11절을 따른다.
 - 인자 이름:
   | 용도 | 이름 |
   |---|---|
@@ -69,17 +71,23 @@ CLOSHA 분석 스크립트 작성 규칙 1.0
 - 앞 노드의 결과를 받을 때는 앞 노드의 `output_dir`를 `input_dir`로 그대로 받고, 스크립트가 그 안의 정해진 위치(예: `05_metadata/atac_qc_manifest.tsv`, `03_shifted_bam/`)를 찾는다.
 
 ## 5. 메시지 함수
+- 진행 메시지는 **stdout**, 오류(`Error:`/`ERROR:`)와 경고(`Warning:`/`WARNING:`)는 **stderr**로 내보낸다(7절).
 ```bash
 error_msg() { echo "Error: $*" >&2; }
 warn_msg()  { echo "Warning: $*" >&2; }
 info_msg()  { echo "$*"; }
 ```
 ```r
-stop_err <- function(...) { cat("ERROR:", paste(..., collapse = ""), "\n", file = stderr()); quit(status = 1) }
-warn_msg <- function(...) { cat("WARNING:", paste(..., collapse = ""), "\n") }
+err_con <- NULL   # logs/<stamp>.error.log, opened right after logs/ is created (7절)
+emit_err <- function(txt) {
+	cat(txt, file = stderr())
+	if (!is.null(err_con)) { cat(txt, file = err_con); flush(err_con) }
+}
+stop_err <- function(...) { emit_err(paste0("ERROR: ", paste(..., collapse = ""), "\n")); quit(status = 1) }
+warn_msg <- function(...) { emit_err(paste0("WARNING: ", paste(..., collapse = ""), "\n")) }
 msg      <- function(...) { cat(..., "\n") }
 ```
-- 오류는 stderr로 내보내고 종료 코드 1로 끝낸다.
+- 오류는 종료 코드 1로 끝낸다.
 - 오류 메시지에는 무엇이 문제인지와 실제 값(경로, 미리보기)을 함께 적는다. 예: `No common seqlevels between BAM and txs_bed. BAM preview: ... txs preview: ...`
 
 ## 6. 출력 폴더와 재실행
@@ -102,17 +110,47 @@ msg      <- function(...) { cat(..., "\n") }
 - 다음 노드가 읽는 파일의 이름과 위치는 바꾸지 않는다. 바꿔야 하면 새 주버전으로 만들고 다음 노드도 함께 맞춘다.
 - 샘플별 처리 결과와 상태는 요약 TSV(manifest, summary)에 남긴다(예: `SplitStatus=done|empty_split:...|failed_optional`).
 
-## 7. 로그
-- 위치와 이름: `output_dir/logs/<YYYYMMDD_HHMMSS>_<PID>.log`
-- 화면과 로그 파일에 같이 남긴다.
-  - Bash: stdout은 `.log`, stderr는 `.error.log`로 나눠 남긴다.
-    ```bash
-    timestamp="$(date '+%Y%m%d_%H%M%S')_$$"
-    log_file="${logs_dir}/${timestamp}.log"
-    err_file="${logs_dir}/${timestamp}.error.log"
-    exec > >(tee -a "$log_file") 2> >(tee -a "$err_file" >&2)
-    ```
-  - R: stdout만 `sink(log_con, append = TRUE, split = TRUE)`로 로그에 남기고, stderr는 sink하지 않는다(오류는 stderr로 그대로 나감). `on.exit()`에서 sink와 연결을 닫는다.
+## 7. 로그와 stdout/stderr 구분
+### 7.1 두 스트림을 반드시 나눈다
+| 스트림 | 내용 | 로그 파일 |
+|---|---|---|
+| **stdout** | 시작 정보, 파라미터, 단계 진행, 샘플별 처리 결과, 요약, 종료 시각 | `output_dir/logs/<YYYYMMDD_HHMMSS>_<PID>.log` |
+| **stderr** | `Error:`/`ERROR:` 오류, `Warning:`/`WARNING:` 경고, 외부 도구와 라이브러리가 stderr로 내는 메시지 | `output_dir/logs/<YYYYMMDD_HHMMSS>_<PID>.error.log` |
+- 두 스트림을 합치지 않는다. `2>&1`, `stderr=STDOUT`, R `sink(type = "message")`로 stderr를 stdout 쪽에 섞지 않는다.
+- 화면(플랫폼이 받는 stdout/stderr)과 로그 파일에 **둘 다** 남긴다. 같은 실행의 `.log`와 `.error.log`는 같은 `<stamp>`를 쓴다.
+- 외부 도구를 실행할 때도 stdout과 stderr를 따로 받는다. 도구의 진행 출력은 `.log`로, 오류 출력은 `.error.log`로 간다.
+- 실패 판단은 종료 코드로 한다(9절). stderr에 경고가 있다는 이유만으로 실패로 보지 않는다(예: AutoGluon의 torch 없음 경고).
+
+### 7.2 언어별 구현
+- Bash:
+  ```bash
+  timestamp="$(date '+%Y%m%d_%H%M%S')_$$"
+  log_file="${logs_dir}/${timestamp}.log"
+  err_file="${logs_dir}/${timestamp}.error.log"
+  # stdout / stderr separate
+  exec > >(tee -a "$log_file") 2> >(tee -a "$err_file" >&2)
+  ```
+  이후 실행하는 외부 도구도 같은 규칙으로 나뉜다. `2>&1`을 붙이지 않는다.
+- R:
+  ```r
+  stamp    <- paste0(format(Sys.time(), "%Y%m%d_%H%M%S"), "_", Sys.getpid())
+  log_file <- file.path(logs_dir, paste0(stamp, ".log"))
+  err_file <- file.path(logs_dir, paste0(stamp, ".error.log"))
+  log_con  <- file(log_file, open = "at")
+  err_con  <- file(err_file, open = "at")
+  sink(log_con, append = TRUE, split = TRUE)          # stdout -> console + .log
+  on.exit({
+  	try(sink(), silent = TRUE)
+  	try(close(log_con), silent = TRUE)
+  	try(close(err_con), silent = TRUE)
+  }, add = TRUE)
+  ```
+  - 오류와 경고는 5절의 `stop_err`, `warn_msg`로 stderr와 `.error.log`에 같이 쓴다.
+  - 패키지가 내는 `message()`와 `warning()`은 stderr로 나간다. `.error.log`에도 남기려면 본문을 `withCallingHandlers(..., message = function(m) cat(conditionMessage(m), file = err_con), warning = function(w) cat("WARNING: ", conditionMessage(w), "\n", file = err_con))`로 감싼다.
+  - 외부 도구는 `system2(cmd, args, stdout = "", stderr = "")`처럼 두 스트림을 그대로 두거나, 파일로 받을 때도 따로 받는다.
+- Python: `print(..., file=sys.stdout)`와 `print(..., file=sys.stderr)`를 나누고, 외부 도구는 `subprocess.Popen(..., stdout=PIPE, stderr=PIPE)`로 따로 읽어 각각 `.log`, `.error.log`에 남긴다(예: `scripts/Retip/retip_*.1.0.py`).
+
+### 7.3 로그 내용
 - 로그 첫 부분:
   ```
   ############################## <모듈 이름>
@@ -160,14 +198,25 @@ msg      <- function(...) { cat(..., "\n") }
 - 목록은 사이트에서 바뀔 수 있으므로 등록 전에 최신 목록으로 스크립트 전체를 검사한다.
 
 ## 11. 자원
-- 스레드 수는 `threads` 인자로 받고 기본값을 준다(ATAC-seq 기본값 4). 외부 도구에 그대로 넘긴다(`samtools -@ "$threads"`).
+- CPU와 메모리는 CLOSHA 실행 환경 설정(예: 싱글 코어, 4코어)에서 노드마다 **할당된다.** 스크립트는 자원 크기를 고정하지 않는다.
+- 스레드 수는 **할당된 코어 수를 스크립트가 직접 확인해서** 쓴다.
+  - `threads` 인자는 선택이고 기본값은 `auto`(할당된 코어 수)다. 숫자를 주면 할당된 코어 수를 넘지 않게 줄인다.
+  - 확인 방법(할당 범위를 반영하는 값):
+    | 언어 | 방법 | 쓰지 않는 것 |
+    |---|---|---|
+    | Bash | `nproc` | `/proc/cpuinfo` 줄 수 |
+    | R | `length(parallel::mcaffinity())` (없으면 `as.integer(system("nproc", intern = TRUE))`) | `parallel::detectCores()` (서버 전체 코어 수) |
+    | Python | `len(os.sched_getaffinity(0))` | `os.cpu_count()` (서버 전체 코어 수) |
+  - 결정한 값을 외부 도구에 넘기고(`samtools -@ "$threads"`, `TOBIAS ... --cores "$threads"`), 계산 라이브러리 스레드(`OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS`)도 같은 값으로 맞춘다.
+  - 로그의 `parameters:`에 요청값과 실제값을 함께 남긴다. 예: `threads = 4 (requested auto, allocated 4)`
+- 실행 환경이 코어를 지정하지 않고 사용량만 제한하는 방식(Docker `--cpus`, Kubernetes `limits.cpu`)으로 바뀌면 위 방법은 서버 전체 코어 수를 돌려줄 수 있다. 그때는 cgroup `cpu.max` 값도 읽도록 규칙을 갱신한다.
+- 메모리는 할당량을 넘지 않게 샘플 단위로 처리하고, 큰 데이터를 한꺼번에 메모리에 올리지 않는다(예: `readBamFile(..., bigFile = TRUE)`).
 
 ## 12. 선택 사항 (Python 모듈 Retip에서 쓴 방식)
 아래는 기준은 아니지만 필요할 때 쓸 수 있는 방식이다(`scripts/Retip/retip_*.1.0.py`).
 - `--key value`, `--key=value` 형식도 받기(플랫폼이 이 형식으로 넘기는 경우 대비). 빈 값은 기본값으로 처리.
-- `auto` 값: 입력에서 정보 읽기(`model=auto`), 할당 CPU 사용(`cpus=auto`), 앞 노드 기록에서 값 읽기(`rt_unit=auto`).
+- `auto` 값: 입력에서 정보 읽기(`model=auto`), 앞 노드 기록에서 값 읽기(`rt_unit=auto`). (할당 CPU 사용은 11절 기본 규칙)
 - 재실행 정리 범위를 스크립트가 만드는 결과 폴더(`output_dir/result/`)로 좁히고, 지우기 전에 symlink 여부와 실제 위치, 입력 포함 여부를 확인.
-- 외부 프로그램의 stdout과 stderr를 따로 받아 `.log`, `.err`에 나눠 남기기.
 
 ## 13. 등록 전 확인 목록
 - [ ] 위치와 이름이 `scripts/{파이프라인}/{모듈}.{주}.{부}.{확장자}` 형식이다.
@@ -175,7 +224,9 @@ msg      <- function(...) { cat(..., "\n") }
 - [ ] 머리 주석에 Usage와 Arguments(required/optional, default)가 있다.
 - [ ] `key=value` 인자를 받고, 필수 인자 누락과 잘못된 형식은 종료 코드 1로 멈춘다.
 - [ ] `output_dir`에서 `logs/`만 남기고 정리한 뒤 시작한다(`/` 보호).
-- [ ] `logs/<YYYYMMDD_HHMMSS>_<PID>.log`에 시작 시각, 파라미터, 단계, 요약, 종료 시각이 남는다. 오류는 stderr로 나간다.
+- [ ] stdout(진행)과 stderr(오류·경고)가 나뉘어 화면과 `logs/<stamp>.log`, `logs/<stamp>.error.log`에 각각 남는다. `2>&1`로 합치지 않는다.
+- [ ] `.log`에 시작 시각, 파라미터(최종값), 단계, 요약, 종료 시각이 남는다.
+- [ ] 스레드 수를 고정하지 않고 할당된 코어 수(`threads=auto`)를 쓰며, 실제값을 로그에 남긴다.
 - [ ] 필요한 명령·패키지를 시작할 때 확인한다.
 - [ ] 도구를 이름으로 부르고, 실행 중 설치·다운로드가 없다.
 - [ ] 샘플별 상태가 요약 TSV에 남고, 종료 코드 규칙(9절)을 따른다.
