@@ -166,10 +166,15 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   /etc/subuid entries and a test DEF holding the same %post and %test start
 #   blocks on ubuntu:24.04; the blocks passed and no file reached the host /tmp
 #   or /dev/shm. A production build of a Retip DEF with the same blocks also
-#   passed them. Built SIF size: 864.3 MiB. The APPTAINER_BINDPATH negative
-#   test was run on 2026-09-30 with the earlier blocks and was not repeated.
-#   Not performed: a production build of these ATAC-seq DEFs, or analysis of
-#   user data.
+#   passed them. Built SIF size: 864.3 MiB. A production build of this DEF
+#   (fakeroot command) stopped at the final workspace removal (rm: 'Is a
+#   directory' after the conda installs), so for this DEF the cleanup falls
+#   back to python3 shutil.rmtree when rm fails, reporting directory-listing vs
+#   lstat type mismatches. The fallback was tested by forcing rm to fail in a
+#   Rocky 9 root build (2026-10-07); this DEF itself was not rebuilt after the
+#   change. The APPTAINER_BINDPATH negative test was run on 2026-09-30 with the
+#   earlier blocks and was not repeated. Not performed: a production build of
+#   these ATAC-seq DEFs, or analysis of user data.
 #   %test checks R 4.5.3, package versions and loading, the functions used by
 #   the script, ggupset, a file-less PDF device, and the recorded package
 #   channels.
@@ -352,7 +357,35 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     [ -d "$WORK" ] || fail "workspace is missing"
     [ "$(realpath -e -- "$WORK")" = "$WORK" ] || fail "canonical path changed"
     [ "$(stat -c %d -- "$WORK")" = "$(stat -c %d -- /)" ] || fail "workspace is on another filesystem"
-    rm -rf --one-file-system -- "$WORK"
+    # Under the fakeroot command (production builds by an account without
+    # /etc/subuid entries), rm can get a stale file type for a directory and
+    # stop with "Is a directory". If rm fails, report entries whose type in
+    # the directory listing differs from lstat, remove the rest with the
+    # base image's Python (shutil.rmtree takes the type from the listing),
+    # and confirm the workspace is gone. The mount check above guarantees
+    # that nothing is mounted inside the workspace.
+    if ! rm -rf --one-file-system -- "$WORK"; then
+        echo "rm could not remove all of $WORK; retrying with python3" >&2
+        /usr/bin/env python3 - "$WORK" <<'PYCLEAN' || fail "python3 could not remove the workspace"
+import os, shutil, stat, sys
+root = sys.argv[1]
+mismatches = 0
+for dirpath, _dirs, _files in os.walk(root):
+    with os.scandir(dirpath) as entries:
+        for entry in entries:
+            try:
+                mode = os.lstat(entry.path).st_mode
+            except OSError:
+                continue
+            if entry.is_dir(follow_symlinks=False) != stat.S_ISDIR(mode):
+                mismatches += 1
+                if mismatches <= 20:
+                    print("type mismatch (listing vs lstat): %s" % entry.path, file=sys.stderr)
+print("type mismatches: %d" % mismatches, file=sys.stderr)
+shutil.rmtree(root)
+PYCLEAN
+    fi
+    [ ! -e "$WORK" ] || fail "workspace could not be removed"
     rmdir -- "$BUILD_ROOT"
 
 %runscript
