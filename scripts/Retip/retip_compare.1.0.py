@@ -26,9 +26,11 @@ Arguments:
                             and logs to output_dir/logs.
     model      (required) - RP or HILIC (must match the user model)
     eval_file  (optional) - Evaluation table (*.csv or *.xlsx with SMILES and
-                            measured RT). default: the reserved_test.csv
-                            written by retip_train
-    sheet      (optional) - XLSX sheet name. default: first sheet
+                            measured RT), or reserved_test (or empty) for the
+                            reserved_test.csv written by retip_train.
+                            default: reserved_test
+    sheet      (optional) - XLSX sheet name; first (or empty) reads the first
+                            sheet. Ignored for CSV. default: first
     rt_unit    (optional) - RT unit label for plots. default: model unit
     scope      (optional) - all (every user-model candidate) or best. default: all
     title      (optional) - Report title. default: Default and user model comparison
@@ -51,7 +53,7 @@ import sys
 MODULE = "compare"
 IMAGE = "bx_retip_compare.1.0.sif"
 REQUIRED = ["input_dir", "output_dir", "model"]
-OPTIONAL = {"eval_file": "", "sheet": "", "rt_unit": "model unit",
+OPTIONAL = {"eval_file": "reserved_test", "sheet": "first", "rt_unit": "model unit",
             "scope": "all", "title": "Default and user model comparison"}
 TABLE_SUFFIXES = {".csv", ".xlsx"}
 
@@ -115,7 +117,7 @@ def locate_train_output(path):
 
 
 def select_eval_table(eval_file, train_result):
-    if not eval_file:
+    if eval_file in ("", "reserved_test"):
         table = train_result / "reserved_test.csv"
         if not table.is_file():
             fail(f"reserved_test.csv not found in {train_result}; set eval_file")
@@ -165,7 +167,8 @@ def main():
     args = [MODULE, "--input", str(table), "--output", str(result_dir),
             "--model", model, "--user-model", str(model_dir),
             "--rt-unit", params["rt_unit"], "--scope", params["scope"], "--title", params["title"]]
-    if params["sheet"]:
+    # "first" (or an empty value) keeps mdcc's default: the first XLSX sheet.
+    if params["sheet"] not in ("", "first"):
         args += ["--sheet", params["sheet"]]
     code = run_mdcc(handle, args)
 

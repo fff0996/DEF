@@ -18,7 +18,8 @@ Arguments:
                             and logs to output_dir/logs.
     model      (optional) - RP or HILIC. If omitted, the table must have a
                             model_type column (RP or HILIC per row).
-    sheet      (optional) - XLSX sheet name. default: first sheet
+    sheet      (optional) - XLSX sheet name; first (or empty) reads the first
+                            sheet. Ignored for CSV. default: first
 
 Outputs (output_dir/result):
     predictions.csv, prediction.png/.svg, report.html, manifest.json
@@ -37,7 +38,7 @@ import sys
 MODULE = "predict"
 IMAGE = "bx_retip_predict.1.0.sif"
 REQUIRED = ["input_file", "output_dir"]
-OPTIONAL = {"model": "", "sheet": ""}
+OPTIONAL = {"model": "", "sheet": "first"}
 TABLE_SUFFIXES = {".csv", ".xlsx"}
 
 
@@ -115,13 +116,14 @@ def main():
     log(handle, f"  input_file = {input_file}")
     log(handle, f"  output_dir = {output_dir}")
     log(handle, f"  model      = {model or '<from input model_type>'}")
-    log(handle, f"  sheet      = {params['sheet'] or '<first sheet>'}")
+    log(handle, f"  sheet      = {params['sheet'] or 'first'}")
     log(handle)
 
     args = [MODULE, "--input", str(input_file), "--output", str(result_dir)]
     if model:
         args += ["--model", model]
-    if params["sheet"]:
+    # "first" (or an empty value) keeps mdcc's default: the first XLSX sheet.
+    if params["sheet"] not in ("", "first"):
         args += ["--sheet", params["sheet"]]
     code = run_mdcc(handle, args)
 

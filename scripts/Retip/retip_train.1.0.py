@@ -19,7 +19,9 @@ Arguments:
     output_dir            (required) - Output directory. Results go to
                                        output_dir/result, logs to output_dir/logs.
     model                 (required) - RP or HILIC
-    sheet                 (optional) - XLSX sheet name. default: first sheet
+    sheet                 (optional) - XLSX sheet name; first (or empty) reads
+                                       the first sheet. Ignored for CSV.
+                                       default: first
     rt_unit               (optional) - RT unit label (values are not converted).
                                        default: model unit
     time_limit            (optional) - AutoGluon fit budget in seconds. default: 1200
@@ -53,7 +55,7 @@ import sys
 MODULE = "train"
 IMAGE = "bx_retip_train.1.0.sif"
 REQUIRED = ["input_file", "output_dir", "model"]
-OPTIONAL = {"sheet": "", "rt_unit": "model unit", "time_limit": "1200",
+OPTIONAL = {"sheet": "first", "rt_unit": "model unit", "time_limit": "1200",
             "cpus": "2", "algorithms": "GBM,CAT,RF,XT,KNN", "test_size": "0.2",
             "validation_size": "0.2", "seed": "42", "max_missing_fraction": "0.2",
             "correlation_threshold": "0.995", "method_label": "user method"}
@@ -152,7 +154,8 @@ def main():
             "--seed", params["seed"], "--max-missing-fraction", params["max_missing_fraction"],
             "--correlation-threshold", params["correlation_threshold"],
             "--method-label", params["method_label"]]
-    if params["sheet"]:
+    # "first" (or an empty value) keeps mdcc's default: the first XLSX sheet.
+    if params["sheet"] not in ("", "first"):
         args += ["--sheet", params["sheet"]]
     code = run_mdcc(handle, args)
 
