@@ -3,7 +3,7 @@
 on the same measured compounds.
 
 Usage:
-    python retip_compare.1.0.py input_dir="..." output_dir="..." model="RP" [eval_dir="..."] [options]
+    python retip_compare.1.0.py input_dir="..." output_dir="..." model="RP" [eval_file="..."] [options]
 
 Examples:
     After retip_train (its reserved_test.csv is the evaluation set):
@@ -15,7 +15,7 @@ Examples:
     With a separate evaluation table:
         apptainer exec bx_retip_compare.1.0.sif python retip_compare.1.0.py \
             input_dir="/path/to/train_output" \
-            eval_dir="/path/to/evaluation" \
+            eval_file="/path/to/evaluation.csv" \
             output_dir="/path/to/output" \
             model="RP"
 
@@ -25,11 +25,9 @@ Arguments:
     output_dir (required) - Output directory. Results go to output_dir/result
                             and logs to output_dir/logs.
     model      (required) - RP or HILIC (must match the user model)
-    eval_dir   (optional) - Directory with an evaluation table (*.csv or
-                            *.xlsx with SMILES and measured RT). default: the
-                            reserved_test.csv written by retip_train
-    eval_name  (optional) - Table file name inside eval_dir; required when
-                            eval_dir holds more than one table
+    eval_file  (optional) - Evaluation table (*.csv or *.xlsx with SMILES and
+                            measured RT). default: the reserved_test.csv
+                            written by retip_train
     sheet      (optional) - XLSX sheet name. default: first sheet
     rt_unit    (optional) - RT unit label for plots. default: model unit
     scope      (optional) - all (every user-model candidate) or best. default: all
@@ -53,7 +51,7 @@ import sys
 MODULE = "compare"
 IMAGE = "bx_retip_compare.1.0.sif"
 REQUIRED = ["input_dir", "output_dir", "model"]
-OPTIONAL = {"eval_dir": "", "eval_name": "", "sheet": "", "rt_unit": "model unit",
+OPTIONAL = {"eval_file": "", "sheet": "", "rt_unit": "model unit",
             "scope": "all", "title": "Default and user model comparison"}
 TABLE_SUFFIXES = {".csv", ".xlsx"}
 
@@ -79,13 +77,6 @@ def parse_args(argv):
         if not params.get(key):
             fail(f"Required parameter '{key}' is missing")
     return params
-
-
-def find_tables(directory):
-    """Return CSV/XLSX tables directly under directory, skipping hidden and lock files."""
-    return sorted(p for p in directory.iterdir()
-                  if p.is_file() and p.suffix.lower() in TABLE_SUFFIXES
-                  and not p.name.startswith((".", "~$")))
 
 
 def open_log(output_dir):
@@ -123,27 +114,18 @@ def locate_train_output(path):
     fail(f"no retip_train model found in input_dir: {path}")
 
 
-def select_eval_table(eval_dir, eval_name, train_result):
-    if not eval_dir:
+def select_eval_table(eval_file, train_result):
+    if not eval_file:
         table = train_result / "reserved_test.csv"
         if not table.is_file():
-            fail(f"reserved_test.csv not found in {train_result}; set eval_dir")
+            fail(f"reserved_test.csv not found in {train_result}; set eval_file")
         return table
-    directory = Path(eval_dir)
-    if not directory.is_dir():
-        fail(f"eval_dir not found: {directory}")
-    tables = find_tables(directory)
-    if eval_name:
-        chosen = directory / eval_name
-        if chosen not in tables:
-            fail(f"eval_name is not a *.csv or *.xlsx table in eval_dir: {eval_name}")
-        return chosen
-    if not tables:
-        fail(f"no *.csv or *.xlsx table in eval_dir: {directory}")
-    if len(tables) > 1:
-        fail("eval_dir holds more than one table; set eval_name to one of: "
-             + ", ".join(t.name for t in tables))
-    return tables[0]
+    table = Path(eval_file)
+    if not table.is_file():
+        fail(f"eval_file not found: {table}")
+    if table.suffix.lower() not in TABLE_SUFFIXES:
+        fail(f"eval_file must be a *.csv or *.xlsx table: {table}")
+    return table
 
 
 def main():
@@ -159,7 +141,7 @@ def main():
     if not input_dir.is_dir():
         fail(f"input_dir not found: {input_dir}")
     model_dir, train_result = locate_train_output(input_dir)
-    table = select_eval_table(params["eval_dir"], params["eval_name"], train_result)
+    table = select_eval_table(params["eval_file"], train_result)
     result_dir = output_dir / "result"
     if result_dir.exists() and any(result_dir.iterdir()):
         fail(f"{result_dir} is not empty; use a new output_dir")
