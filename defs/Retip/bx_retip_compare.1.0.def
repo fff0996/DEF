@@ -38,19 +38,20 @@ From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a
 #   %files content is verified before any installation: mdcc against the
 #   SHA256 list in this DEF
 #   and models against models/SHA256SUMS (itself pinned here).
-#   Python bytecode caches copied from the build host (mdcc/__pycache__) are
-#   removed from /opt/mdcc/mdcc after verification.
+#   The uploaded mdcc must not contain Python bytecode caches (__pycache__):
+#   they are not covered by the SHA256 list, so the build stops if any is
+#   present instead of deleting them.
 #   No Conda or Anaconda repository is used.
 #
 # [HPC BUILD REQUIREMENTS]
 #   Use a designated build environment and an unprivileged build account.
-#   Do not bind production data or service directories into the build container.
+#   Do not bind production data or shared system directories into the build container.
 #   Host-side %pre and %setup sections are not used.
 #   Build workspace: the fixed container-private path /__closha_build/work,
 #   created with plain mkdir; the APT package cache (Dir::Cache), APT index
 #   lists (Dir::State::lists), the pip lock file, pip temporary files
 #   (TMPDIR), and HOME are placed below it, and only that path is removed
-#   after separate checks. The received `rm -rf /var/lib/apt/lists/*` is
+#   after separate checks. The received APT list deletion (/var/lib/apt/lists/*) is
 #   replaced by this workspace cleanup. The base image may ship APT cleanup
 #   hooks (docker-clean); they were not inspected.
 #   The Apptainer output SIF, image cache, and build temporary files are host
@@ -92,6 +93,10 @@ From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a
 #   the --fakeroot engine's empty /tmp/bind-mount-* directory (Apptainer,
 #   before %post) and SQLite temporary files (/var/tmp/etilqs_*) written
 #   every 10 s by a VS Code extension process, identified with strace.
+#   Later on 2026-10-07 the mdcc/models checks were rewritten to satisfy the
+#   site command blacklist (no directory changes and no deletion through
+#   find), and mdcc must now be uploaded without __pycache__; the root and
+#   --fakeroot rebuild of this version is in progress.
 #   The new start blocks also passed in fakeroot-command mode (an account
 #   without /etc/subuid entries) in a test DEF on ubuntu:24.04; a full build
 #   in that mode was not run locally.
@@ -210,26 +215,31 @@ From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a
     # Verify the mdcc code copied by %files before using it.
     [ ! -L /opt/mdcc/mdcc ] || fail "mdcc is a symlink"
     printf '%s\n' \
-        '4a8e11aa2203596ffb4fa86b936834736d4b83c652c0a17a6c8c8a6219ccb6ae  ./__init__.py' \
-        'a4b8cc22d61d4c8c06ad913adbbb160b7a449b3fc8bd08deb48064b8b2661db4  ./cli.py' \
-        'ce4e1d86d65f2c973097ce7444f6b7097267846c8da5c5dea9546b763824424d  ./core.py' \
-        'b32286871b0c833f3035adcceead1999f8219e13537c29fd4ecb885389f2c7d0  ./descriptors.py' \
-        '53193f861da75ae844082728af4d82f161a7d7d53fcc22e0e6f3dcfeac42333d  ./preprocess.py' \
-        '3697dffddf3bbdc2d71e2761f34ebebb98eba91b36aa10a4f48909ec1ad59e3d  ./pyretip/__init__.py' \
-        'a7f9df1ed1e4e1195753730a1fae294ce924fba61e634500c60a4251e680855a  ./pyretip/trainer.py' \
+        '4a8e11aa2203596ffb4fa86b936834736d4b83c652c0a17a6c8c8a6219ccb6ae  /opt/mdcc/mdcc/__init__.py' \
+        'a4b8cc22d61d4c8c06ad913adbbb160b7a449b3fc8bd08deb48064b8b2661db4  /opt/mdcc/mdcc/cli.py' \
+        'ce4e1d86d65f2c973097ce7444f6b7097267846c8da5c5dea9546b763824424d  /opt/mdcc/mdcc/core.py' \
+        'b32286871b0c833f3035adcceead1999f8219e13537c29fd4ecb885389f2c7d0  /opt/mdcc/mdcc/descriptors.py' \
+        '53193f861da75ae844082728af4d82f161a7d7d53fcc22e0e6f3dcfeac42333d  /opt/mdcc/mdcc/preprocess.py' \
+        '3697dffddf3bbdc2d71e2761f34ebebb98eba91b36aa10a4f48909ec1ad59e3d  /opt/mdcc/mdcc/pyretip/__init__.py' \
+        'a7f9df1ed1e4e1195753730a1fae294ce924fba61e634500c60a4251e680855a  /opt/mdcc/mdcc/pyretip/trainer.py' \
         > "$WORK/mdcc.sha256"
-    (cd /opt/mdcc/mdcc && sha256sum --check --quiet "$WORK/mdcc.sha256")
-    [ "$(cd /opt/mdcc/mdcc && find . -type f ! -path '*/__pycache__/*' | wc -l)" = 7 ] \
+    sha256sum --check --quiet "$WORK/mdcc.sha256"
+    # Host-built bytecode caches are not covered by the SHA256 list and Python
+    # could load them instead of the verified sources, so the upload must not
+    # contain any; nothing is deleted here.
+    [ -z "$(find /opt/mdcc/mdcc -name __pycache__ -print)" ] \
+        || fail "mdcc contains __pycache__; upload mdcc without it"
+    [ "$(find /opt/mdcc/mdcc -type f | wc -l)" = 7 ] \
         || fail "mdcc contains unexpected files"
-    # Remove host-built bytecode caches from the copied package only.
-    find /opt/mdcc/mdcc -depth -type d -name __pycache__ -exec rm -rf --one-file-system -- {} +
 
     # The models were copied by %files. SHA256SUMS itself is pinned here, every
     # file it lists must match, and no unlisted file may be present.
     [ ! -L /opt/mdcc/models ] || fail "models is a symlink"
     printf '%s  %s\n' e6f7ee4aa04ef774bfb8984dfb22fdbce517df1a7acef9026d6440b7b4ed0b2b /opt/mdcc/models/SHA256SUMS | sha256sum --check -
-    (cd /opt/mdcc/models && sha256sum --check --quiet SHA256SUMS)
-    (cd /opt/mdcc/models && find . -type f ! -name SHA256SUMS | sed 's|^\./||' | sort) > "$WORK/models.present"
+    awk '{ p = $2; sub(/^\*/, "", p); print $1 "  /opt/mdcc/models/" p }' /opt/mdcc/models/SHA256SUMS \
+        > "$WORK/models.sha256"
+    sha256sum --check --quiet "$WORK/models.sha256"
+    find /opt/mdcc/models -type f ! -name SHA256SUMS -printf '%P\n' | sort > "$WORK/models.present"
     awk '{ sub(/^\*/, "", $2); print $2 }' /opt/mdcc/models/SHA256SUMS | sort > "$WORK/models.listed"
     cmp -s "$WORK/models.present" "$WORK/models.listed" || fail "models contains files not listed in SHA256SUMS"
 
@@ -302,7 +312,6 @@ From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a
 
     # Remove only the exact workspace created above; stop on any doubt.
     # Each check is a separate command so that set -e cannot skip a failure.
-    cd /
     [ "$WORK" = /__closha_build/work ] || fail "unexpected workspace path"
     [ ! -L "$BUILD_ROOT" ] || fail "parent is a symlink"
     [ ! -L "$WORK" ] || fail "workspace is a symlink"
@@ -361,10 +370,11 @@ From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a
     PyPI wheels (rdkit, autogluon.tabular, LightGBM, CatBoost, scikit-learn),
     and the embedded mdcc package and trained RP/HILIC models.
 
-    Build from defs/Retip as an unprivileged user on a designated,
-    internet-connected x86_64 build machine (%files paths are relative to it):
-        cd defs/Retip
-        apptainer build --fakeroot bx_retip_compare.1.0.sif bx_retip_compare.1.0.def
+    The CLOSHA build system builds this DEF with its fixed Slurm job (policy
+    section 6.2) from its --chdir directory, where mdcc/ (without __pycache__)
+    and models/ must be uploaded first, since %files paths are relative to it:
+        apptainer build bx_retip_compare.1.0.sif bx_retip_compare.1.0.def
+    It must pass both as root and with fakeroot.
     Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
 
     Check and run the image:
