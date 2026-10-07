@@ -5,6 +5,10 @@
 #   ATAC_QC.1.1.R) are no longer skipped: the classes with reads are
 #   plotted, provided NucleosomeFree and mononucleosome both have reads.
 #   UsedClasses and DroppedClasses are added to the summary tables.
+#   stdout and stderr are kept apart: progress goes to stdout and
+#   logs/<stamp>.log; errors, warnings, and package messages go to stderr
+#   and logs/<stamp>.error.log. The run stops if output_dir is or contains
+#   an input path.
 
 # Usage:
 # Rscript ATAC_QC_plot.R \
@@ -54,13 +58,25 @@
 #   Mixing them up yields:
 #     "X is not an exported object from 'namespace:Y'"
 
+# Errors and warnings go to stderr and logs/<stamp>.error.log (err_con is
+# opened together with the log file); progress goes to stdout and
+# logs/<stamp>.log.
+err_con <- NULL
+emit_err <- function(txt) {
+	cat(txt, file = stderr())
+	if (!is.null(err_con)) {
+		cat(txt, file = err_con)
+		flush(err_con)
+	}
+}
+
 stop_err <- function(...) {
-	cat("ERROR:", paste(..., collapse = ""), "\n", file = stderr())
+	emit_err(paste0("ERROR: ", paste(..., collapse = ""), "\n"))
 	quit(status = 1)
 }
 
 warn_msg <- function(...) {
-	cat("WARNING:", paste(..., collapse = ""), "\n")
+	emit_err(paste0("WARNING: ", paste(..., collapse = ""), "\n"))
 }
 
 msg <- function(...) {
@@ -147,6 +163,20 @@ if (is.na(manifest_file)) {
 }
 
 # ------------------------------------------------------------
+# output_dir is cleaned below, so it must not be or contain an input.
+# ------------------------------------------------------------
+check_inputs_outside_output <- function(output_dir, inputs) {
+	out <- normalizePath(output_dir, mustWork = FALSE)
+	for (x in inputs[nzchar(inputs)]) {
+		inp <- normalizePath(x, mustWork = FALSE)
+		if (inp == out || startsWith(inp, paste0(out, "/"))) {
+			stop_err("input ", x, " is inside output_dir ", output_dir, ", which is cleaned on each run")
+		}
+	}
+}
+check_inputs_outside_output(output_dir, c(input_dir, tss_bed))
+
+# ------------------------------------------------------------
 # Clean output except logs/
 # ------------------------------------------------------------
 if (dir.exists(output_dir) && normalizePath(output_dir, mustWork = FALSE) != "/") {
@@ -169,13 +199,30 @@ log_file <- file.path(
 log_con <- file(log_file, open = "at")
 sink(log_con, append = TRUE, split = TRUE)
 
+err_file <- sub("\\.log$", ".error.log", log_file)
+err_con <- file(err_file, open = "at")
+
+# Package messages and warnings (stderr) are also copied to the .error.log.
+globalCallingHandlers(
+		message = function(m) {
+			cat(conditionMessage(m), file = err_con)
+			flush(err_con)
+		},
+		warning = function(w) {
+			cat("WARNING: ", conditionMessage(w), "\n", sep = "", file = err_con)
+			flush(err_con)
+		}
+)
+
 on.exit({
 			try(sink(), silent = TRUE)
 			try(close(log_con), silent = TRUE)
+			try(close(err_con), silent = TRUE)
 		}, add = TRUE)
 
 msg("############################## ATAC_QC_plot")
 msg("Log file       : ", log_file)
+msg("Error log file : ", err_file)
 msg("Start time     : ", format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
 msg("")
 msg("parameters:")

@@ -6,7 +6,7 @@ CLOSHA 분석 스크립트 작성 규칙 1.0
 
 참고 예: Bash는 `organellar_filter.1.0.sh`, R은 `ATAC_QC.1.0.R`, `differential_accessibility.1.0.R`.
 
-기존 1.0 스크립트 중 일부는 이 문서의 7절(stdout/stderr 구분: R의 경고가 stdout으로 나가고 `.error.log`가 없음)과 11절(스레드 기본값 4 고정)을 아직 따르지 않는다. 규칙에 맞추는 수정은 1.1절에 따라 새 버전으로 만든다.
+기존 1.0 스크립트 중 일부는 이 문서의 7절(stdout/stderr 구분)과 11절(스레드 자동 결정)을 따르지 않는다. 규칙에 맞춘 버전은 1.1이다(2026-10-07): `organellar_filter.1.1.sh`, `MACS3_callpeak_ATAC.1.1.sh`, `tf_footprinting.1.1.sh`, `ATAC_QC.1.1.R`, `ATAC_QC_plot.1.1.R`, `peak_annotation.1.1.R`, `differential_accessibility.1.1.R`, `atac_motif.1.1.R`. 각 파일 맨 위에 1.0과의 차이가 적혀 있다.
 
 ## 1. 위치, 이름, 버전
 - 위치: `scripts/{파이프라인명}/`. 예: `scripts/ATAC-seq/`.
