@@ -77,7 +77,8 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 # [HPC BUILD REQUIREMENTS]
 #   Use a designated build environment and an unprivileged build account.
 #   Do not run the build as the host root user or through sudo.
-#   Do not bind production data or service directories into the build container.
+#   Do not bind production data or shared system directories into the build
+#   container.
 #   Host-side %pre and %setup sections are not used.
 #   Package installation and cleanup run inside %post.
 #   Build workspace: the fixed container-private path /__closha_build/work.
@@ -96,13 +97,13 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   the build without deleting anything.
 #   No wildcard cleanup of default paths is used.
 #   These checks reduce accidents but do not prove host isolation. The build
-#   service must keep host binds off /__closha_build, its parents, and children.
+#   system must keep host binds off /__closha_build, its parents, and children.
 #   No broad cleanup of /tmp, /var/tmp, /root, or user home directories is used.
 #   %test performs checks without creating or deleting data files.
 #   The Apptainer output SIF, image cache, and build temporary files are host
 #   artifacts; place them in an approved build workspace, separate from services.
 #   This DEF does not clean the host's Apptainer cache or build workspace.
-#   The build service must enforce account, workspace, and mount restrictions;
+#   The build system must enforce account, workspace, and mount restrictions;
 #   comments in this DEF cannot enforce the host's bind configuration.
 #
 # [RUNTIME ENVIRONMENT ISOLATION]
@@ -144,22 +145,27 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   under the fakeroot command with read-only helpers under
 #   /.singularity.d/libs and the host devtmpfs /dev and /dev/shm. The mount
 #   allowlist now accepts those, and /dev/shm is covered with a private tmpfs.
-#   Local test builds (2026-10-06, GitHub Codespace, x86_64, Apptainer 1.4.5
-#   with the same apptainer.conf as production) succeeded as root and with
-#   --fakeroot, including %test. Root builds were traced with strace: no
-#   process opened any /proc or /sys path for writing, and host sysctl values
-#   did not change. inotify and before/after listings showed no DEF-caused
-#   change in the host /tmp or /var/tmp. With --fakeroot, Apptainer itself
-#   (fakeroot engine, before %post) creates and immediately removes an empty
-#   /tmp/bind-mount-* directory on the host; a DEF cannot prevent it. The
+#   Local test builds with those blocks (2026-10-06/07, GitHub Codespace,
+#   x86_64, Apptainer 1.4.5 with the same apptainer.conf as production)
+#   succeeded as root and with --fakeroot, including %test, for all seven
+#   ATAC-seq DEFs. Root builds were traced with strace: no process opened any
+#   /proc or /sys path for writing, and host sysctl values did not change.
+#   inotify and before/after listings showed no DEF-caused change in the host
+#   /tmp or /var/tmp. With --fakeroot, Apptainer itself (fakeroot engine,
+#   before %post) creates and immediately removes an empty /tmp/bind-mount-*
+#   directory on the host; a DEF cannot prevent it. On 2026-10-07 the DEFs were
+#   adjusted for the site command blacklist (the redundant directory change
+#   before cleanup was dropped, and tf_footprinting checks one command fewer in
+#   %test); that version was rebuilt as root for organellar_filter,
+#   macs3_callpeak_atac, and tf_footprinting only, which passed. The
 #   fakeroot-command mode was reproduced locally with an account without
 #   /etc/subuid entries and a test DEF holding the same %post and %test start
-#   blocks on ubuntu:24.04 (the local fakeroot library needs glibc 2.38, newer
-#   than Rocky 9); the blocks passed and no file reached the host /tmp or
-#   /dev/shm. A full Rocky 9 build in that mode was not possible locally. Built
-#   SIF size: 243.7 MiB. The APPTAINER_BINDPATH negative test was run on
-#   2026-09-30 with the earlier blocks and was not repeated. Not performed: a
-#   build on the production build machine, or analysis of user data.
+#   blocks on ubuntu:24.04; the blocks passed and no file reached the host /tmp
+#   or /dev/shm. A production build of a Retip DEF with the same blocks also
+#   passed them. Built SIF size: 243.7 MiB. The APPTAINER_BINDPATH negative
+#   test was run on 2026-09-30 with the earlier blocks and was not repeated.
+#   Not performed: a production build of these ATAC-seq DEFs, or analysis of
+#   user data.
 #   %test checks command locations, MACS3/SAMtools/HTSlib versions, the
 #   callpeak subcommand, Python imports, Bash behavior, and the recorded
 #   package channels.
@@ -324,7 +330,6 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 
     # Remove only the exact workspace created above; stop on any doubt.
     # Each check is a separate command so that set -e cannot skip a failure.
-    cd /
     [ "$WORK" = /__closha_build/work ] || fail "unexpected workspace path"
     [ ! -L "$BUILD_ROOT" ] || fail "parent is a symlink"
     [ ! -L "$WORK" ] || fail "workspace is a symlink"
@@ -398,7 +403,7 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     Base OS: Rocky Linux 9. Tools are installed in /opt/bio from conda-forge and
     bioconda with Miniforge; no Anaconda Inc. repository or Miniconda is used.
 
-    The CLOSHA build service builds this DEF with its fixed Slurm job (policy
+    The CLOSHA build system builds this DEF with its fixed Slurm job (policy
     section 6.2), on an internet-connected x86_64 node, without extra binds:
         apptainer build bx_macs3_callpeak_atac.1.0.sif bx_macs3_callpeak_atac.1.0.def
     It must pass both as root and with fakeroot.
@@ -419,7 +424,7 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     creates one beside the input BAM, so that location must be writable.
     The output directory must be separate from the input and its parents,
     because the script removes previous output except logs/. That existing
-    deletion behavior must be reviewed separately before service use.
+    deletion behavior must be reviewed separately before production use.
     Save the external Bash script with LF line endings.
     Writable runtime binds can expose host data to the analysis script.
     Runtime analysis requires no network access.
