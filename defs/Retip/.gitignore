@@ -1,0 +1,5 @@
+# Model files (about 793 MB) are uploaded to the build directory, not kept
+# in Git. SHA256SUMS stays tracked so the uploaded copy can be checked.
+models/*
+!models/SHA256SUMS
+__pycache__/

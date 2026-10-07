@@ -1,0 +1,373 @@
+Bootstrap: docker
+From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a5e26
+
+# =============================================================================
+# bx_retip_compare / DEF version 1.0
+#
+# [PURPOSE AND TARGET]
+#   RTpred (Retip) module "compare": runs `python -m mdcc.cli compare`.
+#   Revised from the received containers/compare.def (Pipeline RTpred,
+#   Revision 2) to follow the CLOSHA DEF policy; the image content (Python
+#   packages, apt packages, mdcc code, models) is unchanged.
+#   The mdcc package and the trained models are embedded with %files, as in the
+#   received DEF. Build from defs/Retip, because %files paths are relative to
+#   the directory where `apptainer build` is run (checked with Apptainer 1.4.5).
+#
+# [INPUT AND OUTPUT STRUCTURE]
+#   Defined by mdcc.cli compare (see `--help`). Output directories must be
+#   empty; the module refuses to write into a non-empty directory.
+#
+# [REQUIRED RUNTIME DEPENDENCIES]
+#   Python 3.13.15 (official python image). mdcc.core.check_runtime requires
+#   exactly numpy 2.3.5, pandas 2.3.3, rdkit 2026.3.1, autogluon.tabular
+#   1.5.0, scikit-learn 1.7.1, scipy 1.16.3, lightgbm 4.6.0, catboost 1.2.10.
+#   mdcc imports only numpy, pandas, rdkit, matplotlib, autogluon, sklearn,
+#   and the standard library; it starts no subprocesses and uses no network.
+#   apt: libgomp1 (LightGBM/CatBoost OpenMP), libstdc++6, fonts-dejavu-core.
+#   Runtime analysis needs no network access.
+#
+# [BASE IMAGE AND INSTALLATION RULES FOR THIS DEF]
+#   Base image: python:3.13.15-slim-bookworm (Debian 12.15), pinned by its
+#   index digest in From. Debian 12 is not in the policy's base OS list
+#   (Rocky Linux 9+, Ubuntu 22+); the user confirmed it runs on the target
+#   systems, and the policy decision is pending.
+#   Python packages: the requirements.txt pins were resolved for cp313
+#   manylinux x86_64 into the 46-package lock below; every SHA256 matches the
+#   PyPI JSON metadata, and pip installs with --require-hashes
+#   --only-binary=:all:, so no source distribution is built.
+#   %files content is verified before any installation: mdcc against the
+#   SHA256 list in this DEF
+#   and models against models/SHA256SUMS (itself pinned here).
+#   Python bytecode caches copied from the build host (mdcc/__pycache__) are
+#   removed from /opt/mdcc/mdcc after verification.
+#   No Conda or Anaconda repository is used.
+#
+# [HPC BUILD REQUIREMENTS]
+#   Use a designated build environment and an unprivileged build account.
+#   Do not bind production data or service directories into the build container.
+#   Host-side %pre and %setup sections are not used.
+#   Build workspace: the fixed container-private path /__closha_build/work,
+#   created with plain mkdir; the APT package cache (Dir::Cache), APT index
+#   lists (Dir::State::lists), the pip lock file, pip temporary files
+#   (TMPDIR), and HOME are placed below it, and only that path is removed
+#   after separate checks. The received `rm -rf /var/lib/apt/lists/*` is
+#   replaced by this workspace cleanup. The base image may ship APT cleanup
+#   hooks (docker-clean); they were not inspected.
+#   The Apptainer output SIF, image cache, and build temporary files are host
+#   artifacts; place them in an approved build workspace, separate from services.
+#
+# [RUNTIME ENVIRONMENT ISOLATION]
+#   PATH is fixed without home entries; PYTHONNOUSERSITE=1 keeps host
+#   ~/.local packages out. MPLCONFIGDIR follows the job's TMPDIR and is made
+#   unique per user (the received fixed /tmp/mdcc-matplotlib path could
+#   collide between users on a shared node).
+#
+# [CHANGES FROM THE RECEIVED DEF]
+#   Added: host-isolation blocks (policy 6.1), the fixed build workspace and
+#   APT cache redirection (policy 6), %files content verification, the
+#   hash-locked pip install, `set -eu` in %test (the received %test passed
+#   whatever the earlier checks returned), package import checks, this
+#   header, and %help. containers/requirements.txt is no longer copied: the
+#   lock is embedded here. Image packages and versions are unchanged.
+#
+# [VALIDATION STATUS AND REPRODUCIBILITY]
+#   Checked: received DEF and requirements.txt, mdcc imports, models/
+#   SHA256SUMS (235 files, all matching, none unlisted), the pip lock against
+#   PyPI, the base image commands (mount, stat, awk, realpath, sha256sum),
+#   and DEF %post and %test shell syntax (sh -n).
+#   Isolation blocks updated on 2026-10-06 after a production build log:
+#   the production build account has no /etc/subuid entry, so Apptainer runs
+#   %post under the fakeroot command with read-only helpers under
+#   /.singularity.d/libs and the host devtmpfs /dev and /dev/shm. The mount
+#   allowlist now accepts those, and /dev/shm is covered with a private
+#   tmpfs (same blocks as the ATAC-seq DEFs).
+#   Local test builds (2026-10-07, GitHub Codespace, Apptainer 1.4.5 with
+#   the production apptainer.conf, built from defs/Retip) succeeded as root
+#   and with --fakeroot, including %test (check_runtime, package imports,
+#   RP/HILIC model loading, and `mdcc.cli compare --help`).
+#   Root builds were traced with strace: no process opened any /proc or /sys
+#   path for writing, and host sysctl values did not change. inotify and
+#   before/after listings showed no DEF-caused change in the host /tmp or
+#   /var/tmp. Host events seen during the builds came from other sources:
+#   the --fakeroot engine's empty /tmp/bind-mount-* directory (Apptainer,
+#   before %post) and SQLite temporary files (/var/tmp/etilqs_*) written
+#   every 10 s by a VS Code extension process, identified with strace.
+#   The new start blocks also passed in fakeroot-command mode (an account
+#   without /etc/subuid entries) in a test DEF on ubuntu:24.04; a full build
+#   in that mode was not run locally.
+#   Not performed: a build on the production build machine, or analysis
+#   runs with real input data.
+#   Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
+#   APT package versions may change between builds; they are recorded.
+#
+# [CHANGELOG]
+#   2026-10-01 / 1.0: Policy-aligned revision of the received compare.def.
+# =============================================================================
+
+%labels
+    Pipeline RTpred
+    Revision 2
+    Module compare
+    Name bx_retip_compare
+    Version 1.0
+    BaseOS Debian-12-bookworm
+    Python 3.13.15
+    PackageManager pip
+    RuntimeNetworkRequired false
+
+%files
+    mdcc /opt/mdcc/mdcc
+    models /opt/mdcc/models
+
+%environment
+    export PATH=/usr/local/bin:/usr/bin:/bin
+    export PYTHONPATH=/opt/mdcc
+    export PYTHONNOUSERSITE=1
+    export PYTHONDONTWRITEBYTECODE=1
+    export MPLBACKEND=Agg
+    export MPLCONFIGDIR="${TMPDIR:-/tmp}/mdcc-matplotlib-$(id -u)"
+    export OMP_NUM_THREADS=2
+    export OPENBLAS_NUM_THREADS=2
+    export MKL_NUM_THREADS=2
+    export HF_HUB_OFFLINE=1
+    export AWS_EC2_METADATA_DISABLED=true
+
+%post
+    set -eu
+    # Fixed container PATH; ignore any inherited PATH that may point into a
+    # host-bound home directory.
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export DEBIAN_FRONTEND=noninteractive
+    export LC_ALL=C.UTF-8
+
+    # Apptainer builds keep the admin "mount tmp = yes" setting, so %post sees
+    # the host /tmp and /var/tmp. Cover both with private tmpfs mounts in this
+    # container's mount namespace before any other command runs; the host
+    # directories are then unreachable. If mounting fails, the build stops.
+    mount -t tmpfs -o mode=1777,nosuid,nodev closha-tmp /tmp
+    mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
+    [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
+    [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+    # With "mount dev = yes" the build may see the host's /dev and its shared
+    # /dev/shm. Cover /dev/shm with a private tmpfs as well, then confirm from
+    # the mount table that the newest /dev/shm mount is this one.
+    if [ -d /dev/shm ]; then
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-shm /dev/shm
+        awk '$5 == "/dev/shm" { s = $0 } END { exit !(s ~ / - tmpfs closha-shm /) }' /proc/self/mountinfo ||
+            { echo "/dev/shm is not private" >&2; exit 1; }
+    fi
+    # Record the mount table in the build log for review.
+    cat /proc/self/mountinfo
+
+    # Stop before any install step if the build container has a mount other
+    # than those Apptainer creates for builds: the rootfs, /tmp and /var/tmp
+    # (now covered above), private /etc/hosts and /etc/resolv.conf copies, and
+    # kernel pseudo-filesystems under /dev, /proc, and /sys, plus, in builds
+    # that run %post under the fakeroot command (no /etc/subuid entry), the
+    # read-only fakeroot helpers Apptainer places under /.singularity.d/libs.
+    # This rejects host paths added through APPTAINER_BINDPATH or
+    # APPTAINER_MOUNT, which the build passes into %post from the caller's
+    # environment.
+    awk '
+        { split($0, sep, " - "); split(sep[2], f, " "); mp = $5; opt = $6; fs = f[1]; src = $4 }
+        mp == "/" || mp == "/tmp" || mp == "/var/tmp" { next }
+        (mp == "/etc/hosts" || mp == "/etc/resolv.conf") &&
+            src ~ /\/bundle-temp-[0-9]+\/(hosts|resolv\.conf)$/ { next }
+        (mp == "/dev" || mp ~ /^\/dev\//) && fs ~ /^(devtmpfs|tmpfs|devpts|mqueue|hugetlbfs)$/ { next }
+        (mp == "/proc" || mp ~ /^\/proc\//) && fs ~ /^(proc|binfmt_misc|autofs)$/ { next }
+        (mp == "/sys" || mp ~ /^\/sys\//) &&
+            fs ~ /^(sysfs|cgroup|cgroup2|securityfs|selinuxfs|debugfs|tracefs|bpf|fusectl|configfs|pstore|efivarfs)$/ { next }
+        mp == "/.singularity.d/libs" && fs == "tmpfs" && opt ~ /^ro(,|$)/ { next }
+        mp ~ /^\/\.singularity\.d\/libs\/(fakeroot|faked|libfakeroot\.so)$/ && opt ~ /^ro(,|$)/ { next }
+        { print "Unexpected mount in build container: " mp " (" fs ")" > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /proc/self/mountinfo || { echo "Build stopped: remove extra bind settings and rebuild" >&2; exit 1; }
+
+    fail() { echo "Build check failed: $*" >&2; exit 1; }
+
+    # Fixed container-private workspace from the approved profile.
+    # Plain mkdir (no -p) fails if a path already exists, including a symlink
+    # or a bind mount point, so the build stops instead of reusing it.
+    BUILD_ROOT=/__closha_build
+    WORK=/__closha_build/work
+    mkdir -m 0700 -- "$BUILD_ROOT"
+    mkdir -m 0700 -- "$WORK"
+    mkdir -p -- "$WORK/tmp" "$WORK/home" "$WORK/py" \
+        "$WORK/apt-cache/archives/partial" "$WORK/apt-lists/partial"
+
+    # The admin config may bind the host home, and /tmp may be host-backed.
+    # Redirect HOME, TMPDIR, and XDG directories into the workspace before any
+    # other command runs, so no tool reads or writes host user files or /tmp.
+    export HOME="$WORK/home"
+    export TMPDIR="$WORK/tmp"
+    export XDG_CACHE_HOME="$WORK/home/.cache"
+    export XDG_CONFIG_HOME="$WORK/home/.config"
+    export XDG_DATA_HOME="$WORK/home/.local/share"
+
+    # The locked wheel hashes below are for x86_64 only.
+    [ "$(dpkg --print-architecture)" = amd64 ] || fail "unsupported architecture"
+
+    # Verify the mdcc code copied by %files before using it.
+    [ ! -L /opt/mdcc/mdcc ] || fail "mdcc is a symlink"
+    printf '%s\n' \
+        '4a8e11aa2203596ffb4fa86b936834736d4b83c652c0a17a6c8c8a6219ccb6ae  ./__init__.py' \
+        'a4b8cc22d61d4c8c06ad913adbbb160b7a449b3fc8bd08deb48064b8b2661db4  ./cli.py' \
+        'ce4e1d86d65f2c973097ce7444f6b7097267846c8da5c5dea9546b763824424d  ./core.py' \
+        'b32286871b0c833f3035adcceead1999f8219e13537c29fd4ecb885389f2c7d0  ./descriptors.py' \
+        '53193f861da75ae844082728af4d82f161a7d7d53fcc22e0e6f3dcfeac42333d  ./preprocess.py' \
+        '3697dffddf3bbdc2d71e2761f34ebebb98eba91b36aa10a4f48909ec1ad59e3d  ./pyretip/__init__.py' \
+        'a7f9df1ed1e4e1195753730a1fae294ce924fba61e634500c60a4251e680855a  ./pyretip/trainer.py' \
+        > "$WORK/mdcc.sha256"
+    (cd /opt/mdcc/mdcc && sha256sum --check --quiet "$WORK/mdcc.sha256")
+    [ "$(cd /opt/mdcc/mdcc && find . -type f ! -path '*/__pycache__/*' | wc -l)" = 7 ] \
+        || fail "mdcc contains unexpected files"
+    # Remove host-built bytecode caches from the copied package only.
+    find /opt/mdcc/mdcc -depth -type d -name __pycache__ -exec rm -rf --one-file-system -- {} +
+
+    # The models were copied by %files. SHA256SUMS itself is pinned here, every
+    # file it lists must match, and no unlisted file may be present.
+    [ ! -L /opt/mdcc/models ] || fail "models is a symlink"
+    printf '%s  %s\n' e6f7ee4aa04ef774bfb8984dfb22fdbce517df1a7acef9026d6440b7b4ed0b2b /opt/mdcc/models/SHA256SUMS | sha256sum --check -
+    (cd /opt/mdcc/models && sha256sum --check --quiet SHA256SUMS)
+    (cd /opt/mdcc/models && find . -type f ! -name SHA256SUMS | sed 's|^\./||' | sort) > "$WORK/models.present"
+    awk '{ sub(/^\*/, "", $2); print $2 }' /opt/mdcc/models/SHA256SUMS | sort > "$WORK/models.listed"
+    cmp -s "$WORK/models.present" "$WORK/models.listed" || fail "models contains files not listed in SHA256SUMS"
+
+    # Use the official base; APT cache and index lists stay in the workspace.
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get -o Dir::Cache="$WORK/apt-cache" -o Dir::State::lists="$WORK/apt-lists" update
+    apt-get -o Dir::Cache="$WORK/apt-cache" -o Dir::State::lists="$WORK/apt-lists" \
+        install -y --no-install-recommends libgomp1 libstdc++6 fonts-dejavu-core
+
+    # Hash-locked binary wheels (cp313, manylinux x86_64). Hashes match PyPI.
+    export PIP_DISABLE_PIP_VERSION_CHECK=1
+    export PIP_NO_CACHE_DIR=1
+    printf '%s\n' \
+        'autogluon.common==1.5.0 --hash=sha256:8d7f348acafe9c32c2ff49905dbcd652064ca8bb9359516dac05c32dd27409ad' \
+        'autogluon.core==1.5.0 --hash=sha256:df60d751d4093decdbc5fbcc4498d3e6b3d66eba27761020a9f5d89c7b735a48' \
+        'autogluon.features==1.5.0 --hash=sha256:5c8a7dd60c66b532b42122ff87a2d140adf7952632b6db24fe6255bb75f8d90e' \
+        'autogluon.tabular==1.5.0 --hash=sha256:62ba6ee7fc88f60effc5e11ee6f55f86a0917b55f2c2ff881cd9a611267cdceb' \
+        'boto3==1.43.106 --hash=sha256:fdf2e304f9e8864b8613591b18b36ee995560c9666033622eda1cb9057866880' \
+        'botocore==1.43.106 --hash=sha256:c1fb8818f9957cb5037f73db34ac1a12ba43562e31d6e7f9cb7e5fc64e1dba78' \
+        'catboost==1.2.10 --hash=sha256:42c1b6c7ae5c18cdbe00c8b9493987cc13338fe328baaf1a0b98ddaf58db96a2' \
+        'certifi==2026.7.22 --hash=sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775' \
+        'charset-normalizer==3.5.2 --hash=sha256:7218e8f32b0956cfcd048fd42d9d5779809745ca1d86113ca56f66e7ae1549c4' \
+        'cloudpickle==3.1.2 --hash=sha256:9acb47f6afd73f60dc1df93bb801b472f05ff42fa6c84167d25cb206be1fbf4a' \
+        'contourpy==1.4.0 --hash=sha256:f1219a8898523cba821085f2da8a1b962cc696325763f09d7f93538ba43b2d70' \
+        'cycler==0.12.1 --hash=sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30' \
+        'et-xmlfile==2.0.0 --hash=sha256:7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa' \
+        'fonttools==4.66.1 --hash=sha256:83572afe48733bad7a4a9c11721d3a726c2e976d82b063fc9bdd049d76955abd' \
+        'graphviz==0.21 --hash=sha256:54f33de9f4f911d7e84e4191749cac8cc5653f815b06738c54db9a15ab8b1e42' \
+        'idna==3.20 --hash=sha256:ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c' \
+        'jmespath==1.1.0 --hash=sha256:a5663118de4908c91729bea0acadca56526eb2698e83de10cd116ae0f4e97c64' \
+        'joblib==1.6.0 --hash=sha256:3dbbf9f6e4b592a2357b854608e980fe6390d131d7a82f011a377ef2ebef7aba' \
+        'kiwisolver==1.5.1 --hash=sha256:74ad5c3dad54a4641b4c28cd15ded70899d04459c6c7aeacafea716be97cce6d' \
+        'lightgbm==4.6.0 --hash=sha256:cb19b5afea55b5b61cbb2131095f50538bd608a00655f23ad5d25ae3e3bf1c8d' \
+        'matplotlib==3.10.9 --hash=sha256:8f3bcac1ca5ed000a6f4337d47ba67dfddf37ed6a46c15fd7f014997f7bf865f' \
+        'narwhals==2.26.0 --hash=sha256:29326d74f107c347fd1009bd58e38d9f7c7c5b51e6de97bc93dbc325d9038b54' \
+        'networkx==3.7 --hash=sha256:e3fd2c13a7814cee3746340d8d7f8598a67f16a58bf47fb7f8793fab6efca1b0' \
+        'numpy==2.3.5 --hash=sha256:11e06aa0af8c0f05104d56450d6093ee639e15f24ecf62d417329d06e522e017' \
+        'openpyxl==3.1.5 --hash=sha256:5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2' \
+        'packaging==26.3 --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c' \
+        'pandas==2.3.3 --hash=sha256:318d77e0e42a628c04dc56bcef4b40de67918f7041c2b061af1da41dcff670ac' \
+        'pillow==12.3.0 --hash=sha256:0847a763afefb695bc912d7c131e7e0632d4edc1d8698f58ddabec8e46b8b6d3' \
+        'plotly==7.1.0 --hash=sha256:dbb7fa18afce40d0a8e80d1bf162eceb3faa0ce5a77fe741ad09a74cf78f53f3' \
+        'psutil==7.1.3 --hash=sha256:3bb428f9f05c1225a558f53e30ccbad9930b11c3fc206836242de1091d3e7dd3' \
+        'pyarrow==20.0.0 --hash=sha256:97c8dc984ed09cb07d618d57d8d4b67a5100a30c3818c2fb0b04599f0da2de7b' \
+        'pyparsing==3.3.3 --hash=sha256:ece8c00a69cf01b45d0b1dedabb469c90d8caf996d4fda40f147627a122849a4' \
+        'python-dateutil==2.9.0.post0 --hash=sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427' \
+        'pytz==2026.4 --hash=sha256:9d514388fbc89ca0833203464272ac485b8828568ab73532f5020f17e892a0ff' \
+        'PyYAML==6.0.3 --hash=sha256:0f29edc409a6392443abf94b9cf89ce99889a1dd5376d94316ae5145dfedd5d6' \
+        'rdkit==2026.3.1 --hash=sha256:af2e141a7a885155ecf956adb04c26809146db8a8fc4ab1ad8946e108e174969' \
+        'requests==2.34.2 --hash=sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0' \
+        's3transfer==0.19.2 --hash=sha256:d8168eccca828cbb2cd573675333f3bddd254313a9c42494b84c76b539e8ba25' \
+        'scikit-learn==1.7.1 --hash=sha256:13679981fdaebc10cc4c13c43344416a86fcbc61449cb3e6517e1df9d12c8309' \
+        'scipy==1.16.3 --hash=sha256:7dc1360c06535ea6116a2220f760ae572db9f661aba2d88074fe30ec2aa1ff88' \
+        'six==1.17.0 --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274' \
+        'threadpoolctl==3.7.0 --hash=sha256:cd8b60b5641b45c67bbf73c64c843235fc2d8a480c87389f52f5dbee893b86be' \
+        'tqdm==4.70.1 --hash=sha256:c293e525e6fef9c20e8728fd4612df02a0aa31bb5fe91ecd93e123b1b7bffa73' \
+        'typing-extensions==4.16.0 --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8' \
+        'tzdata==2026.4 --hash=sha256:c2169a8b0a7a5e9674da5a135ccdfb2b3e671b333ed9fed17b41f73c34476e81' \
+        'urllib3==2.8.0 --hash=sha256:0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3' \
+        > "$WORK/py/requirements.lock"
+    /usr/local/bin/python -m pip install --require-hashes --only-binary=:all: \
+        --index-url https://pypi.org/simple \
+        -r "$WORK/py/requirements.lock"
+    /usr/local/bin/python -m pip check
+    PYTHONPATH=/opt/mdcc /usr/local/bin/python -c 'from mdcc.core import check_runtime; check_runtime()'
+
+    # Retain installed-version information with the image.
+    /usr/local/bin/python -m pip freeze --all > /opt/mdcc/pip-freeze.txt
+    dpkg-query -W > /opt/mdcc/os-packages.txt
+
+    # Remove only the exact workspace created above; stop on any doubt.
+    # Each check is a separate command so that set -e cannot skip a failure.
+    cd /
+    [ "$WORK" = /__closha_build/work ] || fail "unexpected workspace path"
+    [ ! -L "$BUILD_ROOT" ] || fail "parent is a symlink"
+    [ ! -L "$WORK" ] || fail "workspace is a symlink"
+    [ -d "$WORK" ] || fail "workspace is missing"
+    [ "$(realpath -e -- "$WORK")" = "$WORK" ] || fail "canonical path changed"
+    [ "$(stat -c %d -- "$WORK")" = "$(stat -c %d -- /)" ] || fail "workspace is on another filesystem"
+    rm -rf --one-file-system -- "$WORK"
+    rmdir -- "$BUILD_ROOT"
+
+%runscript
+    exec /usr/local/bin/python -m mdcc.cli compare "$@"
+
+%test
+    set -eu
+    export PATH=/usr/local/bin:/usr/bin:/bin
+    export PYTHONPATH=/opt/mdcc
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONNOUSERSITE=1
+    export MPLBACKEND=Agg
+    export LC_ALL=C.UTF-8
+
+    # The build runs %test separately from %post, again with the host /tmp and
+    # /var/tmp bound (mount tmp = yes), and R and Python create temporary
+    # files there. When running as root (a root or fakeroot build), cover both,
+    # and /dev/shm when present, with private tmpfs mounts first; if mounting
+    # fails, the build stops.
+    # Unprivileged runtime checks cannot mount and skip this step.
+    if [ "$(id -u)" = 0 ]; then
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-tmp /tmp
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
+        [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
+        [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+        if [ -d /dev/shm ]; then
+            mount -t tmpfs -o mode=1777,nosuid,nodev closha-shm /dev/shm
+            awk '$5 == "/dev/shm" { s = $0 } END { exit !(s ~ / - tmpfs closha-shm /) }' /proc/self/mountinfo ||
+                { echo "/dev/shm is not private" >&2; exit 1; }
+        fi
+    fi
+
+    [ "$(command -v python)" = /usr/local/bin/python ]
+    python -c 'from mdcc.core import check_runtime; check_runtime()'
+    python -c 'import rdkit, autogluon.tabular, lightgbm, catboost, sklearn, scipy, matplotlib, openpyxl'
+    python -c 'from mdcc.core import load_model; [load_model("/opt/mdcc/models/" + m.lower() + "_model", m) for m in ("RP", "HILIC")]'
+    python -m mdcc.cli compare --help >/dev/null
+
+    # The build workspace must not remain in the image.
+    if [ -e /__closha_build ]; then
+        echo 'Build workspace /__closha_build remains in the image' >&2
+        exit 1
+    fi
+
+    echo 'RTpred compare: runtime dependency checks passed.'
+
+%help
+    RTpred (Retip) compare module: Python 3.13.15 (Debian 12 slim), hash-locked
+    PyPI wheels (rdkit, autogluon.tabular, LightGBM, CatBoost, scikit-learn),
+    and the embedded mdcc package and trained RP/HILIC models.
+
+    Build from defs/Retip as an unprivileged user on a designated,
+    internet-connected x86_64 build machine (%files paths are relative to it):
+        cd defs/Retip
+        apptainer build --fakeroot bx_retip_compare.1.0.sif bx_retip_compare.1.0.def
+    Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
+
+    Check and run the image:
+        apptainer test --cleanenv bx_retip_compare.1.0.sif
+        apptainer run bx_retip_compare.1.0.sif --help
+    Output directories must be empty. Runtime analysis needs no network.
