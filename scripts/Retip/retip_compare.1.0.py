@@ -34,7 +34,9 @@ Arguments (key=value, --key=value, or --key value):
                             capped by them. default: auto
     sheet      (optional) - XLSX sheet name; first (or empty) reads the first
                             sheet. Ignored for CSV. default: first
-    rt_unit    (optional) - RT unit label for plots. default: model unit
+    rt_unit    (optional) - RT unit label. mdcc requires it to equal the label
+                            used in retip_train; auto (or empty) reads it from
+                            the user model. default: auto
     scope      (optional) - all (every user-model candidate) or best. default: all
     title      (optional) - Report title. default: Default and user model comparison
 
@@ -49,6 +51,7 @@ Runs inside bx_retip_compare.1.0.sif. Rerunning replaces output_dir/result
 (only that folder is removed; logs are kept).
 """
 import datetime
+import json
 import importlib.util
 import os
 from pathlib import Path
@@ -61,7 +64,7 @@ import threading
 MODULE = "compare"
 IMAGE = "bx_retip_compare.1.0.sif"
 REQUIRED = ["input_dir", "output_dir", "model"]
-OPTIONAL = {"eval_file": "reserved_test", "sheet": "first", "cpus": "auto", "rt_unit": "model unit",
+OPTIONAL = {"eval_file": "reserved_test", "sheet": "first", "cpus": "auto", "rt_unit": "auto",
             "scope": "all", "title": "Default and user model comparison"}
 TABLE_SUFFIXES = {".csv", ".xlsx"}
 
@@ -248,6 +251,13 @@ def main():
     table = select_eval_table(params["eval_file"], train_result)
     result_dir = output_dir / "result"
     check_inputs_outside(result_dir, input_dir, model_dir, table)
+    rt_unit = params["rt_unit"]
+    if rt_unit in ("", "auto"):
+        # mdcc compare stops unless this matches the unit used in training.
+        try:
+            rt_unit = json.loads((model_dir / "model_manifest.json").read_text())["rt_unit"]
+        except (OSError, ValueError, KeyError):
+            fail(f"cannot read rt_unit from {model_dir / 'model_manifest.json'}; set rt_unit")
     if importlib.util.find_spec("mdcc") is None:
         fail(f"mdcc is not importable; run inside {IMAGE}")
 
@@ -261,14 +271,15 @@ def main():
     log(logs, f"  user model = {model_dir}")
     log(logs, f"  eval table = {table}")
     log(logs, f"  output_dir = {output_dir}")
+    log(logs, f"  rt_unit    = {rt_unit} (requested {params['rt_unit']})")
     log(logs, f"  cpus       = {cpus} (requested {params['cpus']}, allocated {allocated_cpus()})")
-    for key in ["model", "sheet", "rt_unit", "scope", "title"]:
+    for key in ["model", "sheet", "scope", "title"]:
         log(logs, f"  {key:<10} = {params.get(key) or '<default>'}")
     log(logs)
 
     args = [MODULE, "--input", str(table), "--output", str(result_dir),
             "--model", model, "--user-model", str(model_dir),
-            "--rt-unit", params["rt_unit"], "--scope", params["scope"], "--title", params["title"]]
+            "--rt-unit", rt_unit, "--scope", params["scope"], "--title", params["title"]]
     # "first" (or an empty value) keeps mdcc's default: the first XLSX sheet.
     if params["sheet"] not in ("", "first"):
         args += ["--sheet", params["sheet"]]
