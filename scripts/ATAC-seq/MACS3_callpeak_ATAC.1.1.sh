@@ -10,7 +10,7 @@
 #   The run stops if output_dir is input_dir or one of its parents.
 #
 # Usage:
-#   ./MACS3_callpeak_ATAC.1.1.sh input_dir="..." output_dir="..." genome_size="..." [peak_type="atac"] [alignment_suffix=".bam"]
+#   ./MACS3_callpeak_ATAC.1.1.sh input_dir="..." output_dir="..." genome_size="..." [peak_type="atac"] [alignment_suffix=".shifted.bam"]
 #
 # Examples:
 #   General ATAC-seq:
@@ -39,7 +39,7 @@
 #   output_dir       (required) - Output directory
 #   genome_size      (required) - MACS3 genome size, e.g. hs, mm, ce, dm, or numeric size
 #   peak_type        (optional) - atac, narrow, broad, tf. default: atac
-#   alignment_suffix (optional) - BAM suffix to search. default: .bam
+#   alignment_suffix (optional) - BAM suffix to search. default: .shifted.bam
 #   qvalue           (optional) - q-value cutoff. default: 0.05
 #   broad_cutoff     (optional) - broad cutoff for broad peak calling. default: 0.1
 
