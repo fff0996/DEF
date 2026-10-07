@@ -29,7 +29,12 @@
 #     and this module only operates on pre-computed split BAMs.
 #   - If ATAC_QC was run without genome_fasta, split BAMs do not exist
 #     and those samples are skipped cleanly.
-#   - If a sample's SplitStatus is "empty_split:..." it is skipped.
+#   - A class whose split BAM is empty (e.g. no trinucleosome fragments
+#     when long fragments were not kept as proper pairs, so ATAC_QC marks
+#     the sample "empty_split:trinucleosome") is left out of the plots.
+#     A sample is skipped only if NucleosomeFree or mononucleosome is
+#     empty or missing. Used and dropped classes are logged and written
+#     to the summary tables.
 #
 # NOTE on namespaces:
 #   These functions look like they all belong to ATACseqQC because the
@@ -369,6 +374,13 @@ file_exists_non_na <- function(x) {
 	!is.na(x) && nzchar(x) && file.exists(x)
 }
 
+count_mapped_reads <- function(bam) {
+	tryCatch(
+			sum(Rsamtools::idxstatsBam(bam)$mapped),
+			error = function(e) NA_real_
+	)
+}
+
 # ------------------------------------------------------------
 # Read inputs
 # ------------------------------------------------------------
@@ -482,15 +494,31 @@ for (i in seq_len(nrow(manifest))) {
 	
 	names(bamfiles) <- class_names
 	
-	can_plot <- manifest$SplitStatus[i] == "done" &&
+	# A class is usable when its split BAM exists and has mapped reads.
+	# Plot the usable classes as long as the two core classes,
+	# NucleosomeFree and mononucleosome, are among them.
+	class_reads <- vapply(bamfiles, function(b) {
+		if (file_exists_non_na(b)) count_mapped_reads(b) else NA_real_
+	}, numeric(1))
+	classes_use <- class_names[!is.na(class_reads) & class_reads > 0]
+	classes_dropped <- setdiff(class_names, classes_use)
+	reads_text <- paste(
+			class_names,
+			ifelse(is.na(class_reads), "missing", format(class_reads, scientific = FALSE, trim = TRUE)),
+			sep = ":",
+			collapse = ","
+	)
+	
+	split_status <- manifest$SplitStatus[i]
+	can_plot <- (split_status == "done" || grepl("^empty_split", split_status)) &&
 			file_exists_non_na(obj_rds) &&
-			all(vapply(bamfiles, file_exists_non_na, logical(1)))
+			all(c("NucleosomeFree", "mononucleosome") %in% classes_use)
 	
 	if (!can_plot) {
 		reason <- paste0(
-				"SplitStatus=", manifest$SplitStatus[i],
+				"SplitStatus=", split_status,
 				"; SplitObjectsRDS exists=", file_exists_non_na(obj_rds),
-				"; split BAMs exist=", paste(vapply(bamfiles, file_exists_non_na, logical(1)), collapse = ",")
+				"; split BAM reads=", reads_text
 		)
 		
 		warn_msg("sample skipped: ", sample_id, " / ", reason)
@@ -501,6 +529,8 @@ for (i in seq_len(nrow(manifest))) {
 				Replicate = replicate,
 				Status = "skipped",
 				Reason = reason,
+				UsedClasses = NA_character_,
+				DroppedClasses = NA_character_,
 				HeatmapPDF = NA_character_,
 				ProfilePDF = NA_character_,
 				ProfileTSV = NA_character_,
@@ -522,7 +552,17 @@ for (i in seq_len(nrow(manifest))) {
 	
 	objs <- readRDS(obj_rds)
 	
-	missing_objs <- setdiff(class_names, names(objs))
+	msg("split BAM reads: ", reads_text)
+	if (length(classes_dropped) > 0) {
+		warn_msg(
+				sample_id, " plotted without empty class(es): ",
+				paste(classes_dropped, collapse = ","),
+				" (SplitStatus=", split_status, ")"
+		)
+	}
+	msg("classes used: ", paste(classes_use, collapse = ","))
+	
+	missing_objs <- setdiff(classes_use, names(objs))
 	
 	if (length(missing_objs) > 0) {
 		stop_err(
@@ -550,7 +590,7 @@ for (i in seq_len(nrow(manifest))) {
 	# NBIS-style library size normalization
 	# NOTE: estLibSize is exported by ChIPpeakAnno, not ATACseqQC.
 	librarySize <- safe_call(
-			ChIPpeakAnno::estLibSize(bamfiles),
+			ChIPpeakAnno::estLibSize(bamfiles[classes_use]),
 			paste0(sample_id, " estLibSize")
 	)
 	
@@ -561,7 +601,7 @@ for (i in seq_len(nrow(manifest))) {
 	# distinction is invisible without ::, but it matters here.
 	sigs <- safe_call(
 			ATACseqQC::enrichedFragments(
-					gal = objs[class_names],
+					gal = objs[classes_use],
 					TSS = TSS_use,
 					librarySize = librarySize,
 					seqlev = seqlev_use,
@@ -663,7 +703,9 @@ for (i in seq_len(nrow(manifest))) {
 			Condition = condition,
 			Replicate = replicate,
 			Status = "done",
-			Reason = NA_character_,
+			Reason = if (length(classes_dropped) > 0) paste0("empty class(es) not plotted: ", paste(classes_dropped, collapse = ",")) else NA_character_,
+			UsedClasses = paste(classes_use, collapse = ","),
+			DroppedClasses = if (length(classes_dropped) > 0) paste(classes_dropped, collapse = ",") else NA_character_,
 			HeatmapPDF = heatmap_pdf,
 			ProfilePDF = profile_pdf,
 			ProfileTSV = profile_tsv,
