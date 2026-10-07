@@ -1,7 +1,8 @@
-CLOSHA DEF 생성 에이전트 — 설계 및 지침 1.5
+CLOSHA DEF 생성 에이전트 — 설계 및 지침 1.6
 
 작성일: 2026-09-29
 
+개정 1.6 (2026-10-06): 운영 빌드 로그로 확인한 fakeroot 명령 방식(subuid 미등록 계정)의 mount를 허용 목록에 반영하고, 호스트 /dev/shm을 tmpfs로 가리는 규칙 추가.
 개정 1.5 (2026-10-06): 운영 빌드 실행 명령(6.2절) 추가.
 개정 1.4 (2026-10-01): Conda 정책을 Anaconda Inc. 저장소 금지로 정정하고, Miniforge + conda-forge/bioconda 레시피 규칙, conda DEF 머리 주석 블록, Rocky 9 R의 which 설치, 설치 기록 파일·라벨 규칙을 추가(ATAC-seq conda DEF 4종 로컬 root 빌드 확인 반영). 전산팀 검토 결과(2026-10-01)에 따른 conda 사용 조건(라이선스 확인, 재빌드 재현성, 이미지 크기)과 제출물을 추가.
 개정 1.3 (2026-09-30): 운영 apptainer.conf와 Apptainer 1.4.5 빌드 동작 확인 결과를 반영해 빌드 컨테이너의 호스트 연결 차단 규칙(6.1절), %post·%test 시작 순서, 로컬 검증 빌드 절차를 추가.
@@ -116,20 +117,28 @@ Conda 관련 경로·실행 파일 검사만으로 설치 이력이나 기반 �
     mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
     [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
     [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+    # Cover the host's shared /dev/shm (mount dev = yes) the same way.
+    if [ -d /dev/shm ]; then
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-shm /dev/shm
+        awk '$5 == "/dev/shm" { s = $0 } END { exit !(s ~ / - tmpfs closha-shm /) }' /proc/self/mountinfo ||
+            { echo "/dev/shm is not private" >&2; exit 1; }
+    fi
     # Record the mount table in the build log for review.
     cat /proc/self/mountinfo
 
     # Stop before any install step if a mount other than the build defaults
     # is present (section 6.1 allowlist).
     awk '
-        { split($0, sep, " - "); split(sep[2], f, " "); mp = $5; fs = f[1]; src = $4 }
+        { split($0, sep, " - "); split(sep[2], f, " "); mp = $5; opt = $6; fs = f[1]; src = $4 }
         mp == "/" || mp == "/tmp" || mp == "/var/tmp" { next }
         (mp == "/etc/hosts" || mp == "/etc/resolv.conf") &&
             src ~ /\/bundle-temp-[0-9]+\/(hosts|resolv\.conf)$/ { next }
-        (mp == "/dev" || mp ~ /^\/dev\//) && fs ~ /^(tmpfs|devpts|mqueue)$/ { next }
+        (mp == "/dev" || mp ~ /^\/dev\//) && fs ~ /^(devtmpfs|tmpfs|devpts|mqueue|hugetlbfs)$/ { next }
         (mp == "/proc" || mp ~ /^\/proc\//) && fs ~ /^(proc|binfmt_misc|autofs)$/ { next }
         (mp == "/sys" || mp ~ /^\/sys\//) &&
             fs ~ /^(sysfs|cgroup|cgroup2|securityfs|selinuxfs|debugfs|tracefs|bpf|fusectl|configfs|pstore|efivarfs)$/ { next }
+        mp == "/.singularity.d/libs" && fs == "tmpfs" && opt ~ /^ro(,|$)/ { next }
+        mp ~ /^\/\.singularity\.d\/libs\/(fakeroot|faked|libfakeroot\.so)$/ && opt ~ /^ro(,|$)/ { next }
         { print "Unexpected mount in build container: " mp " (" fs ")" > "/dev/stderr"; bad = 1 }
         END { exit bad }
     ' /proc/self/mountinfo || { echo "Build stopped: remove extra bind settings and rebuild" >&2; exit 1; }
@@ -181,16 +190,18 @@ Conda 관련 경로·실행 파일 검사만으로 설치 이력이나 기반 �
 - `mount tmp`, `mount proc`, `mount sys`, `mount dev`는 켜진 채 남는다. 호스트 /tmp와 /var/tmp가 %post와 %test 모두에 쓰기 가능하게 연결된다.
 - /etc/hosts와 /etc/resolv.conf에는 빌드 임시 디렉터리(`bundle-temp-*`)에 만든 복사본이 연결된다. 호스트 원본이 아니다.
 - 빌드를 실행한 셸의 `APPTAINER_BINDPATH`, `APPTAINER_MOUNT`는 %post와 %test에 그대로 전달된다. 명령에 --bind가 없어도 임의의 호스트 경로가 연결될 수 있다(root·fakeroot 모두 실측).
+- subuid에 등록되지 않은 일반 계정이 빌드하면(운영 빌드, 2026-10-06 로그) Apptainer는 root-mapped namespace를 만들고 %post를 fakeroot 명령으로 실행한다. 이때 /.singularity.d/libs(tmpfs)와 그 아래 fakeroot, faked, libfakeroot.so가 호스트에서 읽기 전용(ro)으로 연결된다. /dev는 호스트 devtmpfs이고 호스트의 공유 메모리 /dev/shm과 /dev/hugepages가 함께 보인다. 이 방식에서도 tmpfs mount는 동작하고 %test는 uid 0으로 실행된다.
 - --fakeroot 빌드는 %post 전에 Apptainer의 fakeroot 엔진이 호스트 /tmp에 빈 `bind-mount-*` 디렉터리를 만들었다가 바로 지운다. TMPDIR로 옮겨지지 않으며 DEF로 막을 수 없다. Apptainer 자체 동작으로 기록한다.
 
 DEF 작성 규칙:
 - %post 첫 부분은 다음 순서를 지킨다. 어떤 설치·다운로드 명령보다 먼저 실행한다.
   1. `set -eu`와 컨테이너 전용 `PATH` 고정. 상속된 PATH를 쓰지 않는다.
   2. /tmp와 /var/tmp에 전용 tmpfs를 mount하고 `stat -f -c %T` 결과가 tmpfs인지 확인한다. mount에 실패하면 빌드를 중단한다. 이 mount는 컨테이너 전용 mount namespace 안에서만 유효하며 호스트에 영향을 주지 않는다.
-  3. `/proc/self/mountinfo`를 빌드 로그에 출력한다.
-  4. mount 허용 목록을 검사해, 목록 밖의 mount가 있으면 설치 전에 빌드를 중단한다. 허용 대상은 rootfs `/`, /tmp와 /var/tmp, `bundle-temp-*` 복사본인 /etc/hosts와 /etc/resolv.conf, 그리고 /dev·/proc·/sys 아래의 커널 가상 파일시스템이다(참고 템플릿의 fstype 목록). 새 환경에서 정상 mount가 거부되면 실측한 mount와 근거를 확인한 뒤 목록을 검토해 늘린다. 검사를 끄지 않는다.
-  5. 작업 경로 생성(6절) 직후 `HOME`, `TMPDIR`, `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME`을 작업 경로 아래로 옮긴다. 도구별 캐시 설정은 그 다음에 추가한다.
-- %test 첫 부분에서도 `id -u`가 0이면(root 또는 fakeroot 빌드) /tmp와 /var/tmp에 같은 tmpfs를 mount하고 확인한다. R은 시작할 때마다 /tmp에 세션 디렉터리를 만들고, Python은 임시 디렉터리를 고를 때 /tmp에 시험 파일을 만든다. 비특권 런타임 검사는 mount 권한이 없으므로 이 단계를 건너뛴다.
+  3. /dev/shm이 있으면 전용 tmpfs를 mount하고, mountinfo에서 마지막 /dev/shm mount가 이 tmpfs(`closha-shm`)인지 확인한다. 호스트 /dev/shm도 tmpfs라 `stat`으로는 구분되지 않는다.
+  4. `/proc/self/mountinfo`를 빌드 로그에 출력한다.
+  5. mount 허용 목록을 검사해, 목록 밖의 mount가 있으면 설치 전에 빌드를 중단한다. 허용 대상은 rootfs `/`, /tmp와 /var/tmp, `bundle-temp-*` 복사본인 /etc/hosts와 /etc/resolv.conf, /dev·/proc·/sys 아래의 커널 가상 파일시스템(참고 템플릿의 fstype 목록), 그리고 fakeroot 명령 방식에서 Apptainer가 읽기 전용으로 넣는 /.singularity.d/libs와 그 아래 fakeroot·faked·libfakeroot.so다. libs 연결이 읽기 전용이 아니면 거부한다. 새 환경에서 정상 mount가 거부되면 실측한 mount와 근거를 확인한 뒤 목록을 검토해 늘린다. 검사를 끄지 않는다.
+  6. 작업 경로 생성(6절) 직후 `HOME`, `TMPDIR`, `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME`을 작업 경로 아래로 옮긴다. 도구별 캐시 설정은 그 다음에 추가한다.
+- %test 첫 부분에서도 `id -u`가 0이면(root 또는 fakeroot 빌드) /tmp와 /var/tmp, 그리고 있으면 /dev/shm에 같은 tmpfs를 mount하고 확인한다. R은 시작할 때마다 /tmp에 세션 디렉터리를 만들고, Python은 임시 디렉터리를 고를 때 /tmp에 시험 파일을 만든다. 비특권 런타임 검사는 mount 권한이 없으므로 이 단계를 건너뛴다.
 - %post와 %test에서 /etc/hosts, /etc/localtime, /etc/resolv.conf, /proc, /sys, /dev 아래에 쓰지 않는다. 시간대 설정을 위해 /etc/localtime을 교체하는 레시피는 별도 검토 없이 쓰지 않는다.
 - %environment에는 home 경로가 없는 고정 `PATH`를 둔다. 런타임에는 사용자 home이 연결되므로 R은 `R_LIBS` 해제, `R_LIBS_USER`를 이미지 라이브러리로 지정, `R_PROFILE_USER=/dev/null`, `R_ENVIRON_USER=/dev/null`을 설정한다. Python은 `PYTHONPATH`와 `PYTHONHOME`을 해제하고 `PYTHONNOUSERSITE=1`을 설정한다.
 - 외부 분석 스크립트는 `command -v 도구` 형태로 이름만 호출한다. 도구 위치는 %environment의 PATH가 정하므로 스크립트에 이미지 내부 절대경로를 넣지 않는다. 스크립트가 ~, $HOME, /tmp에 결과를 쓰지 않는지는 런타임 검토 항목으로 따로 기록한다.
@@ -210,6 +221,11 @@ DEF 작성 규칙:
         mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
         [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
         [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+        if [ -d /dev/shm ]; then
+            mount -t tmpfs -o mode=1777,nosuid,nodev closha-shm /dev/shm
+            awk '$5 == "/dev/shm" { s = $0 } END { exit !(s ~ / - tmpfs closha-shm /) }' /proc/self/mountinfo ||
+                { echo "/dev/shm is not private" >&2; exit 1; }
+        fi
     fi
 ```
 
@@ -217,6 +233,7 @@ DEF 작성 규칙:
 - 운영 HPC가 아닌 일회용 개발 환경(예: GitHub Codespace)에서, 사용자가 명시적으로 승인한 경우에만 수행한다. 만든 SIF는 배포하지 않는다.
 - 운영과 같은 Apptainer 버전(현재 1.4.5, setuid 설치)과 운영 apptainer.conf와 같은 설정을 사용한다.
 - `env -i`로 환경을 비우고 `APPTAINER_TMPDIR`, `APPTAINER_CACHEDIR`, SIF 출력은 작업용 디렉터리에 둔다. root 빌드와 --fakeroot 빌드의 캐시 디렉터리는 소유자가 달라지므로 분리한다.
+- 운영처럼 subuid에 등록되지 않은 계정의 빌드(fakeroot 명령 방식)도 확인한다. 시험 계정을 만들고 subuid·subgid 항목을 지운 뒤 그 계정으로 `apptainer build`를 실행한다. 호스트의 fakeroot 라이브러리가 기반 이미지 glibc보다 새 버전이면(예: Ubuntu 24.04 호스트와 Rocky 9 이미지) %post가 시작되지 않으므로, 같은 %post·%test 시작 블록을 호스트와 glibc가 맞는 기반 이미지에 넣은 시험 DEF로 확인한다.
 - root 빌드와 --fakeroot 빌드를 모두 수행하고, 각 빌드에서 다음을 기록한다.
   - 호스트 /tmp, /var/tmp: `inotifywait -m -r` 이벤트와 빌드 전후 파일 목록(경로·크기·수정 시각) 비교. 검증 도구 자신이 만드는 파일은 제외 대상으로 명시한다.
   - root 빌드: `strace -f --seccomp-bpf`로 /proc와 /sys 경로를 쓰기 모드(O_WRONLY, O_RDWR, O_CREAT, O_TRUNC)로 연 프로세스를 기록하고, 호스트 `sysctl -a`(자동으로 변하는 카운터 제외)를 전후 비교한다. 추적 방식이 쓰기를 잡는지는 /proc에 일부러 쓰는 시험 DEF로 먼저 확인한다.
@@ -375,12 +392,18 @@ config: admin bind paths and the home mount are dropped, but the host /tmp and
 /var/tmp stay bound and writable, /proc, /sys, and /dev are mounted, and
 /etc/hosts and /etc/resolv.conf are private copies. APPTAINER_BINDPATH and
 APPTAINER_MOUNT from the caller's environment still reach %post and %test.
+When the build account has no /etc/subuid entry, as in production, %post runs
+under the fakeroot command: read-only fakeroot helpers appear under
+/.singularity.d/libs, and /dev is the host devtmpfs with the host /dev/shm.
 Start every %post, before any install or download command, with: set -eu and a
 fixed container PATH; private tmpfs mounts over /tmp and /var/tmp, verified with
-stat -f and stopping on failure; the mount table printed to the build log; the
+stat -f and stopping on failure; a private tmpfs over /dev/shm when present,
+verified in the mount table; the mount table printed to the build log; the
 approved mount allowlist check, stopping before any install step on any other
 mount; then the workspace, followed at once by HOME, TMPDIR, and XDG directories
 set below it. Start every %test with the same tmpfs mounts when id -u is 0.
+The allowlist accepts /.singularity.d/libs and its fakeroot helpers only when
+they are mounted read-only.
 Never write /etc/hosts, /etc/localtime, /etc/resolv.conf, /proc, /sys, or /dev.
 Do not disable the mount check; widen the allowlist only after reviewing the
 observed mount and its source.

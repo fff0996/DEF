@@ -142,18 +142,28 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   /proc, or /sys. These blocks are identical to the ones verified in
 #   the ATAC-seq DEFs verified on 2026-09-30 (policy section 6.1).
 #   Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
-#   Local test builds (2026-10-01, GitHub Codespace, x86_64, Apptainer 1.4.5
-#   with the same apptainer.conf as production) succeeded as root and with
-#   --fakeroot, including %test. Root builds were traced with strace: no
-#   process opened any /proc or /sys path for writing, and host sysctl values
-#   did not change. inotify and before/after listings showed no DEF-caused
-#   change in the host /tmp or /var/tmp. With --fakeroot, Apptainer itself
-#   (fakeroot engine, before %post) creates and immediately removes an empty
-#   /tmp/bind-mount-* directory on the host; a DEF cannot prevent it. Built SIF
-#   size: 719.9 MiB. The APPTAINER_BINDPATH negative test was run on 2026-09-30
-#   with the same isolation blocks (the build stopped before any install step)
-#   and was not repeated for this DEF. Not performed: a build on the production
-#   build machine, or analysis of user data.
+#   Isolation blocks updated on 2026-10-06 after a production build log: the
+#   production build account has no /etc/subuid entry, so Apptainer runs %post
+#   under the fakeroot command with read-only helpers under
+#   /.singularity.d/libs and the host devtmpfs /dev and /dev/shm. The mount
+#   allowlist now accepts those, and /dev/shm is covered with a private tmpfs.
+#   Local test builds (2026-10-06, GitHub Codespace, x86_64, Apptainer 1.4.5
+#   with the same apptainer.conf as production) succeeded as root, including
+#   %test; the --fakeroot rebuild with these blocks is in progress (the
+#   previous blocks passed --fakeroot on 2026-10-01). Root builds were traced
+#   with strace: no process opened any /proc or /sys path for writing, and host
+#   sysctl values did not change. inotify and before/after listings showed no
+#   DEF-caused change in the host /tmp or /var/tmp. With --fakeroot, Apptainer
+#   itself (fakeroot engine, before %post) creates and immediately removes an
+#   empty /tmp/bind-mount-* directory on the host; a DEF cannot prevent it. The
+#   fakeroot-command mode was reproduced locally with an account without
+#   /etc/subuid entries and a test DEF holding the same %post and %test start
+#   blocks on ubuntu:24.04 (the local fakeroot library needs glibc 2.38, newer
+#   than Rocky 9); the blocks passed and no file reached the host /tmp or
+#   /dev/shm. A full Rocky 9 build in that mode was not possible locally. Built
+#   SIF size: 719.9 MiB. The APPTAINER_BINDPATH negative test was run on
+#   2026-09-30 with the earlier blocks and was not repeated. Not performed: a
+#   build on the production build machine, or analysis of user data.
 #   %test checks R 4.5.3, package versions and loading, the functions used by
 #   the script, a file-less PDF device (smoothScatter), and the recorded
 #   package channels.
@@ -203,24 +213,37 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
     [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
     [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+    # With "mount dev = yes" the build may see the host's /dev and its shared
+    # /dev/shm. Cover /dev/shm with a private tmpfs as well, then confirm from
+    # the mount table that the newest /dev/shm mount is this one.
+    if [ -d /dev/shm ]; then
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-shm /dev/shm
+        awk '$5 == "/dev/shm" { s = $0 } END { exit !(s ~ / - tmpfs closha-shm /) }' /proc/self/mountinfo ||
+            { echo "/dev/shm is not private" >&2; exit 1; }
+    fi
     # Record the mount table in the build log for review.
     cat /proc/self/mountinfo
 
     # Stop before any install step if the build container has a mount other
     # than those Apptainer creates for builds: the rootfs, /tmp and /var/tmp
     # (now covered above), private /etc/hosts and /etc/resolv.conf copies, and
-    # kernel pseudo-filesystems under /dev, /proc, and /sys. This rejects host
-    # paths added through APPTAINER_BINDPATH or APPTAINER_MOUNT, which the
-    # build passes into %post from the caller's environment.
+    # kernel pseudo-filesystems under /dev, /proc, and /sys, plus, in builds
+    # that run %post under the fakeroot command (no /etc/subuid entry), the
+    # read-only fakeroot helpers Apptainer places under /.singularity.d/libs.
+    # This rejects host paths added through APPTAINER_BINDPATH or
+    # APPTAINER_MOUNT, which the build passes into %post from the caller's
+    # environment.
     awk '
-        { split($0, sep, " - "); split(sep[2], f, " "); mp = $5; fs = f[1]; src = $4 }
+        { split($0, sep, " - "); split(sep[2], f, " "); mp = $5; opt = $6; fs = f[1]; src = $4 }
         mp == "/" || mp == "/tmp" || mp == "/var/tmp" { next }
         (mp == "/etc/hosts" || mp == "/etc/resolv.conf") &&
             src ~ /\/bundle-temp-[0-9]+\/(hosts|resolv\.conf)$/ { next }
-        (mp == "/dev" || mp ~ /^\/dev\//) && fs ~ /^(tmpfs|devpts|mqueue)$/ { next }
+        (mp == "/dev" || mp ~ /^\/dev\//) && fs ~ /^(devtmpfs|tmpfs|devpts|mqueue|hugetlbfs)$/ { next }
         (mp == "/proc" || mp ~ /^\/proc\//) && fs ~ /^(proc|binfmt_misc|autofs)$/ { next }
         (mp == "/sys" || mp ~ /^\/sys\//) &&
             fs ~ /^(sysfs|cgroup|cgroup2|securityfs|selinuxfs|debugfs|tracefs|bpf|fusectl|configfs|pstore|efivarfs)$/ { next }
+        mp == "/.singularity.d/libs" && fs == "tmpfs" && opt ~ /^ro(,|$)/ { next }
+        mp ~ /^\/\.singularity\.d\/libs\/(fakeroot|faked|libfakeroot\.so)$/ && opt ~ /^ro(,|$)/ { next }
         { print "Unexpected mount in build container: " mp " (" fs ")" > "/dev/stderr"; bad = 1 }
         END { exit bad }
     ' /proc/self/mountinfo || { echo "Build stopped: remove extra bind settings and rebuild" >&2; exit 1; }
@@ -341,14 +364,20 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 
     # The build runs %test separately from %post, again with the host /tmp and
     # /var/tmp bound (mount tmp = yes), and R and Python create temporary
-    # files there. When running as root (a root or fakeroot build), cover both
-    # with private tmpfs mounts first; if mounting fails, the build stops.
+    # files there. When running as root (a root or fakeroot build), cover both,
+    # and /dev/shm when present, with private tmpfs mounts first; if mounting
+    # fails, the build stops.
     # Unprivileged runtime checks cannot mount and skip this step.
     if [ "$(id -u)" = 0 ]; then
         mount -t tmpfs -o mode=1777,nosuid,nodev closha-tmp /tmp
         mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
         [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
         [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+        if [ -d /dev/shm ]; then
+            mount -t tmpfs -o mode=1777,nosuid,nodev closha-shm /dev/shm
+            awk '$5 == "/dev/shm" { s = $0 } END { exit !(s ~ / - tmpfs closha-shm /) }' /proc/self/mountinfo ||
+                { echo "/dev/shm is not private" >&2; exit 1; }
+        fi
     fi
 
     for cmd in R Rscript; do
