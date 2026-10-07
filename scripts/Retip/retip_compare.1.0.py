@@ -39,6 +39,9 @@ Outputs (output_dir/result):
     comparison.csv, predictions_long.csv, comparison.png/.svg, report.html,
     manifest.json
 
+Logs (output_dir/logs): <time>_<pid>.log copies stdout (progress) and
+<time>_<pid>.err copies stderr (errors and warnings).
+
 Runs inside bx_retip_compare.1.0.sif. Nothing is deleted: output_dir/result
 must be new or empty.
 """
@@ -49,6 +52,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import threading
 
 MODULE = "compare"
 IMAGE = "bx_retip_compare.1.0.sif"
@@ -101,27 +105,51 @@ def parse_args(argv):
     return params
 
 
-def open_log(output_dir):
-    logs_dir = output_dir / "logs"
-    logs_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    return (logs_dir / f"{stamp}_{os.getpid()}.log").open("a", encoding="utf-8")
+class Logs:
+    """Run log files: <stamp>.log mirrors stdout, <stamp>.err mirrors stderr."""
+
+    def __init__(self, output_dir):
+        logs_dir = output_dir / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        stamp = f"{datetime.datetime.now():%Y%m%d_%H%M%S}_{os.getpid()}"
+        self.out = (logs_dir / f"{stamp}.log").open("a", encoding="utf-8")
+        self.err = (logs_dir / f"{stamp}.err").open("a", encoding="utf-8")
+        self.lock = threading.Lock()
 
 
-def log(handle, message=""):
-    print(message, flush=True)
-    handle.write(message + "\n")
-    handle.flush()
+def log(logs, message=""):
+    """Progress message: stdout and the .log file."""
+    with logs.lock:
+        print(message, flush=True)
+        logs.out.write(message + "\n")
+        logs.out.flush()
 
 
-def run_mdcc(handle, args):
-    """Run python -m mdcc.cli and copy its combined output to the console and log."""
+def log_err(logs, message):
+    """Error or warning: stderr and the .err file."""
+    with logs.lock:
+        print(message, file=sys.stderr, flush=True)
+        logs.err.write(message + "\n")
+        logs.err.flush()
+
+
+def run_mdcc(logs, args):
+    """Run python -m mdcc.cli, keeping its stdout and stderr apart."""
     command = [sys.executable, "-m", "mdcc.cli", *args]
-    log(handle, "Command: " + " ".join(command))
-    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    log(logs, "Command: " + " ".join(command))
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                           text=True, bufsize=1) as process:
-        for line in process.stdout:
-            log(handle, line.rstrip("\n"))
+        def pump(stream, write):
+            for line in stream:
+                write(logs, line.rstrip("\n"))
+        readers = [threading.Thread(target=pump, args=(process.stdout, log)),
+                   threading.Thread(target=pump, args=(process.stderr, log_err))]
+        for reader in readers:
+            reader.start()
+        for reader in readers:
+            reader.join()
+    if process.returncode != 0:
+        log_err(logs, f"Error: mdcc {args[0]} exited with status {process.returncode}")
     return process.returncode
 
 
@@ -170,19 +198,19 @@ def main():
     if importlib.util.find_spec("mdcc") is None:
         fail(f"mdcc is not importable; run inside {IMAGE}")
 
-    handle = open_log(output_dir)
-    log(handle, f"############################## RTpred {MODULE}")
-    log(handle, f"Log file: {handle.name}")
-    log(handle, f"Start time: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
-    log(handle)
-    log(handle, "parameters:")
-    log(handle, f"  input_dir  = {input_dir}")
-    log(handle, f"  user model = {model_dir}")
-    log(handle, f"  eval table = {table}")
-    log(handle, f"  output_dir = {output_dir}")
+    logs = Logs(output_dir)
+    log(logs, f"############################## RTpred {MODULE}")
+    log(logs, f"Log files: {logs.out.name} (stdout), {logs.err.name} (stderr)")
+    log(logs, f"Start time: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+    log(logs)
+    log(logs, "parameters:")
+    log(logs, f"  input_dir  = {input_dir}")
+    log(logs, f"  user model = {model_dir}")
+    log(logs, f"  eval table = {table}")
+    log(logs, f"  output_dir = {output_dir}")
     for key in ["model", "sheet", "rt_unit", "scope", "title"]:
-        log(handle, f"  {key:<10} = {params.get(key) or '<default>'}")
-    log(handle)
+        log(logs, f"  {key:<10} = {params.get(key) or '<default>'}")
+    log(logs)
 
     args = [MODULE, "--input", str(table), "--output", str(result_dir),
             "--model", model, "--user-model", str(model_dir),
@@ -190,11 +218,11 @@ def main():
     # "first" (or an empty value) keeps mdcc's default: the first XLSX sheet.
     if params["sheet"] not in ("", "first"):
         args += ["--sheet", params["sheet"]]
-    code = run_mdcc(handle, args)
+    code = run_mdcc(logs, args)
 
-    log(handle)
-    log(handle, f"Results: {result_dir}")
-    log(handle, f"End time: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
+    log(logs)
+    log(logs, f"Results: {result_dir}")
+    log(logs, f"End time: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
     sys.exit(code)
 
 
