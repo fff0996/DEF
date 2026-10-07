@@ -1,0 +1,41 @@
+# Representative species of the JASPAR CORE taxonomic groups that have an
+# OrgDb in Bioconductor AnnotationHub (checked 2026-10-07, snapshot 2025-10-29).
+# Use with: Rscript tools/download_orgdb.R species_file="tools/orgdb_species_jaspar.txt" out_dir="..."
+# Names must match AnnotationHub exactly (list=TRUE writes the full list).
+#
+# Not in AnnotationHub (use a GO table instead): Hordeum vulgare, Apis mellifera,
+# Schizosaccharomyces pombe, Neurospora crassa, Aspergillus nidulans,
+# Candida albicans, Ciona intestinalis.
+
+# vertebrates
+Homo sapiens
+Mus musculus
+Rattus norvegicus
+Danio rerio
+Gallus gallus
+Xenopus laevis
+Bos taurus
+Sus scrofa
+
+# plants
+Arabidopsis thaliana
+Oryza sativa_Japonica_Group
+Zea mays
+Glycine max
+Solanum lycopersicum
+Triticum aestivum
+Nicotiana tabacum
+Medicago truncatula
+Brassica napus
+Populus trichocarpa
+Physcomitrium patens
+
+# insects
+Drosophila melanogaster
+Anopheles gambiae
+
+# nematodes
+Caenorhabditis elegans
+
+# fungi
+Saccharomyces cerevisiae
