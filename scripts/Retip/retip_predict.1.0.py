@@ -10,7 +10,7 @@ Example:
         output_dir="/path/to/output" \
         model="RP"
 
-Arguments:
+Arguments (key=value, --key=value, or --key value):
     input_file (required) - Compound table (*.csv or *.xlsx) with a SMILES
                             column (smiles or structure); experimental_rt is
                             optional.
@@ -48,17 +48,37 @@ def fail(message):
 
 
 def parse_args(argv):
-    """Parse key=value arguments, as in the other CLOSHA scripts."""
+    """Parse key=value, --key=value, or --key value arguments.
+
+    A --key followed directly by another --option (or nothing) gets an empty
+    value, which keeps that option's default behavior.
+    """
     params = dict(OPTIONAL)
-    for arg in argv:
-        if "=" not in arg:
-            fail(f"Invalid argument format: {arg} (must be key=value format)")
-        key, value = arg.split("=", 1)
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        i += 1
+        if arg.startswith("--"):
+            arg = arg[2:]
+            if "=" in arg:
+                key, value = arg.split("=", 1)
+            else:
+                key, value = arg, ""
+                if i < len(argv) and not argv[i].startswith("--"):
+                    value = argv[i]
+                    i += 1
+        elif "=" in arg:
+            key, value = arg.split("=", 1)
+        else:
+            fail(f"Invalid argument format: {arg} (use key=value or --key value)")
+        key = key.replace("-", "_")
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
             fail(f"Invalid key: {key}")
         if key not in REQUIRED and key not in OPTIONAL:
             fail(f"Unknown parameter: {key}")
-        params[key] = value.strip().strip("'\"")
+        value = value.strip().strip("'\"")
+        # An empty optional value keeps its default.
+        params[key] = value if value or key in REQUIRED else OPTIONAL[key]
     for key in REQUIRED:
         if not params.get(key):
             fail(f"Required parameter '{key}' is missing")
