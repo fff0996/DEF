@@ -10,7 +10,7 @@ Example:
         output_dir="/path/to/output" \
         model="RP" \
         time_limit="1200" \
-        cpus="4"
+        cpus="auto"
 
 Arguments (key=value, --key=value, or --key value):
     input_file            (required) - Training table (*.csv or *.xlsx) with
@@ -25,7 +25,10 @@ Arguments (key=value, --key=value, or --key value):
     rt_unit               (optional) - RT unit label (values are not converted).
                                        default: model unit
     time_limit            (optional) - AutoGluon fit budget in seconds. default: 1200
-    cpus                  (optional) - CPU cores for training. default: 2
+    cpus                  (optional) - CPU cores for training and numeric
+                                       libraries: auto uses the cores allocated
+                                       to the job (Slurm/cgroup); a number is
+                                       capped by them. default: auto
     algorithms            (optional) - Comma-separated subset of GBM,CAT,RF,XT,KNN.
                                        default: GBM,CAT,RF,XT,KNN
     test_size             (optional) - Reserved test fraction. default: 0.2
@@ -60,7 +63,7 @@ MODULE = "train"
 IMAGE = "bx_retip_train.1.0.sif"
 REQUIRED = ["input_file", "output_dir", "model"]
 OPTIONAL = {"sheet": "first", "rt_unit": "model unit", "time_limit": "1200",
-            "cpus": "2", "algorithms": "GBM,CAT,RF,XT,KNN", "test_size": "0.2",
+            "cpus": "auto", "algorithms": "GBM,CAT,RF,XT,KNN", "test_size": "0.2",
             "validation_size": "0.2", "seed": "42", "max_missing_fraction": "0.2",
             "correlation_threshold": "0.995", "method_label": "user method"}
 TABLE_SUFFIXES = {".csv", ".xlsx"}
@@ -110,6 +113,29 @@ def parse_args(argv):
     return params
 
 
+def allocated_cpus():
+    """CPU cores this job may use: the affinity mask (which reflects Slurm and
+    cgroup limits), capped by SLURM_CPUS_PER_TASK when Slurm sets it."""
+    try:
+        count = len(os.sched_getaffinity(0))
+    except AttributeError:
+        count = os.cpu_count() or 1
+    slurm = os.environ.get("SLURM_CPUS_PER_TASK", "")
+    if slurm.isdigit() and int(slurm) > 0:
+        count = min(count, int(slurm))
+    return max(1, count)
+
+
+def resolve_cpus(value):
+    """auto (or empty) uses the allocated cores; a number is capped by them."""
+    allocated = allocated_cpus()
+    if value in ("", "auto"):
+        return allocated
+    if not value.isdigit() or int(value) < 1:
+        fail(f"cpus must be auto or a positive integer: {value}")
+    return min(int(value), allocated)
+
+
 class Logs:
     """Run log files: <stamp>.log mirrors stdout, <stamp>.err mirrors stderr."""
 
@@ -138,12 +164,15 @@ def log_err(logs, message):
         logs.err.flush()
 
 
-def run_mdcc(logs, args):
-    """Run python -m mdcc.cli, keeping its stdout and stderr apart."""
+def run_mdcc(logs, args, cpus):
+    """Run python -m mdcc.cli with numeric-library threads set to cpus,
+    keeping its stdout and stderr apart."""
     command = [sys.executable, "-m", "mdcc.cli", *args]
+    env = dict(os.environ, **{name: str(cpus) for name in
+               ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")})
     log(logs, "Command: " + " ".join(command))
     with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                          text=True, bufsize=1) as process:
+                          text=True, bufsize=1, env=env) as process:
         def pump(stream, write):
             for line in stream:
                 write(logs, line.rstrip("\n"))
@@ -163,6 +192,7 @@ def main():
     input_file = Path(params["input_file"])
     output_dir = Path(params["output_dir"])
     model = params["model"]
+    cpus = resolve_cpus(params["cpus"])
 
     if model not in ("RP", "HILIC"):
         fail(f"model must be RP or HILIC: {model}")
@@ -188,7 +218,8 @@ def main():
     log(logs, "parameters:")
     log(logs, f"  input_file = {input_file}")
     log(logs, f"  output_dir = {output_dir}")
-    for key in ["model", "sheet", "rt_unit", "time_limit", "cpus", "algorithms", "test_size",
+    log(logs, f"  {'cpus':<21} = {cpus} (requested {params['cpus']}, allocated {allocated_cpus()})")
+    for key in ["model", "sheet", "rt_unit", "time_limit", "algorithms", "test_size",
                 "validation_size", "seed", "max_missing_fraction", "correlation_threshold",
                 "method_label"]:
         log(logs, f"  {key:<21} = {params.get(key) or '<default>'}")
@@ -196,7 +227,7 @@ def main():
 
     args = [MODULE, "--input", str(input_file), "--output", str(result_dir),
             "--model", model, "--rt-unit", params["rt_unit"],
-            "--time-limit", params["time_limit"], "--cpus", params["cpus"],
+            "--time-limit", params["time_limit"], "--cpus", str(cpus),
             "--algorithms", *algorithms,
             "--test-size", params["test_size"], "--validation-size", params["validation_size"],
             "--seed", params["seed"], "--max-missing-fraction", params["max_missing_fraction"],
@@ -205,7 +236,7 @@ def main():
     # "first" (or an empty value) keeps mdcc's default: the first XLSX sheet.
     if params["sheet"] not in ("", "first"):
         args += ["--sheet", params["sheet"]]
-    code = run_mdcc(logs, args)
+    code = run_mdcc(logs, args, cpus)
 
     log(logs)
     log(logs, f"Results: {result_dir}")
