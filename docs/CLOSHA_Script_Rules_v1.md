@@ -212,13 +212,8 @@ msg      <- function(...) { cat(..., "\n") }
 - 실행 환경이 코어를 지정하지 않고 사용량만 제한하는 방식(Docker `--cpus`, Kubernetes `limits.cpu`)으로 바뀌면 위 방법은 서버 전체 코어 수를 돌려줄 수 있다. 그때는 cgroup `cpu.max` 값도 읽도록 규칙을 갱신한다.
 - 메모리는 할당량을 넘지 않게 샘플 단위로 처리하고, 큰 데이터를 한꺼번에 메모리에 올리지 않는다(예: `readBamFile(..., bigFile = TRUE)`).
 
-## 12. 선택 사항 (Python 모듈 Retip에서 쓴 방식)
-아래는 기준은 아니지만 필요할 때 쓸 수 있는 방식이다(`scripts/Retip/retip_*.1.0.py`).
-- `--key value`, `--key=value` 형식도 받기(플랫폼이 이 형식으로 넘기는 경우 대비). 빈 값은 기본값으로 처리.
-- `auto` 값: 입력에서 정보 읽기(`model=auto`), 앞 노드 기록에서 값 읽기(`rt_unit=auto`). (할당 CPU 사용은 11절 기본 규칙)
-- 재실행 정리 범위를 스크립트가 만드는 결과 폴더(`output_dir/result/`)로 좁히고, 지우기 전에 symlink 여부와 실제 위치, 입력 포함 여부를 확인.
 
-## 13. 등록 전 확인 목록
+## 12. 등록 전 확인 목록
 - [ ] 위치와 이름이 `scripts/{파이프라인}/{모듈}.{주}.{부}.{확장자}` 형식이다.
 - [ ] 동작이 바뀌었으면 새 버전 파일이고, 맨 위에 변경 내역이 있다.
 - [ ] 머리 주석에 Usage와 Arguments(required/optional, default)가 있다.
