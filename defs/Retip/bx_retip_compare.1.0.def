@@ -95,8 +95,13 @@ From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a
 #   every 10 s by a VS Code extension process, identified with strace.
 #   Later on 2026-10-07 the mdcc/models checks were rewritten to satisfy the
 #   site command blacklist (no directory changes and no deletion through
-#   find), and mdcc must now be uploaded without __pycache__; the root and
-#   --fakeroot rebuild of this version is in progress.
+#   find), and mdcc must now be uploaded without __pycache__. This version
+#   passed local root and --fakeroot rebuilds the same day with the same host
+#   checks (no DEF-caused host /tmp, /var/tmp, /proc, /sys, or sysctl change).
+#   A production build (fakeroot-command mode) of this version passed the
+#   tmpfs mounts, the mount allowlist, the workspace setup, and the mdcc
+#   SHA256 check, then stopped as designed because the uploaded mdcc held
+#   __pycache__; the rest of %post has not yet run in production.
 #   The new start blocks also passed in fakeroot-command mode (an account
 #   without /etc/subuid entries) in a test DEF on ubuntu:24.04; a full build
 #   in that mode was not run locally.
