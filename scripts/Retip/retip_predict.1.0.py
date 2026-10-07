@@ -16,8 +16,10 @@ Arguments (key=value, --key=value, or --key value):
                             optional.
     output_dir (required) - Output directory. Results go to output_dir/result
                             and logs to output_dir/logs.
-    model      (optional) - RP or HILIC. If omitted, the table must have a
-                            model_type column (RP or HILIC per row).
+    model      (optional) - RP, HILIC, or auto. auto (or empty) uses the
+                            table's model_type column (RP or HILIC per row),
+                            so one table may mix both modes. RP or HILIC
+                            requires every row to match. default: auto
     sheet      (optional) - XLSX sheet name; first (or empty) reads the first
                             sheet. Ignored for CSV. default: first
 
@@ -42,7 +44,7 @@ import threading
 MODULE = "predict"
 IMAGE = "bx_retip_predict.1.0.sif"
 REQUIRED = ["input_file", "output_dir"]
-OPTIONAL = {"model": "", "sheet": "first"}
+OPTIONAL = {"model": "auto", "sheet": "first"}
 TABLE_SUFFIXES = {".csv", ".xlsx"}
 
 
@@ -141,10 +143,11 @@ def main():
     params = parse_args(sys.argv[1:])
     input_file = Path(params["input_file"])
     output_dir = Path(params["output_dir"])
-    model = params["model"]
+    # auto (or empty) leaves --model out, so mdcc uses each row's model_type.
+    model = "" if params["model"] in ("", "auto") else params["model"]
 
     if model and model not in ("RP", "HILIC"):
-        fail(f"model must be RP or HILIC: {model}")
+        fail(f"model must be RP, HILIC, or auto: {model}")
     if not input_file.is_file():
         fail(f"input_file not found: {input_file}")
     if input_file.suffix.lower() not in TABLE_SUFFIXES:
@@ -163,7 +166,7 @@ def main():
     log(logs, "parameters:")
     log(logs, f"  input_file = {input_file}")
     log(logs, f"  output_dir = {output_dir}")
-    log(logs, f"  model      = {model or '<from input model_type>'}")
+    log(logs, f"  model      = {model or 'auto (input model_type column)'}")
     log(logs, f"  sheet      = {params['sheet'] or 'first'}")
     log(logs)
 
