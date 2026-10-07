@@ -45,14 +45,15 @@ Outputs (output_dir/result):
 Logs (output_dir/logs): <time>_<pid>.log copies stdout (progress) and
 <time>_<pid>.err copies stderr (errors and warnings).
 
-Runs inside bx_retip_compare.1.0.sif. Nothing is deleted: output_dir/result
-must be new or empty.
+Runs inside bx_retip_compare.1.0.sif. Rerunning replaces output_dir/result
+(only that folder is removed; logs are kept).
 """
 import datetime
 import importlib.util
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -129,6 +130,29 @@ def resolve_cpus(value):
     if not value.isdigit() or int(value) < 1:
         fail(f"cpus must be auto or a positive integer: {value}")
     return min(int(value), allocated)
+
+
+def check_inputs_outside(result_dir, *inputs):
+    """The previous result is removed before each run, so no input may be
+    inside output_dir/result."""
+    target = result_dir.resolve()
+    for path in inputs:
+        resolved = Path(path).resolve()
+        if resolved == target or target in resolved.parents:
+            fail(f"input {path} is inside {result_dir}, which is replaced on each run")
+
+
+def clear_previous_result(logs, output_dir, result_dir):
+    """Remove only output_dir/result from an earlier run, after checking that
+    it is a real directory directly under output_dir (not a symlink)."""
+    if not result_dir.exists() and not result_dir.is_symlink():
+        return
+    if result_dir.is_symlink() or not result_dir.is_dir():
+        fail(f"{result_dir} is not a plain directory; not removing it")
+    if result_dir.resolve().parent != output_dir.resolve():
+        fail(f"{result_dir} does not resolve directly under {output_dir}; not removing it")
+    log(logs, f"Removing previous result: {result_dir}")
+    shutil.rmtree(result_dir)
 
 
 class Logs:
@@ -223,8 +247,7 @@ def main():
     model_dir, train_result = locate_train_output(input_dir)
     table = select_eval_table(params["eval_file"], train_result)
     result_dir = output_dir / "result"
-    if result_dir.exists() and any(result_dir.iterdir()):
-        fail(f"{result_dir} is not empty; use a new output_dir")
+    check_inputs_outside(result_dir, input_dir, model_dir, table)
     if importlib.util.find_spec("mdcc") is None:
         fail(f"mdcc is not importable; run inside {IMAGE}")
 
@@ -249,6 +272,7 @@ def main():
     # "first" (or an empty value) keeps mdcc's default: the first XLSX sheet.
     if params["sheet"] not in ("", "first"):
         args += ["--sheet", params["sheet"]]
+    clear_previous_result(logs, output_dir, result_dir)
     code = run_mdcc(logs, args, cpus)
 
     log(logs)
