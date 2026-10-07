@@ -2,7 +2,7 @@
 """RTpred module 2: train a user retention time model (pyRetip / AutoGluon).
 
 Usage:
-    python retip_train.1.0.py input_file="..." output_dir="..." model="RP" [options]
+    python retip_train.1.0.py input_file="..." output_dir="..." [model="auto"] [options]
 
 Example:
     apptainer exec bx_retip_train.1.0.sif python retip_train.1.0.py \
@@ -18,12 +18,16 @@ Arguments (key=value, --key=value, or --key value):
                                        (experimental_rt / rt / retention_time)
     output_dir            (required) - Output directory. Results go to
                                        output_dir/result, logs to output_dir/logs.
-    model                 (required) - RP or HILIC
+    model                 (optional) - RP, HILIC, or auto. auto (or empty) takes
+                                       the single mode in the table's model_type
+                                       column; it stops if the column is missing
+                                       or mixes modes. default: auto
     sheet                 (optional) - XLSX sheet name; first (or empty) reads
                                        the first sheet. Ignored for CSV.
                                        default: first
-    rt_unit               (optional) - RT unit label (values are not converted).
-                                       default: model unit
+    rt_unit               (optional) - RT unit label (values are not converted);
+                                       auto (or empty) means "model unit".
+                                       default: auto
     time_limit            (optional) - AutoGluon fit budget in seconds. default: 1200
     cpus                  (optional) - CPU cores for training and numeric
                                        libraries: auto uses the cores allocated
@@ -50,6 +54,7 @@ Logs (output_dir/logs): <time>_<pid>.log copies stdout (progress) and
 Runs inside bx_retip_train.1.0.sif. Rerunning replaces output_dir/result
 (only that folder is removed; logs are kept).
 """
+import csv
 import datetime
 import importlib.util
 import os
@@ -62,8 +67,8 @@ import threading
 
 MODULE = "train"
 IMAGE = "bx_retip_train.1.0.sif"
-REQUIRED = ["input_file", "output_dir", "model"]
-OPTIONAL = {"sheet": "first", "rt_unit": "model unit", "time_limit": "1200",
+REQUIRED = ["input_file", "output_dir"]
+OPTIONAL = {"model": "auto", "sheet": "first", "rt_unit": "auto", "time_limit": "1200",
             "cpus": "auto", "algorithms": "GBM,CAT,RF,XT,KNN", "test_size": "0.2",
             "validation_size": "0.2", "seed": "42", "max_missing_fraction": "0.2",
             "correlation_threshold": "0.995", "method_label": "user method"}
@@ -112,6 +117,46 @@ def parse_args(argv):
         if not params.get(key):
             fail(f"Required parameter '{key}' is missing")
     return params
+
+
+# Column names mdcc reads as the chromatography mode (mdcc.core.load_table).
+MODE_COLUMNS = {"model_type", "column", "chrom_system", "mode"}
+
+
+def table_modes(path, sheet):
+    """Return the set of modes in the table's mode column, or None if it has none."""
+    if path.suffix.lower() == ".csv":
+        with path.open(encoding="utf-8-sig", newline="") as handle:
+            rows = list(csv.reader(handle))
+    else:
+        import pandas
+        frame = pandas.read_excel(path, sheet_name=0 if sheet in ("", "first") else sheet,
+                                  header=None, dtype=str, keep_default_na=False)
+        rows = frame.values.tolist()
+    if not rows:
+        fail(f"input_file is empty: {path}")
+    columns = [i for i, name in enumerate(rows[0]) if str(name).strip().lower() in MODE_COLUMNS]
+    if not columns:
+        return None
+    if len(columns) > 1:
+        fail("input_file has more than one mode column (model_type/column/chrom_system/mode)")
+    return {str(row[columns[0]]).strip().upper() for row in rows[1:] if len(row) > columns[0]}
+
+
+def resolve_model(value, path, sheet):
+    """auto picks the single RP/HILIC mode written in the table."""
+    if value not in ("", "auto"):
+        if value not in ("RP", "HILIC"):
+            fail(f"model must be RP, HILIC, or auto: {value}")
+        return value
+    modes = table_modes(path, sheet)
+    if modes is None:
+        fail("model=auto needs a model_type column in input_file; otherwise choose RP or HILIC")
+    if modes - {"RP", "HILIC"}:
+        fail(f"model_type values must be RP or HILIC (found {sorted(modes)}); train one mode per run")
+    if len(modes) != 1:
+        fail(f"input_file mixes chromatography modes {sorted(modes)}; train one mode per run")
+    return modes.pop()
 
 
 def allocated_cpus():
@@ -215,11 +260,8 @@ def main():
     params = parse_args(sys.argv[1:])
     input_file = Path(params["input_file"])
     output_dir = Path(params["output_dir"])
-    model = params["model"]
     cpus = resolve_cpus(params["cpus"])
 
-    if model not in ("RP", "HILIC"):
-        fail(f"model must be RP or HILIC: {model}")
     algorithms = [a.strip() for a in params["algorithms"].split(",") if a.strip()]
     unknown = [a for a in algorithms if a not in ALGORITHMS]
     if not algorithms or unknown:
@@ -228,6 +270,8 @@ def main():
         fail(f"input_file not found: {input_file}")
     if input_file.suffix.lower() not in TABLE_SUFFIXES:
         fail(f"input_file must be a *.csv or *.xlsx table: {input_file}")
+    model = resolve_model(params["model"], input_file, params["sheet"])
+    rt_unit = "model unit" if params["rt_unit"] in ("", "auto") else params["rt_unit"]
     result_dir = output_dir / "result"
     check_inputs_outside(result_dir, input_file)
     if importlib.util.find_spec("mdcc") is None:
@@ -242,14 +286,16 @@ def main():
     log(logs, f"  input_file = {input_file}")
     log(logs, f"  output_dir = {output_dir}")
     log(logs, f"  {'cpus':<21} = {cpus} (requested {params['cpus']}, allocated {allocated_cpus()})")
-    for key in ["model", "sheet", "rt_unit", "time_limit", "algorithms", "test_size",
+    log(logs, f"  {'model':<21} = {model} (requested {params['model']})")
+    log(logs, f"  {'rt_unit':<21} = {rt_unit}")
+    for key in ["sheet", "time_limit", "algorithms", "test_size",
                 "validation_size", "seed", "max_missing_fraction", "correlation_threshold",
                 "method_label"]:
         log(logs, f"  {key:<21} = {params.get(key) or '<default>'}")
     log(logs)
 
     args = [MODULE, "--input", str(input_file), "--output", str(result_dir),
-            "--model", model, "--rt-unit", params["rt_unit"],
+            "--model", model, "--rt-unit", rt_unit,
             "--time-limit", params["time_limit"], "--cpus", str(cpus),
             "--algorithms", *algorithms,
             "--test-size", params["test_size"], "--validation-size", params["validation_size"],
