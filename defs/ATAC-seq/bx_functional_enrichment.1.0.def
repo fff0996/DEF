@@ -154,6 +154,12 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   differential_accessibility.1.2.R output (da_dir with genome_gff):
 #   peaks assigned to nearest gene TSS, up list (82 genes) gave 29 GO BP
 #   terms led by photosynthesis, down list (62 genes) gave 0.
+#   A production fakeroot-command build of bx_functional_enrichment
+#   (2026-10-08) stopped at the final workspace removal: a stale fakeroot
+#   record made miniforge/pkgs look like a file to rm and to the first
+#   python3 fallback. The fallback was replaced (unlink, and treat only
+#   EISDIR as a directory) and tested with a stat-faking library and Rocky 9
+#   Python 3.9; the DEF was not rebuilt after that change.
 #   %test checks R 4.5.3, package versions and loading, the functions used by
 #   the script, an offline GO.db term lookup, a file-less PDF device, and the
 #   recorded package channels.
@@ -332,31 +338,55 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     [ "$(realpath -e -- "$WORK")" = "$WORK" ] || fail "canonical path changed"
     [ "$(stat -c %d -- "$WORK")" = "$(stat -c %d -- /)" ] || fail "workspace is on another filesystem"
     # Under the fakeroot command (production builds by an account without
-    # /etc/subuid entries), rm can get a stale file type for a directory and
-    # stop with "Is a directory". If rm fails, report entries whose type in
-    # the directory listing differs from lstat, remove the rest with the
-    # base image's Python (shutil.rmtree takes the type from the listing),
-    # and confirm the workspace is gone. The mount check above guarantees
-    # that nothing is mounted inside the workspace.
+    # /etc/subuid entries), a stale fakeroot record can report a directory as
+    # a regular file. A production build showed this for miniforge/pkgs: rm
+    # and Python's shutil.rmtree both called unlink on it and stopped with
+    # "Is a directory". If rm fails, the rest is removed with the base
+    # image's Python, which decides by the kernel's answer instead of stat:
+    # it unlinks each entry and only on EISDIR opens it as a directory
+    # (O_NOFOLLOW, same filesystem as the workspace), empties it, and removes
+    # it with rmdir. Symbolic links are removed, never followed.
     if ! rm -rf --one-file-system -- "$WORK"; then
         echo "rm could not remove all of $WORK; retrying with python3" >&2
         /usr/bin/env python3 - "$WORK" <<'PYCLEAN' || fail "python3 could not remove the workspace"
-import os, shutil, stat, sys
+import os, sys
+# Remove the workspace without trusting file types from stat: under the
+# fakeroot command a stale record can report a directory as a file. Each
+# entry is unlinked; only when the kernel answers EISDIR is it opened as a
+# directory (no symlink following, same device as the workspace), emptied,
+# and removed with rmdir.
 root = sys.argv[1]
-mismatches = 0
-for dirpath, _dirs, _files in os.walk(root):
-    with os.scandir(dirpath) as entries:
-        for entry in entries:
-            try:
-                mode = os.lstat(entry.path).st_mode
-            except OSError:
-                continue
-            if entry.is_dir(follow_symlinks=False) != stat.S_ISDIR(mode):
-                mismatches += 1
-                if mismatches <= 20:
-                    print("type mismatch (listing vs lstat): %s" % entry.path, file=sys.stderr)
-print("type mismatches: %d" % mismatches, file=sys.stderr)
-shutil.rmtree(root)
+dir_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+root_fd = os.open(root, dir_flags)
+root_dev = os.fstat(root_fd).st_dev
+removed = [0, 0]
+
+def empty(dir_fd, where):
+    for name in os.listdir(dir_fd):
+        try:
+            os.unlink(name, dir_fd=dir_fd)
+            removed[0] += 1
+            continue
+        except FileNotFoundError:
+            continue
+        except IsADirectoryError:
+            pass
+        fd = os.open(name, dir_flags, dir_fd=dir_fd)
+        try:
+            if os.fstat(fd).st_dev != root_dev:
+                sys.exit("not removing a different filesystem: %s/%s" % (where, name))
+            empty(fd, where + "/" + name)
+        finally:
+            os.close(fd)
+        os.rmdir(name, dir_fd=dir_fd)
+        removed[1] += 1
+
+try:
+    empty(root_fd, root)
+finally:
+    os.close(root_fd)
+os.rmdir(root)
+print("python3 removed %d files and %d directories" % tuple(removed), file=sys.stderr)
 PYCLEAN
     fi
     [ ! -e "$WORK" ] || fail "workspace could not be removed"
