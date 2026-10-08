@@ -2,7 +2,8 @@
 
 # Usage:
 #   Rscript functional_enrichment.1.0.R \
-#     input_dir="..."            # peak_annotation output_dir (or gene_file="...")
+#     input_dir="..."            # peak_annotation output_dir, or gene_file="...",
+#                                # or da_dir="..." / da_file="..." with genome_gff="..."
 #     output_dir="..." \
 #     orgdb_file="..."           # or go_table="..."
 #     [gene_keytype="auto"] \
@@ -15,13 +16,20 @@
 #     [min_gs_size="10"] \
 #     [max_gs_size="500"] \
 #     [min_mapped_fraction="0.5"] \
-#     [show_category="20"]
+#     [show_category="20"] \
+#     [da_norm="TMM"] [da_fdr="0.05"] [da_min_abs_logfc="0"]
 #
 # Arguments:
 #   input_dir           (required*) - peak_annotation output_dir; every
 #                                     gene_lists/*.annotated_gene_list.tsv is analysed
 #   gene_file           (required*) - Alternative to input_dir: one gene list (TSV/CSV
 #                                     with a geneId/gene_id/gene column, or one ID per line)
+#   da_dir              (required*) - Alternative: differential_accessibility output_dir;
+#                                     reads 03_results/diff_accessibility_<da_norm>.csv
+#   da_file             (required*) - Alternative: one differential accessibility table
+#                                     (CSV/TSV with seqnames or chr, start, end, logFC, FDR)
+#   genome_gff          (required with da_dir/da_file) - GFF3/GTF (.gz allowed) used to
+#                                     assign each peak to its nearest gene TSS
 #   output_dir          (required)  - Output directory (cleaned except logs/ on each run)
 #   orgdb_file          (required**) - OrgDb SQLite file saved by tools/download_orgdb.R
 #   go_table            (required**) - Gene-to-GO table instead of an OrgDb: a GAF file,
@@ -44,10 +52,22 @@
 #   min_mapped_fraction (optional) - Stop if fewer input IDs than this fraction are found
 #                                    in the annotation, default: 0.5
 #   show_category       (optional) - GO terms shown in the plots, default: 20
-#   * one of input_dir or gene_file;  ** one of orgdb_file or go_table
+#   da_norm             (optional) - With da_dir: TMM, EDASeq, or CQN result, default: TMM
+#   da_fdr              (optional) - With da_dir/da_file: FDR cutoff for up/down peaks,
+#                                    default: 0.05
+#   da_min_abs_logfc    (optional) - With da_dir/da_file: minimum |logFC|, default: 0
+#   * one of input_dir, gene_file, da_dir, or da_file;  ** one of orgdb_file or go_table
+#
+# With da_dir/da_file, two gene lists are analysed: <name>.up (peaks more
+# accessible in the treated condition, logFC > 0) and <name>.down (logFC < 0);
+# <name> is da_norm with da_dir and the file name with da_file.
+# Each peak is assigned to the gene with the nearest TSS; max_distance_to_tss
+# applies to that distance. universe=auto uses the genes nearest to all tested
+# peaks (same distance filter).
 #
 # Outputs (output_dir):
-#   01_gene_lists/  gene IDs used per list (after the distance filter)
+#   01_gene_lists/  gene IDs used per list (after the distance filter); with da_dir/
+#                   da_file also da_peak_to_gene.tsv (each peak, nearest gene, distance)
 #   02_enrichment/  <list>.GO_<ont>.tsv (all tested terms with adjusted p-values)
 #   03_plots/       <list>.GO_<ont>.dotplot.pdf and .barplot.pdf (significant terms)
 #   04_summary/     enrichment_summary.tsv (genes, mapped fraction, significant terms)
@@ -89,7 +109,8 @@ msg <- function(...) {
 allowed_args <- c(
 		"input_dir", "gene_file", "output_dir", "orgdb_file", "go_table", "gene_keytype",
 		"ont", "max_distance_to_tss", "universe", "pvalue_cutoff", "qvalue_cutoff",
-		"p_adjust_method", "min_gs_size", "max_gs_size", "min_mapped_fraction", "show_category"
+		"p_adjust_method", "min_gs_size", "max_gs_size", "min_mapped_fraction", "show_category",
+		"da_dir", "da_file", "genome_gff", "da_norm", "da_fdr", "da_min_abs_logfc"
 )
 
 for (arg in commandArgs(TRUE)) {
@@ -110,7 +131,8 @@ defaults <- list(
 		input_dir = "", gene_file = "", orgdb_file = "", go_table = "", gene_keytype = "auto",
 		ont = "BP", max_distance_to_tss = "3000", universe = "auto", pvalue_cutoff = "0.05",
 		qvalue_cutoff = "0.2", p_adjust_method = "BH", min_gs_size = "10", max_gs_size = "500",
-		min_mapped_fraction = "0.5", show_category = "20"
+		min_mapped_fraction = "0.5", show_category = "20", da_dir = "", da_file = "",
+		genome_gff = "", da_norm = "TMM", da_fdr = "0.05", da_min_abs_logfc = "0"
 )
 for (k in names(defaults)) {
 	if (!exists(k, inherits = FALSE) || !nzchar(get(k))) assign(k, defaults[[k]])
@@ -122,13 +144,20 @@ for (k in names(defaults)) {
 if (!exists("output_dir", inherits = FALSE) || !nzchar(output_dir)) {
 	stop_err("Required parameter 'output_dir' is missing")
 }
-if (!nzchar(input_dir) && !nzchar(gene_file)) stop_err("One of 'input_dir' or 'gene_file' is required")
-if (nzchar(input_dir) && nzchar(gene_file)) stop_err("Give only one of 'input_dir' or 'gene_file'")
+n_inputs <- sum(nzchar(c(input_dir, gene_file, da_dir, da_file)))
+if (n_inputs == 0) stop_err("One of 'input_dir', 'gene_file', 'da_dir', or 'da_file' is required")
+if (n_inputs > 1) stop_err("Give only one of 'input_dir', 'gene_file', 'da_dir', or 'da_file'")
+da_mode <- nzchar(da_dir) || nzchar(da_file)
+if (da_mode && !nzchar(genome_gff)) stop_err("genome_gff is required with da_dir or da_file")
 if (!nzchar(orgdb_file) && !nzchar(go_table)) stop_err("One of 'orgdb_file' or 'go_table' is required")
 if (nzchar(orgdb_file) && nzchar(go_table)) stop_err("Give only one of 'orgdb_file' or 'go_table'")
 
 if (nzchar(input_dir) && !dir.exists(input_dir)) stop_err("input_dir not found: ", input_dir)
 if (nzchar(gene_file) && !file.exists(gene_file)) stop_err("gene_file not found: ", gene_file)
+if (nzchar(da_dir) && !dir.exists(da_dir)) stop_err("da_dir not found: ", da_dir)
+if (nzchar(da_file) && !file.exists(da_file)) stop_err("da_file not found: ", da_file)
+if (nzchar(genome_gff) && !file.exists(genome_gff)) stop_err("genome_gff not found: ", genome_gff)
+if (!da_norm %in% c("TMM", "EDASeq", "CQN")) stop_err("da_norm must be TMM, EDASeq, or CQN: ", da_norm)
 if (nzchar(orgdb_file) && !file.exists(orgdb_file)) stop_err("orgdb_file not found: ", orgdb_file)
 if (nzchar(go_table) && !file.exists(go_table)) stop_err("go_table not found: ", go_table)
 
@@ -150,6 +179,8 @@ min_gs_size <- as.integer(as_num(min_gs_size, "min_gs_size", 1))
 max_gs_size <- as.integer(as_num(max_gs_size, "max_gs_size", 1))
 show_category <- as.integer(as_num(show_category, "show_category", 1))
 max_distance <- if (toupper(max_distance_to_tss) == "NA") NA_real_ else as_num(max_distance_to_tss, "max_distance_to_tss", 0)
+da_fdr <- as_num(da_fdr, "da_fdr", 0, 1)
+da_min_abs_logfc <- as_num(da_min_abs_logfc, "da_min_abs_logfc", 0)
 
 # ------------------------------------------------------------
 # output_dir is cleaned below, so it must not be or contain an input.
@@ -164,7 +195,8 @@ check_inputs_outside_output <- function(output_dir, inputs) {
 	}
 }
 universe_file <- if (!universe %in% c("auto", "all")) universe else ""
-check_inputs_outside_output(output_dir, c(input_dir, gene_file, orgdb_file, go_table, universe_file))
+check_inputs_outside_output(output_dir, c(input_dir, gene_file, da_dir, da_file, genome_gff,
+				orgdb_file, go_table, universe_file))
 if (nzchar(universe_file) && !file.exists(universe_file)) stop_err("universe file not found: ", universe_file)
 
 # ------------------------------------------------------------
@@ -214,6 +246,14 @@ msg("")
 msg("parameters:")
 msg("  input_dir           = ", ifelse(nzchar(input_dir), input_dir, "<not used>"))
 msg("  gene_file           = ", ifelse(nzchar(gene_file), gene_file, "<not used>"))
+msg("  da_dir              = ", ifelse(nzchar(da_dir), da_dir, "<not used>"))
+msg("  da_file             = ", ifelse(nzchar(da_file), da_file, "<not used>"))
+if (da_mode) {
+	msg("  genome_gff          = ", genome_gff)
+	msg("  da_norm             = ", da_norm)
+	msg("  da_fdr              = ", da_fdr)
+	msg("  da_min_abs_logfc    = ", da_min_abs_logfc)
+}
 msg("  output_dir          = ", output_dir)
 msg("  orgdb_file          = ", ifelse(nzchar(orgdb_file), orgdb_file, "<not used>"))
 msg("  go_table            = ", ifelse(nzchar(go_table), go_table, "<not used>"))
@@ -278,13 +318,132 @@ read_gene_ids <- function(path, apply_distance = TRUE) {
 	unique(ids[!is.na(ids) & nzchar(ids)])
 }
 
+# Gene TSS positions from a GFF3 or GTF file (.gz allowed). Uses "gene"
+# features (e.g. gene, ncRNA_gene); if there are none, gene spans are taken
+# from transcript/exon rows grouped by gene_id.
+read_gene_tss <- function(path) {
+	con <- if (grepl("\\.gz$", path)) gzfile(path) else file(path)
+	gff <- read.delim(con, header = FALSE, comment.char = "#", quote = "",
+			stringsAsFactors = FALSE, colClasses = "character")
+	if (ncol(gff) < 9) stop_err("genome_gff needs 9 tab-separated columns: ", path)
+	get_attr <- function(attr, key) {
+		v <- rep(NA_character_, length(attr))
+		m <- regmatches(attr, regexec(paste0("(^|;)\\s*", key, "[= ]\"?([^;\"]+)"), attr))
+		hit <- lengths(m) == 3
+		v[hit] <- vapply(m[hit], `[`, character(1), 3)
+		v
+	}
+	genes <- gff[grepl("gene$", gff[[3]], ignore.case = TRUE) & !grepl("^pseudogene$", gff[[3]]), ]
+	if (nrow(genes) > 0) {
+		id <- get_attr(genes[[9]], "ID")
+		id[is.na(id)] <- get_attr(genes[[9]][is.na(id)], "gene_id")
+		df <- data.frame(chr = genes[[1]], start = as.numeric(genes[[4]]), end = as.numeric(genes[[5]]),
+				strand = genes[[7]], gene = id, stringsAsFactors = FALSE)
+	} else {
+		tx <- gff[gff[[3]] %in% c("transcript", "mRNA", "exon"), ]
+		id <- get_attr(tx[[9]], "gene_id")
+		tx <- tx[!is.na(id), ]
+		id <- id[!is.na(id)]
+		if (length(id) == 0) stop_err("genome_gff has no gene features and no gene_id attributes: ", path)
+		key <- paste(id, tx[[1]], tx[[7]], sep = "\t")
+		df <- data.frame(
+				chr = tapply(tx[[1]], key, `[`, 1), start = tapply(as.numeric(tx[[4]]), key, min),
+				end = tapply(as.numeric(tx[[5]]), key, max), strand = tapply(tx[[7]], key, `[`, 1),
+				gene = tapply(id, key, `[`, 1), stringsAsFactors = FALSE)
+	}
+	df <- df[!is.na(df$gene) & nzchar(df$gene), ]
+	df$gene <- sub("^gene[:-]", "", df$gene)
+	df$tss <- ifelse(df$strand == "-", df$end, df$start)
+	unique(df[, c("chr", "tss", "gene")])
+}
+
+# Nearest gene TSS for each peak; distance is 0 when the TSS lies in the peak.
+nearest_gene <- function(peaks, tss) {
+	out <- data.frame(gene = rep(NA_character_, nrow(peaks)), distance_to_tss = NA_real_,
+			stringsAsFactors = FALSE)
+	for (chr in intersect(unique(peaks$chr), unique(tss$chr))) {
+		ip <- which(peaks$chr == chr)
+		t <- tss[tss$chr == chr, ]
+		t <- t[order(t$tss), ]
+		mid <- (peaks$start[ip] + peaks$end[ip]) / 2
+		j <- findInterval(mid, t$tss)
+		left <- pmax(j, 1)
+		right <- pmin(j + 1, nrow(t))
+		pick <- ifelse(abs(t$tss[left] - mid) <= abs(t$tss[right] - mid), left, right)
+		tp <- t$tss[pick]
+		d <- ifelse(tp >= peaks$start[ip] & tp <= peaks$end[ip], 0,
+				pmin(abs(peaks$start[ip] - tp), abs(peaks$end[ip] - tp)))
+		out$gene[ip] <- t$gene[pick]
+		out$distance_to_tss[ip] <- d
+	}
+	out
+}
+
+read_da_table <- function(path) {
+	first <- readLines(path, n = 1, warn = FALSE)
+	sep <- if (grepl("\t", first)) "\t" else ","
+	df <- read.table(path, sep = sep, header = TRUE, quote = "\"", comment.char = "",
+			stringsAsFactors = FALSE, check.names = FALSE)
+	chr_col <- intersect(c("seqnames", "chr", "Chr", "chrom", "seqname"), names(df))[1]
+	if (is.na(chr_col) || !all(c("start", "end", "logFC", "FDR") %in% names(df))) {
+		stop_err("DA table needs seqnames (or chr), start, end, logFC, and FDR columns: ", path)
+	}
+	data.frame(chr = as.character(df[[chr_col]]), start = as.numeric(df$start), end = as.numeric(df$end),
+			peak_id = if ("peakID" %in% names(df)) df$peakID else if ("peak_id" %in% names(df)) df$peak_id else
+						paste0(df[[chr_col]], ":", df$start, "-", df$end),
+			logFC = suppressWarnings(as.numeric(df$logFC)), FDR = suppressWarnings(as.numeric(df$FDR)),
+			stringsAsFactors = FALSE)
+}
+
 # ------------------------------------------------------------
 # Step 1: Gene lists
 # ------------------------------------------------------------
 msg("############################## Step 1: Read gene lists")
 
 gene_lists <- list()
-if (nzchar(gene_file)) {
+da_universe <- NULL
+if (da_mode) {
+	da_path <- if (nzchar(da_file)) da_file else
+				file.path(da_dir, "03_results", paste0("diff_accessibility_", da_norm, ".csv"))
+	if (!file.exists(da_path)) {
+		stop_err("DA result not found: ", da_path, " (da_dir must be a differential_accessibility output_dir;",
+				" EDASeq/CQN results exist only when that run had run_edaseq/run_cqn=TRUE)")
+	}
+	da <- read_da_table(da_path)
+	msg("DA table: ", da_path, " (", nrow(da), " peaks)")
+	if (all(is.na(da$FDR))) {
+		stop_err("DA table has no FDR values (the differential_accessibility run had no replicates); ",
+				"up/down peaks cannot be selected")
+	}
+	tss <- read_gene_tss(genome_gff)
+	msg("genome_gff: ", nrow(tss), " gene TSS positions on ", length(unique(tss$chr)), " sequences")
+	if (length(intersect(da$chr, tss$chr)) == 0) {
+		# Try the other chromosome naming style (chr1 <-> 1).
+		alt <- ifelse(grepl("^chr", tss$chr), sub("^chr", "", tss$chr), paste0("chr", tss$chr))
+		if (length(intersect(da$chr, alt)) > 0) {
+			tss$chr <- alt
+			msg("chromosome names in genome_gff adjusted to match the DA table (chr prefix)")
+		} else {
+			stop_err("No common chromosome names between the DA table and genome_gff. DA: ",
+					paste(head(unique(da$chr), 5), collapse = ","), " / GFF: ",
+					paste(head(unique(tss$chr), 5), collapse = ","))
+		}
+	}
+	near <- nearest_gene(da, tss)
+	da <- cbind(da, near)
+	da$status <- ifelse(!is.na(da$FDR) & da$FDR <= da_fdr & !is.na(da$logFC) & abs(da$logFC) >= da_min_abs_logfc,
+			ifelse(da$logFC > 0, "up", ifelse(da$logFC < 0, "down", "not_significant")), "not_significant")
+	write.table(da, file.path(list_dir, "da_peak_to_gene.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+	keep <- !is.na(da$gene) & (is.na(max_distance) | da$distance_to_tss <= max_distance)
+	msg("peaks with a gene within max_distance_to_tss: ", sum(keep), " of ", nrow(da))
+	msg("significant peaks: up ", sum(da$status == "up"), ", down ", sum(da$status == "down"),
+			" (FDR <= ", da_fdr, ", |logFC| >= ", da_min_abs_logfc, ")")
+	list_prefix <- if (nzchar(da_file)) sub("\\.(csv|tsv|txt)$", "", basename(da_file), ignore.case = TRUE) else da_norm
+	for (dir_name in c("up", "down")) {
+		gene_lists[[paste0(list_prefix, ".", dir_name)]] <- unique(da$gene[keep & da$status == dir_name])
+	}
+	da_universe <- unique(da$gene[keep])
+} else if (nzchar(gene_file)) {
 	nm <- sub("\\.(tsv|csv|txt)$", "", basename(gene_file), ignore.case = TRUE)
 	gene_lists[[nm]] <- read_gene_ids(gene_file)
 } else {
@@ -303,12 +462,16 @@ for (nm in names(gene_lists)) {
 	msg("  ", nm, ": ", length(gene_lists[[nm]]), " genes")
 	writeLines(gene_lists[[nm]], file.path(list_dir, paste0(nm, ".genes.txt")))
 }
+empty_lists <- names(gene_lists)[lengths(gene_lists) == 0]
+if (length(empty_lists) > 0) warn_msg("empty gene list(s) skipped: ", paste(empty_lists, collapse = ", "))
 gene_lists <- gene_lists[lengths(gene_lists) > 0]
 if (length(gene_lists) == 0) stop_err("All gene lists are empty after the distance filter")
 msg("")
 
 universe_ids <- NULL
-if (universe == "auto" && nzchar(input_dir)) {
+if (universe == "auto" && da_mode) {
+	universe_ids <- da_universe
+} else if (universe == "auto" && nzchar(input_dir)) {
 	uf <- file.path(input_dir, "gene_lists", "txdb_gene_universe.tsv")
 	if (file.exists(uf)) universe_ids <- read_gene_ids(uf, apply_distance = FALSE)
 } else if (nzchar(universe_file)) {

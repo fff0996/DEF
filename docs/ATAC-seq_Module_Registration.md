@@ -1,30 +1,34 @@
-ATAC-seq 모듈 등록 정보 (스크립트 1.1 기준)
+ATAC-seq 모듈 등록 정보 (스크립트 최신 버전 기준)
 
 작성일: 2026-10-07
 
-CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리다. 기준은 `scripts/ATAC-seq/*.1.1.*`이고, 모든 스크립트는 `key=value` 인자를 받는다. 모든 모듈은 `output_dir/logs/`에 `<시각>_<PID>.log`(stdout)와 `<시각>_<PID>.error.log`(stderr)를 남기며, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지우고 시작한다. 입력이 `output_dir` 안에 있으면 지우기 전에 멈춘다.
+CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리다. 기준은 `scripts/ATAC-seq/`의 모듈별 최신 버전(아래 표)이고, 모든 스크립트는 `key=value` 인자를 받는다. 모든 모듈은 `output_dir/logs/`에 `<시각>_<PID>.log`(stdout)와 `<시각>_<PID>.error.log`(stderr)를 남기며, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지우고 시작한다. 입력이 `output_dir` 안에 있으면 지우기 전에 멈춘다.
 
 ## 0. 파이프라인 흐름
 ```
 [organellar_filter] ─output_dir─> [ATAC_QC] ─output_dir─┬─> [ATAC_QC_plot]
-                                                         ├─> [MACS3_callpeak] ─output_dir─┬─> [peak_annotation]
-                                                         │                                ├─> [differential_accessibility] ─output_dir─> [atac_motif]
+                                                         ├─> [MACS3_callpeak] ─output_dir─┬─> [peak_annotation] ─output_dir─> [functional_enrichment] (input_dir)
+                                                         │                                ├─> [differential_accessibility] ─output_dir─┬─> [atac_motif]
+                                                         │                                │                                            └─> [functional_enrichment] (da_dir)
                                                          │                                └─> [tf_footprinting] (macs_dir)
                                                          ├─> [differential_accessibility] (input_dir)
-                                                         └─> [tf_footprinting] (input_dir)
+                                                         ├─> [tf_footprinting] (input_dir)
+                                                         └─> [replicate_consistency] (input_dir)
 ```
 | 모듈 | 스크립트 | 실행 이미지 | 실행 명령 |
 |---|---|---|---|
 | organellar_filter | `organellar_filter.1.1.sh` | bx_organellar_filter.1.0 | `bash organellar_filter.1.1.sh key=value ...` |
-| ATAC_QC | `ATAC_QC.1.1.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC.1.1.R key=value ...` |
+| ATAC_QC | `ATAC_QC.1.2.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC.1.2.R key=value ...` |
 | ATAC_QC_plot | `ATAC_QC_plot.1.1.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC_plot.1.1.R key=value ...` |
-| MACS3_callpeak | `MACS3_callpeak_ATAC.1.1.sh` | bx_macs3_callpeak_atac.1.0 | `bash MACS3_callpeak_ATAC.1.1.sh key=value ...` |
+| MACS3_callpeak | `MACS3_callpeak_ATAC.1.2.sh` | bx_macs3_callpeak_atac.1.0 | `bash MACS3_callpeak_ATAC.1.2.sh key=value ...` |
 | peak_annotation | `peak_annotation.1.1.R` | bx_peak_annotation.1.0 | `Rscript peak_annotation.1.1.R key=value ...` |
-| differential_accessibility | `differential_accessibility.1.1.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.1.R key=value ...` |
+| differential_accessibility | `differential_accessibility.1.2.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.2.R key=value ...` |
 | atac_motif | `atac_motif.1.1.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.1.R key=value ...` |
 | tf_footprinting | `tf_footprinting.1.1.sh` | bx_tf_footprinting.1.0 | `bash tf_footprinting.1.1.sh key=value ...` |
+| functional_enrichment | `functional_enrichment.1.0.R` | bx_functional_enrichment.1.0 | `Rscript functional_enrichment.1.0.R key=value ...` |
+| replicate_consistency | `replicate_consistency.1.0.sh` | bx_replicate_consistency.1.0 | `bash replicate_consistency.1.0.sh key=value ...` |
 
-`ATAC_QC.1.1`과 `ATAC_QC_plot.1.1`은 함께 쓴다(1.1 QC는 clean BAM을 쓰므로 trinucleosome이 비어 있을 수 있고, 1.1 plot은 빈 종류를 빼고 그린다).
+`ATAC_QC.1.2`(또는 1.1)와 `ATAC_QC_plot.1.1`은 함께 쓴다(1.1 이후 QC는 clean BAM을 쓰므로 trinucleosome이 비어 있을 수 있고, 1.1 plot은 빈 종류를 빼고 그린다). 1.2 버전(ATAC_QC, MACS3, differential_accessibility)은 1.1에 QC 지표만 더한 것이라 같은 이미지에서 돌고, 기존 결과 파일은 그대로다.
 
 ## 1. organellar_filter
 미토콘드리아·엽록체 등 세포소기관 contig의 read를 BAM에서 제거한다.
@@ -39,7 +43,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 결과: `03_filtered_bam/*.organellar_removed.bam`(+ .bai), idxstats, flagstat(전/후), contig 목록, 요약 TSV.
 
 ## 2. ATAC_QC
-fragment 크기 분포, bamQC, Tn5 shift, 뉴클레오솜 위치별 BAM 분할(ATACseqQC). 1.1은 bamQC clean BAM으로 shift·분할한다.
+fragment 크기 분포, bamQC, Tn5 shift, 뉴클레오솜 위치별 BAM 분할(ATACseqQC). 1.1부터 bamQC clean BAM으로 shift·분할한다. 1.2는 샘플별 TSS enrichment 점수와 CPM 정규화 coverage bigWig를 더한다.
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -49,8 +53,12 @@ fragment 크기 분포, bamQC, Tn5 shift, 뉴클레오솜 위치별 BAM 분할(A
 | Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. .fai가 없으면 FASTA 옆에 만든다 |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. ATAC_QC_plot, MACS3, differential_accessibility, tf_footprinting의 `input_dir` |
 | Option | `seqlev` | String | 선택 | `auto` | 사용할 염색체(쉼표 구분). auto = BAM과 txs_bed에 공통으로 있는 염색체 전부 |
+| Option | `tss_flank` | Integer | 선택 | `1000` | (1.2) TSS enrichment 점수를 계산할 TSS 앞뒤 범위(bp, 200 이상) |
+| Option | `make_bigwig` | List (`TRUE`, `FALSE`) | 선택 | `TRUE` | (1.2) 샘플별 coverage bigWig(CPM) 생성 |
 
-결과: `01_fragment_size`, `02_bam_qc`, `03_shifted_bam`, `04_split_bam`, `05_metadata/atac_qc_manifest.tsv`, `06_rds`.
+결과: `01_fragment_size`, `02_bam_qc`, `03_shifted_bam`, `04_split_bam`, `05_metadata/atac_qc_manifest.tsv`, `06_rds`. 1.2는 추가로 `05_metadata/atac_qc_metrics.tsv`(샘플별 read 수, clean 비율, TSS enrichment), `07_tss_enrichment`(샘플별 점수 그림·TSV), `08_bigwig/<sample>.shifted.cpm.bw`(IGV 등에서 바로 열림).
+
+TSS enrichment 참고: ENCODE 사람(hg38) 기준 5 미만 주의, 5~7 허용, 7 초과 좋음. 다른 종은 주석 품질에 따라 범위가 다르다.
 
 ## 3. ATAC_QC_plot
 분할 BAM으로 TSS 주변 신호 heatmap과 profile을 그린다.
@@ -81,7 +89,7 @@ MACS3 callpeak(paired-end, BAMPE)로 peak를 찾는다.
 | Option | `qvalue` | Float | 선택 | `0.05` | q-value 기준 |
 | Option | `broad_cutoff` | Float | 선택 | `0.1` | broad peak 기준(`peak_type=broad`일 때) |
 
-결과: `<sample>_peaks.narrowPeak`(broad면 `.broadPeak`) 등 MACS3 출력, `<sample>_macs3.log`/`.stderr.log`. 일부 샘플만 실패하면 경고 후 종료 코드 0.
+결과: `<sample>_peaks.narrowPeak`(broad면 `.broadPeak`) 등 MACS3 출력, `<sample>_macs3.log`/`.stderr.log`. 일부 샘플만 실패하면 경고 후 종료 코드 0. 1.2는 추가로 `frip_summary.tsv`(샘플별 peak 수, 전체 read, peak 안 read, FRiP)를 만든다. FRiP 참고: ENCODE ATAC-seq 기준 0.3 초과 좋음, 0.2 초과 허용.
 
 ## 5. peak_annotation
 ChIPseeker로 peak 주석(유전자 위치 분류, TSS 거리)과 그림을 만든다.
@@ -117,7 +125,7 @@ ChIPseeker로 peak 주석(유전자 위치 분류, TSS 거리)과 그림을 만�
 | Option | `run_edaseq` | List (`TRUE`, `FALSE`) | 선택 | `TRUE` | EDASeq GC 보정 정규화 실행 |
 | Option | `run_cqn` | List (`TRUE`, `FALSE`) | 선택 | `TRUE` | CQN GC 보정 정규화 실행 |
 
-결과: `01_sample_sheet`, `02_counts`, `03_results`(`diff_accessibility_<정규화>.csv` 등), `04_plots`, `05_rds`.
+결과: `01_sample_sheet`, `02_counts`, `03_results`(`diff_accessibility_<정규화>.csv` 등), `04_plots`, `05_rds`. 1.2는 추가로 샘플 상관 heatmap(`04_plots/sample_correlation_heatmap.pdf`, `03_results/sample_correlation.tsv`)과 PCA(`04_plots/PCA_plot.pdf`, `03_results/PCA_coordinates.tsv`, 3샘플 이상)를 만든다. 반복 실험이 같은 조건끼리 묶이는지, 튀는 샘플이 있는지 확인하는 용도다.
 
 ## 7. atac_motif
 차등 접근성 결과로 모티프 농축(monaLisa) 분석.
@@ -163,7 +171,53 @@ TOBIAS로 조건별 전사인자 footprint와 비교(BINDetect).
 
 결과: `00_metadata`, `01_peak_merge`, `02_merged_bam_by_condition`, `03_tobias_tracks`(bigWig), `04_BINDetect`, `summary/`.
 
-## 9. 공통 참고
+## 9. functional_enrichment
+GO 농축 분석(clusterProfiler). 종별 데이터는 이미지에 없고, `tools/download_orgdb.R`로 받은 OrgDb 파일이나 유전자-GO 대응표를 입력으로 받는다. 실행 중 인터넷 접속이 없으므로 KEGG는 쓰지 않는다.
+
+| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|---|
+| Input | `input_dir` | Directory | 조건부 | | peak_annotation의 `output_dir`. `gene_lists/*.annotated_gene_list.tsv`를 목록별로 분석. 아래 4개 입력 중 하나만 |
+| Input | `gene_file` | File (TSV/CSV/TXT) | 조건부 | | 유전자 목록 파일 하나(geneId/gene_id/gene 컬럼, 또는 한 줄에 ID 하나) |
+| Input | `da_dir` | Directory | 조건부 | | differential_accessibility의 `output_dir`. `03_results/diff_accessibility_<da_norm>.csv`를 읽어 up/down 영역 근처 유전자를 분석 |
+| Input | `da_file` | File (CSV/TSV) | 조건부 | | 차등 접근성 결과 파일 하나(seqnames 또는 chr, start, end, logFC, FDR 컬럼) |
+| Input | `genome_gff` | File (GFF3/GTF, .gz 가능) | 조건부 | | `da_dir`/`da_file`일 때 필수. peak마다 가장 가까운 유전자 TSS를 찾는 데 사용 |
+| Input | `orgdb_file` | File (SQLite) | 조건부 | | `download_orgdb.R`로 받은 `<종>.<AH id>.OrgDb.sqlite`. `go_table`과 둘 중 하나 |
+| Input | `go_table` | File (GAF/TSV/CSV) | 조건부 | | 유전자-GO 대응표. OrgDb가 없는 종에 사용 |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
+| Option | `gene_keytype` | String | 선택 | `auto` | OrgDb의 ID 종류(TAIR, ENTREZID, SYMBOL, ENSEMBL 등). auto = 가장 많이 맞는 종류를 자동 선택 |
+| Option | `ont` | List (`BP`, `MF`, `CC`, `ALL`) | 선택 | `BP` | GO 분류 |
+| Option | `max_distance_to_tss` | String | 선택 | `3000` | TSS에서 이 거리(bp) 안의 peak에 연결된 유전자만 사용. `NA` = 전부 |
+| Option | `universe` | String | 선택 | `auto` | 배경 유전자. auto = peak_annotation의 전체 유전자 목록 또는 DA에서 검정한 전체 peak의 유전자. `all` = 주석 전체. 파일 경로도 가능 |
+| Option | `pvalue_cutoff` | Float | 선택 | `0.05` | 조정 p-value 기준 |
+| Option | `qvalue_cutoff` | Float | 선택 | `0.2` | q-value 기준 |
+| Option | `p_adjust_method` | List (`BH`, `bonferroni`, `holm`, `hochberg`, `hommel`, `BY`, `fdr`, `none`) | 선택 | `BH` | 다중검정 보정 방법 |
+| Option | `min_gs_size` | Integer | 선택 | `10` | GO 항목의 최소 유전자 수 |
+| Option | `max_gs_size` | Integer | 선택 | `500` | GO 항목의 최대 유전자 수 |
+| Option | `min_mapped_fraction` | Float | 선택 | `0.5` | 입력 ID 중 주석에서 찾은 비율이 이보다 낮으면 멈춤(종이나 ID 종류가 다를 때) |
+| Option | `show_category` | Integer | 선택 | `20` | 그림에 보일 GO 항목 수 |
+| Option | `da_norm` | List (`TMM`, `EDASeq`, `CQN`) | 선택 | `TMM` | `da_dir`에서 읽을 정규화 결과 |
+| Option | `da_fdr` | Float | 선택 | `0.05` | up/down peak를 고르는 FDR 기준 |
+| Option | `da_min_abs_logfc` | Float | 선택 | `0` | up/down peak의 최소 \|logFC\| |
+
+결과: `01_gene_lists`(목록별 유전자, DA 입력이면 `da_peak_to_gene.tsv`), `02_enrichment/<목록>.GO_<ont>.tsv`, `03_plots`(dotplot·barplot PDF), `04_summary/enrichment_summary.tsv`. DA 입력이면 목록은 `<da_norm>.up`(treated에서 더 열림)과 `<da_norm>.down`이다.
+
+## 10. replicate_consistency
+반복 실험 간 peak 재현성(IDR, ENCODE 방식). 조건별로 반복 실험마다, 그리고 합친 BAM으로 MACS3를 느슨한 기준(p-value)으로 돌리고, 반복 실험 쌍마다 IDR을 계산한다. 조건마다 반복 실험이 2개 이상이어야 한다.
+
+| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|---|
+| Input | `input_dir` | Directory | 필수 | | Tn5 shift된 BAM 폴더. ATAC_QC의 `output_dir`이면 `03_shifted_bam`에서 찾음 |
+| Input | `sample_data` | File (CSV) | 필수 | | ATAC_QC와 같은 샘플 시트(`SampleID`, `Condition`, `Replicate`). BAM 이름은 `<SampleID><alignment_suffix>` |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
+| Option | `genome_size` | String | **필수** | | 유효 유전체 크기(MACS3와 같음). `hs`, `mm`, `ce`, `dm` 또는 숫자 |
+| Option | `alignment_suffix` | String | 선택 | `.shifted.bam` | BAM 파일 이름 끝부분 |
+| Option | `pvalue` | Float | 선택 | `0.01` | 느슨한 peak 기준(p-value) |
+| Option | `idr_threshold` | Float | 선택 | `0.05` | 재현성 있는 peak 기준(global IDR) |
+| Option | `max_peaks` | Integer | 선택 | `300000` | 반복 실험마다 p-value 순으로 남길 최대 peak 수 |
+
+결과: `01_relaxed_peaks/<조건>/`, `02_idr/<조건>/`(쌍별 IDR 표, 통과 peak, 그림), `03_reproducible_peaks/<조건>.conservative_peaks.narrowPeak`(통과 peak가 가장 많은 쌍), `04_summary/idr_summary.tsv`. 반복 실험이 1개인 조건은 건너뛴다. 의사 반복(pseudo-replicate) 분석은 하지 않는다.
+
+## 11. 공통 참고
 - `threads`/`cores`는 실행 환경에서 할당한 코어 수를 자동으로 쓰므로 등록 화면에서 빼도 된다. 로그에 `requested`, `allocated`가 함께 남는다.
-- 입력 옆에 인덱스(.bai, .fai)를 만드는 모듈(organellar_filter, ATAC_QC, MACS3, tf_footprinting)은 입력 위치에 쓰기 권한이 있거나 인덱스가 미리 있어야 한다.
+- 입력 옆에 인덱스(.bai, .fai)를 만드는 모듈(organellar_filter, ATAC_QC, MACS3, tf_footprinting, replicate_consistency)은 입력 위치에 쓰기 권한이 있거나 인덱스가 미리 있어야 한다.
 - 빈 값으로 두는 선택 인자는 기본값으로 동작한다.

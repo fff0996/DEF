@@ -2,10 +2,10 @@ Bootstrap: docker
 From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f
 
 # =============================================================================
-# bx_functional_enrichment.1.0
+# bx_replicate_consistency.1.0
 #
 #   Target script:
-#     - functional_enrichment.1.0.R
+#     - replicate_consistency.1.0.sh
 #
 #   [MANDATORY BUILD RULES]
 #   1) Base OS must be Rocky Linux 9. Rocky 8 is not allowed: it causes
@@ -31,37 +31,36 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   change. Do not bind any host path over /opt/bio at runtime.
 #
 # [PURPOSE]
-#   GO over-representation analysis (clusterProfiler) of the gene lists written
-#   by peak_annotation (gene_lists/*.annotated_gene_list.tsv) or of one gene
-#   file, with an OrgDb SQLite file saved by tools/download_orgdb.R (enrichGO)
-#   or a gene-to-GO table / GAF file (enricher). Differential accessibility
-#   results (da_dir or da_file) are also accepted: each peak is assigned to
-#   the nearest gene TSS from genome_gff, and the up and down peak genes are
-#   analysed. Gene IDs are matched as given or without a "gene:" prefix or
-#   ".1" suffix; the OrgDb key type is picked automatically unless
-#   gene_keytype is set. Runs offline (no KEGG).
+#   Replicate consistency of ATAC-seq peaks with IDR (ENCODE style): relaxed
+#   MACS3 peak calling (p-value threshold) per replicate and on the pooled
+#   replicates, IDR for every replicate pair with the pooled peaks as the
+#   reference list, and a conservative reproducible peak set per condition.
 #   The analysis script is supplied through CLOSHA's external bind paths,
 #   rather than embedded in the image. This DEF provides its runtime.
 #
 # [INPUT AND OUTPUT STRUCTURE]
-#   Input: input_dir (peak_annotation output_dir), gene_file, or da_dir /
-#   da_file (differential_accessibility output, with genome_gff); orgdb_file
-#   or go_table; optional gene_keytype, ont, max_distance_to_tss, universe,
-#   pvalue_cutoff, qvalue_cutoff, p_adjust_method, min_gs_size, max_gs_size,
-#   min_mapped_fraction, show_category, da_norm, da_fdr, da_min_abs_logfc.
-#   Output: 01_gene_lists, 02_enrichment (TSV per list), 03_plots (dot and bar
-#   plot PDFs), 04_summary/enrichment_summary.tsv, and logs/ (.log and
-#   .error.log).
+#   Input: input_dir with Tn5-shifted BAM files (an ATAC_QC output_dir is
+#   searched in 03_shifted_bam) and sample_data (CSV with SampleID,
+#   Condition, Replicate). Required: genome_size. Optional:
+#   alignment_suffix, pvalue, idr_threshold, max_peaks.
+#   Missing BAI files are created with samtools beside the input BAM files.
+#   Output: 01_relaxed_peaks, 02_idr (IDR tables, passing peaks, plots),
+#   03_reproducible_peaks/<condition>.conservative_peaks.narrowPeak,
+#   04_summary/idr_summary.tsv, and logs/ (.log and .error.log).
 #   The script first removes existing output_dir contents except logs/ and
 #   stops if an input lies inside output_dir.
 #
 # [REQUIRED RUNTIME DEPENDENCIES]
-#   R 4.5.3 (conda-forge r-base) and Bioconductor 3.22 packages (bioconda):
-#     clusterProfiler 4.18.4, AnnotationDbi 1.72.0, GO.db 3.22.0,
-#     enrichplot 1.30.5 (with DOSE 4.4.0), ggplot2 4.0.3.
-#   No species data is in the image: OrgDb files or GO tables are inputs.
-#   Every pkg::function call and every unqualified function used after the
-#   script's library() calls is checked in %test after the packages load.
+#   /opt/bio: MACS3 3.0.4 (bioconda, Python 3.13): callpeak, and SAMtools
+#   1.23.1 / HTSlib 1.23.1: index for missing BAI files. Same package set
+#   as the bx_macs3_callpeak_atac image.
+#   /opt/idr: IDR 2.0.4.2 (bioconda) in its own environment with Python 3.10
+#   and numpy 1.23.5 (scipy 1.15.2, matplotlib 3.10.9 for the IDR plots).
+#   IDR 2.0.4.2 uses numpy.int, which numpy 1.24 removed, while MACS3 3.0.4
+#   needs numpy >= 1.25, so the two cannot share one environment (checked:
+#   IDR with numpy 1.26.4 stops with "module 'numpy' has no attribute
+#   'int'"). Only the idr command is exposed, through /opt/idr-cmd/bin.
+#   Bash, coreutils, findutils, GNU awk, sed (Rocky Linux 9 base image).
 #   Runtime analysis needs no network access.
 #
 # [BASE IMAGE AND INSTALLATION RULES FOR THIS DEF]
@@ -72,12 +71,9 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   Packages: conda-forge and bioconda only, with --override-channels and
 #   strict channel priority. Top-level packages are pinned to exact versions;
 #   the full resolved set with SHA256 values is recorded in
-#   /opt/bio/share/bx-functional-enrichment/conda-explicit.txt and checked so
+#   /opt/bio/share/bx-replicate-consistency/conda-explicit.txt and checked so
 #   that every URL is under conda.anaconda.org/conda-forge or /bioconda.
-#   The bioconda GO.db data package downloads its data tarball from
-#   Bioconductor mirrors in a post-link step during the build.
-#   Building requires internet access to github.com and conda.anaconda.org,
-#   plus Bioconductor mirrors for GO.db.
+#   Building requires internet access to github.com and conda.anaconda.org.
 #
 # [HPC BUILD REQUIREMENTS]
 #   Use a designated build environment and an unprivileged build account.
@@ -94,9 +90,8 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   (CONDARC), temporary files (TMPDIR), and HOME for the install steps are
 #   all placed below it, so conda itself does not remain in the image; only
 #   the /opt/bio environment does.
-#   Only the Rocky 9 BaseOS which package is installed with DNF
-#   (R's utils package needs /usr/bin/which), with the DNF cache
-#   (cachedir) in the workspace and keepcache disabled.
+#   No DNF installation is needed: the Rocky Linux 9
+#   base image already provides every command the DEF and the script use.
 #   Cleanup removes only that exact workspace, after separate checks of the
 #   path constant, symlinks, canonical path, and root-filesystem device, and
 #   then removes the empty /__closha_build with rmdir. Any failed check stops
@@ -113,21 +108,22 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   comments in this DEF cannot enforce the host's bind configuration.
 #
 # [RUNTIME ENVIRONMENT ISOLATION]
-#   Apptainer binds the user's home directory by default. %environment puts
-#   /opt/bio/bin first on a PATH without home entries, points R_LIBS_USER at
-#   the image library, sets R_PROFILE_USER and R_ENVIRON_USER to /dev/null,
-#   and unsets R_LIBS, so that a host ~/R library, ~/.Rprofile, or
-#   ~/.Renviron is not loaded into this runtime.
+#   %environment puts /opt/bio/bin and /opt/idr-cmd/bin (the idr command
+#   only) first on a PATH without home entries,
+#   unsets PYTHONPATH and PYTHONHOME, sets PYTHONNOUSERSITE=1 so host
+#   ~/.local packages from the default home bind are not imported, and sets
+#   MPLBACKEND=Agg for the IDR plots.
 #
 # [CHANGES FROM THE PREVIOUS SIF]
 #   No previous SIF or DEF; this is a new module (2026-10-07).
 #   This is a new image; nothing existing is modified or overwritten.
 #
 # [VALIDATION STATUS AND REPRODUCIBILITY]
-#   Checked: supplied-script dependencies (library/requireNamespace/::), a
-#   dry-run solve of the package set from conda-forge and bioconda only
-#   (257 packages), the Miniforge installer SHA256, the Rocky 9.8 base
-#   image contents, and DEF %post and %test shell syntax (sh -n).
+#   Checked: supplied-script dependencies, a dry-run solve of the package set
+#   from conda-forge and bioconda only (53 for /opt/bio and 141 for /opt/idr
+#   packages), the Miniforge installer SHA256, the Rocky 9.8 base image
+#   contents (GNU awk 5.1.0, coreutils, findutils), and DEF %post and %test
+#   shell syntax (sh -n).
 #   Production /etc/apptainer/apptainer.conf (supplied by the user):
 #   mount home/tmp/proc/sys/dev = yes, bind path = /etc/localtime and
 #   /etc/hosts, user bind control = yes, allow setuid = yes; Apptainer 1.4.5.
@@ -145,48 +141,51 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   the ATAC-seq DEFs verified on 2026-09-30 (policy section 6.1).
 #   Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
 #   Codespace verification builds (2026-10-07, Apptainer 1.4.5, root and
-#   fakeroot): both exit 0, %test passed, no files left in host /tmp or
-#   /var/tmp, no host sysctl change, SIF 753.8 MiB. Run inside the SIF on
-#   test gene lists with an Arabidopsis OrgDb (AH121945): keytype TAIR
-#   detected (100% of IDs), photosynthesis-enriched list gave 27 GO BP
-#   terms, random list gave 0; go_table with ont=ALL also ran.
-#   Rebuilt as root on 2026-10-08 and run on a synthetic
-#   differential_accessibility.1.2.R output (da_dir with genome_gff):
-#   peaks assigned to nearest gene TSS, up list (82 genes) gave 29 GO BP
-#   terms led by photosynthesis, down list (62 genes) gave 0.
-#   %test checks R 4.5.3, package versions and loading, the functions used by
-#   the script, an offline GO.db term lookup, a file-less PDF device, and the
-#   recorded package channels.
+#   fakeroot; root rebuilt 2026-10-08): all exit 0, %test passed, no files
+#   left in host /tmp or /var/tmp, no host sysctl change, SIF 572.5 MiB.
+#   A first draft with IDR and MACS3 in one Python 3.10 environment
+#   (numpy 1.26.4) failed at run time in IDR (numpy.int), which led to the
+#   separate /opt/idr environment. Run inside the SIF on synthetic
+#   paired-end ATAC-seq data (2 conditions x 2 replicates, Tn5-shifted BAMs
+#   from ATAC_QC.1.2.R): relaxed peaks and IDR for both pairs, 70 and 97
+#   peaks passing IDR 0.05, conservative peak sets written, exit 0.
+#   %test checks command locations, IDR/MACS3/SAMtools/HTSlib versions, the IDR
+#   and callpeak command-line help, Python and numpy versions and imports in
+#   both environments, numpy.int as used by IDR, a headless matplotlib figure,
+#   Bash behavior, and the recorded package channels of both environments.
 #   These checks do not audit the entire filesystem or historical installation
 #   activity.
 #   Unresolved: the Miniforge and conda package recipe is not yet a
 #   registered approved recipe.
 #
 # [CHANGELOG]
-#   2026-10-01 / 1.0: Created for functional_enrichment.1.0.R on Rocky Linux 9
-#   with Miniforge (conda-forge/bioconda only), following policy 1.4.
+#   2026-10-07 / 1.0: New DEF for replicate_consistency.1.0.sh on Rocky Linux 9
+#   with Miniforge (conda-forge/bioconda only), following policy 1.6.
 # =============================================================================
 
 %labels
     Maintainer       KOBIC Bio-Express
     Pipeline         ATAC-seq
-    Component        bx_functional_enrichment
+    Component        bx_replicate_consistency
     Version          1.0
     BaseOS           RockyLinux9
     CondaInstaller   Miniforge3-26.7.2-0
     AnacondaRepoFree true
-    RVersion         4.5.3
-    Description      "clusterProfiler GO enrichment environment for the CLOSHA ATAC-seq functional_enrichment script"
+    IdrVersion       2.0.4.2
+    Macs3Version     3.0.4
+    SamtoolsVersion  1.23.1
+    PythonVersion    3.13
+    IdrPythonVersion 3.10
+    Description      "IDR, MACS3, and SAMtools environment for the CLOSHA ATAC-seq replicate_consistency script"
 
 %environment
-    export PATH=/opt/bio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export PATH=/opt/bio/bin:/opt/idr-cmd/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     export LANG=C.UTF-8
     export LC_ALL=C.UTF-8
-    # Keep host-side user R libraries and profiles out of this runtime.
-    unset R_LIBS
-    export R_LIBS_USER=/opt/bio/lib/R/library
-    export R_PROFILE_USER=/dev/null
-    export R_ENVIRON_USER=/dev/null
+    # Keep host-side Python paths and user site-packages out of this runtime.
+    unset PYTHONPATH PYTHONHOME
+    export PYTHONNOUSERSITE=1
+    export MPLBACKEND=Agg
 
 %post
     set -eu
@@ -262,13 +261,6 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     [ "$(uname -m)" = x86_64 ] || fail "unsupported architecture"
     grep -q '^Rocky Linux release 9\.' /etc/rocky-release || fail "base OS is not Rocky Linux 9"
 
-    # R's utils package runs /usr/bin/which when it loads, and the Rocky 9 base
-    # image has no which. Install only that package from Rocky 9 BaseOS, with
-    # the DNF cache in the workspace.
-    dnf --assumeyes --setopt=cachedir="$WORK/dnf-cache" --setopt=keepcache=0 \
-        --setopt=install_weak_deps=False install which
-    [ -x /usr/bin/which ] || fail "which was not installed"
-
     # Miniforge from the conda-forge project's GitHub release (never Miniconda
     # or the Anaconda Distribution). SHA256 matches the published .sha256 file.
     # It is installed into the workspace and removed with it after use.
@@ -302,26 +294,43 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     "$CONDA" create --yes --prefix /opt/bio \
         --override-channels --channel conda-forge --channel bioconda \
         --strict-channel-priority \
-        r-base=4.5.3 \
-        bioconductor-clusterprofiler=4.18.4 \
-        bioconductor-annotationdbi=1.72.0 \
-        bioconductor-go.db=3.22.0 \
-        bioconductor-enrichplot=1.30.5 \
-        r-ggplot2=4.0.3
+        macs3=3.0.4 \
+        samtools=1.23.1 \
+        htslib=1.23.1 \
+        python=3.13
 
     # Record the exact package set with SHA256 values, then check that every
     # package came from conda-forge or bioconda.
-    mkdir -p /opt/bio/share/bx-functional-enrichment
-    "$CONDA" list --prefix /opt/bio --explicit --sha256 > /opt/bio/share/bx-functional-enrichment/conda-explicit.txt
+    mkdir -p /opt/bio/share/bx-replicate-consistency
+    "$CONDA" list --prefix /opt/bio --explicit --sha256 > /opt/bio/share/bx-replicate-consistency/conda-explicit.txt
     awk '
         /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
         END { exit bad }
-    ' /opt/bio/share/bx-functional-enrichment/conda-explicit.txt || fail "package from a disallowed channel"
-    "$CONDA" list --prefix /opt/bio > /opt/bio/share/bx-functional-enrichment/conda-packages.txt
-    cp /etc/rocky-release /opt/bio/share/bx-functional-enrichment/base-os-release.txt
-    rpm -qa --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' | sort > /opt/bio/share/bx-functional-enrichment/rocky-packages.tsv
-    /opt/bio/bin/R --version | head -n 1 > /opt/bio/share/bx-functional-enrichment/r-version.txt
-    grep -F 'R version 4.5.3' /opt/bio/share/bx-functional-enrichment/r-version.txt
+    ' /opt/bio/share/bx-replicate-consistency/conda-explicit.txt || fail "package from a disallowed channel"
+    "$CONDA" list --prefix /opt/bio > /opt/bio/share/bx-replicate-consistency/conda-packages.txt
+    cp /etc/rocky-release /opt/bio/share/bx-replicate-consistency/base-os-release.txt
+    rpm -qa --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' | sort > /opt/bio/share/bx-replicate-consistency/rocky-packages.tsv
+    # IDR in its own environment (numpy 1.23.5; see the dependency notes).
+    "$CONDA" create --yes --prefix /opt/idr \
+        --override-channels --channel conda-forge --channel bioconda \
+        --strict-channel-priority \
+        idr=2.0.4.2 \
+        python=3.10 \
+        numpy=1.23.5
+    "$CONDA" list --prefix /opt/idr --explicit --sha256 > /opt/bio/share/bx-replicate-consistency/idr-conda-explicit.txt
+    awk '
+        /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /opt/bio/share/bx-replicate-consistency/idr-conda-explicit.txt || fail "package from a disallowed channel"
+    "$CONDA" list --prefix /opt/idr > /opt/bio/share/bx-replicate-consistency/idr-conda-packages.txt
+    mkdir -p /opt/idr-cmd/bin
+    ln -s /opt/idr/bin/idr /opt/idr-cmd/bin/idr
+    /opt/bio/bin/samtools --version > /opt/bio/share/bx-replicate-consistency/samtools-version.txt
+    grep -Fx 'samtools 1.23.1' /opt/bio/share/bx-replicate-consistency/samtools-version.txt
+    /opt/bio/bin/macs3 --version > /opt/bio/share/bx-replicate-consistency/macs3-version.txt 2>&1
+    grep -Fx 'macs3 3.0.4' /opt/bio/share/bx-replicate-consistency/macs3-version.txt
+    /opt/idr-cmd/bin/idr --version > /opt/bio/share/bx-replicate-consistency/idr-version.txt 2>&1
+    grep -F '2.0.4' /opt/bio/share/bx-replicate-consistency/idr-version.txt
 
     # Remove only the exact workspace created above; stop on any doubt.
     # Each check is a separate command so that set -e cannot skip a failure.
@@ -363,11 +372,13 @@ PYCLEAN
     rmdir -- "$BUILD_ROOT"
 
 %runscript
-    exec /opt/bio/bin/Rscript "$@"
+    exec /opt/bio/bin/idr "$@"
 
 %test
     set -eu
-    export PATH=/opt/bio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export PATH=/opt/bio/bin:/opt/idr-cmd/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export PYTHONNOUSERSITE=1
+    export MPLBACKEND=Agg
     export LC_ALL=C.UTF-8
 
     # The build runs %test separately from %post, again with the host /tmp and
@@ -388,61 +399,39 @@ PYCLEAN
         fi
     fi
 
-    for cmd in R Rscript; do
+    for cmd in macs3 samtools python; do
         [ "$(command -v "$cmd")" = "/opt/bio/bin/$cmd" ]
     done
-    [ -x /usr/bin/which ]
+    [ "$(command -v idr)" = /opt/idr-cmd/bin/idr ]
+    [ "$(ls /opt/idr-cmd/bin)" = idr ]
+    for cmd in bash find sort sed grep wc xargs tee date basename mkdir rm cp cut realpath awk; do
+        command -v "$cmd" >/dev/null 2>&1
+    done
 
-    R --version | head -n 1 | grep -F 'R version 4.5.3'
-
-    # Attach packages in the script order, then check every pkg::function
-    # and every unqualified function the script uses. GO.db must resolve a term offline.
-    Rscript --no-init-file -e '
-        pkgs <- c("clusterProfiler", "AnnotationDbi", "enrichplot", "ggplot2",
-                  "GO.db")
-        for (p in pkgs) suppressPackageStartupMessages(library(p, character.only = TRUE))
-        if (!startsWith(as.character(packageVersion("clusterProfiler")), "4.18.")) {
-            stop("unexpected clusterProfiler version: ", packageVersion("clusterProfiler"))
-        }
-        if (!startsWith(as.character(packageVersion("GO.db")), "3.22.")) {
-            stop("unexpected GO.db version: ", packageVersion("GO.db"))
-        }
-        if (!startsWith(as.character(packageVersion("enrichplot")), "1.30.")) {
-            stop("unexpected enrichplot version: ", packageVersion("enrichplot"))
-        }
-        used <- c(
-            "clusterProfiler::enricher", "clusterProfiler::enrichGO",
-            "AnnotationDbi::loadDb", "AnnotationDbi::keytypes",
-            "AnnotationDbi::keys", "AnnotationDbi::Ontology",
-            "AnnotationDbi::Term", "enrichplot::dotplot",
-            "ggplot2::ggtitle", "ggplot2::ggsave",
-            "graphics::barplot"
-        )
-        for (u in used) {
-            x <- strsplit(u, "::", fixed = TRUE)[[1]]
-            invisible(getExportedValue(x[1], x[2]))
-        }
-        unqualified <- c(
-            "globalCallingHandlers"
-        )
-        missing <- unqualified[!vapply(unqualified, exists, logical(1))]
-        if (length(missing) > 0) {
-            stop("functions not found on the search path: ", paste(missing, collapse = ", "))
-        }
-        term <- AnnotationDbi::Term("GO:0015979")
-        if (!identical(unname(term), "photosynthesis")) stop("GO.db term lookup failed: ", term)
-        pdf(NULL)
-        plot(1)
-        invisible(dev.off())
-        cat("clusterProfiler", as.character(packageVersion("clusterProfiler")), "\n")
-    '
+    # Check installed versions without creating files.
+    idr --version 2>&1 | grep -F '2.0.4'
+    idr --help >/dev/null
+    test "$(macs3 --version 2>&1)" = 'macs3 3.0.4'
+    macs3 callpeak --help >/dev/null
+    samtools_info=$(samtools --version)
+    printf '%s\n' "$samtools_info" | grep -Fx 'samtools 1.23.1'
+    printf '%s\n' "$samtools_info" | grep -Fx 'Using htslib 1.23.1'
+    python -c 'import MACS3, numpy, scipy, sklearn, hmmlearn, cykhash'
+    /opt/idr/bin/python -c 'import sys, numpy; assert sys.version_info[:2] == (3, 10), sys.version; assert numpy.__version__ == "1.23.5", numpy.__version__'
+    /opt/idr/bin/python -c 'import idr.idr, scipy, matplotlib'
+    /opt/idr/bin/python -c 'import numpy, matplotlib.pyplot as plt, io; numpy.array([1], dtype=numpy.int); f = plt.figure(); f.savefig(io.BytesIO(), format="png")'
+    awk '
+        /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /opt/bio/share/bx-replicate-consistency/idr-conda-explicit.txt
+    bash -c 'mapfile -t a < <(printf "ok\n"); test "${a[0]}" = ok'
 
     # Every recorded package URL must come from conda-forge or bioconda.
     awk '
         /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
         END { exit bad }
-    ' /opt/bio/share/bx-functional-enrichment/conda-explicit.txt
-    [ "$(grep -c -E '^https://' /opt/bio/share/bx-functional-enrichment/conda-explicit.txt)" -gt 0 ]
+    ' /opt/bio/share/bx-replicate-consistency/conda-explicit.txt
+    [ "$(grep -c -E '^https://' /opt/bio/share/bx-replicate-consistency/conda-explicit.txt)" -gt 0 ]
 
     # The build workspace must not remain in the image.
     if [ -e /__closha_build ]; then
@@ -450,17 +439,18 @@ PYCLEAN
         exit 1
     fi
 
-    echo 'R 4.5.3 / Bioconductor 3.22 (bioconda): bx_functional_enrichment runtime dependency checks passed.'
+    echo 'IDR 2.0.4.2 / MACS3 3.0.4 / SAMtools 1.23.1: runtime dependency checks passed.'
 
 %help
-    CLOSHA functional enrichment environment: R 4.5.3 + Bioconductor 3.22
-    (clusterProfiler, AnnotationDbi, GO.db, enrichplot, ggplot2).
+    CLOSHA replicate consistency environment: MACS3 3.0.4 (Python 3.13) +
+    SAMtools/HTSlib 1.23.1 in /opt/bio, IDR 2.0.4.2 (Python 3.10) in /opt/idr
+    (bioconda).
     Base OS: Rocky Linux 9. Tools are installed in /opt/bio from conda-forge and
     bioconda with Miniforge; no Anaconda Inc. repository or Miniconda is used.
 
     The CLOSHA build system builds this DEF with its fixed Slurm job (policy
     section 6.2), on an internet-connected x86_64 node, without extra binds:
-        apptainer build bx_functional_enrichment.1.0.sif bx_functional_enrichment.1.0.def
+        apptainer build bx_replicate_consistency.1.0.sif bx_replicate_consistency.1.0.def
     It must pass both as root and with fakeroot.
 
     Store the SIF, Apptainer cache, and build temporary files in an approved host
@@ -469,16 +459,18 @@ PYCLEAN
     Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
 
     Check the image:
-        apptainer test --cleanenv bx_functional_enrichment.1.0.sif
+        apptainer test --cleanenv bx_replicate_consistency.1.0.sif
 
-    functional_enrichment.1.0.R is supplied externally through approved runtime binds.
+    replicate_consistency.1.0.sh is supplied externally through approved runtime binds.
     This DEF does not run it during image construction:
-        apptainer exec bx_functional_enrichment.1.0.sif Rscript functional_enrichment.1.0.R key=value ...
+        apptainer exec bx_replicate_consistency.1.0.sif bash replicate_consistency.1.0.sh key=value ...
 
-    Give the OrgDb file saved by tools/download_orgdb.R (orgdb_file) or a
-    gene-to-GO table (go_table). The image holds no species data and the
-    analysis needs no network access.
+    Input: Tn5-shifted paired-end BAM files and the ATAC_QC sample sheet
+    (SampleID, Condition, Replicate); each condition needs two or more
+    replicates. If an input BAI is absent, the script creates one beside the
+    input BAM, so that location must be writable.
     The script removes previous output except logs/, so output_dir must be
     separate from the inputs and their parents.
+    Save the external Bash script with LF line endings.
     Writable runtime binds can expose host data to the analysis script.
     Runtime analysis requires no network access.
