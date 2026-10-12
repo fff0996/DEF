@@ -8,18 +8,59 @@ const fs = require("fs");
 const path = require("path");
 const {
   Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType, LevelFormat,
-  BorderStyle,
+  BorderStyle, Table, TableRow, TableCell, WidthType, ShadingType,
 } = require("docx");
 
 const ROOT = path.resolve(__dirname, "..", "..");
-const SRC = path.join(ROOT, "docs", "ATAC-seq_Portal_Content.md");
-const OUT = path.join(ROOT, "docs", "portal", "ATAC-seq_Portal_Content.docx");
+// Optional arguments: source markdown and output docx (relative to the repo).
+const SRC = path.join(ROOT, process.argv[2] || "docs/ATAC-seq_Portal_Content.md");
+const OUT = path.join(ROOT, process.argv[3] || "docs/portal/ATAC-seq_Portal_Content.docx");
 
 const BODY_FONT = "Pretendard", POINT_FONT = "GmarketSans";
 const MAIN = "222222", SUB = "3A3A3A", POINT = "32549C";
 
 // Internal notes: shown in gray with a "do not paste" marker.
-const NOTE_PREFIXES = ["KOBIC 포탈의", "포탈 스타일", "포탈의 현재", "출처 확인 필요", "그림:"];
+const NOTE_PREFIXES = ["KOBIC 포탈의", "포탈 스타일", "포탈의 현재", "출처 확인 필요", "그림:",
+  "등록 화면 공통 안내"];
+const PAGE_W = 9506;   // A4 width minus 1200 DXA margins
+
+function table(rows) {
+  // rows: arrays of cell strings; the first row is the header
+  const n = rows[0].length;
+  // parameter tables get wide description columns; others share the width
+  const preset = {
+    7: [920, 950, 950, 1400, 1000, 2140, 2146],
+    3: [1800, 3853, 3853],
+  };
+  const widths = preset[n] || Array(n).fill(Math.floor(PAGE_W / n));
+  const total = widths.reduce((a, b) => a + b, 0);
+  return new Table({
+    width: { size: total, type: WidthType.DXA },
+    columnWidths: widths,
+    rows: rows.map((cells, r) => new TableRow({
+      children: cells.map((c, i) => new TableCell({
+        width: { size: widths[i], type: WidthType.DXA },
+        shading: r === 0 ? { type: ShadingType.CLEAR, fill: "E8EDF6", color: "auto" } : undefined,
+        margins: { top: 60, bottom: 60, left: 90, right: 90 },
+        children: [new Paragraph({ children: runs(c, r === 0 ? { bold: true, size: 18, color: POINT } : { size: 18 }) })],
+      })),
+    })),
+  });
+}
+
+function splitRow(line) {
+  // split a markdown table row on unescaped pipes
+  const cells = [];
+  let cur = "";
+  const body = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  for (let i = 0; i < body.length; i++) {
+    if (body[i] === "\\" && body[i + 1] === "|") { cur += "|"; i++; }
+    else if (body[i] === "|") { cells.push(cur.trim()); cur = ""; }
+    else cur += body[i];
+  }
+  cells.push(cur.trim());
+  return cells;
+}
 
 function runs(text, base = {}) {
   // **bold**, *italic*, `code` -> TextRuns
@@ -65,8 +106,31 @@ function image(rel) {
 const children = [];
 let listInstance = 0, inNumbered = false;   // restart numbering for each list
 const lines = fs.readFileSync(SRC, "utf8").split("\n");
+let tableRows = null, codeLines = null;
+function flushTable() {
+  if (tableRows) { children.push(table(tableRows)); children.push(new Paragraph({ children: [] })); }
+  tableRows = null;
+}
 for (const raw of lines) {
   const line = raw.trimEnd();
+  // fenced code block: copy lines as plain text in a gray box
+  if (line.startsWith("```")) {
+    if (codeLines === null) { codeLines = []; continue; }
+    children.push(...codeLines.map((t) => new Paragraph({
+      shading: { type: ShadingType.CLEAR, fill: "F3F4F6", color: "auto" },
+      spacing: { after: 0 }, children: [new TextRun({ text: t || " ", size: 19, color: SUB })],
+    })));
+    children.push(new Paragraph({ children: [] }));
+    codeLines = null;
+    continue;
+  }
+  if (codeLines !== null) { codeLines.push(raw); continue; }
+  if (line.startsWith("|")) {
+    if (/^\|[\s|:-]+\|$/.test(line)) continue;   // separator row
+    (tableRows = tableRows || []).push(splitRow(line));
+    continue;
+  }
+  flushTable();
   if (!line.trim() || line.trim() === "---") continue;
   if (!/^\d+\. /.test(line)) inNumbered = false;
   if (line.startsWith("# ")) {
@@ -104,6 +168,8 @@ for (const raw of lines) {
     children.push(new Paragraph({ spacing: { after: 140 }, children: runs(line) }));
   }
 }
+
+flushTable();
 
 const doc = new Document({
   styles: {
