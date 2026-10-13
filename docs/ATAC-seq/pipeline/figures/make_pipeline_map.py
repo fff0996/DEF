@@ -6,7 +6,7 @@
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parent / "pipeline.svg"
-W, H = 2700, 1860
+W, H = 2700, 2020
 FONT = "Montserrat, 'DejaVu Sans', Arial, sans-serif"
 
 PURPLE, BLUE, GREEN, YELLOW = "#A8509C", "#1269FF", "#7CC744", "#FFB400"
@@ -113,54 +113,19 @@ def station(x, y, color=DARK, fill="#fff"):
     overlay.append(f'<circle cx="{x}" cy="{y}" r="13" fill="{fill}" stroke="{color}" stroke-width="7"/>')
 
 
-def doc_icon(x, y):
-    overlay.append(f'<path d="M{x - 17},{y - 22} h22 l12,12 v32 h-34 Z" fill="{DARK}"/>'
-                   f'<path d="M{x + 5},{y - 22} v12 h12 Z" fill="#fff"/>')
+ICON_DIR = Path(__file__).resolve().parent / "icons"   # cropped from docs/workflow_ex maps
+ICON_SCALE = 1.1
 
 
-def fastq_icon(x, y):
-    """Sequencing reads: rows of dashes (as in the BIO-EXPRESS pipeline maps)."""
-    s = ""
-    for r, segs in enumerate([[(-30, -8), (-2, 14), (20, 30)], [(-24, 2), (8, 30)],
-                              [(-30, -12), (-6, 16), (22, 30)], [(-20, 4), (10, 30)]]):
-        for a, b in segs:
-            s += f'<rect x="{x + a}" y="{y - 20 + r * 11}" width="{b - a}" height="5" fill="{DARK}"/>'
-    overlay.append(s)
-
-
-def fasta_icon(x, y):
-    """Reference or assembled sequence: DNA double helix, wide at the top,
-    middle, and bottom and crossing twice, with rungs between the strands."""
-    import math
-    hh, r = 30, 13                       # half height, strand amplitude
-    def pts(sign):
-        return " ".join(f"{x + sign * r * math.cos(2 * math.pi * t / 40):.1f},{y - hh + t * 2 * hh / 40:.1f}"
-                        for t in range(41))
-    s = (f'<polyline points="{pts(1)}" fill="none" stroke="{DARK}" stroke-width="5" stroke-linecap="round"/>'
-         f'<polyline points="{pts(-1)}" fill="none" stroke="{DARK}" stroke-width="5" stroke-linecap="round"/>')
-    for t in (0, 4, 16, 20, 24, 36, 40):     # rungs where the strands are apart
-        c = abs(math.cos(2 * math.pi * t / 40))
-        yy = y - hh + t * 2 * hh / 40
-        half = r * c - 2
-        s += f'<line x1="{x - half:.1f}" y1="{yy:.1f}" x2="{x + half:.1f}" y2="{yy:.1f}" stroke="{DARK}" stroke-width="{4 if t in (0, 40) else 3}" stroke-linecap="round"/>'
-    overlay.append(s)
-
-
-def bam_icon(x, y):
-    """Alignment file: framed read over a reference with A/T/C/G."""
-    s = (f'<rect x="{x - 28}" y="{y - 26}" width="56" height="52" rx="4" fill="#fff" stroke="{DARK}" stroke-width="2.5"/>'
-         f'<line x1="{x - 22}" y1="{y - 14}" x2="{x + 10}" y2="{y - 14}" stroke="{DARK}" stroke-width="2.5"/>'
-         f'<line x1="{x - 22}" y1="{y - 19}" x2="{x - 22}" y2="{y - 9}" stroke="{DARK}" stroke-width="2.5"/>'
-         f'<line x1="{x + 10}" y1="{y - 19}" x2="{x + 10}" y2="{y - 9}" stroke="{DARK}" stroke-width="2.5"/>'
-         f'<path d="M{x - 6},{y - 4} v10 l-4,-4 M{x - 6},{y + 6} l4,-4" fill="none" stroke="{DARK}" stroke-width="2"/>'
-         f'<line x1="{x - 22}" y1="{y + 16}" x2="{x + 10}" y2="{y + 16}" stroke="{PURPLE}" stroke-width="3"/>')
-    for i, ch in enumerate("ATCG"):
-        s += (f'<text x="{x + 20}" y="{y - 15 + i * 11}" text-anchor="middle" font-family="{FONT}" font-size="10" '
-              f'font-weight="700" fill="{PURPLE}">{ch}</text>')
-    overlay.append(s)
-
-
-ICONS = {"doc": doc_icon, "fastq": fastq_icon, "fasta": fasta_icon, "bam": bam_icon}
+def icon(name, x, y):
+    """Place an icon from icons/<name>.png centered at (x, y)."""
+    import base64, struct
+    data = (ICON_DIR / f"{name}.png").read_bytes()
+    w, h = struct.unpack(">II", data[16:24])
+    w, h = w * ICON_SCALE, h * ICON_SCALE
+    b64 = base64.b64encode(data).decode()
+    overlay.append(f'<image x="{x - w / 2:.1f}" y="{y - h / 2:.1f}" width="{w:.1f}" height="{h:.1f}" '
+                   f'href="data:image/png;base64,{b64}"/>')
 
 
 def label_box(x, y, text, kind):
@@ -189,13 +154,56 @@ def tag(cx, cy, text, kind, above=True, gap=78, icon=True):
     label_box(cx, ly, text, kind)
     if icon:
         iy = ly - h / 2 - 40 if above else ly + h / 2 + 40
-        ICONS["doc" if icon is True else icon](cx, iy)
+        globals()["icon"]("doc" if icon is True else icon, cx, iy)
     station(cx, cy, color if kind == "out" else DARK)
 
 
+def label_width(text):
+    return max(len(t) for t in text.split("\n")) * 12.2 + 44
+
+
+def outputs(cx, cy, labels, above=True, gap=60, dx=0):
+    """Output station with several format labels side by side, joined to the
+    station by a dashed bracket (as in the BIO-EXPRESS maps)."""
+    h = 47
+    ws = [label_width(t) for t in labels]
+    total = sum(ws) + 12 * (len(ws) - 1)
+    xs, x = [], cx + dx - total / 2     # dx moves the label group sideways
+    for w in ws:
+        xs.append(x + w / 2)
+        x += w + 12
+    ly = cy - gap - h / 2 if above else cy + gap + h / 2
+    edge = ly + h / 2 if above else ly - h / 2
+    by = (cy + edge) / 2
+    dash = f'stroke="{ORANGE}" stroke-width="3" stroke-dasharray="7,6" fill="none"'
+    overlay.append(f'<path d="M{cx},{cy} V{by}" {dash}/>')
+    left, right = min(xs[0], cx), max(xs[-1], cx)
+    if right > left:
+        overlay.append(f'<path d="M{left:.1f},{by} H{right:.1f}" {dash}/>')
+    for x, t in zip(xs, labels):
+        overlay.append(f'<path d="M{x:.1f},{by} V{edge}" {dash}/>')
+        label_box(x, ly, t, "out")
+        icon("doc", x, ly - h / 2 - 40 if above else ly + h / 2 + 40)
+    station(cx, cy, ORANGE)
+
+
+def refs(x, ny, items):
+    """Extra inputs of a node, shown above it as 'LABEL +' (as in the examples)."""
+    ws = [label_width(t) for t, _ in items]
+    total = sum(ws) + 12 * (len(ws) - 1)
+    lx = x - total / 2
+    for (t, ic), w in zip(items, ws):
+        cx = lx + w / 2
+        label_box(cx, ny - 76, t, "in")
+        icon(ic, cx, ny - 140)
+        lx += w + 12
+    overlay.append(f'<text x="{x}" y="{ny - 42}" text-anchor="middle" font-family="{FONT}" font-size="22" '
+                   f'font-weight="700" fill="{TEXT}">+</text>')
+
+
 # ---------------------------------------------------------------- layout
-yA, yR, yB, yC, yF, yD, yE = 380, 620, 830, 1050, 1250, 1340, 1520
-yJ = 1160   # shifted BAM line to differential_accessibility and tf_footprinting
+yA, yR, yB, yC, yF, yD, yE = 380, 620, 830, 1100, 1440, 1460, 1660
+yJ = 1240   # shifted BAM line to differential_accessibility and tf_footprinting
 
 # Preprocessing row and the return to row B
 route([(175, yA), (1880, yA), (1940, yA), (1940, yR), (90, yR), (90, yB), (200, yB)], PURPLE,
@@ -206,11 +214,8 @@ tag(175, yA, "FASTQ.GZ", "in", gap=50, icon="fastq")
 tag(596, yA, "FASTQ.GZ", "in", gap=50, icon="fastq")
 tag(998, yA, "BAM", "in", gap=50, icon="bam")
 tag(1497, yA, "BAM", "in", gap=50, icon="bam")
-# bowtie2 also takes the reference genome (index built from it)
-label_box(800, yA - 76, "REF.FASTA", "in")
-overlay.append(f'<text x="800" y="{yA - 42}" text-anchor="middle" font-family="{FONT}" font-size="22" font-weight="700" fill="{TEXT}">+</text>')
-fasta_icon(800, yA - 140)
-tag(1250, yR, "organellar-removed\nBAM", "in", gap=40, icon="bam")
+refs(800, yA, [("REF.FASTA", "fasta")])          # bowtie2 index is built from the reference
+tag(1250, yR, "BAM", "in", gap=40, icon="bam")
 
 # Row B: ATAC_QC -> MACS3 -> peak_annotation -> functional_enrichment
 route([(330, yB), (1250, yB)], BLUE, arrows=(0,))
@@ -218,7 +223,7 @@ route([(1250, yB), (2300, yB), (2470, yB)], GREEN, arrows=(1,))
 # Trunk from ATAC_QC output (shifted BAM) down to QC_plot and replicate_consistency
 route([(620, yB), (620, yE), (800, yE)], BLUE, arrows=(0,))
 route([(620, yC), (800, yC)], BLUE)
-# BAM joins the peaks track to differential_accessibility and tf_footprinting
+# Peaks to differential_accessibility and tf_footprinting
 route([(1250, yB), (1380, yB), (1380, yD), (1500, yD)], GREEN, arrows=(1,))
 route([(1380, yC), (1500, yC)], GREEN)
 # The shifted BAM crosses the peaks track (no junction) and enters
@@ -233,7 +238,7 @@ route([(2060, yC), (2060, yF), (2470, yF)], GREEN)
 # Output lines
 route([(330, yB), (330, yB + 150)], YELLOW)
 route([(950, yC), (1200, yC)], YELLOW)
-route([(1640, yC), (1640, yC + 120), (1800, yC + 120)], YELLOW)
+route([(1640, yC), (1640, yC + 120), (1960, yC + 120)], YELLOW)
 route([(1640, yD), (1960, yD)], GREEN)
 route([(950, yE), (1240, yE)], GREEN)
 
@@ -249,22 +254,31 @@ node(2280, yF, "functional_\nenrichment")
 node(1640, yD, "tf_footprinting")
 node(950, yE, "replicate_\nconsistency")
 
+# Extra inputs of the nodes (reference files)
+refs(330, yB, [("REF.FASTA", "fasta"), ("TSS BED", "doc")])
+refs(1640, yB, [("GFF/GTF", "fasta")])
+refs(2280, yB, [("OrgDb", "table")])
+refs(950, yC, [("TSS BED", "doc")])
+refs(1640, yC, [("REF.FASTA", "fasta")])
+refs(2280, yC, [("REF.FASTA", "fasta"), ("Motif DB", "doc")])
+refs(2280, yF, [("GFF/GTF", "fasta"), ("OrgDb", "table")])
+refs(1760, yD, [("REF.FASTA", "fasta"), ("Motif DB", "doc")])
+
 # Intermediate data (input format) stations
-tag(620, yB, "shifted BAM\nsplit BAM (bam)", "in", gap=50, icon="bam")
-tag(1250, yB, "peaks (narrowPeak)\nFRiP (tsv)", "in", gap=50, icon="doc")
-tag(1960, yB, "annotation (tsv)\ngene_lists (tsv)", "in", gap=50, icon="doc")
-tag(1960, yC, "diff_accessibility\n(csv)", "in", gap=50, icon="doc")
+tag(620, yB, "BAM", "in", gap=50, icon="bam")
+tag(1250, yB, "narrowPeak", "in", gap=50, icon="doc")
+tag(1960, yB, "TSV", "in", gap=50, icon="doc")
+tag(1960, yC, "CSV", "in", gap=50, icon="doc")
 
 # Outputs
-tag(330, yB + 150, "TSS enrichment (tsv)\nbigWig (bw)", "out", above=False, gap=46)
-tag(1200, yC, "TSS heatmap\nprofile (pdf)", "out", gap=50)
-tag(1800, yC + 120, "MDS · PCA ·\ncorrelation (pdf)", "out", above=False, gap=12, icon=False)
-doc_icon(1945, yC + 175)
-tag(2470, yB, "GO enrichment\n(tsv / pdf)", "out", gap=50)
-tag(2470, yC, "motif enrichment\nheatmap (pdf)", "out", gap=50)
-tag(2470, yF, "GO up / down\n(tsv / pdf)", "out", above=False, gap=46)
-tag(1960, yD, "footprints (bw)\nBINDetect (tsv / pdf)", "out", above=False, gap=46)
-tag(1240, yE, "reproducible peaks\n(narrowPeak) · IDR plot", "out", above=False, gap=46)
+outputs(330, yB + 150, ["TSV", "BigWig"], above=False, gap=46)
+outputs(1200, yC, ["TSV", "Figure"], gap=50)
+outputs(1960, yC + 120, ["Figure"], above=False, gap=12)
+outputs(2470, yB, ["TSV", "Figure"], gap=50, dx=70)
+outputs(2470, yC, ["TSV", "Figure"], above=False, gap=46, dx=70)
+outputs(2470, yF, ["TSV", "Figure"], above=False, gap=46, dx=70)
+outputs(1960, yD, ["BigWig", "TSV", "Figure"], above=False, gap=46)
+outputs(1240, yE, ["narrowPeak", "Figure"], above=False, gap=46)
 
 # Title and legend
 title = (f'<g transform="translate(60,62)">'
@@ -272,14 +286,14 @@ title = (f'<g transform="translate(60,62)">'
          f'<text x="44" y="38" text-anchor="middle" font-family="{FONT}" font-size="34" font-weight="800" fill="#fff">BX</text>'
          f'<text x="108" y="42" font-family="{FONT}" font-size="46" font-weight="800" fill="#3A3A3A">BIO-EXPRESS</text></g>'
          f'<text x="60" y="172" font-family="{FONT}" font-size="38" font-weight="700" fill="{TEXT}">ATAC-seq pipeline</text>')
-lg = [f'<text x="60" y="1660" font-family="{FONT}" font-size="30" font-weight="700" fill="{TEXT}">Legend</text>']
+lg = [f'<text x="60" y="1830" font-family="{FONT}" font-size="30" font-weight="700" fill="{TEXT}">Legend</text>']
 for i, (c, t) in enumerate([(PURPLE, "Preprocessing"), (BLUE, "QC &amp; Tn5 shift"),
                             (GREEN, "Peak &amp; downstream analysis"), (YELLOW, "Visualization")]):
-    y = 1702 + i * 42
+    y = 1872 + i * 42
     lg.append(f'<rect x="60" y="{y - 9}" width="80" height="17" fill="{c}"/>'
               f'<text x="158" y="{y + 7}" font-family="{FONT}" font-size="22" font-weight="500" fill="{TEXT}">{t}</text>')
 for i, (c, t) in enumerate([(DARK, "Input format"), (ORANGE, "Output format")]):
-    y = 1702 + i * 42
+    y = 1872 + i * 42
     lg.append(f'<circle cx="470" cy="{y}" r="10" fill="#fff" stroke="{c}" stroke-width="5"/>'
               f'<line x1="484" y1="{y}" x2="530" y2="{y}" stroke="{c}" stroke-width="3" stroke-dasharray="7,6"/>'
               f'<text x="545" y="{y + 7}" font-family="{FONT}" font-size="22" font-weight="500" fill="{TEXT}">{t}</text>')
