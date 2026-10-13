@@ -79,7 +79,7 @@ def place_arrows():
             free.append((cur, s1))
         # one arrow in every visible gap long enough to hold it
         for f0, f1 in free:
-            if f1 - f0 < 60:
+            if f1 - f0 < 42:
                 continue
             n = max(1, int((f1 - f0) // 300))   # long gaps get a repeated arrow
             for k in range(n):
@@ -126,14 +126,21 @@ def fastq_icon(x, y):
 
 
 def fasta_icon(x, y):
-    """Reference or assembled sequence: DNA double helix."""
+    """Reference or assembled sequence: DNA double helix, wide at the top,
+    middle, and bottom and crossing twice, with rungs between the strands."""
     import math
-    a = " ".join(f"{x + 12 * math.sin(t / 10 * math.pi):.1f},{y - 24 + t * 2.4:.1f}" for t in range(21))
-    b = " ".join(f"{x - 12 * math.sin(t / 10 * math.pi):.1f},{y - 24 + t * 2.4:.1f}" for t in range(21))
-    rungs = "".join(f'<line x1="{x - 9}" y1="{y - 24 + t * 2.4:.1f}" x2="{x + 9}" y2="{y - 24 + t * 2.4:.1f}" '
-                    f'stroke="{DARK}" stroke-width="3"/>' for t in (3, 7, 13, 17))
-    overlay.append(f'<polyline points="{a}" fill="none" stroke="{DARK}" stroke-width="6"/>'
-                   f'<polyline points="{b}" fill="none" stroke="{DARK}" stroke-width="6"/>' + rungs)
+    hh, r = 30, 13                       # half height, strand amplitude
+    def pts(sign):
+        return " ".join(f"{x + sign * r * math.cos(2 * math.pi * t / 40):.1f},{y - hh + t * 2 * hh / 40:.1f}"
+                        for t in range(41))
+    s = (f'<polyline points="{pts(1)}" fill="none" stroke="{DARK}" stroke-width="5" stroke-linecap="round"/>'
+         f'<polyline points="{pts(-1)}" fill="none" stroke="{DARK}" stroke-width="5" stroke-linecap="round"/>')
+    for t in (0, 4, 16, 20, 24, 36, 40):     # rungs where the strands are apart
+        c = abs(math.cos(2 * math.pi * t / 40))
+        yy = y - hh + t * 2 * hh / 40
+        half = r * c - 2
+        s += f'<line x1="{x - half:.1f}" y1="{yy:.1f}" x2="{x + half:.1f}" y2="{yy:.1f}" stroke="{DARK}" stroke-width="{4 if t in (0, 40) else 3}" stroke-linecap="round"/>'
+    overlay.append(s)
 
 
 def bam_icon(x, y):
@@ -188,18 +195,18 @@ yA, yR, yB, yC, yF, yD, yE = 380, 620, 830, 1050, 1250, 1340, 1520
 yJ = 1160   # BAM line joining the peaks track
 
 # Preprocessing row and the return to row B
-route([(175, yA), (1660, yA), (1720, yA), (1720, yR), (90, yR), (90, yB), (200, yB)], PURPLE,
+route([(175, yA), (1880, yA), (1940, yA), (1940, yR), (90, yR), (90, yB), (200, yB)], PURPLE,
       arrows=(0, 3, 5))
-for x, t in [(380, "fastp"), (720, "bowtie2"), (1110, "GATK_\nMarkDuplicates"), (1500, "organellar_\nfilter")]:
+for x, t in [(400, "fastp"), (800, "bowtie2"), (1250, "GATK_\nMarkDuplicates"), (1720, "organellar_\nfilter")]:
     node(x, yA, t)
 tag(175, yA, "FASTQ.GZ", "in", gap=50, icon="fastq")
-tag(549, yA, "FASTQ.GZ", "in", gap=50, icon="fastq")
-tag(884, yA, "BAM", "in", gap=50, icon="bam")
-tag(1318, yA, "BAM", "in", gap=50, icon="bam")
+tag(596, yA, "FASTQ.GZ", "in", gap=50, icon="fastq")
+tag(998, yA, "BAM", "in", gap=50, icon="bam")
+tag(1497, yA, "BAM", "in", gap=50, icon="bam")
 # bowtie2 also takes the reference genome (index built from it)
-label_box(720, yA - 76, "REF.FASTA", "in")
-overlay.append(f'<text x="720" y="{yA - 42}" text-anchor="middle" font-family="{FONT}" font-size="22" font-weight="700" fill="{TEXT}">+</text>')
-fasta_icon(720, yA - 140)
+label_box(800, yA - 76, "REF.FASTA", "in")
+overlay.append(f'<text x="800" y="{yA - 42}" text-anchor="middle" font-family="{FONT}" font-size="22" font-weight="700" fill="{TEXT}">+</text>')
+fasta_icon(800, yA - 140)
 tag(1250, yR, "organellar-removed\nBAM", "in", gap=40, icon="bam")
 
 # Row B: ATAC_QC -> MACS3 -> peak_annotation -> functional_enrichment
