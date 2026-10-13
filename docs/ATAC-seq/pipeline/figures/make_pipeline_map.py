@@ -19,7 +19,7 @@ segments = []     # straight parts of routes, for direction arrows
 blocks = []       # boxes that arrows must not sit under: (x0, y0, x1, y1)
 
 
-def route(points, color, r=42, arrows=()):
+def route(points, color, r=42, arrows=(), halo=False):
     """Orthogonal polyline with rounded corners; arrows = segment indexes."""
     d = f"M{points[0][0]},{points[0][1]}"
     for i in range(1, len(points) - 1):
@@ -31,6 +31,9 @@ def route(points, color, r=42, arrows=()):
         ty = (y2 - y1 > 0) - (y2 - y1 < 0)
         d += f" L{x1 - sx * rr},{y1 - sy * rr} Q{x1},{y1} {x1 + tx * rr},{y1 + ty * rr}"
     d += f" L{points[-1][0]},{points[-1][1]}"
+    if halo:   # white outline so a crossing line reads as passing over, not joining
+        lines.append(f'<path d="{d}" fill="none" stroke="#fff" stroke-width="{LW + 12}" '
+                     f'stroke-linecap="butt" stroke-linejoin="round"/>')
     lines.append(f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{LW}" '
                  f'stroke-linecap="round" stroke-linejoin="round"/>')
     for i in range(len(points) - 1):
@@ -192,7 +195,7 @@ def tag(cx, cy, text, kind, above=True, gap=78, icon=True):
 
 # ---------------------------------------------------------------- layout
 yA, yR, yB, yC, yF, yD, yE = 380, 620, 830, 1050, 1250, 1340, 1520
-yJ = 1160   # BAM line joining the peaks track
+yJ = 1160   # shifted BAM line to differential_accessibility and tf_footprinting
 
 # Preprocessing row and the return to row B
 route([(175, yA), (1880, yA), (1940, yA), (1940, yR), (90, yR), (90, yB), (200, yB)], PURPLE,
@@ -216,9 +219,13 @@ route([(1250, yB), (2300, yB), (2470, yB)], GREEN, arrows=(1,))
 route([(620, yB), (620, yE), (800, yE)], BLUE, arrows=(0,))
 route([(620, yC), (800, yC)], BLUE)
 # BAM joins the peaks track to differential_accessibility and tf_footprinting
-route([(620, yJ), (1380, yJ)], BLUE, arrows=(0,))
 route([(1250, yB), (1380, yB), (1380, yD), (1500, yD)], GREEN, arrows=(1,))
 route([(1380, yC), (1500, yC)], GREEN)
+# The shifted BAM crosses the peaks track (no junction) and enters
+# differential_accessibility from below and tf_footprinting from above.
+lines.append(f'<line x1="1350" y1="{yJ}" x2="1410" y2="{yJ}" stroke="#fff" stroke-width="{LW + 12}"/>')   # gap in the green track
+route([(620, yJ), (1560, yJ), (1560, yC)], BLUE)
+route([(1520, yJ), (1520, yD)], BLUE)
 # differential_accessibility -> atac_motif and functional_enrichment (DA)
 route([(1640, yC), (2470, yC)], GREEN, arrows=(0,))
 route([(2060, yC), (2060, yF), (2470, yF)], GREEN)
