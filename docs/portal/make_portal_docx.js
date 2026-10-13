@@ -1,9 +1,9 @@
 // Build the KOBIC portal copy-paste document (Word) from
-// docs/ATAC-seq/Portal_Content.md, in the portal style: Pretendard body
+// docs/ATAC-seq_Portal_Content.md, in the portal style: Pretendard body
 // #222222, GmarketSans headings #32549C, notes #3A3A3A. The portal has no
 // editor and keeps Word formatting on paste, so each section is copied from
 // this file.
-// Run: node docs/tools/make_portal_docx.js   (needs the npm package "docx")
+// Run: node docs/portal/make_portal_docx.js   (needs the npm package "docx")
 const fs = require("fs");
 const path = require("path");
 const {
@@ -13,8 +13,8 @@ const {
 
 const ROOT = path.resolve(__dirname, "..", "..");
 // Optional arguments: source markdown and output docx (relative to the repo).
-const SRC = path.join(ROOT, process.argv[2] || "docs/ATAC-seq/Portal_Content.md");
-const OUT = path.join(ROOT, process.argv[3] || "docs/ATAC-seq/portal/Portal_Content.docx");
+const SRC = path.join(ROOT, process.argv[2] || "docs/ATAC-seq_Portal_Content.md");
+const OUT = path.join(ROOT, process.argv[3] || "docs/portal/ATAC-seq_Portal_Content.docx");
 
 const BODY_FONT = "Pretendard", POINT_FONT = "GmarketSans";
 const MAIN = "222222", SUB = "3A3A3A", POINT = "32549C";

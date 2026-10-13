@@ -3,14 +3,14 @@
 
 Adapted from Yan F. et al., Genome Biology 21, 22 (2020), Fig. 1A
 (CC BY 4.0); check the source and license before publishing.
-Run: python3 docs/ATAC-seq/figures/make_concept.py, then
-rsvg-convert -w 1800 docs/ATAC-seq/figures/concept.svg -o docs/ATAC-seq/figures/concept.png
+Run: python3 docs/figures/make_atac_concept.py, then
+rsvg-convert -w 1800 docs/figures/ATAC-seq_concept.svg -o docs/figures/ATAC-seq_concept.png
 (the Pretendard font gives the intended look).
 """
 import math
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent / "concept.svg"
+OUT = Path(__file__).resolve().parent / "ATAC-seq_concept.svg"
 W, H = 1800, 630
 FONT = "Pretendard, 'Noto Sans KR', sans-serif"
 
