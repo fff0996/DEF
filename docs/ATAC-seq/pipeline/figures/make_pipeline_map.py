@@ -255,14 +255,14 @@ node(1640, yD, "tf_footprinting")
 node(950, yE, "replicate_\nconsistency")
 
 # Extra inputs of the nodes (reference files)
-refs(330, yB, [("REF.FASTA", "fasta"), ("TSS BED", "doc")])
-refs(1640, yB, [("GFF/GTF", "fasta")])
-refs(2280, yB, [("OrgDb", "table")])
-refs(950, yC, [("TSS BED", "doc")])
+refs(330, yB, [("REF.FASTA", "fasta"), ("TSS (.bed)", "doc")])
+refs(1640, yB, [("GFF3/GTF", "fasta")])
+refs(2280, yB, [("OrgDb (.sqlite)", "table")])
+refs(950, yC, [("TSS (.bed)", "doc")])
 refs(1640, yC, [("REF.FASTA", "fasta")])
-refs(2280, yC, [("REF.FASTA", "fasta"), ("Motif DB", "table")])
-refs(2280, yF, [("GFF/GTF", "fasta"), ("OrgDb", "table")])
-refs(1760, yD, [("REF.FASTA", "fasta"), ("Motif DB", "table")])
+refs(2280, yC, [("REF.FASTA", "fasta"), ("Motif DB (.meme)", "table")])
+refs(2280, yF, [("GFF3/GTF", "fasta"), ("OrgDb (.sqlite)", "table")])
+refs(1760, yD, [("REF.FASTA", "fasta"), ("Motif DB (.meme)", "table")])
 
 # Intermediate data (input format) stations
 tag(620, yB, "BAM", "in", gap=50, icon="bam")
@@ -272,13 +272,13 @@ tag(1960, yC, "CSV", "in", gap=50, icon="doc")
 
 # Outputs
 outputs(330, yB + 150, ["TSV", "BigWig"], above=False, gap=46)
-outputs(1200, yC, ["TSV", "Figure"], gap=50)
-outputs(1960, yC + 120, ["Figure"], above=False, gap=12)
-outputs(2470, yB, ["TSV", "Figure"], gap=50, dx=70)
-outputs(2470, yC, ["TSV", "Figure"], above=False, gap=46, dx=70)
-outputs(2470, yF, ["TSV", "Figure"], above=False, gap=46, dx=70)
-outputs(1960, yD, ["BigWig", "TSV", "Figure"], above=False, gap=46)
-outputs(1240, yE, ["narrowPeak", "Figure"], above=False, gap=46)
+outputs(1200, yC, ["TSV", "PDF"], gap=50)
+outputs(1960, yC + 120, ["PDF"], above=False, gap=12)
+outputs(2470, yB, ["TSV", "PDF"], gap=50, dx=90)
+outputs(2470, yC, ["TSV", "PDF", "PNG"], above=False, gap=46, dx=40)
+outputs(2470, yF, ["TSV", "PDF"], above=False, gap=46, dx=90)
+outputs(1960, yD, ["BigWig", "TSV", "PDF"], above=False, gap=46)
+outputs(1240, yE, ["narrowPeak", "PNG"], above=False, gap=46)
 
 # Title and legend
 title = (f'<g transform="translate(60,62)">'
