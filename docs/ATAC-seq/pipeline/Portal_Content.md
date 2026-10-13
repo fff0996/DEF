@@ -1,6 +1,6 @@
 # ATAC-seq 파이프라인 포탈 등록 콘텐츠
 
-KOBIC 포탈의 ATAC-seq Analysis Pipeline 상세 페이지(https://kobic.re.kr/kobic/analysis/pipeline/go_detail?id=73)에 들어갈 국문/영문 원고다. 섹션 순서는 포탈 페이지 구성을 따른다. 모듈별 입력·옵션·결과는 `docs/ATAC-seq/Module_Registration.md`, 그림은 `docs/ATAC-seq/figures/`에 있다.
+KOBIC 포탈의 ATAC-seq Analysis Pipeline 상세 페이지(https://kobic.re.kr/kobic/analysis/pipeline/go_detail?id=73)에 들어갈 국문/영문 원고다. 섹션 순서는 포탈 페이지 구성을 따른다. 모듈별 입력·옵션·결과는 `docs/ATAC-seq/modules/Registration.md`, 그림은 `docs/ATAC-seq/figures/`에 있다.
 
 포탈 스타일: 주 폰트 Pretendard, 포인트 폰트 GmarketSans, 주 폰트 컬러 #222222, 보조 #3A3A3A, 포인트 #32549C, 배경 #FFFFFF.
 
@@ -52,7 +52,7 @@ Motif enrichment along accessibility changes and footprinting results are review
 
 ## 3. 분석 흐름 / Analysis workflow
 
-그림: `docs/ATAC-seq/figures/pipeline.png` (원본 `pipeline.svg`)
+그림: `docs/ATAC-seq/pipeline/figures/pipeline.png` (원본 `pipeline.svg`)
 
 ### 대체 텍스트 (alt)
 - 국문: ATAC-seq 파이프라인 흐름도. FASTQ 전처리(fastp, bowtie2, GATK MarkDuplicates, organellar_filter) 후 ATAC_QC, MACS3 peak 검출을 거쳐 peak 주석, 차등 접근성, motif, footprinting, 반복 재현성, GO 기능 분석으로 이어짐.
@@ -62,7 +62,7 @@ Motif enrichment along accessibility changes and footprinting results are review
 
 ## 4. 분석 개념 / Analysis concept
 
-그림: `docs/ATAC-seq/figures/concept.png` (원본 `concept.svg`)
+그림: `docs/ATAC-seq/pipeline/figures/concept.png` (원본 `concept.svg`)
 
 ### 국문 (그림 설명)
 **그림. ATAC-seq의 원리와 분석 신호.** (위) 뉴클레오솜(회색 원) 사이의 열린 염색질에서 Tn5 전이효소가 DNA를 자르고 시퀀싱 어댑터를 삽입한다. 꺾인 화살표는 유전자(파란 상자)의 전사 시작점(TSS)이며, 그 상류의 열린 영역에 전사인자(육각형)가 결합해 있다. (NFR fragments density) 뉴클레오솜이 없는 영역(NFR)에서 생성된 fragment의 위치별 밀도로, 점선 사이가 열린 영역이다. (NFR fragments, Mononucleosome fragments) Tn5의 두 절단 지점(주황·초록 끝) 사이 DNA가 하나의 fragment가 된다. 열린 영역 안에서는 짧은 NFR fragment가, 뉴클레오솜 하나를 사이에 두면 약 180–250 bp의 mononucleosome fragment가 생성되며, 본 파이프라인은 fragment 길이로 이를 구분한다. (Peaks) fragment가 집중된 열린 영역을 peak(검은 막대)로 검출한다. 전사인자가 결합한 자리는 Tn5가 절단하지 못해 신호가 국소적으로 감소하며(주황 점선 사이), 이 footprint(파란 구간)로 전사인자 결합 위치를 추정한다. 실제 peak 검출에는 Tn5 보정을 거친 전체 paired-end fragment를 사용한다. Yan F. *et al.*, *Genome Biol* 21, 22 (2020), Fig. 1A를 수정(CC BY 4.0).

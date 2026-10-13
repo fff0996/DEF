@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Metro-style schematic of the CLOSHA ATAC-seq pipeline (SVG)."""
-# Run: python3 docs/ATAC-seq/figures/make_pipeline_map.py, then render the PNG with
-# rsvg-convert -w 2700 docs/ATAC-seq/figures/pipeline.svg -o docs/ATAC-seq/figures/pipeline.png
+# Run: python3 docs/ATAC-seq/pipeline/figures/make_pipeline_map.py, then render the PNG with
+# rsvg-convert -w 2700 docs/ATAC-seq/pipeline/figures/pipeline.svg -o docs/ATAC-seq/pipeline/figures/pipeline.png
 # (the Montserrat font gives the intended look).
 from pathlib import Path
 

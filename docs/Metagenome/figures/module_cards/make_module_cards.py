@@ -462,7 +462,7 @@ if __name__ == "__main__":
         print(p)
     for name, c in ATAC_CARDS.items():
         # ATAC-seq cards live with the ATAC-seq docs
-        p = OUT.parents[2] / "ATAC-seq" / "figures" / "module_cards" / f"{name}_card.svg"
+        p = OUT.parents[2] / "ATAC-seq" / "modules" / "figures" / "module_cards" / f"{name}_card.svg"
         p.parent.mkdir(exist_ok=True)
         p.write_text(card(c))
         print(p)

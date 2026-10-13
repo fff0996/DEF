@@ -3,8 +3,8 @@
 
 Adapted from Yan F. et al., Genome Biology 21, 22 (2020), Fig. 1A
 (CC BY 4.0); check the source and license before publishing.
-Run: python3 docs/ATAC-seq/figures/make_concept.py, then
-rsvg-convert -w 1800 docs/ATAC-seq/figures/concept.svg -o docs/ATAC-seq/figures/concept.png
+Run: python3 docs/ATAC-seq/pipeline/figures/make_concept.py, then
+rsvg-convert -w 1800 docs/ATAC-seq/pipeline/figures/concept.svg -o docs/ATAC-seq/pipeline/figures/concept.png
 (the Pretendard font gives the intended look).
 """
 import math

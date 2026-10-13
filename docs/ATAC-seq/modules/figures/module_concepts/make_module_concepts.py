@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Concept figures for the ATAC-seq modules, one drawing per module, in the
-style of docs/ATAC-seq/figures/concept.svg (KOBIC portal font and colors).
+style of docs/ATAC-seq/pipeline/figures/concept.svg (KOBIC portal font and colors).
 
-Run: python3 docs/ATAC-seq/figures/module_concepts/make_module_concepts.py, then
+Run: python3 docs/ATAC-seq/modules/figures/module_concepts/make_module_concepts.py, then
 rsvg-convert -w 1600 <name>.svg -o <name>.png (needs the Pretendard font).
 Values in the drawings are schematic, not data.
 """
