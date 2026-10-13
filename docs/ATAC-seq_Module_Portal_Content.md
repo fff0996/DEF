@@ -52,6 +52,14 @@ Removes reads aligned to organellar chromosomes such as mitochondria and chlorop
 | BAM 파일은 좌표 순으로 정렬되어 있어야 합니다. | BAM files must be coordinate-sorted. |
 | 세포소기관 염색체 이름이 일반적이지 않은 종은 organellar_pattern을 지정해 주세요. 결과의 contig 목록에서 제거된 염색체를 확인할 수 있습니다. | For species with unusual organellar contig names, set organellar_pattern. The contig list in the results shows which contigs were removed. |
 
+
+### 분석 개념 이미지
+그림: `docs/figures/module_concepts/organellar_filter_concept.png`
+
+- 레전드(국문): **그림. 세포소기관 read 제거.** (A) 핵 DNA는 뉴클레오솜에 감겨 Tn5 절단이 열린 영역에 한정되지만, 미토콘드리아·엽록체 DNA는 뉴클레오솜이 없어 Tn5가 많이 자른다. (B) 그 결과 정렬된 read의 상당 부분이 세포소기관 contig(Mt, Pt)에 몰리며, 필터 후에는 핵 염색체 read만 남는다. (C) 세포소기관 contig는 이름 정규식(organellar_pattern)으로 찾아 제외한다.
+- 레전드(영문): **Figure. Removal of organellar reads.** (A) Nuclear DNA is wrapped around nucleosomes, so Tn5 cuts only open regions, whereas mitochondrial and chloroplast DNA lacks nucleosomes and is cut heavily. (B) Many aligned reads therefore fall on organellar contigs (Mt, Pt); after filtering only nuclear reads remain. (C) Organellar contigs are matched by a name pattern (organellar_pattern) and excluded.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
+
 ### 스크립트 사용 예제
 ```
 bash organellar_filter.1.1.sh input_dir=/data/bam output_dir=/data/organellar_filter
@@ -129,6 +137,14 @@ trt_2,treated,2
 | TSS enrichment는 ENCODE 사람(hg38) 기준 7 초과 양호, 5 미만 주의입니다. 다른 종은 주석 품질에 따라 범위가 다릅니다. | TSS enrichment above 7 is good and below 5 is concerning for human (hg38, ENCODE); the range for other species depends on the annotation. |
 | clean BAM은 proper pair만 남기므로 긴 fragment가 적은 데이터에서는 trinucleosome 분할이 비어 있을 수 있습니다. ATAC_QC_plot은 빈 분할을 빼고 그립니다. | The clean BAM keeps proper pairs only, so the trinucleosome split can be empty when long fragments are rare; ATAC_QC_plot skips empty classes. |
 
+
+### 분석 개념 이미지
+그림: `docs/figures/module_concepts/ATAC_QC_concept.png`
+
+- 레전드(국문): **그림. ATAC-seq 품질 평가와 Tn5 보정.** (A) Tn5 절단 위치에 따라 뉴클레오솜 사이 열린 DNA에서는 짧은 NFR fragment가, 뉴클레오솜 하나 또는 둘을 사이에 두면 mononucleosome·dinucleosome fragment가 생긴다. (B) 좋은 라이브러리의 fragment 길이 분포는 NFR 봉우리와 약 200 bp 간격의 뉴클레오솜 주기를 보이며, 약 10.5 bp의 DNA 나선 주기도 나타난다(작은 그림: 로그 척도). (C) Tn5는 두 가닥에 9 bp 간격으로 삽입되므로 + 가닥 read는 +4 bp, − 가닥 read는 −5 bp 옮겨 실제 삽입 중심을 표시한다. (B)는 Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1을 수정(CC BY 4.0).
+- 레전드(영문): **Figure. ATAC-seq quality control and Tn5 shift.** (A) Depending on the Tn5 cut sites, open DNA between nucleosomes gives short NFR fragments, and fragments spanning one or two nucleosomes are mononucleosome or dinucleosome fragments. (B) A good library shows an NFR peak and nucleosome periodicity of about 200 bp in the fragment size distribution, with the ~10.5 bp helical pitch visible (inset: log scale). (C) Tn5 inserts into the two strands 9 bp apart, so plus-strand reads are shifted +4 bp and minus-strand reads −5 bp to mark the insertion center. Panel B adapted from Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1 (CC BY 4.0).
+- 출처: Adapted from Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1 (CC BY 4.0).
+
 ### 스크립트 사용 예제
 ```
 Rscript ATAC_QC.1.2.R input_dir=/data/organellar_filter sample_data=/data/sample_data.csv txs_bed=/ref/genes.bed genome_fasta=/ref/genome.fa output_dir=/data/atac_qc
@@ -179,6 +195,14 @@ Plots heatmaps and average profiles of the signal around TSSs from the fragment-
 | 국문 | 영문 |
 |---|---|
 | ATAC_QC 1.1 이상의 결과를 입력으로 사용해 주세요. | Use the output of ATAC_QC 1.1 or later as input. |
+
+
+### 분석 개념 이미지
+그림: `docs/figures/module_concepts/ATAC_QC_plot_concept.png`
+
+- 레전드(국문): **그림. TSS 주변 신호.** (A) 모든 TSS를 기준으로 정렬한 nucleosome-free(왼쪽)와 nucleosome-bound(오른쪽) 신호 heatmap. 각 행은 하나의 TSS다. (B) 평균 신호. 좋은 데이터에서는 NFR 신호가 TSS에 모이고, 뉴클레오솜 신호는 그 양옆(−1, +1 뉴클레오솜)에 나타난다. Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1을 수정(CC BY 4.0).
+- 레전드(영문): **Figure. Signal around TSSs.** (A) Heatmaps of nucleosome-free (left) and nucleosome-bound (right) signal aligned at all TSSs; each row is one TSS. (B) Averaged coverage. In good data the NFR signal concentrates at the TSS and the nucleosome signal flanks it (−1 and +1 nucleosomes). Adapted from Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1 (CC BY 4.0).
+- 출처: Adapted from Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1 (CC BY 4.0).
 
 ### 스크립트 사용 예제
 ```
@@ -236,6 +260,14 @@ Calls open-chromatin peaks from Tn5-corrected BAM files with MACS3 callpeak in p
 | FRiP는 ENCODE ATAC-seq 기준 0.3 초과 양호, 0.2 초과 허용입니다. | FRiP above 0.3 is good and above 0.2 is acceptable (ENCODE ATAC-seq). |
 | 일부 샘플만 실패하면 경고를 남기고 나머지 결과로 정상 종료합니다. | If only some samples fail, the run warns and finishes with the remaining samples. |
 
+
+### 분석 개념 이미지
+그림: `docs/figures/module_concepts/MACS3_callpeak_ATAC_concept.png`
+
+- 레전드(국문): **그림. Peak 검출.** (A) Tn5 보정 BAM의 paired-end fragment를 유전체에 쌓으면, 열린 영역에서 주변 배경(local λ)보다 높은 더미가 생긴다. (B) 각 위치에서 관찰된 fragment 수를 λ로부터 기대되는 값과 Poisson 분포로 비교해 p-value와 q-value를 구하고, 기준을 넘는 구간을 peak(summit 포함)로 기록한다. (C) 전체 read 중 peak 안에 들어간 비율(FRiP)로 신호 대 잡음을 평가한다.
+- 레전드(영문): **Figure. Peak calling.** (A) Piling up paired-end fragments from Tn5-shifted BAM files gives stacks above the local background (λ) at open regions. (B) Observed fragment counts are compared with those expected from λ under a Poisson model to obtain p- and q-values, and regions passing the threshold are reported as peaks with their summits. (C) The fraction of reads in peaks (FRiP) measures signal to noise.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
+
 ### 스크립트 사용 예제
 ```
 bash MACS3_callpeak_ATAC.1.2.sh input_dir=/data/atac_qc output_dir=/data/macs3 genome_size=hs
@@ -289,6 +321,14 @@ Classifies peaks into genomic features such as promoter, exon, intron, and inter
 |---|---|
 | genome_gff는 BAM과 같은 유전체 버전이어야 하고 염색체 이름 표기도 같아야 합니다. | genome_gff must match the genome version and chromosome naming of the BAM files. |
 | 유전자 ID는 genome_gff의 ID를 그대로 사용합니다. GO 분석의 OrgDb와 ID 체계가 맞는지 확인해 주세요. | Gene IDs come from genome_gff as is; check that they match the ID type of the OrgDb used for GO analysis. |
+
+
+### 분석 개념 이미지
+그림: `docs/figures/module_concepts/peak_annotation_concept.png`
+
+- 레전드(국문): **그림. Peak 주석.** (A) 각 peak를 유전자 구조(promoter, exon, intron, downstream, distal intergenic)에 따라 분류하고, 가장 가까운 유전자와 그 TSS까지의 거리(distanceToTSS)를 붙인다. 주석은 해당 종의 GFF3/GTF로 만든 TxDb를 사용한다. (B) 기능 영역별 peak 비율. ATAC-seq peak는 보통 promoter에 많이 모인다.
+- 레전드(영문): **Figure. Peak annotation.** (A) Each peak is classified by gene structure (promoter, exon, intron, downstream, distal intergenic), and the nearest gene and the distance to its TSS (distanceToTSS) are added, using a TxDb built from the species' GFF3/GTF. (B) Fraction of peaks per feature; ATAC-seq peaks are typically enriched at promoters.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
@@ -368,6 +408,14 @@ trt_2,treated
 | 조건마다 반복 실험이 2개 이상이어야 p-value와 FDR을 계산합니다. 반복이 없으면 변화량만 보고합니다. | p-values and FDR need two or more replicates per condition; without replicates only fold changes are reported. |
 | PCA는 샘플이 3개 이상일 때 만듭니다. | PCA is produced with three or more samples. |
 
+
+### 분석 개념 이미지
+그림: `docs/figures/module_concepts/differential_accessibility_concept.png`
+
+- 레전드(국문): **그림. 차등 접근성 분석.** (A) 샘플별 peak를 합쳐 공통 peak 집합을 만든다. (B) 공통 peak마다 조건별 read 수를 세어, 접근성이 증가·유지·감소한 peak를 구분한다. (C) TMM 정규화와 edgeR quasi-likelihood 검정 결과를 MA plot으로 보면, 유의하게 증가(up)·감소(down)한 peak가 드러난다.
+- 레전드(영문): **Figure. Differential accessibility.** (A) Sample peaks are merged into a consensus peak set. (B) Reads are counted per consensus peak and condition, separating peaks that gain, keep, or lose accessibility. (C) After TMM normalization and the edgeR quasi-likelihood test, the MA plot shows significantly increased (up) and decreased (down) peaks.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
+
 ### 스크립트 사용 예제
 ```
 Rscript differential_accessibility.1.2.R sample_data=/data/da_sample_data.csv genome_fasta=/ref/genome.fa input_dir=/data/atac_qc peak_dir=/data/macs3 output_dir=/data/da control_name=control
@@ -430,6 +478,14 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 | 분석 종에 맞는 JASPAR 분류군(척추동물, 식물 등)의 MEME 파일을 사용해 주세요. | Use a MEME file from the JASPAR taxonomic group of the species (vertebrates, plants, and so on). |
 | genome_fasta 옆에 .fai 인덱스가 미리 있어야 합니다. | A .fai index must exist beside genome_fasta. |
 | 차등 peak가 적으면 구간 수가 줄어 결과가 불안정할 수 있습니다. n_per_bin과 min_abs_logfc를 조정해 주세요. | With few differential peaks the bins are few and results can be unstable; adjust n_per_bin and min_abs_logfc. |
+
+
+### 분석 개념 이미지
+그림: `docs/figures/module_concepts/atac_motif_concept.png`
+
+- 레전드(국문): **그림. 모티프 농축 분석.** (A) peak를 접근성 변화량(logFC) 순서로 정렬해 여러 구간(bin)으로 나눈다. (B) 구간마다 전사인자 모티프의 출현을 센다. (C) 모티프×구간 heatmap. 접근성이 증가한 구간에 농축된 모티프(파랑)와 감소한 구간에 농축된 모티프를 찾아, 변화와 함께 움직이는 전사인자 후보를 제시한다.
+- 레전드(영문): **Figure. Motif enrichment.** (A) Peaks are ranked by accessibility change (logFC) and split into bins. (B) Transcription factor motif occurrences are counted per bin. (C) Motif-by-bin heatmap showing motifs enriched in bins of increased (blue) or decreased accessibility, which point to candidate factors driving the change.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
@@ -501,6 +557,14 @@ trt_2	treated
 |---|---|
 | footprint는 시퀀싱 깊이가 충분해야 신뢰할 수 있습니다. 조건별로 BAM을 합쳐 깊이를 확보합니다. | Footprints need sufficient sequencing depth; BAM files are merged per condition to gain depth. |
 | 조건이 2개 이상이어야 BINDetect 비교를 수행합니다. | BINDetect comparisons need two or more conditions. |
+
+
+### 분석 개념 이미지
+그림: `docs/figures/module_concepts/tf_footprinting_concept.png`
+
+- 레전드(국문): **그림. 전사인자 footprint 분석.** (A) 단백질이 결합한 DNA는 Tn5가 자르지 못해, 절단 신호에 움푹 패인 footprint가 생긴다. (B) 관찰된 절단 신호에서 Tn5 서열 선호도로 예측한 기대 신호를 빼서 편향을 보정한다(ATACorrect). (C) 조건 간 footprint 점수를 비교해(BINDetect), 결합이 늘거나 준 전사인자를 volcano plot으로 보여 준다. Bentsen M. et al., Nat Commun 11, 4267 (2020), Fig. 1을 수정(CC BY 4.0).
+- 레전드(영문): **Figure. Transcription factor footprinting.** (A) DNA bound by a protein is protected from Tn5, leaving a footprint in the cut-site signal. (B) Tn5 sequence bias is corrected by subtracting the cutting expected from Tn5 sequence preference from the observed cut sites (ATACorrect). (C) Footprint scores are compared between conditions (BINDetect), and factors with increased or decreased binding are shown in a volcano plot. Adapted from Bentsen M. et al., Nat Commun 11, 4267 (2020), Fig. 1 (CC BY 4.0).
+- 출처: Adapted from Bentsen M. et al., Nat Commun 11, 4267 (2020), Fig. 1 (CC BY 4.0).
 
 ### 스크립트 사용 예제
 ```
@@ -574,6 +638,14 @@ Analyzes with clusterProfiler which biological functions (GO) are enriched among
 | genome_gff의 유전자 ID가 OrgDb에서 절반 이상 찾아지지 않으면 중단합니다. 종과 ID 체계를 확인해 주세요. | The run stops if fewer than half of the genome_gff gene IDs are found in the OrgDb; check the species and ID type. |
 | 입력은 input_dir, gene_file, da_dir, da_file 중 하나만 지정합니다. | Give only one of input_dir, gene_file, da_dir, or da_file. |
 
+
+### 분석 개념 이미지
+그림: `docs/figures/module_concepts/functional_enrichment_concept.png`
+
+- 레전드(국문): **그림. GO 기능 농축 분석.** (A) 각 peak를 가장 가까운 TSS의 유전자에 연결한다(max_distance_to_tss보다 먼 peak는 제외). 차등 접근성 결과에서는 증가·감소 목록을 따로 만든다. (B) 배경 유전자(N) 중 GO 항목(M)에 속하는 유전자가 입력 목록(n)에 k개 이상 나올 확률을 초기하분포로 구하고 다중검정을 보정한다. (C) 유의한 GO 항목의 dot plot(크기: 유전자 수, 색: 유의성).
+- 레전드(영문): **Figure. GO enrichment.** (A) Each peak is linked to the gene with the nearest TSS (peaks beyond max_distance_to_tss are dropped); differential results give separate up and down lists. (B) The probability of observing at least k genes of a GO term (M) in the input list (n) out of the background (N) is computed with the hypergeometric test and adjusted for multiple testing. (C) Dot plot of significant GO terms (size: gene count; color: significance).
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
+
 ### 스크립트 사용 예제
 ```
 Rscript functional_enrichment.1.0.R da_dir=/data/da genome_gff=/ref/genes.gff3 orgdb_file=/ref/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite output_dir=/data/functional_enrichment
@@ -631,6 +703,14 @@ ATAC_QC와 같은 sample_data.csv를 사용한다(2번 모듈의 샘플시트 �
 | 조건마다 반복 실험이 2개 이상이어야 합니다. 반복이 1개인 조건은 건너뜁니다. | Each condition needs two or more replicates; conditions with one replicate are skipped. |
 | 품질 확인용 모듈이며, 결과 peak를 다른 모듈이 이어받지는 않습니다. | This is a QC module; its peaks are not passed to other modules. |
 | 의사 반복(pseudo-replicate) 분석은 수행하지 않습니다. | Pseudo-replicate analysis is not performed. |
+
+
+### 분석 개념 이미지
+그림: `docs/figures/module_concepts/replicate_consistency_concept.png`
+
+- 레전드(국문): **그림. 반복 실험 재현성(IDR).** (A) 실제 peak는 두 반복 실험에서 신호 순위가 비슷하지만, 잡음 peak는 순위가 어긋난다. (B) 두 반복의 peak 순위를 비교해 IDR(Irreproducible Discovery Rate)을 계산하고, 기준(IDR ≤ 0.05)을 통과한 peak를 재현성 있는 peak로 본다. (C) 느슨한 기준으로 찾은 peak 중 IDR을 통과한 peak가 가장 많은 반복 쌍을 조건의 대표 peak 세트로 정한다.
+- 레전드(영문): **Figure. Replicate consistency (IDR).** (A) True peaks keep similar signal ranks in two replicates, whereas noise peaks do not. (B) Ranks are compared between replicates to compute the Irreproducible Discovery Rate (IDR), and peaks passing IDR ≤ 0.05 are reproducible. (C) Among relaxed peaks, the replicate pair with the most passing peaks gives the conservative peak set of the condition.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
