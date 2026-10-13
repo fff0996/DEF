@@ -260,9 +260,9 @@ refs(1640, yB, [("GFF/GTF", "fasta")])
 refs(2280, yB, [("OrgDb", "table")])
 refs(950, yC, [("TSS BED", "doc")])
 refs(1640, yC, [("REF.FASTA", "fasta")])
-refs(2280, yC, [("REF.FASTA", "fasta"), ("Motif DB", "doc")])
+refs(2280, yC, [("REF.FASTA", "fasta"), ("Motif DB", "table")])
 refs(2280, yF, [("GFF/GTF", "fasta"), ("OrgDb", "table")])
-refs(1760, yD, [("REF.FASTA", "fasta"), ("Motif DB", "doc")])
+refs(1760, yD, [("REF.FASTA", "fasta"), ("Motif DB", "table")])
 
 # Intermediate data (input format) stations
 tag(620, yB, "BAM", "in", gap=50, icon="bam")
