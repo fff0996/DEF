@@ -3,7 +3,7 @@
 in the KOBIC portal style. Redraws the vendor cards for GTDB-Tk, Prokka, and
 Prodigal with corrected content.
 
-Run: python3 docs/figures/module_cards/make_module_cards.py, then for each SVG
+Run: python3 docs/Metagenome/figures/module_cards/make_module_cards.py, then for each SVG
 rsvg-convert -w 2000 <name>.svg -o <name>.png
 (needs the Pretendard and GmarketSans fonts).
 """
@@ -461,7 +461,8 @@ if __name__ == "__main__":
         p.write_text(card(c))
         print(p)
     for name, c in ATAC_CARDS.items():
-        p = OUT / "ATAC-seq" / f"{name}_card.svg"
+        # ATAC-seq cards live with the ATAC-seq docs
+        p = OUT.parents[2] / "ATAC-seq" / "figures" / "module_cards" / f"{name}_card.svg"
         p.parent.mkdir(exist_ok=True)
         p.write_text(card(c))
         print(p)
