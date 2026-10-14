@@ -17,6 +17,8 @@ FONT = "Pretendard, sans-serif"
 MAIN, SUB, POINT = "#222222", "#3A3A3A", "#32549C"
 TINT, LIGHT, SKY = "#EAF0FA", "#C9D7F0", "#8CC3EE"
 GRAY, PALE, ORANGE, GREEN = "#A7ADB6", "#EEF0F3", "#F08A24", "#2E9E6B"
+# Red and blue follow the real output plots (edgeR plotMD, monaLisa heatmap, idr).
+RED, BLUE = "#D6604D", "#2166AC"
 
 
 # ---------------------------------------------------------------- helpers
@@ -93,6 +95,23 @@ def svg(body):
             f'<rect width="{W}" height="{H}" fill="#FFFFFF"/>' + body + "</svg>")
 
 
+def table(x, y, header, rows, widths, hl=None):
+    """Small text table drawn like a TSV preview; hl maps row index to a text color."""
+    out = rect(x, y, sum(widths), 34, PALE, 4)
+    cx = x
+    for h, wd in zip(header, widths):
+        out += t(cx + 10, y + 17, h, 14, 700, SUB, "start")
+        cx += wd
+    for r, row in enumerate(rows):
+        yy = y + 34 + r * 32
+        out += line(x, yy + 32, x + sum(widths), yy + 32, PALE, 1.5)
+        cx = x
+        for v, wd in zip(row, widths):
+            out += t(cx + 10, yy + 16, v, 14, 600, (hl or {}).get(r, MAIN), "start")
+            cx += wd
+    return out
+
+
 def legend(x, y, items):
     out = ""
     for i, (kind, color, label) in enumerate(items):
@@ -131,19 +150,14 @@ def organellar_filter():
         g.append(tn5(cx - 30, cy - 18, 0.45) + tn5(cx + 30, cy - 14, 0.45) + tn5(cx + 4, cy + 22, 0.45))
     g.append(t(290, 580, "Naked organellar DNA has no nucleosomes → many Tn5 cuts", 15, 600, SUB))
 
-    g.append(panel(580, "B", "Mapped reads before and after"))
-    base, top = 520, 130
-    for i, (label, org) in enumerate([("Before", 0.45), ("After", 0.0)]):
-        x = 650 + i * 170
-        nuc_h = (base - top) * (1 - 0.45)
-        g.append(rect(x, base - nuc_h, 90, nuc_h, POINT))
-        if org:
-            g.append(rect(x, base - nuc_h - (base - top) * org, 90, (base - top) * org, ORANGE))
-            g.append(t(x + 45, base - nuc_h - (base - top) * org / 2, "Mt, Pt", 16, 700, "#fff"))
-        g.append(t(x + 45, base - nuc_h / 2, "nuclear", 16, 700, "#fff"))
-        g.append(t(x + 45, base + 24, label, 17, 700, MAIN))
-    g.append(line(630, base, 940, base, SUB, 2.5))
-    g.append(arrow(745, 330, 815, 330, POINT, 4))
+    g.append(panel(580, "B", "Reads per contig (idxstats)"))
+    rows = [("chr1", "8,120,400", "kept"), ("chr2", "6,904,210", "kept"), ("chr3", "7,388,950", "kept"),
+            ("…", "…", ""), ("Mt", "9,812,300", "removed"), ("Pt", "4,276,180", "removed")]
+    g.append(table(610, 100, ["contig", "mapped reads", ""], rows, [90, 160, 110], {4: ORANGE, 5: ORANGE}))
+    g.append(t(610, 360, "flagstat before / after", 15, 700, SUB, "start"))
+    g.append(table(610, 380, ["", "before", "after"], [("mapped", "36,502,040", "22,413,560")], [90, 140, 130]))
+    g.append(t(610, 500, "Files: 01_stats/ (idxstats, flagstat),", 14, 500, SUB, "start"))
+    g.append(t(610, 524, "04_summary/organellar_filter_summary.tsv", 14, 500, SUB, "start"))
 
     g.append(panel(1000, "C", "Contigs matched by organellar_pattern"))
     rows = [("1", False), ("2", False), ("3", False), ("4", False), ("5", False), ("Mt", True), ("Pt", True)]
@@ -222,7 +236,7 @@ def atac_qc_plot():
     """Redrawn after ATACseqQC (Ou et al., BMC Genomics 2018) Fig. 1b, c."""
     g = [panel(40, "A", "Signal heatmaps around TSSs")]
     random.seed(21)
-    for k, (title, kind) in enumerate([("Nucleosome-free", "nfr"), ("Nucleosome-bound", "nuc")]):
+    for k, (title, kind) in enumerate([("NucleosomeFree", "nfr"), ("mononucleosome", "nuc")]):
         x0, y0, cw, rh = 70 + k * 360, 110, 13, 14
         g.append(t(x0 + 150, 88, title, 16, 700, POINT if kind == "nfr" else SUB))
         for r in range(26):
@@ -239,6 +253,7 @@ def atac_qc_plot():
         g.append(t(x0, y0 + 26 * rh + 22, "−1 kb", 14, 600, SUB) + t(x0 + 11.5 * cw, y0 + 26 * rh + 22, "TSS", 14, 700, ORANGE)
                  + t(x0 + 23 * cw, y0 + 26 * rh + 22, "+1 kb", 14, 600, SUB))
     g.append(t(370, 560, "Each row is one TSS (genes sorted by signal)", 15, 500, SUB))
+    g.append(t(370, 586, "dinucleosome and trinucleosome panels follow when they have reads", 14, 500, SUB))
 
     g.append(panel(780, "B", "Averaged coverage around TSSs"))
     x0, y0, w, h = 860, 120, 600, 340
@@ -254,7 +269,7 @@ def atac_qc_plot():
         x = x0 + w / 2 + sgn * 0.31 * w / 2
         g.append(nucleosome(x, 95, 14) + t(x + 28 * sgn, 95, lab, 14, 700, SUB))
     g.append(t(x0, y0 + h + 24, "−1000", 13, 600, SUB) + t(x0 + w, y0 + h + 24, "1000", 13, 600, SUB))
-    g.append(legend(1290, 140, [("line", POINT, "Nucleosome-free"), ("dash", SUB, "Nucleosome-bound")]))
+    g.append(legend(1290, 140, [("line", POINT, "NucleosomeFree"), ("dash", SUB, "mononucleosome")]))
     g.append(t(1160, 560, "Good library: NFR peak at the TSS, nucleosomes positioned on both sides", 15, 600, POINT))
     return svg("".join(g))
 
@@ -300,14 +315,12 @@ def macs3():
     g.append(t(960, 300, "narrowPeak record", 15, 700, SUB, "start"))
     g.append(rect(960, 316, 290, 40, PALE, 6) + t(1105, 336, "chr · start · end · score · summit", 14, 600, MAIN))
 
-    g.append(panel(1290, "C", "FRiP"))
-    cx, cy, r = 1420, 330, 110
-    frac = 0.38
-    a = 2 * math.pi * frac
-    g.append(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{GRAY}"/>'
-             f'<path d="M{cx},{cy} L{cx},{cy - r} A{r},{r} 0 0 1 {cx + r * math.sin(a):.1f},{cy - r * math.cos(a):.1f} Z" fill="{POINT}"/>')
-    g.append(legend(1320, 480, [("box", POINT, "reads in peaks"), ("box", GRAY, "reads outside peaks")]))
-    g.append(t(1420, 570, "FRiP = in peaks / all reads", 16, 700, POINT))
+    g.append(panel(1290, "C", "FRiP per sample"))
+    rows = [("ctrl_1", "41,230", "0.38"), ("ctrl_2", "39,870", "0.35"), ("trt_1", "45,610", "0.41"), ("trt_2", "44,020", "0.39")]
+    g.append(table(1290, 100, ["SampleID", "peaks", "FRiP"], rows, [110, 100, 70]))
+    g.append(t(1290, 300, "frip_summary.tsv", 14, 600, SUB, "start"))
+    g.append(t(1290, 360, "FRiP = reads in peaks / all reads", 16, 700, POINT, "start"))
+    g.append(t(1290, 392, "ENCODE: ≥ 0.3 ideal, ≥ 0.2 acceptable", 14, 500, SUB, "start"))
     return svg("".join(g))
 
 
@@ -335,16 +348,20 @@ def peak_annotation():
     g.append(t(265, 476, "nearest gene: geneId", 15, 600, SUB))
     g.append(t(520, 560, "Annotation from a TxDb built from the GFF3/GTF of the species", 15, 500, SUB))
 
-    g.append(panel(1080, "B", "Feature distribution"))
-    cats = [("Promoter", 0.42, POINT), ("5' UTR", 0.04, SKY), ("Exon", 0.08, LIGHT), ("Intron", 0.16, SUB),
-            ("Downstream", 0.06, GRAY), ("Distal intergenic", 0.24, MAIN)]
-    y0 = 120
-    for name, f, col in cats:
-        hh = f * 380
-        g.append(rect(1120, y0, 90, hh, col))
-        g.append(t(1230, y0 + hh / 2, f"{name}", 15, 600, MAIN, "start"))
-        y0 += hh
-    g.append(t(1165, 530, "Peaks (%)", 15, 700, SUB))
+    g.append(panel(1080, "B", "Feature distribution per sample"))
+    cats = [("Promoter", POINT), ("5' UTR", SKY), ("3' UTR", TINT), ("Exon", LIGHT), ("Intron", SUB),
+            ("Downstream", GRAY), ("Distal Intergenic", MAIN)]
+    fracs = [[0.42, 0.04, 0.03, 0.08, 0.16, 0.05, 0.22], [0.40, 0.05, 0.03, 0.07, 0.17, 0.06, 0.22],
+             [0.36, 0.04, 0.04, 0.09, 0.19, 0.05, 0.23]]
+    for k, (sample, fr) in enumerate(zip(["ctrl_1", "ctrl_2", "trt_1"], fracs)):
+        x, y0 = 1110 + k * 70, 110
+        for (name, col), f in zip(cats, fr):
+            hh = f * 380
+            g.append(rect(x, y0, 50, hh, col, 0, "#fff", 1))
+            y0 += hh
+        g.append(t(x + 25, 512, sample, 13, 600, SUB))
+    g.append(t(1190, 545, "percent of peaks", 14, 600, SUB))
+    g.append(legend(1340, 140, [("box", col, name) for name, col in cats]))
     return svg("".join(g))
 
 
@@ -366,7 +383,7 @@ def differential_accessibility():
     g.append(panel(560, "B", "Counts per peak and condition"))
     for j, (lab, c, tr) in enumerate([("up", 3, 9), ("unchanged", 6, 6), ("down", 8, 3)]):
         x = 610 + j * 150
-        g.append(t(x + 50, 90, lab, 16, 700, POINT if lab == "up" else (ORANGE if lab == "down" else SUB)))
+        g.append(t(x + 50, 90, lab, 16, 700, RED if lab == "up" else (BLUE if lab == "down" else SUB)))
         for k in range(c):
             g.append(rect(x + 5, 330 - k * 22, 40, 16, SUB, 2))
         for k in range(tr):
@@ -376,22 +393,22 @@ def differential_accessibility():
     g.append(legend(620, 420, [("box", SUB, "control (C)"), ("box", POINT, "treated (T)")]))
     g.append(t(830, 510, "TMM normalization → edgeR QL F-test", 16, 700, MAIN))
 
-    g.append(panel(1060, "C", "MA plot"))
+    g.append(panel(1060, "C", "MD plot"))
     random.seed(5)
     x0, y0, w, h = 1120, 110, 420, 360
-    g.append(axes(x0, y0, w, h, "Average accessibility (logCPM)", "logFC (treated / control)"))
+    g.append(axes(x0, y0, w, h, "Average log CPM", "log-fold-change (treated / control)"))
     g.append(line(x0, y0 + h / 2, x0 + w, y0 + h / 2, GRAY, 2, "6,5"))
     for i in range(260):
         a = random.uniform(0.05, 0.95)
         m = random.gauss(0, 0.05 + 0.1 * (1 - a))
         col, rr = GRAY, 3.5
         if i < 22:
-            m, col, rr = random.uniform(0.25, 0.42), POINT, 5
+            m, col, rr = random.uniform(0.25, 0.42), RED, 5
         elif i < 40:
-            m, col, rr = -random.uniform(0.25, 0.42), ORANGE, 5
+            m, col, rr = -random.uniform(0.25, 0.42), BLUE, 5
         m = max(-0.46, min(0.46, m))
         g.append(f'<circle cx="{x0 + a * w:.1f}" cy="{y0 + h / 2 - m * h:.1f}" r="{rr}" fill="{col}" opacity="0.85"/>')
-    g.append(legend(1150, 520, [("dot", POINT, "more accessible in treated (up)"), ("dot", ORANGE, "less accessible (down)")]))
+    g.append(legend(1150, 520, [("dot", RED, "up: more accessible in treated"), ("dot", BLUE, "down: less accessible")]))
     return svg("".join(g))
 
 
@@ -401,14 +418,14 @@ def atac_motif():
     x, y0, hh = 90, 90, 440
     for i in range(100):
         f = i / 99
-        col = POINT if f < 0.5 else ORANGE
+        col = RED if f < 0.5 else BLUE
         op = abs(f - 0.5) * 2
         g.append(rect(x, y0 + i * hh / 100, 60, hh / 100 + 0.5, col, op=max(0.1, op)))
     for b in range(5):
         yy = y0 + b * hh / 5
         g.append(line(x - 10, yy, x + 70, yy, MAIN, 2))
         g.append(t(x + 90, yy + hh / 10, f"bin{5 - b}", 15, 700, MAIN, "start"))
-    g.append(t(x + 30, y0 - 18, "up", 15, 700, POINT) + t(x + 30, y0 + hh + 20, "down", 15, 700, ORANGE))
+    g.append(t(x + 30, y0 - 18, "up", 15, 700, RED) + t(x + 30, y0 + hh + 20, "down", 15, 700, BLUE))
     g.append(f'<rect x="{x}" y="{y0}" width="60" height="{hh}" fill="none" stroke="{SUB}" stroke-width="2"/>')
 
     g.append(panel(330, "B", "Motif occurrences per bin"))
@@ -422,29 +439,37 @@ def atac_motif():
             nB = [0, 0, 1, 2, 3][b]
             for k in range(nA):
                 xx = random.uniform(350, 740)
-                g.append(rect(xx, ys - 6, 22, 12, POINT, 2))
+                g.append(rect(xx, ys - 6, 22, 12, MAIN, 2))
             for k in range(nB):
                 xx = random.uniform(350, 740)
                 g.append(rect(xx, ys - 6, 22, 12, ORANGE, 2))
         g.append(t(780, yy + 20, f"bin{5 - b}", 14, 700, SUB, "start"))
-    g.append(legend(360, 560, [("box", POINT, "motif A"), ("box", ORANGE, "motif B")]))
+    g.append(legend(360, 560, [("box", MAIN, "motif A"), ("box", ORANGE, "motif B")]))
 
-    g.append(panel(880, "C", "Enrichment heatmap (motif × bin)"))
+    g.append(panel(880, "C", "Motif heatmap (motif × bin)"))
     vals = [[-1.2, -0.6, 0.0, 0.7, 1.5], [1.4, 0.8, 0.1, -0.5, -1.1], [-0.2, 0.1, 0.0, 0.2, 0.3]]
+    sig = [[3, 1, 0, 2, 8], [7, 3, 0, 1, 4], [0, 0, 0, 0, 1]]
     names = ["motif A", "motif B", "motif C"]
-    for r, row in enumerate(vals):
-        for c, v in enumerate(row):
-            col = POINT if v > 0 else ORANGE
-            g.append(rect(1060 + c * 80, 130 + r * 90, 78, 86, col, 0, op=min(1, abs(v) / 1.5)))
-        g.append(t(1040, 173 + r * 90, names[r], 16, 700, MAIN, "end"))
-        # simple sequence logo
-        letters = ["T", "G", "A", "C", "G"] if r == 0 else (["C", "A", "C", "G", "T"] if r == 1 else ["A", "T", "A", "T", "A"])
-        for k, L in enumerate(letters):
-            g.append(t(1490 + k * 18, 175 + r * 90, L, 26 - (k % 2) * 6, 900, [POINT, ORANGE, GREEN, SUB][k % 4]))
+    logos = [["T", "G", "A", "C", "G"], ["C", "A", "C", "G", "T"], ["A", "T", "A", "T", "A"]]
+    lcol = {"A": GREEN, "C": BLUE, "G": ORANGE, "T": RED}
+    x1, x2, cw, rh, y0 = 1100, 1350, 44, 80, 150
     for c in range(5):
-        g.append(t(1099 + c * 80, 420, f"bin{c + 1}", 14, 700, SUB))
-    g.append(t(1260, 450, "down ← logFC → up", 15, 600, SUB))
-    g.append(legend(1080, 500, [("box", POINT, "enriched (log2 enrichment > 0)"), ("box", ORANGE, "depleted")]))
+        g.append(rect(x1 + c * cw, y0 - 22, cw - 2, 14, BLUE if c < 2 else (GRAY if c == 2 else RED), 0, op=0.35 + 0.15 * abs(c - 2)))
+        g.append(rect(x2 + c * cw, y0 - 22, cw - 2, 14, BLUE if c < 2 else (GRAY if c == 2 else RED), 0, op=0.35 + 0.15 * abs(c - 2)))
+    for r in range(3):
+        y = y0 + r * rh
+        g.append(t(960, y + rh / 2, names[r], 15, 700, MAIN, "end"))
+        for k, L in enumerate(logos[r]):
+            g.append(t(985 + k * 20, y + rh / 2, L, 24 - (k % 2) * 6, 900, lcol[L]))
+        for c in range(5):
+            v = vals[r][c]
+            g.append(rect(x1 + c * cw, y, cw - 2, rh - 2, RED if v > 0 else BLUE, 0, op=max(0.06, min(1, abs(v) / 1.5))))
+            g.append(rect(x2 + c * cw, y, cw - 2, rh - 2, MAIN, 0, op=max(0.04, sig[r][c] / 8)))
+    g.append(t(x1 + 2.5 * cw, 110, "enrichment (log2)", 14, 700, SUB) + t(x2 + 2.5 * cw, 110, "adj. P value (−log10)", 14, 700, SUB))
+    g.append(t(x1 + 2.5 * cw, y0 + 3 * rh + 22, "bins: down ← logFC → up", 13, 600, SUB))
+    g.append(t(x2 + 2.5 * cw, y0 + 3 * rh + 22, "bins: down ← logFC → up", 13, 600, SUB))
+    g.append(legend(1000, 480, [("box", RED, "enriched (log2 enrichment > 0)"), ("box", BLUE, "depleted (< 0)"),
+                                ("box", MAIN, "darker = more significant")]))
     return svg("".join(g))
 
 
@@ -487,7 +512,7 @@ def tf_footprinting():
 
     g.append(panel(1080, "C", "Differential binding"))
     x0, y0, w, h = 1140, 120, 400, 360
-    g.append(axes(x0, y0, w, h, "Change in binding (control / condition)", "−log10(p)"))
+    g.append(axes(x0, y0, w, h, "Differential binding score", "−log10(p-value)"))
     g.append(line(x0 + w / 2, y0, x0 + w / 2, y0 + h, GRAY, 2, "6,5"))
     random.seed(13)
     for i in range(60):
@@ -552,26 +577,27 @@ def replicate_consistency():
     g.append(t(305, 540, "strong peaks keep their rank; noise does not", 15, 600, SUB))
     g.append(t(60, 110, "rank 1", 13, 600, SUB, "end"))
 
-    g.append(panel(620, "B", "Rank agreement and IDR"))
+    g.append(panel(620, "B", "Ranks (idr plot, upper left)"))
     x0, y0, w, h = 690, 110, 380, 380
-    g.append(axes(x0, y0, w, h, "Rank in replicate 1", "Rank in replicate 2"))
-    for i in range(160):
-        if i < 70:
-            r = random.uniform(0, 0.5)
+    g.append(axes(x0, y0, w, h, "Sample 1 Rank", "Sample 2 Rank"))
+    for i in range(170):
+        if i < 80:
+            r = random.uniform(0.45, 1)
             a, b = r + random.gauss(0, 0.03), r + random.gauss(0, 0.03)
-            col = POINT
+            col = MAIN
         else:
-            a, b = random.uniform(0.3, 1), random.uniform(0, 1)
-            col = GRAY
-        g.append(f'<circle cx="{x0 + min(max(a, 0), 1) * w:.1f}" cy="{y0 + min(max(b, 0), 1) * h:.1f}" r="4.5" fill="{col}" opacity="0.85"/>')
-    g.append(legend(720, 560, [("dot", POINT, "reproducible (IDR ≤ 0.05)"), ("dot", GRAY, "irreproducible")]))
+            a, b = random.uniform(0, 0.75), random.uniform(0, 0.75)
+            col = RED
+        g.append(f'<circle cx="{x0 + min(max(a, 0), 1) * w:.1f}" cy="{y0 + h - min(max(b, 0), 1) * h:.1f}" r="4.5" fill="{col}" opacity="0.8"/>')
+    g.append(legend(720, 560, [("dot", MAIN, "passing IDR (reproducible)"), ("dot", RED, "IDR ≥ threshold (red in the plot)")]))
 
-    g.append(panel(1130, "C", "Conservative peak set"))
-    g.append(rect(1180, 130, 120, 300, GRAY, 4) + t(1240, 455, "relaxed peaks", 15, 600, SUB))
-    g.append(rect(1360, 300, 120, 130, POINT, 4) + t(1420, 455, "passing IDR", 15, 700, POINT))
-    g.append(arrow(1305, 280, 1355, 330, SUB, 3))
-    g.append(t(1340, 520, "Pair with the most passing peaks", 15, 600, MAIN))
-    g.append(t(1340, 546, "= conservative peaks of the condition", 15, 600, MAIN))
+    g.append(panel(1130, "C", "Peaks passing IDR"))
+    rows = [("ctrl", "r1_vs_r2", "98,400", "31,250"), ("trt", "r1_vs_r2", "102,700", "34,980")]
+    g.append(table(1130, 110, ["condition", "pair", "relaxed", "passing"], rows, [100, 100, 100, 90]))
+    g.append(t(1130, 250, "04_summary/idr_summary.tsv", 14, 600, SUB, "start"))
+    g.append(t(1130, 320, "Pair with the most passing peaks", 15, 600, MAIN, "start"))
+    g.append(t(1130, 346, "= conservative peaks of the condition", 15, 600, MAIN, "start"))
+    g.append(t(1130, 372, "(03_reproducible_peaks/*.narrowPeak)", 14, 500, SUB, "start"))
     return svg("".join(g))
 
 
