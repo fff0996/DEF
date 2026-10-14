@@ -125,7 +125,7 @@ Removes reads aligned to organellar chromosomes such as mitochondria and chlorop
 | Output | Required | Directory | output_dir | /data/organellar_filter | 결과 폴더. ATAC_QC의 input_dir | Output folder; input_dir of ATAC_QC |
 | Option | Optional | String | organellar_pattern | (^chrM$\|^MT$\|^Mt$\|mitochond\|mitochondrion\|mitochondrial\|chloroplast\|plastid\|^Pt$\|^PT$\|^chrC$) | 세포소기관 염색체 이름 정규식(대소문자 무시) | Regular expression for organellar contig names (case-insensitive) |
 
-스레드 수(`threads`)는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)으로 정해지며, 스크립트 기본값 `auto`가 그 코어 수를 쓴다.
+등록 메모: 스레드 수(`threads`)는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)으로 정해지며, 스크립트 기본값 `auto`가 그 코어 수를 쓴다.
 
 ### 주요 사항
 | 국문 | 영문 |
@@ -640,7 +640,7 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 | Option | Optional | List | run_kmer | TRUE | k-mer 분석 실행(TRUE/FALSE) | Run k-mer analysis (TRUE/FALSE) |
 | Option | Optional | List | run_regression | TRUE | 회귀 분석 실행(TRUE/FALSE) | Run regression analysis (TRUE/FALSE) |
 
-스레드 수(`threads`)는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)으로 정해지며, 스크립트 기본값 `auto`가 그 코어 수를 쓴다.
+등록 메모: 스레드 수(`threads`)는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)으로 정해지며, 스크립트 기본값 `auto`가 그 코어 수를 쓴다.
 
 ### 주요 사항
 | 국문 | 영문 |
@@ -726,7 +726,7 @@ Corrects Tn5 cleavage signals per condition with TOBIAS, computes footprint scor
 | Input | Required | Directory | macs_dir | /data/macs3 | MACS3_callpeak_ATAC의 output_dir. 그 안의 샘플별 peak를 합쳐 공통 peak를 만듦 | MACS3_callpeak_ATAC output_dir; the sample peaks in it are merged into common peaks |
 | Output | Required | Directory | output_dir | /data/tf_footprinting | 결과 폴더 | Output folder |
 
-코어 수(`cores`)는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)으로 정해지며, 스크립트 기본값 `auto`가 그 코어 수를 쓴다.
+등록 메모: 코어 수(`cores`)는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)으로 정해지며, 스크립트 기본값 `auto`가 그 코어 수를 쓴다.
 
 ### 샘플시트
 - 제목(국문): 샘플 정보 파일(sample_data)
@@ -817,7 +817,6 @@ Analyzes with clusterProfiler which biological functions (GO) are enriched among
 | Input | Required | File | genome_gff | /ref/genes.gff3 | 유전자 주석 GFF3/GTF. differential_accessibility 결과일 때 peak를 가장 가까운 유전자에 연결하는 데 사용(peak_annotation 결과면 쓰지 않음) | Gene annotation GFF3/GTF, used to link differential peaks to their nearest genes (not used for a peak_annotation output) |
 | Input | Required | File | orgdb_file | /ref/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite | 분석 종의 OrgDb SQLite 파일(tools/download_orgdb.R로 저장) | OrgDb SQLite file of the species (saved with tools/download_orgdb.R) |
 | Output | Required | Directory | output_dir | /data/functional_enrichment | 결과 폴더 | Output folder |
-| Option | Optional | String | gene_keytype | auto | OrgDb ID 종류(TAIR, ENTREZID, SYMBOL 등). auto는 자동 선택 | OrgDb key type (TAIR, ENTREZID, SYMBOL, ...); auto selects it |
 | Option | Optional | List | ont | BP | GO 분류(BP, MF, CC, ALL) | GO ontology (BP, MF, CC, ALL) |
 | Option | Optional | String | max_distance_to_tss | 3000 | TSS에서 이 거리(bp) 안의 peak에 연결된 유전자만 사용. NA는 전부 | Use genes whose peak is within this distance of the TSS (bp); NA uses all |
 | Option | Optional | String | universe | auto | 배경 유전자(auto, all, 또는 파일 경로) | Background genes (auto, all, or a file path) |
@@ -831,6 +830,8 @@ Analyzes with clusterProfiler which biological functions (GO) are enriched among
 | Option | Optional | List | da_norm | TMM | differential_accessibility 결과에서 읽을 정규화 결과(TMM, EDASeq, CQN). 그 결과일 때만 사용 | Normalization result read from a differential_accessibility output (TMM, EDASeq, CQN); used only for that input |
 | Option | Optional | Float | da_fdr | 0.05 | up/down peak FDR 기준. differential_accessibility 결과일 때만 사용 | FDR cutoff for up/down peaks; used only for a differential_accessibility output |
 | Option | Optional | Float | da_min_abs_logfc | 0 | up/down peak 최소 abs(logFC). differential_accessibility 결과일 때만 사용 | Minimum abs(logFC) for up/down peaks; used only for a differential_accessibility output |
+
+등록 메모: OrgDb의 ID 종류(`gene_keytype`)는 포탈에 등록하지 않는다. 스크립트가 입력 유전자 ID와 가장 많이 맞는 종류(TAIR, ENTREZID, SYMBOL 등)를 자동으로 고른다.
 
 ### 주요 사항
 | 국문 | 영문 |
@@ -855,7 +856,6 @@ Rscript functional_enrichment.1.1.R \
   genome_gff=/ref/genes.gff3 \
   orgdb_file=/ref/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite \
   output_dir=/data/functional_enrichment \
-  gene_keytype=auto \
   ont=BP \
   max_distance_to_tss=3000 \
   universe=auto \

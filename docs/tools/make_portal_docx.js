@@ -20,7 +20,7 @@ const BODY_FONT = "Pretendard", POINT_FONT = "GmarketSans";
 const MAIN = "222222", SUB = "3A3A3A", POINT = "32549C";
 
 // Internal notes: shown in gray with a "do not paste" marker.
-const NOTE_PREFIXES = ["KOBIC 포탈의", "포탈 스타일", "포탈의 현재", "출처 확인 필요", "그림:",
+const NOTE_PREFIXES = ["KOBIC 포탈의", "포탈 스타일", "포탈의 현재", "출처 확인 필요", "그림:", "등록 메모:",
   "등록 화면 공통 안내"];
 const PAGE_W = 9506;   // A4 width minus 1200 DXA margins
 

@@ -177,7 +177,7 @@ GO 농축 분석(clusterProfiler). 종별 데이터는 이미지에 없고, `too
 | Input | `genome_gff` | File (GFF3/GTF, .gz 가능) | 필수 | | differential_accessibility 결과일 때 peak마다 가장 가까운 유전자 TSS를 찾는 데 사용(peak_annotation 결과면 쓰지 않음) |
 | Input | `orgdb_file` | File (SQLite) | 필수 | | `download_orgdb.R`로 받은 `<종>.<AH id>.OrgDb.sqlite` |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
-| Option | `gene_keytype` | String | 선택 | `auto` | OrgDb의 ID 종류(TAIR, ENTREZID, SYMBOL, ENSEMBL 등). auto = 가장 많이 맞는 종류를 자동 선택 |
+| Option | `gene_keytype` | String | 선택 | `auto` | OrgDb의 ID 종류(TAIR, ENTREZID, SYMBOL, ENSEMBL 등). auto = 가장 많이 맞는 종류를 자동 선택. **포탈에 등록하지 않음** |
 | Option | `ont` | List (`BP`, `MF`, `CC`, `ALL`) | 선택 | `BP` | GO 분류 |
 | Option | `max_distance_to_tss` | String | 선택 | `3000` | TSS에서 이 거리(bp) 안의 peak에 연결된 유전자만 사용. `NA` = 전부 |
 | Option | `universe` | String | 선택 | `auto` | 배경 유전자. auto = peak_annotation의 전체 유전자 목록 또는 DA에서 검정한 전체 peak의 유전자. `all` = 주석 전체. 파일 경로도 가능 |
