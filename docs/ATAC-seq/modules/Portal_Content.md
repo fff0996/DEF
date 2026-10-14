@@ -16,7 +16,80 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 
 ---
 
-## 1. organellar_filter
+## 1. bowtie2
+
+### 기본 정보
+| 항목 | 국문 | 영문 |
+|---|---|---|
+| 모듈명 | bowtie2 | bowtie2 |
+| 서브 타이틀 | 참조 유전체 정렬 | Read alignment to the reference genome |
+| 버전 | 1.1 | |
+| 카테고리 (제안) | Alignment / Read Alignment | |
+| 태그 | ATAC-seq, bowtie2, alignment, SAM, BAM, samtools | |
+| 레퍼런스 URL | https://bowtie-bio.sourceforge.net/bowtie2/ | |
+| 컨테이너 이미지 | bowtie2.1.0 | |
+| 실행 스크립트 파일 | bowtie2.1.1.sh | |
+
+### 내용(국문)
+FASTQ read를 bowtie2로 참조 유전체에 정렬합니다. 폴더 안의 FASTQ 파일 이름에서 R1/R2 짝을 찾아 paired-end로 정렬하고, 짝이 없는 파일은 single-end로 정렬합니다.
+- 참조 유전체는 bowtie2 인덱스 이름(prefix)이나 FASTA 파일로 지정합니다. 인덱스가 없으면 FASTA 옆에 인덱스를 만듭니다.
+- post_process_bam=yes이면 samtools로 정렬 결과를 좌표 순 BAM으로 바꾸고 인덱스(.bai)를 만듭니다.
+- 샘플별 정렬 요약(전체 정렬률 등)을 로그로 남깁니다.
+- 결과 BAM은 GATK_MarkDuplicates 모듈의 입력으로 사용합니다.
+
+### 내용(영문)
+Aligns FASTQ reads to the reference genome with bowtie2. R1/R2 pairs are found from the FASTQ file names in the folder and aligned as paired-end; files without a mate are aligned as single-end.
+- The reference is given as a bowtie2 index prefix or a FASTA file. If no index exists, one is built beside the FASTA.
+- With post_process_bam=yes, samtools converts the alignments to a coordinate-sorted BAM and builds its index (.bai).
+- An alignment summary per sample (overall alignment rate and so on) is written to a log.
+- The BAM files are the input of the GATK_MarkDuplicates module.
+
+### 입출력 / 파라미터
+| 탭 | 필수 | 형식 | Name | Value | Description | English Description |
+|---|---|---|---|---|---|---|
+| Input | Required | Directory | input_dir | /data/fastq | FASTQ 폴더(.fastq, .fq, .gz; 하위 폴더 포함). R1/R2 짝은 _R1/_R2, .R1/.R2, _1/_2 이름으로 찾음 | FASTQ folder (.fastq, .fq, .gz; subfolders included); pairs are matched by _R1/_R2, .R1/.R2, or _1/_2 |
+| Output | Required | Directory | output_dir | /data/bowtie2 | 결과 폴더. GATK_MarkDuplicates의 input_dir | Output folder; input_dir of GATK_MarkDuplicates |
+| Option | Required | File | ref_genome | /ref/genome.fa | bowtie2 인덱스 이름(prefix) 또는 FASTA. 인덱스가 없으면 FASTA 옆에 생성 | bowtie2 index prefix or FASTA; a missing index is built beside the FASTA |
+| Option | Optional | List | post_process_bam | no | yes/no(y/n). yes면 좌표 순 BAM(.sorted.bam)과 .bai 생성 | yes/no (y/n); yes writes a coordinate-sorted BAM (.sorted.bam) and .bai |
+
+### 주요 사항
+| 국문 | 영문 |
+|---|---|
+| ATAC-seq 파이프라인에서는 post_process_bam=yes로 실행해 주세요. 다음 단계(GATK_MarkDuplicates)는 *.sorted.bam만 읽습니다. 기본값(no)이면 SAM 파일만 만들어집니다. | In the ATAC-seq pipeline run with post_process_bam=yes. The next step (GATK_MarkDuplicates) reads *.sorted.bam only; with the default (no) only SAM files are written. |
+| bowtie2 기본 설정(end-to-end, 짝 read 사이 최대 500 bp)으로 정렬합니다. 500 bp보다 긴 fragment는 정상 짝으로 정렬되지 않아, 뉴클레오솜 2~3개 길이의 fragment가 적게 잡힐 수 있습니다. | Alignment uses the bowtie2 defaults (end-to-end, pairs up to 500 bp apart). Fragments longer than 500 bp are not aligned as concordant pairs, so di- and trinucleosome fragments may be under-represented. |
+| 인덱스가 없으면 FASTA와 같은 폴더에 만들므로 그 폴더에 쓰기 권한이 필요하고, 큰 유전체는 시간이 오래 걸립니다. 미리 만든 인덱스 이름을 지정하는 것을 권장합니다. | Without an index, one is built in the FASTA folder, which must be writable, and a large genome takes long. Giving a prebuilt index prefix is recommended. |
+| 샘플 이름은 FASTQ 이름에서 R1/R2 표시와 _trimmed, _HQ를 뺀 것입니다. 이후 모듈이 SampleID로 BAM을 찾으므로, 샘플 정보 파일의 SampleID가 이 이름에 들어 있어야 합니다. | The sample name is the FASTQ name without the R1/R2 tag and _trimmed or _HQ. Later modules find BAM files by SampleID, so each SampleID in the sample sheet must appear in this name. |
+| 스레드 수는 4로 고정되어 있습니다. | The thread count is fixed at 4. |
+| 결과 폴더에 SAM과 정렬 전 BAM(.unsorted.bam)도 남아 용량을 차지합니다. | SAM files and unsorted BAM files (.unsorted.bam) also remain in the output folder and take up space. |
+
+### 분석 개념 이미지
+그림: `docs/ATAC-seq/modules/figures/module_concepts/bowtie2_concept.png`
+
+- 레전드(국문): **그림. bowtie2 정렬.** (A) 참조 유전체 FASTA로 bowtie2 인덱스(.bt2 파일 6개)를 만든다. 인덱스가 이미 있으면 그대로 쓴다. (B) 짝을 이룬 두 read(R1, R2)를 참조 유전체에 서로 마주 보는 방향으로 정렬하며, 두 read 바깥 끝 사이가 fragment 길이다. bowtie2 기본 설정에서는 500 bp까지의 짝만 정상 짝(concordant)으로 본다. (C) 샘플마다 SAM 파일이 만들어지고, post_process_bam=yes이면 정렬 전 BAM을 거쳐 좌표 순 BAM과 인덱스가 만들어진다. 정렬 요약은 샘플별 로그에 남는다(숫자는 예시).
+- 레전드(영문): **Figure. Alignment with bowtie2.** (A) A bowtie2 index (six .bt2 files) is built from the reference FASTA; an existing index is used as is. (B) The two reads of a pair (R1, R2) align to the reference facing each other, and the span between their outer ends is the fragment length. With the bowtie2 defaults only pairs up to 500 bp are concordant. (C) Each sample gives a SAM file, and with post_process_bam=yes an unsorted BAM and then a coordinate-sorted BAM with its index. The alignment summary is written to a per-sample log (numbers are illustrative).
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
+
+### 스크립트 사용 예제
+```
+bash bowtie2.1.1.sh \
+  input_dir=/data/fastq \
+  output_dir=/data/bowtie2 \
+  ref_genome=/ref/genome.fa \
+  post_process_bam=yes
+```
+
+### 주요 결과 이미지
+등록할 그림: 화면 캡처 `<sample>_bowtie.log`의 정렬 요약 부분 (이 모듈은 그림을 만들지 않는다)
+
+**레전드(국문)**
+**샘플별 bowtie2 정렬 요약.** 전체 read 쌍 중 정상 짝으로 한 곳에 정렬된 비율(aligned concordantly exactly 1 time), 여러 곳에 정렬된 비율(>1 times), 정렬되지 않은 비율(0 times)과 전체 정렬률(overall alignment rate)을 보여 준다. ENCODE ATAC-seq 기준은 전체 정렬률 95% 이상이 바람직하고 80% 이상이면 허용하며, 여러 곳에 정렬된 비율이 높으면 반복 서열이나 오염을 의심할 수 있다.
+
+**Legend (English)**
+**bowtie2 alignment summary per sample.** The log shows the fractions of read pairs aligned concordantly exactly once, more than once, and not at all, and the overall alignment rate. The ENCODE ATAC-seq standard prefers an overall alignment rate of 95% or more and accepts 80% or more; a high multi-mapping fraction points to repeats or contamination.
+
+---
+
+## 2. organellar_filter
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -84,7 +157,7 @@ bash organellar_filter.1.1.sh \
 
 ---
 
-## 2. ATAC_QC
+## 3. ATAC_QC
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -183,7 +256,7 @@ Rscript ATAC_QC.1.2.R \
 
 ---
 
-## 3. ATAC_QC_plot
+## 4. ATAC_QC_plot
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -256,7 +329,7 @@ Rscript ATAC_QC_plot.1.1.R \
 
 ---
 
-## 4. MACS3_callpeak_ATAC
+## 5. MACS3_callpeak_ATAC
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -333,7 +406,7 @@ bash MACS3_callpeak_ATAC.1.2.sh \
 
 ---
 
-## 5. peak_annotation
+## 6. peak_annotation
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -409,7 +482,7 @@ Rscript peak_annotation.1.1.R \
 
 ---
 
-## 6. differential_accessibility
+## 7. differential_accessibility
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -514,7 +587,7 @@ Rscript differential_accessibility.1.2.R \
 
 ---
 
-## 7. atac_motif
+## 8. atac_motif
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -608,7 +681,7 @@ Rscript atac_motif.1.1.R \
 
 ---
 
-## 8. tf_footprinting
+## 9. tf_footprinting
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -702,7 +775,7 @@ bash tf_footprinting.1.1.sh \
 
 ---
 
-## 9. functional_enrichment
+## 10. functional_enrichment
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -806,7 +879,7 @@ Rscript functional_enrichment.1.0.R \
 
 ---
 
-## 10. replicate_consistency
+## 11. replicate_consistency
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |

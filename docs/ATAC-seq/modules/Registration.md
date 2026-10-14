@@ -17,6 +17,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 ```
 | 모듈 | 스크립트 | 실행 이미지 | 실행 명령 |
 |---|---|---|---|
+| bowtie2 | `bowtie2.1.1.sh` | bowtie2.1.0 | `bash bowtie2.1.1.sh key=value ...` |
 | organellar_filter | `organellar_filter.1.1.sh` | bx_organellar_filter.1.0 | `bash organellar_filter.1.1.sh key=value ...` |
 | ATAC_QC | `ATAC_QC.1.2.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC.1.2.R key=value ...` |
 | ATAC_QC_plot | `ATAC_QC_plot.1.1.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC_plot.1.1.R key=value ...` |

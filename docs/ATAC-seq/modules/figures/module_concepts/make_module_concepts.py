@@ -128,6 +128,52 @@ def legend(x, y, items):
     return out
 
 
+
+# ---------------------------------------------------------------- 0. bowtie2
+def bowtie2():
+    g = [panel(40, "A", "Reference index")]
+    g.append(rect(70, 110, 170, 60, TINT, 8, POINT) + t(155, 140, "genome.fa", 17, 700, POINT))
+    g.append(arrow(155, 175, 155, 245, SUB, 3) + t(170, 210, "bowtie2-build", 15, 700, SUB, "start"))
+    for k in range(6):
+        name = f"genome.fa.{k + 1}.bt2" if k < 4 else f"genome.fa.rev.{k - 3}.bt2"
+        g.append(rect(70, 255 + k * 40, 230, 32, PALE, 6) + t(84, 271 + k * 40, name, 14, 600, MAIN, "start"))
+    g.append(t(70, 520, "Built beside the FASTA when no index exists;", 14, 500, SUB, "start"))
+    g.append(t(70, 544, "an existing index prefix is used as is", 14, 500, SUB, "start"))
+
+    g.append(panel(380, "B", "Paired-end alignment"))
+    y = 300
+    g.append(line(410, y, 900, y, SUB, 5) + t(410, y + 30, "reference", 14, 600, SUB, "start"))
+    g.append(t(420, 120, "R1", 16, 800, POINT) + t(870, 120, "R2", 16, 800, ORANGE))
+    g.append(rect(445, 140, 120, 14, POINT, 3) + rect(745, 140, 120, 14, ORANGE, 3))
+    g.append(arrow(505, 162, 520, y - 18, GRAY, 2) + arrow(805, 162, 790, y - 18, GRAY, 2))
+    g.append(arrow(470, y - 10, 590, y - 10, POINT, 4) + arrow(840, y - 10, 720, y - 10, ORANGE, 4))
+    g.append(line(470, y + 60, 840, y + 60, MAIN, 2) + line(470, y + 50, 470, y + 70, MAIN, 2) + line(840, y + 50, 840, y + 70, MAIN, 2))
+    g.append(t(655, y + 84, "fragment (insert) length", 14, 700, MAIN))
+    g.append(rect(410, 430, 490, 120, PALE, 10))
+    g.append(t(430, 458, "bowtie2 defaults: end-to-end alignment,", 14, 600, MAIN, "start"))
+    g.append(t(430, 484, "concordant pairs up to 500 bp (-X 500)", 14, 600, MAIN, "start"))
+    g.append(t(430, 516, "Pairs: _R1/_R2, .R1/.R2, _1/_2; unpaired → single-end", 13, 500, SUB, "start"))
+
+    g.append(panel(960, "C", "Outputs per sample"))
+    steps = [("<sample>_bowtie_paired.sam", PALE, MAIN), ("…unsorted.bam", PALE, MAIN),
+             ("…sorted.bam + .bai", TINT, POINT)]
+    for k, (lab, fill, col) in enumerate(steps):
+        yy = 100 + k * 78
+        g.append(rect(990, yy, 300, 46, fill, 8, col if k == 2 else None) + t(1140, yy + 23, lab, 15, 700, col))
+        if k < 2:
+            g.append(arrow(1140, yy + 50, 1140, yy + 74, SUB, 2.5))
+    g.append(t(1305, 201, "post_process_bam=yes", 13, 700, ORANGE, "start") + t(1305, 221, "(samtools view, sort, index)", 13, 500, SUB, "start"))
+    g.append(t(990, 365, "<sample>_bowtie.log (alignment summary, excerpt)", 14, 700, SUB, "start"))
+    summary = ["10000000 reads; of these:", "  10000000 (100.00%) were paired; of these:",
+               "    412000 (4.12%) aligned concordantly 0 times", "    8930000 (89.30%) aligned concordantly exactly 1 time",
+               "    658000 (6.58%) aligned concordantly >1 times", "97.31% overall alignment rate"]
+    g.append(rect(990, 380, 560, 190, "#fff", 6, GRAY, 1.5))
+    for k, row in enumerate(summary):
+        g.append(f'<text x="1004" y="{408 + k * 28}" font-family="DejaVu Sans Mono, monospace" font-size="14" '
+                 f'fill="{POINT if k == 5 else MAIN}" font-weight="{700 if k == 5 else 400}" '
+                 f'dominant-baseline="middle" xml:space="preserve">{escape(row)}</text>')
+    return svg("".join(g))
+
 # ---------------------------------------------------------------- 1. organellar_filter
 def organellar_filter():
     g = [panel(40, "A", "Tn5 also cuts organellar DNA")]
@@ -606,6 +652,7 @@ def replicate_consistency():
 
 
 FIGS = {
+    "bowtie2": bowtie2,
     "organellar_filter": organellar_filter, "ATAC_QC": atac_qc, "ATAC_QC_plot": atac_qc_plot,
     "MACS3_callpeak_ATAC": macs3, "peak_annotation": peak_annotation,
     "differential_accessibility": differential_accessibility, "atac_motif": atac_motif,
