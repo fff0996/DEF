@@ -228,10 +228,10 @@ Rscript ATAC_QC_plot.1.1.R input_dir=/data/atac_qc tss_bed=/ref/tss.bed output_d
 등록할 그림: `01_tss_signal/<sample>.Heatmap_splitbam.pdf` (대표 샘플 1개)
 
 **레전드(국문)**
-**TSS 주변의 nucleosome-free 신호와 mononucleosome 신호.** 각 행은 TSS 하나이고, 가로축은 TSS 중심 ±1,010 bp 구간이다. 왼쪽 패널은 nucleosome-free fragment, 오른쪽 패널은 mononucleosome fragment의 신호(log2)를 색으로 나타낸다. 정상적인 ATAC-seq에서는 nucleosome-free 신호가 TSS 바로 위에 모이고, mononucleosome 신호는 TSS 양옆(nucleosome 자리)에 나타난다.
+**TSS 주변의 nucleosome-free 신호와 mononucleosome 신호.** 각 행은 TSS 하나이고, 가로축은 TSS 중심 ±1,010 bp 구간이다. 패널은 fragment 종류별(NucleosomeFree, mononucleosome, 그리고 read가 있으면 dinucleosome, trinucleosome)이며, 신호(log2)를 색으로 나타낸다. 정상적인 ATAC-seq에서는 nucleosome-free 신호가 TSS 바로 위에 모이고, mononucleosome 신호는 TSS 양옆(nucleosome 자리)에 나타난다.
 
 **Legend (English)**
-**Nucleosome-free and mononucleosome signal around TSSs.** Each row is one TSS and the x-axis spans ±1,010 bp around its centre. The left panel shows nucleosome-free fragment signal and the right panel mononucleosome fragment signal (log2, colour scale). In good ATAC-seq data the nucleosome-free signal concentrates at the TSS, while the mononucleosome signal flanks it where nucleosomes sit.
+**Nucleosome-free and mononucleosome signal around TSSs.** Each row is one TSS and the x-axis spans ±1,010 bp around its centre. Panels are per fragment class (NucleosomeFree, mononucleosome, and dinucleosome and trinucleosome when they have reads), with signal (log2) as a colour scale. In good ATAC-seq data the nucleosome-free signal concentrates at the TSS, while the mononucleosome signal flanks it where nucleosomes sit.
 
 ---
 
@@ -535,10 +535,10 @@ Rscript atac_motif.1.1.R input_dir=/data/da genome_fasta=/ref/genome.fa motif_db
 등록할 그림: `02_binned_enrichment/binned_motif_heatmap.pdf`
 
 **레전드(국문)**
-**접근성 변화 구간별 모티프 농축.** peak를 접근성 변화(log2 fold change) 크기에 따라 여러 구간(bin)으로 나누고, 구간마다 각 전사인자 모티프가 배경보다 얼마나 많은지를 색으로 보여 준다. 행은 유의하게 농축된 모티프이며, 서로 비슷한 모티프끼리 묶어 정렬했고 왼쪽에 서열 로고를 붙였다. 열린 쪽 구간에서만 진하게 나타나는 모티프는 조건 변화로 활성이 커진 전사인자의 후보다.
+**접근성 변화 구간별 모티프 농축.** peak를 접근성 변화(log2 fold change) 크기에 따라 여러 구간(bin)으로 나누고, 구간마다 각 전사인자 모티프가 배경보다 얼마나 많은지를 색으로 보여 준다. 행은 유의하게 농축된 모티프이며, 서로 비슷한 모티프끼리 묶어 정렬했고 왼쪽에 서열 로고와 GC 비율을 붙였다. 첫 heatmap은 농축도(log2 enrichment; 빨강 농축, 파랑 결핍), 둘째는 보정 p-value(−log10; 진할수록 유의)다. 열린 쪽 구간에서만 진하게 나타나는 모티프는 조건 변화로 활성이 커진 전사인자의 후보다.
 
 **Legend (English)**
-**Motif enrichment across bins of accessibility change.** Peaks are grouped into bins by log2 fold change in accessibility, and the colour shows how strongly each transcription factor motif is enriched in each bin relative to background. Rows are significantly enriched motifs, clustered by motif similarity and shown with sequence logos. Motifs enriched only in the gained-accessibility bins point to transcription factors that become more active.
+**Motif enrichment across bins of accessibility change.** Peaks are grouped into bins by log2 fold change in accessibility, and the colour shows how strongly each transcription factor motif is enriched in each bin relative to background. Rows are significantly enriched motifs, clustered by motif similarity and shown with sequence logos and GC content. The first heatmap is log2 enrichment (red enriched, blue depleted) and the second the adjusted p-value (−log10; darker is more significant). Motifs enriched only in the gained-accessibility bins point to transcription factors that become more active.
 
 ---
 
@@ -607,8 +607,8 @@ trt_2	treated
 ### 분석 개념 이미지
 그림: `docs/ATAC-seq/modules/figures/module_concepts/tf_footprinting_concept.png`
 
-- 레전드(국문): **그림. 전사인자 footprint 분석.** (A) 단백질이 결합한 DNA는 Tn5가 자르지 못해, 절단 신호에 움푹 패인 footprint가 생긴다. (B) 관찰된 절단 신호에서 Tn5 서열 선호도로 예측한 기대 신호를 빼서 편향을 보정한다(ATACorrect). (C) 조건 간 footprint 점수를 비교해(BINDetect), 결합이 늘거나 준 전사인자를 volcano plot(가로축 differential binding score, 세로축 −log10 p-value)으로 보여 준다. Bentsen M. et al., Nat Commun 11, 4267 (2020), Fig. 1을 수정(CC BY 4.0).
-- 레전드(영문): **Figure. Transcription factor footprinting.** (A) DNA bound by a protein is protected from Tn5, leaving a footprint in the cut-site signal. (B) Tn5 sequence bias is corrected by subtracting the cutting expected from Tn5 sequence preference from the observed cut sites (ATACorrect). (C) Footprint scores are compared between conditions (BINDetect), and factors with increased or decreased binding are shown in a volcano plot (differential binding score against −log10 p-value). Adapted from Bentsen M. et al., Nat Commun 11, 4267 (2020), Fig. 1 (CC BY 4.0).
+- 레전드(국문): **그림. 전사인자 footprint 분석.** (A) 단백질이 결합한 DNA는 Tn5가 자르지 못해, 절단 신호에 움푹 패인 footprint가 생긴다. (B) 관찰된 절단 신호에서 Tn5 서열 선호도로 예측한 기대 신호를 빼서 편향을 보정한다(ATACorrect). (C) 조건 간 footprint 점수를 비교해(BINDetect), 결합이 늘거나 준 전사인자를 volcano plot(가로축 differential binding score, 세로축 −log10 p-value)으로 보여 준다. 조건 이름을 알파벳순으로 놓았을 때 첫 번째 조건에서 결합이 강하면 양수(빨강), 두 번째 조건에서 강하면 음수(파랑)다. Bentsen M. et al., Nat Commun 11, 4267 (2020), Fig. 1을 수정(CC BY 4.0).
+- 레전드(영문): **Figure. Transcription factor footprinting.** (A) DNA bound by a protein is protected from Tn5, leaving a footprint in the cut-site signal. (B) Tn5 sequence bias is corrected by subtracting the cutting expected from Tn5 sequence preference from the observed cut sites (ATACorrect). (C) Footprint scores are compared between conditions (BINDetect), and factors with increased or decreased binding are shown in a volcano plot (differential binding score against −log10 p-value). With the condition names in alphabetical order, positive scores (red) mean stronger binding in the first condition and negative scores (blue) in the second. Adapted from Bentsen M. et al., Nat Commun 11, 4267 (2020), Fig. 1 (CC BY 4.0).
 - 출처: Bentsen M, Goymann P, Schultheis H, Klee K, Petrova A, Wiegandt R, Fust A, Preussner J, Kuenne C, Braun T, Kim J, Looso M. ATAC-seq footprinting unravels kinetics of transcription factor binding during zygotic genome activation. *Nat Commun* 11, 4267 (2020). https://doi.org/10.1038/s41467-020-18035-1, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ### 스크립트 사용 예제
@@ -620,10 +620,10 @@ bash tf_footprinting.1.1.sh input_dir=/data/atac_qc metadata=/data/metadata.tsv 
 등록할 그림: `04_BINDetect/bindetect_figures.pdf`의 volcano plot 쪽
 
 **레전드(국문)**
-**조건 간 전사인자 결합 변화(BINDetect volcano plot).** 점 하나가 전사인자(모티프) 하나다. 가로축은 두 조건 사이의 결합 점수 차이(differential binding score)로, 오른쪽은 두 번째 조건에서, 왼쪽은 첫 번째 조건에서 결합이 더 강하다는 뜻이다. 세로축은 그 차이의 유의성(−log10 p)이며, 유의하게 변한 전사인자는 색과 이름으로 표시된다.
+**조건 간 전사인자 결합 변화(BINDetect volcano plot).** 점 하나가 전사인자(모티프) 하나다. 가로축은 두 조건 사이의 결합 점수 차이(differential binding score)다. 조건 이름을 알파벳순으로 놓았을 때 양수(오른쪽, 빨강)는 첫 번째 조건에서, 음수(왼쪽, 파랑)는 두 번째 조건에서 결합이 더 강하다는 뜻이다. 세로축은 그 차이의 유의성(−log10 p-value)이며, 변화가 크거나 유의한 전사인자는 색과 이름으로 표시된다.
 
 **Legend (English)**
-**Differential transcription factor binding between conditions (BINDetect volcano plot).** Each point is one transcription factor motif. The x-axis is the differential binding score between the two conditions (positive: stronger in the second condition; negative: stronger in the first), and the y-axis is its significance (−log10 p). Significantly changed factors are coloured and labelled.
+**Differential transcription factor binding between conditions (BINDetect volcano plot).** Each point is one transcription factor motif. The x-axis is the differential binding score between the two conditions; with the condition names in alphabetical order, positive scores (right, red) mean stronger binding in the first condition and negative scores (left, blue) in the second. The y-axis is its significance (−log10 p-value), and factors with large or significant changes are coloured and labelled.
 
 ---
 

@@ -518,10 +518,14 @@ def tf_footprinting():
     for i in range(60):
         dx = random.gauss(0, 0.09)
         g.append(f'<circle cx="{x0 + w / 2 + dx * w:.1f}" cy="{y0 + h - min(abs(dx) * random.uniform(2, 3), 0.6) * h:.1f}" r="4.5" fill="{GRAY}"/>')
-    for name, dx, dy, col in [("TF1", 0.36, 0.86, ORANGE), ("TF3", 0.28, 0.66, ORANGE), ("TF2", -0.3, 0.74, POINT)]:
+    # BINDetect colors: change > 0 (higher in condition 1) red, change < 0 (higher in condition 2) blue
+    for name, dx, dy, col in [("TF1", 0.36, 0.86, RED), ("TF3", 0.28, 0.66, RED), ("TF2", -0.3, 0.74, BLUE)]:
         cx, cy = x0 + w / 2 + dx * w, y0 + h - dy * h
         g.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="8" fill="{col}"/>' + t(cx + 14, cy - 12, name, 14, 700, col, "start"))
-    g.append(t(1340, 560, "Each dot is one transcription factor motif", 15, 600, SUB))
+    g.append(t(x0 + 6, y0 + h + 50, "← higher in condition 2", 13, 700, BLUE, "start")
+             + t(x0 + w - 6, y0 + h + 50, "higher in condition 1 →", 13, 700, RED, "end"))
+    g.append(t(1340, 570, "Each dot is one transcription factor motif", 15, 600, SUB))
+    g.append(t(1340, 594, "conditions 1 and 2 in alphabetical order of the names", 13, 500, SUB))
     return svg("".join(g))
 
 
