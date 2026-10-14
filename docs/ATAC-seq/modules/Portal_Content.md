@@ -70,6 +70,7 @@ Aligns FASTQ reads to the reference genome with bowtie2. R1/R2 pairs are found f
 | 샘플 이름은 FASTQ 이름에서 R1/R2 표시와 _trimmed, _HQ를 뺀 것입니다. 이후 모듈이 SampleID로 BAM을 찾으므로, 샘플 정보 파일의 SampleID가 이 이름에 들어 있어야 합니다. | The sample name is the FASTQ name without the R1/R2 tag and _trimmed or _HQ. Later modules find BAM files by SampleID, so each SampleID in the sample sheet must appear in this name. |
 | 스레드 수는 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)을 따릅니다. 최대 4코어를 고르면 정렬이 빨라집니다. | The thread count follows the Processor Core selection (single core or up to 4 cores); choosing up to 4 cores speeds up alignment. |
 | 결과 폴더에 SAM과 정렬 전 BAM(.unsorted.bam)도 남아 용량을 차지합니다. | SAM files and unsorted BAM files (.unsorted.bam) also remain in the output folder and take up space. |
+| 1.3부터 샘플마다 read group(@RG; ID, SM, LB = 샘플 이름, PL = ILLUMINA)을 붙입니다. GATK_MarkDuplicates(GATK 4.6)는 read group이 없는 BAM에서 멈추므로, 1.2 이하로 만든 BAM은 1.3으로 다시 정렬해 주세요. | From 1.3 each sample gets a read group (@RG; ID, SM, and LB = the sample name, PL = ILLUMINA). GATK_MarkDuplicates (GATK 4.6) stops on BAM files without read groups, so realign BAM files made with 1.2 or earlier using 1.3. |
 
 ### 분석 개념 이미지
 그림: `docs/ATAC-seq/modules/figures/module_concepts/bowtie2_concept.png`
