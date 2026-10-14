@@ -139,7 +139,7 @@ ChIPseeker로 peak 주석(유전자 위치 분류, TSS 거리)과 그림을 만�
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
 | Option | `norm` | List (`TMM`, `EDASeq`, `CQN`) | 선택 | `TMM` | `input_dir`에서 읽을 결과의 정규화 방식(`03_results/diff_accessibility_<norm>.csv`) |
 | Option | `chrs` | String | 선택 | (빈 값) | 사용할 염색체(쉼표 구분). 비우면 자동 |
-| Option | `fdr_filter` | Float | 선택 | (빈 값) | 이 FDR 이하인 peak만 사용. 비우면 필터 없음 |
+| Option | `fdr_filter` | Float | 선택 | (빈 값) | 이 FDR 이하인 peak만 사용. 비우면 필터 없음(권장). 남은 peak가 n_per_bin의 약 2배보다 적으면 구간을 만들 수 없어 이유를 알리고 멈춤 |
 | Option | `n_per_bin` | Integer | 선택 | `400` | logFC 구간 하나에 넣을 peak 수 |
 | Option | `min_abs_logfc` | Float | 선택 | `0.3` | 구간 나눌 때 쓰는 최소 |logFC| |
 | Option | `padj_cutoff` | Float | 선택 | `4.0` | 강하게 농축된 모티프 기준(-log10 조정 p-value) |

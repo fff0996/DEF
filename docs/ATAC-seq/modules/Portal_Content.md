@@ -849,7 +849,7 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 | Output | Required | Directory | output_dir | /data/atac_motif | 결과 폴더 | Output folder |
 | Option | Optional | List | norm | TMM | input_dir에서 읽을 정규화 결과(TMM, EDASeq, CQN) | Normalization result to read from input_dir (TMM, EDASeq, CQN) |
 | Option | Optional | String | chrs | | 사용할 염색체(쉼표 구분). 비우면 자동 | Chromosomes to use (comma-separated); empty selects automatically |
-| Option | Optional | Float | fdr_filter | | 이 FDR 이하 peak만 사용. 비우면 필터 없음 | Use peaks with FDR at or below this; empty applies no filter |
+| Option | Optional | Float | fdr_filter | | 이 FDR 이하 peak만 사용. 비우면 필터 없음(권장). monaLisa는 전체 peak를 logFC 순으로 구간에 나눠 비교하므로 보통 비워 둔다. 값을 넣어 남은 peak가 n_per_bin의 약 2배보다 적으면 구간을 만들 수 없어 이유를 알리고 멈춤 | Use peaks with FDR at or below this; empty applies no filter (recommended). monaLisa compares bins of all peaks ordered by logFC, so this is usually left empty; if fewer than about twice n_per_bin peaks remain, no bins can be made and the run stops with the reason |
 | Option | Optional | Integer | n_per_bin | 400 | 구간당 peak 수 | Peaks per bin |
 | Option | Optional | Float | min_abs_logfc | 0.3 | 구간 나눌 때 쓰는 최소 abs(logFC) | Minimum abs(logFC) used for binning |
 | Option | Optional | Float | padj_cutoff | 4.0 | 강하게 농축된 모티프 기준(−log10 조정 p-value) | Strong enrichment cutoff (−log10 adjusted p-value) |

@@ -1,11 +1,17 @@
 #!/usr/bin/env Rscript
 
 # Version 1.4 (changes from atac_motif.1.3.R):
-#   The right panel of 01_qc/logFC_vs_GC.pdf no longer stops the run when
-#   the R package KernSmooth is missing (bx_atac_motif 1.0 does not have it;
-#   graphics::smoothScatter() needs it). Without KernSmooth the panel is a
-#   scatter plot with semi-transparent points, so dense areas still show
-#   darker. Everything else is unchanged.
+#   The run stops with a clear message when too few peaks remain to make the
+#   logFC bins (after fdr_filter and the chromosome filter). 1.3 went on and
+#   stopped inside monaLisa::bin() with "invalid number of intervals" (for
+#   example fdr_filter=0.05 kept 14 of 22,275 peaks). The check counts the
+#   bins the same way as monaLisa's equalN binning: the peaks below
+#   -min_abs_logfc and above +min_abs_logfc each give round(count /
+#   n_per_bin) bins (plus the central bin), or, when no peak lies within
+#   +/-min_abs_logfc, all peaks give round(count / n_per_bin) bins; at least
+#   2 bins outside the central one are needed. min_abs_logfc=0 is now passed
+#   to monaLisa as "no central bin" (1.3 passed 0, which monaLisa rejects).
+#   Everything else is unchanged.
 #
 # Version 1.3 (changes from atac_motif.1.2.R):
 #   The differential accessibility table is always taken from input_dir
@@ -750,6 +756,38 @@ saveRDS(gr, file.path(rds_dir, "motif_input_GRanges.rds"))
 cat("input GRanges saved:", file.path(rds_dir, "motif_input_GRanges.rds"), "\n\n")
 
 # ------------------------------------------------------------
+# Check that the peaks are enough for the logFC bins
+# ------------------------------------------------------------
+# monaLisa's equalN binning: the peaks beyond -/+min_abs_logfc each give
+# round(count / n_per_bin) bins around a central bin; if no peak lies within
+# +/-min_abs_logfc, all peaks give round(count / n_per_bin) bins. monaLisa
+# ignores min_abs_logfc when all peaks lie on one side of it (or when it is 0).
+n_peaks <- length(gr)
+n_down <- sum(gr$logFC < -min_abs_logfc)
+n_up <- sum(gr$logFC > min_abs_logfc)
+use_min_abs <- min_abs_logfc > 0 &&
+		!(-min_abs_logfc > max(gr$logFC) || min_abs_logfc < min(gr$logFC))
+if (use_min_abs) {
+	n_bins <- round(n_down / n_per_bin) + round(n_up / n_per_bin)
+} else {
+	n_bins <- round(n_peaks / n_per_bin)
+}
+cat("peaks for binning: ", n_peaks, " (logFC < -", min_abs_logfc, ": ", n_down,
+		", logFC > ", min_abs_logfc, ": ", n_up, ")\n", sep = "")
+cat("logFC bins expected (n_per_bin=", n_per_bin, "): ", n_bins, "\n\n", sep = "")
+if (n_bins < 2) {
+	stop_err(paste0(
+			"too few peaks to make logFC bins: ", n_peaks, " peaks remain",
+			if (!is.na(fdr_filter_num)) paste0(" after fdr_filter=", fdr_filter) else "", " (",
+			n_down, " with logFC < -", min_abs_logfc, ", ", n_up, " with logFC > ", min_abs_logfc,
+			"), but n_per_bin=", n_per_bin, " needs about ", 2 * n_per_bin,
+			" peaks to make at least 2 bins. monaLisa compares bins of all peaks ",
+			"ordered by logFC, so leave fdr_filter empty to use every peak of the ",
+			"differential accessibility table, or lower n_per_bin."
+	))
+}
+
+# ------------------------------------------------------------
 # Step 2: QC plots
 # ------------------------------------------------------------
 cat("############################## Step 2: QC plots\n")
@@ -768,27 +806,13 @@ plot(
 )
 abline(h = 0, col = "red", lty = 5)
 
-if (requireNamespace("KernSmooth", quietly = TRUE)) {
-	smoothScatter(
-			gr$gc,
-			gr$logFC,
-			xlab = "GC fraction",
-			ylab = "logFC",
-			main = "smoothScatter"
-	)
-} else {
-	emit_err("WARNING: R package KernSmooth is not installed; logFC_vs_GC.pdf right panel drawn as a semi-transparent scatter plot instead of smoothScatter\n")
-	plot(
-			gr$gc,
-			gr$logFC,
-			pch = 16,
-			cex = 0.4,
-			col = rgb(0, 0, 0, 0.15),
-			xlab = "GC fraction",
-			ylab = "logFC",
-			main = "density (semi-transparent points)"
-	)
-}
+smoothScatter(
+		gr$gc,
+		gr$logFC,
+		xlab = "GC fraction",
+		ylab = "logFC",
+		main = "smoothScatter"
+)
 abline(h = 0, col = "red", lty = 5)
 
 dev.off()
@@ -818,7 +842,7 @@ bins <- bin(
 		x = gr$logFC,
 		binmode = "equalN",
 		nElement = n_per_bin,
-		minAbsX = min_abs_logfc
+		minAbsX = if (min_abs_logfc > 0) min_abs_logfc else NULL
 )
 
 cat("bin table:\n")
