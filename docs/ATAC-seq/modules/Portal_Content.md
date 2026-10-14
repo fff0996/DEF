@@ -9,7 +9,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 선택(Optional) 입력은 빈 값이 "사용 안 함"이다. 경로를 넣어 두면 그 경로를 실제로 찾으므로 Value를 비워 둔다.
 - 스크립트 사용 예제는 모든 옵션을 기본값으로 적었다(기본값이 없는 옵션은 제외). 예시 값은 애기장대(TAIR10, 유전체 약 1.2e8 bp) 기준이다.
 - 형식(Type)은 포탈 목록에 맞춰 고른다. 원고에는 Directory, File, String, Integer, Float, List로 적었다.
-- 기반 이미지 출처(Bootstrap)는 `Apptainer`다(작업이 SIF로 실행되므로). 기반 이미지(From)는 DEF의 `rockylinux/rockylinux:9.8` (digest `sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f`)이며 모든 모듈이 같다.
+- 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다르다. 기반 이미지(From)는 DEF의 `rockylinux/rockylinux:9.8` (digest `sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f`)이며 모든 모듈이 같다.
 - 버전은 각 실행 스크립트 파일 이름에 적힌 버전을 쓴다(예: organellar_filter.1.1.sh → 1.1).
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지운다.
 - 카테고리와 아이콘은 포탈 목록에서 고른다. 원고의 카테고리는 제안이다.
@@ -31,6 +31,9 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 | 컨테이너 이미지 | bowtie2.1.0 | |
 | 실행 스크립트 파일 | bowtie2.1.2.sh | |
 | Processor Core (제안) | 최대 4코어 (bowtie2, samtools sort가 여러 코어 사용) | Up to 4 cores (bowtie2 and samtools sort are multi-threaded) |
+
+### 실행 이미지
+등록 메모: bowtie2 DEF는 아직 저장소에 없어 보류한다(bowtie2 2.5.4, SAMtools 1.24 구성 예정).
 
 ### 내용(국문)
 FASTQ read를 bowtie2로 참조 유전체에 정렬합니다. 폴더 안의 FASTQ 파일 이름에서 R1/R2 짝을 찾아 paired-end로 정렬하고, 짝이 없는 파일은 single-end로 정렬합니다.
@@ -106,6 +109,24 @@ bash bowtie2.1.2.sh \
 | 실행 스크립트 파일 | organellar_filter.1.2.sh | |
 | Processor Core (제안) | 최대 4코어 (samtools가 여러 코어 사용) | Up to 4 cores (samtools is multi-threaded) |
 
+### 실행 이미지
+이미지: bx_organellar_filter 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_organellar_filter.1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+- **설명(국문):** 정렬된 BAM에서 세포소기관(미토콘드리아, 엽록체) read를 제거하는 SAMtools 환경입니다.
+- **Description (English):** SAMtools environment for removing organellar (mitochondrial and chloroplast) reads from aligned BAM files.
+
+| 도구 | 버전 |
+|---|---|
+| SAMtools | 1.23.1 |
+| HTSlib | 1.23.1 |
+
 ### 내용(국문)
 정렬된 BAM 파일에서 미토콘드리아와 엽록체 등 세포소기관 염색체에 정렬된 read를 제거합니다. ATAC-seq에서는 Tn5가 뉴클레오솜이 없는 세포소기관 DNA를 많이 자르기 때문에 이 read의 비율이 높게 나타나며, 그대로 두면 peak 검출과 정규화에 영향을 줍니다.
 - 세포소기관 염색체 이름을 정규식으로 찾아 제외합니다(chrM, MT, Pt, chrC 등).
@@ -174,6 +195,30 @@ bash organellar_filter.1.2.sh \
 | 컨테이너 이미지 | bx_atac_qc.1.0 | |
 | 실행 스크립트 파일 | ATAC_QC.1.2.R | |
 | Processor Core (제안) | 싱글 코어 (ATACseqQC는 1코어로 계산) | Single core (ATACseqQC runs on one core) |
+
+### 실행 이미지
+이미지: bx_atac_qc 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_atac_qc.1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+- **설명(국문):** ATAC-seq 품질 평가(fragment 크기 분포, TSS enrichment, Tn5 보정, 뉴클레오솜 분류)와 TSS 주변 신호 그림을 위한 R 환경입니다.
+- **Description (English):** R environment for ATAC-seq quality control (fragment size distribution, TSS enrichment, Tn5 shift, nucleosome classes) and TSS signal plots.
+
+| 도구 | 버전 |
+|---|---|
+| R | 4.5.3 |
+| ATACseqQC | 1.34.0 |
+| ChIPpeakAnno | 3.44.0 |
+| Rsamtools | 2.26.0 |
+| GenomicAlignments | 1.46.0 |
+| GenomicRanges | 1.62.1 |
+| GenomeInfoDb | 1.46.2 |
+| IRanges | 2.44.0 |
 
 ### 내용(국문)
 ATACseqQC로 ATAC-seq 데이터의 품질을 평가하고, 이후 분석에 쓸 Tn5 보정 BAM을 만듭니다.
@@ -275,6 +320,30 @@ Rscript ATAC_QC.1.2.R \
 | 실행 스크립트 파일 | ATAC_QC_plot.1.1.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
 
+### 실행 이미지
+이미지: bx_atac_qc 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_atac_qc.1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+- **설명(국문):** ATAC-seq 품질 평가(fragment 크기 분포, TSS enrichment, Tn5 보정, 뉴클레오솜 분류)와 TSS 주변 신호 그림을 위한 R 환경입니다.
+- **Description (English):** R environment for ATAC-seq quality control (fragment size distribution, TSS enrichment, Tn5 shift, nucleosome classes) and TSS signal plots.
+
+| 도구 | 버전 |
+|---|---|
+| R | 4.5.3 |
+| ATACseqQC | 1.34.0 |
+| ChIPpeakAnno | 3.44.0 |
+| Rsamtools | 2.26.0 |
+| GenomicAlignments | 1.46.0 |
+| GenomicRanges | 1.62.1 |
+| GenomeInfoDb | 1.46.2 |
+| IRanges | 2.44.0 |
+
 ### 내용(국문)
 ATAC_QC가 만든 fragment 종류별 BAM으로 TSS 주변 신호의 heatmap과 평균 profile을 그립니다. 좋은 ATAC-seq 데이터에서는 NFR 신호가 TSS 바로 위에 모이고, mononucleosome 신호는 TSS 양옆에 나타납니다.
 - 종류별(NFR, mononucleosome 등) TSS 주변 신호 heatmap과 profile을 PDF와 TSV로 저장합니다.
@@ -348,6 +417,26 @@ Rscript ATAC_QC_plot.1.1.R \
 | 컨테이너 이미지 | bx_macs3_callpeak_atac.1.0 | |
 | 실행 스크립트 파일 | MACS3_callpeak_ATAC.1.3.sh | |
 | Processor Core (제안) | 싱글 코어 (MACS3는 1코어로 계산) | Single core (MACS3 runs on one core) |
+
+### 실행 이미지
+이미지: bx_macs3_callpeak_atac 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_macs3_callpeak_atac.1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+- **설명(국문):** MACS3로 ATAC-seq peak를 찾고 SAMtools로 FRiP를 계산하는 환경입니다.
+- **Description (English):** Environment for calling ATAC-seq peaks with MACS3 and computing FRiP with SAMtools.
+
+| 도구 | 버전 |
+|---|---|
+| MACS3 | 3.0.4 |
+| Python | 3.13 |
+| SAMtools | 1.23.1 |
+| HTSlib | 1.23.1 |
 
 ### 내용(국문)
 MACS3 callpeak의 paired-end 모드(BAMPE)로 Tn5 보정 BAM에서 열린 염색질 peak를 검출합니다.
@@ -427,6 +516,32 @@ bash MACS3_callpeak_ATAC.1.3.sh \
 | 실행 스크립트 파일 | peak_annotation.1.1.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
 
+### 실행 이미지
+이미지: bx_peak_annotation 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_peak_annotation.1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+- **설명(국문):** ChIPseeker로 peak의 유전체 위치와 가까운 유전자를 주석하는 R 환경입니다.
+- **Description (English):** R environment for annotating peaks with genomic features and nearby genes using ChIPseeker.
+
+| 도구 | 버전 |
+|---|---|
+| R | 4.5.3 |
+| ChIPseeker | 1.46.1 |
+| GenomicFeatures | 1.62.0 |
+| txdbmaker | 1.6.2 |
+| rtracklayer | 1.70.1 |
+| optparse | 1.8.2 |
+| ggplot2 | 4.0.3 |
+| readr | 2.2.0 |
+| dplyr | 1.2.1 |
+| ggupset | 0.4.1 |
+
 ### 내용(국문)
 ChIPseeker로 peak를 promoter, exon, intron, intergenic 등 유전체 기능 영역으로 분류하고, 가장 가까운 유전자와 TSS까지의 거리를 붙입니다.
 - 유전자 주석(GFF3/GTF)으로 TxDb를 만들어 사용하므로 다양한 종에 적용할 수 있습니다.
@@ -503,6 +618,32 @@ Rscript peak_annotation.1.1.R \
 | 컨테이너 이미지 | bx_differential_accessibility.1.0 | |
 | 실행 스크립트 파일 | differential_accessibility.1.2.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
+
+### 실행 이미지
+이미지: bx_differential_accessibility 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_differential_accessibility.1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+- **설명(국문):** edgeR로 조건 간 차등 접근성을 분석하고, EDASeq와 cqn으로 GC 편향을 보정하는 R 환경입니다.
+- **Description (English):** R environment for differential accessibility with edgeR, with GC-bias correction by EDASeq and cqn.
+
+| 도구 | 버전 |
+|---|---|
+| R | 4.5.3 |
+| edgeR | 4.8.2 |
+| limma | 3.66.0 |
+| EDASeq | 2.44.0 |
+| cqn | 1.56.0 |
+| bamsignals | 1.42.0 |
+| ggplot2 | 4.0.3 |
+| Hmisc | 5.3-0 |
+| hexbin | 1.28.6 |
+| wesanderson | 0.3.7 |
 
 ### 내용(국문)
 두 조건의 공통 peak에서 read 수를 세어 edgeR로 접근성이 증가하거나 감소한 영역을 찾습니다.
@@ -610,6 +751,31 @@ Rscript differential_accessibility.1.2.R \
 | 실행 스크립트 파일 | atac_motif.1.3.R | |
 | Processor Core (제안) | 최대 4코어 (모티프 계산을 여러 코어로 나눔) | Up to 4 cores (motif scoring is parallel) |
 
+### 실행 이미지
+이미지: bx_atac_motif 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_atac_motif.1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+- **설명(국문):** monaLisa로 접근성 변화 구간별 모티프 농축을 분석하는 R 환경입니다.
+- **Description (English):** R environment for motif enrichment across bins of accessibility change with monaLisa.
+
+| 도구 | 버전 |
+|---|---|
+| R | 4.5.3 |
+| monaLisa | 1.16.0 |
+| TFBSTools | 1.48.0 |
+| universalmotif | 1.28.0 |
+| ComplexHeatmap | 2.26.1 |
+| circlize | 0.4.18 |
+| stabs | 0.7-1 |
+| glmnet | 5.0 |
+| ggplot2 | 4.0.3 |
+
 ### 내용(국문)
 monaLisa로 접근성 변화량(logFC)에 따라 peak를 구간으로 나누고, 구간별로 많이 나타나는 전사인자 모티프를 찾습니다.
 - 접근성이 증가한 구간과 감소한 구간에서 농축된 모티프를 heatmap과 seqlogo로 보여 줍니다.
@@ -704,6 +870,28 @@ Rscript atac_motif.1.3.R \
 | 실행 스크립트 파일 | tf_footprinting.1.3.sh | |
 | Processor Core (제안) | 최대 4코어 (TOBIAS가 여러 코어 사용) | Up to 4 cores (TOBIAS is multi-threaded) |
 
+### 실행 이미지
+이미지: bx_tf_footprinting 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_tf_footprinting.1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+- **설명(국문):** TOBIAS로 전사인자 footprint를 계산하고 조건 간 결합 변화를 비교하는 환경입니다. peak 병합에 bedtools를 씁니다.
+- **Description (English):** Environment for transcription factor footprinting and differential binding with TOBIAS; bedtools merges the peaks.
+
+| 도구 | 버전 |
+|---|---|
+| TOBIAS | 0.17.5 |
+| MOODS | 1.9.4.2 |
+| Python | 3.13 |
+| SAMtools | 1.24 |
+| HTSlib | 1.24 |
+| bedtools | 2.31.1 |
+
 ### 내용(국문)
 TOBIAS로 조건별 Tn5 절단 신호를 보정하고 footprint 점수를 계산한 뒤, BINDetect로 조건 간 전사인자 결합 변화를 비교합니다.
 - 조건별로 BAM을 합치고, 샘플 peak를 합친 공통 peak 영역을 사용합니다.
@@ -793,6 +981,28 @@ bash tf_footprinting.1.3.sh \
 | 컨테이너 이미지 | bx_functional_enrichment.1.0 | |
 | 실행 스크립트 파일 | functional_enrichment.1.1.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
+
+### 실행 이미지
+이미지: bx_functional_enrichment 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_functional_enrichment.1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+- **설명(국문):** clusterProfiler로 GO 기능 농축을 분석하는 R 환경입니다. 종별 OrgDb 파일은 이미지에 넣지 않고 입력으로 받습니다.
+- **Description (English):** R environment for GO enrichment with clusterProfiler; the species OrgDb file is given as an input, not stored in the image.
+
+| 도구 | 버전 |
+|---|---|
+| R | 4.5.3 |
+| clusterProfiler | 4.18.4 |
+| enrichplot | 1.30.5 |
+| AnnotationDbi | 1.72.0 |
+| GO.db | 3.22.0 |
+| ggplot2 | 4.0.3 |
 
 ### 내용(국문)
 열린 영역 또는 접근성이 변한 영역 근처 유전자가 어떤 생물학적 기능(GO)에 몰려 있는지 clusterProfiler로 분석합니다.
@@ -896,6 +1106,27 @@ Rscript functional_enrichment.1.1.R \
 | 컨테이너 이미지 | bx_replicate_consistency.1.0 | |
 | 실행 스크립트 파일 | replicate_consistency.1.1.sh | |
 | Processor Core (제안) | 싱글 코어 (MACS3, idr은 1코어로 계산) | Single core (MACS3 and idr run on one core) |
+
+### 실행 이미지
+이미지: bx_replicate_consistency 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_replicate_consistency.1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+- **설명(국문):** 반복 실험 간 peak 재현성을 IDR로 평가하는 환경입니다. IDR은 다른 도구와 충돌하지 않도록 별도 Python 3.10 환경에 설치되어 있습니다.
+- **Description (English):** Environment for peak reproducibility between replicates with IDR; IDR is installed in its own Python 3.10 environment to avoid conflicts with the other tools.
+
+| 도구 | 버전 |
+|---|---|
+| IDR | 2.0.4.2 (Python 3.10, NumPy 1.23.5) |
+| MACS3 | 3.0.4 |
+| Python | 3.13 |
+| SAMtools | 1.23.1 |
+| HTSlib | 1.23.1 |
 
 ### 내용(국문)
 ENCODE 방식의 IDR(Irreproducible Discovery Rate)로 반복 실험 사이 peak 재현성을 평가합니다.
