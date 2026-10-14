@@ -96,7 +96,8 @@ function image(rel) {
   const buf = fs.readFileSync(file);
   // PNG width/height from the IHDR chunk
   const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);
-  const width = 600, height = Math.round((h / w) * width);
+  // category icons are shown small; figures use the page width
+  const width = rel.includes("category_icons/") ? 120 : 600, height = Math.round((h / w) * width);
   return new Paragraph({
     alignment: AlignmentType.CENTER, spacing: { before: 120, after: 120 },
     children: [new ImageRun({ type: "png", data: buf, transformation: { width, height } })],

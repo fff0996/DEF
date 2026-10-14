@@ -26,6 +26,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 | 서브 타이틀 | 참조 유전체 정렬 | Read alignment to the reference genome |
 | 버전 | 1.2 | |
 | 카테고리 대분류 | 정렬 | Alignment |
+| 카테고리 아이콘 | 선택 예정(Alignment 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | read 정렬 | Read Alignment |
 | 태그 | ATAC-seq, bowtie2, alignment, SAM, BAM, samtools | |
 | 레퍼런스 URL | https://bowtie-bio.sourceforge.net/bowtie2/ | |
@@ -104,6 +105,7 @@ bash bowtie2.1.2.sh \
 | 서브 타이틀 | 세포소기관 read 제거 | Organellar read removal |
 | 버전 | 1.2 | |
 | 카테고리 대분류 | 정렬 | Alignment |
+| 카테고리 아이콘 | 선택 예정(Alignment 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 정렬 결과 처리 | Alignment Processing |
 | 태그 | ATAC-seq, mitochondria, chloroplast, samtools, BAM filtering | |
 | 레퍼런스 URL | https://www.htslib.org/ | |
@@ -192,6 +194,7 @@ bash organellar_filter.1.2.sh \
 | 서브 타이틀 | ATAC-seq 품질 평가와 Tn5 보정 | ATAC-seq QC and Tn5 shift |
 | 버전 | 1.2 | |
 | 카테고리 대분류 | 품질 관리 | Quality Control |
+| 카테고리 아이콘 | 선택 예정(Quality Control 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 정렬 품질 평가 | Alignment QC |
 | 태그 | ATAC-seq, ATACseqQC, fragment size, TSS enrichment, Tn5 shift, bigWig | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ATACseqQC/ | |
@@ -317,6 +320,7 @@ Rscript ATAC_QC.1.2.R \
 | 서브 타이틀 | TSS 주변 신호 시각화 | TSS signal visualization |
 | 버전 | 1.1 | |
 | 카테고리 대분류 | 품질 관리 | Quality Control |
+| 카테고리 아이콘 | 선택 예정(Quality Control 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 정렬 품질 평가 | Alignment QC |
 | 태그 | ATAC-seq, ATACseqQC, TSS, heatmap, nucleosome | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ATACseqQC/ | |
@@ -416,6 +420,7 @@ Rscript ATAC_QC_plot.1.1.R \
 | 서브 타이틀 | ATAC-seq peak 검출 | ATAC-seq peak calling |
 | 버전 | 1.3 | |
 | 카테고리 대분류 | 특징 검출 | Feature Detection |
+| 카테고리 아이콘 | 선택 예정(Feature Detection 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | peak 검출 | Peak Calling |
 | 태그 | ATAC-seq, MACS3, peak calling, narrowPeak, FRiP | |
 | 레퍼런스 URL | https://github.com/macs3-project/MACS | |
@@ -515,6 +520,7 @@ bash MACS3_callpeak_ATAC.1.3.sh \
 | 서브 타이틀 | Peak 유전체 주석 | Peak annotation |
 | 버전 | 1.1 | |
 | 카테고리 대분류 | 주석 | Annotation |
+| 카테고리 아이콘 | 선택 예정(Annotation 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 유전체 영역 주석 | Genomic Feature Annotation |
 | 태그 | ATAC-seq, ChIPseeker, peak annotation, promoter, TSS | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ChIPseeker/ | |
@@ -619,6 +625,7 @@ Rscript peak_annotation.1.1.R \
 | 서브 타이틀 | 조건 간 차등 접근성 분석 | Differential accessibility |
 | 버전 | 1.2 | |
 | 카테고리 대분류 | 통계 분석 | Statistical Analysis |
+| 카테고리 아이콘 | 선택 예정(Statistical Analysis 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 차등 분석 | Differential Analysis |
 | 태그 | ATAC-seq, edgeR, differential accessibility, GC bias, PCA | |
 | 레퍼런스 URL | https://bioconductor.org/packages/edgeR/ | |
@@ -752,12 +759,15 @@ Rscript differential_accessibility.1.2.R \
 | 서브 타이틀 | 접근성 변화 연관 모티프 분석 | Motif enrichment by accessibility change |
 | 버전 | 1.3 | |
 | 카테고리 대분류 | 유전자 조절 | Gene Regulation |
+| 카테고리 아이콘 | `docs/category_icons/gene_regulation.png` | |
 | 카테고리 중분류 | 모티프 분석 | Motif Analysis |
 | 태그 | ATAC-seq, monaLisa, motif enrichment, JASPAR, k-mer | |
 | 레퍼런스 URL | https://bioconductor.org/packages/monaLisa/ | |
 | 컨테이너 이미지 | bx_atac_motif.1.0 | |
 | 실행 스크립트 파일 | atac_motif.1.3.R | |
 | Processor Core (제안) | 최대 4코어 (모티프 계산을 여러 코어로 나눔) | Up to 4 cores (motif scoring is parallel) |
+
+그림: `docs/category_icons/gene_regulation.png` (카테고리 아이콘)
 
 ### 실행 이미지
 이미지: bx_atac_motif 1.0
@@ -872,12 +882,15 @@ Rscript atac_motif.1.3.R \
 | 서브 타이틀 | 전사인자 footprint 분석 | Transcription factor footprinting |
 | 버전 | 1.3 | |
 | 카테고리 대분류 | 유전자 조절 | Gene Regulation |
+| 카테고리 아이콘 | `docs/category_icons/gene_regulation.png` | |
 | 카테고리 중분류 | 전사인자 footprint | TF Footprinting |
 | 태그 | ATAC-seq, TOBIAS, footprinting, BINDetect, transcription factor | |
 | 레퍼런스 URL | https://github.com/loosolab/TOBIAS | |
 | 컨테이너 이미지 | bx_tf_footprinting.1.0 | |
 | 실행 스크립트 파일 | tf_footprinting.1.3.sh | |
 | Processor Core (제안) | 최대 4코어 (TOBIAS가 여러 코어 사용) | Up to 4 cores (TOBIAS is multi-threaded) |
+
+그림: `docs/category_icons/gene_regulation.png` (카테고리 아이콘)
 
 ### 실행 이미지
 이미지: bx_tf_footprinting 1.0
@@ -985,6 +998,7 @@ bash tf_footprinting.1.3.sh \
 | 서브 타이틀 | GO 기능 농축 분석 | GO enrichment analysis |
 | 버전 | 1.1 | |
 | 카테고리 대분류 | 기능 분석 | Functional Analysis |
+| 카테고리 아이콘 | 선택 예정(Functional Analysis 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 농축 분석 | Enrichment Analysis |
 | 태그 | ATAC-seq, clusterProfiler, GO, enrichment, OrgDb | |
 | 레퍼런스 URL | https://bioconductor.org/packages/clusterProfiler/ | |
@@ -1111,6 +1125,7 @@ Rscript functional_enrichment.1.1.R \
 | 서브 타이틀 | 반복 실험 peak 재현성(IDR) | Replicate consistency (IDR) |
 | 버전 | 1.1 | |
 | 카테고리 대분류 | 품질 관리 | Quality Control |
+| 카테고리 아이콘 | 선택 예정(Quality Control 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 재현성 평가 | Reproducibility |
 | 태그 | ATAC-seq, IDR, reproducibility, replicate, MACS3 | |
 | 레퍼런스 URL | https://github.com/nboley/idr | |
