@@ -78,17 +78,27 @@ KOBIC 포탈의 파이프라인 페이지와 모듈 등록 화면에 넣을 원�
 ### 5.2 카테고리와 아이콘
 카테고리는 오믹스 종류가 아니라 **분석 단계(기능)**로 나눈다. 그래야 다른 파이프라인의 모듈도 같은 목록에 넣을 수 있다. "ATAC-seq QC", "Epigenomics"처럼 특정 분석이나 연구 분야 이름은 쓰지 않는다.
 
-| 대분류 | 중분류 예 | ATAC-seq 모듈 |
+| 대분류 (국문) | 중분류 (국문) | ATAC-seq 모듈 |
 |---|---|---|
-| Quality Control | Raw Data QC, Alignment QC, Reproducibility | ATAC_QC, ATAC_QC_plot, replicate_consistency |
-| Preprocessing | Read Trimming | (fastp) |
-| Alignment | Read Alignment, Alignment Processing | organellar_filter, (bowtie2, MarkDuplicates) |
-| Feature Detection | Peak Calling, Variant Calling | MACS3_callpeak_ATAC |
-| Annotation | Genomic Feature Annotation, Gene Annotation, Taxonomic Classification | peak_annotation |
-| Statistical Analysis | Differential Analysis | differential_accessibility |
-| Gene Regulation | Motif Analysis, TF Footprinting, Regulatory Network | atac_motif, tf_footprinting |
-| Functional Analysis | Enrichment Analysis, Pathway Analysis, Functional Profiling | functional_enrichment |
-| Visualization | Plotting | — |
+| Quality Control (품질 관리) | Raw Data QC (원시 데이터 품질 평가) | (fastqc) |
+| | Alignment QC (정렬 품질 평가) | ATAC_QC, ATAC_QC_plot |
+| | Reproducibility (재현성 평가) | replicate_consistency |
+| Preprocessing (전처리) | Read Trimming (read 다듬기) | (fastp) |
+| Alignment (정렬) | Read Alignment (read 정렬) | bowtie2 |
+| | Alignment Processing (정렬 결과 처리) | organellar_filter, (GATK_MarkDuplicates) |
+| Feature Detection (특징 검출) | Peak Calling (peak 검출) | MACS3_callpeak_ATAC |
+| | Variant Calling (변이 검출) | — |
+| Annotation (주석) | Genomic Feature Annotation (유전체 영역 주석) | peak_annotation |
+| | Gene Annotation (유전자 주석), Taxonomic Classification (분류군 판별) | — |
+| Statistical Analysis (통계 분석) | Differential Analysis (차등 분석) | differential_accessibility |
+| Gene Regulation (유전자 조절) | Motif Analysis (모티프 분석) | atac_motif |
+| | TF Footprinting (전사인자 footprint) | tf_footprinting |
+| | Regulatory Network (조절 네트워크) | — |
+| Functional Analysis (기능 분석) | Enrichment Analysis (농축 분석) | functional_enrichment |
+| | Pathway Analysis (경로 분석), Functional Profiling (기능 프로파일링) | — |
+| Visualization (시각화) | Plotting (그림) | — |
+
+괄호 안 모듈은 ATAC-seq 원고에 아직 없는 모듈이다. 새 모듈은 이 표에서 대분류·중분류를 고르고, 맞는 것이 없을 때만 중분류를 새로 만든다(대분류는 늘리지 않는 것을 원칙으로 한다).
 
 - 이름을 고른 이유:
   - **Alignment, Mapping 대신:** Alignment가 서열끼리 정렬(MSA)까지 포함하는 넓은 말이다.

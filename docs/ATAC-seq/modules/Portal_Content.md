@@ -12,7 +12,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다르다. 기반 이미지(From)는 DEF의 `rockylinux/rockylinux:9.8` (digest `sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f`)이며 모든 모듈이 같다.
 - 버전은 각 실행 스크립트 파일 이름에 적힌 버전을 쓴다(예: organellar_filter.1.1.sh → 1.1).
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지운다.
-- 카테고리와 아이콘은 포탈 목록에서 고른다. 원고의 카테고리는 제안이다.
+- 카테고리는 기능(분석 단계) 기준의 대분류·중분류로 정했다(`docs/CLOSHA_Portal_Guide_v1.md` 5.2). 아이콘은 대분류마다 하나다.
 - 주요 결과 이미지는 실제 데이터로 실행한 결과에서 가져와 `docs/ATAC-seq/modules/figures/module_results/<모듈>_result.{png,svg}`로 PNG(등록용)와 SVG(원본)를 함께 저장한다(A/B 두 그림이면 `_result_A`, `_result_B`). PDF는 `pdftocairo -png -r 200 -singlefile <그림>.pdf <모듈>_result`와 `pdftocairo -svg <그림>.pdf <모듈>_result.svg`로 바꾼다(여러 쪽이면 `-f <쪽> -l <쪽>`). 처음부터 PNG인 그림(IDR)과 표 캡처는 PNG만 저장한다.
 
 ---
@@ -25,7 +25,8 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 | 모듈명 | bowtie2 | bowtie2 |
 | 서브 타이틀 | 참조 유전체 정렬 | Read alignment to the reference genome |
 | 버전 | 1.2 | |
-| 카테고리 (제안) | Alignment / Read Alignment | |
+| 카테고리 대분류 | 정렬 | Alignment |
+| 카테고리 중분류 | read 정렬 | Read Alignment |
 | 태그 | ATAC-seq, bowtie2, alignment, SAM, BAM, samtools | |
 | 레퍼런스 URL | https://bowtie-bio.sourceforge.net/bowtie2/ | |
 | 컨테이너 이미지 | bowtie2.1.0 | |
@@ -102,7 +103,8 @@ bash bowtie2.1.2.sh \
 | 모듈명 | organellar_filter | organellar_filter |
 | 서브 타이틀 | 세포소기관 read 제거 | Organellar read removal |
 | 버전 | 1.2 | |
-| 카테고리 (제안) | Quality Control / Read Filtering | |
+| 카테고리 대분류 | 정렬 | Alignment |
+| 카테고리 중분류 | 정렬 결과 처리 | Alignment Processing |
 | 태그 | ATAC-seq, mitochondria, chloroplast, samtools, BAM filtering | |
 | 레퍼런스 URL | https://www.htslib.org/ | |
 | 컨테이너 이미지 | bx_organellar_filter.1.0 | |
@@ -189,7 +191,8 @@ bash organellar_filter.1.2.sh \
 | 모듈명 | ATAC_QC | ATAC_QC |
 | 서브 타이틀 | ATAC-seq 품질 평가와 Tn5 보정 | ATAC-seq QC and Tn5 shift |
 | 버전 | 1.2 | |
-| 카테고리 (제안) | Quality Control / ATAC-seq QC | |
+| 카테고리 대분류 | 품질 관리 | Quality Control |
+| 카테고리 중분류 | 정렬 품질 평가 | Alignment QC |
 | 태그 | ATAC-seq, ATACseqQC, fragment size, TSS enrichment, Tn5 shift, bigWig | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ATACseqQC/ | |
 | 컨테이너 이미지 | bx_atac_qc.1.0 | |
@@ -313,7 +316,8 @@ Rscript ATAC_QC.1.2.R \
 | 모듈명 | ATAC_QC_plot | ATAC_QC_plot |
 | 서브 타이틀 | TSS 주변 신호 시각화 | TSS signal visualization |
 | 버전 | 1.1 | |
-| 카테고리 (제안) | Quality Control / ATAC-seq QC | |
+| 카테고리 대분류 | 품질 관리 | Quality Control |
+| 카테고리 중분류 | 정렬 품질 평가 | Alignment QC |
 | 태그 | ATAC-seq, ATACseqQC, TSS, heatmap, nucleosome | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ATACseqQC/ | |
 | 컨테이너 이미지 | bx_atac_qc.1.0 | |
@@ -411,7 +415,8 @@ Rscript ATAC_QC_plot.1.1.R \
 | 모듈명 | MACS3_callpeak_ATAC | MACS3_callpeak_ATAC |
 | 서브 타이틀 | ATAC-seq peak 검출 | ATAC-seq peak calling |
 | 버전 | 1.3 | |
-| 카테고리 (제안) | Epigenomics / Peak Calling | |
+| 카테고리 대분류 | 특징 검출 | Feature Detection |
+| 카테고리 중분류 | peak 검출 | Peak Calling |
 | 태그 | ATAC-seq, MACS3, peak calling, narrowPeak, FRiP | |
 | 레퍼런스 URL | https://github.com/macs3-project/MACS | |
 | 컨테이너 이미지 | bx_macs3_callpeak_atac.1.0 | |
@@ -509,7 +514,8 @@ bash MACS3_callpeak_ATAC.1.3.sh \
 | 모듈명 | peak_annotation | peak_annotation |
 | 서브 타이틀 | Peak 유전체 주석 | Peak annotation |
 | 버전 | 1.1 | |
-| 카테고리 (제안) | Epigenomics / Annotation | |
+| 카테고리 대분류 | 주석 | Annotation |
+| 카테고리 중분류 | 유전체 영역 주석 | Genomic Feature Annotation |
 | 태그 | ATAC-seq, ChIPseeker, peak annotation, promoter, TSS | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ChIPseeker/ | |
 | 컨테이너 이미지 | bx_peak_annotation.1.0 | |
@@ -612,7 +618,8 @@ Rscript peak_annotation.1.1.R \
 | 모듈명 | differential_accessibility | differential_accessibility |
 | 서브 타이틀 | 조건 간 차등 접근성 분석 | Differential accessibility |
 | 버전 | 1.2 | |
-| 카테고리 (제안) | Epigenomics / Differential Analysis | |
+| 카테고리 대분류 | 통계 분석 | Statistical Analysis |
+| 카테고리 중분류 | 차등 분석 | Differential Analysis |
 | 태그 | ATAC-seq, edgeR, differential accessibility, GC bias, PCA | |
 | 레퍼런스 URL | https://bioconductor.org/packages/edgeR/ | |
 | 컨테이너 이미지 | bx_differential_accessibility.1.0 | |
@@ -744,7 +751,8 @@ Rscript differential_accessibility.1.2.R \
 | 모듈명 | atac_motif | atac_motif |
 | 서브 타이틀 | 접근성 변화 연관 모티프 분석 | Motif enrichment by accessibility change |
 | 버전 | 1.3 | |
-| 카테고리 (제안) | Epigenomics / Motif Analysis | |
+| 카테고리 대분류 | 유전자 조절 | Gene Regulation |
+| 카테고리 중분류 | 모티프 분석 | Motif Analysis |
 | 태그 | ATAC-seq, monaLisa, motif enrichment, JASPAR, k-mer | |
 | 레퍼런스 URL | https://bioconductor.org/packages/monaLisa/ | |
 | 컨테이너 이미지 | bx_atac_motif.1.0 | |
@@ -863,7 +871,8 @@ Rscript atac_motif.1.3.R \
 | 모듈명 | tf_footprinting | tf_footprinting |
 | 서브 타이틀 | 전사인자 footprint 분석 | Transcription factor footprinting |
 | 버전 | 1.3 | |
-| 카테고리 (제안) | Epigenomics / Footprinting | |
+| 카테고리 대분류 | 유전자 조절 | Gene Regulation |
+| 카테고리 중분류 | 전사인자 footprint | TF Footprinting |
 | 태그 | ATAC-seq, TOBIAS, footprinting, BINDetect, transcription factor | |
 | 레퍼런스 URL | https://github.com/loosolab/TOBIAS | |
 | 컨테이너 이미지 | bx_tf_footprinting.1.0 | |
@@ -975,7 +984,8 @@ bash tf_footprinting.1.3.sh \
 | 모듈명 | functional_enrichment | functional_enrichment |
 | 서브 타이틀 | GO 기능 농축 분석 | GO enrichment analysis |
 | 버전 | 1.1 | |
-| 카테고리 (제안) | Functional Analysis / Enrichment | |
+| 카테고리 대분류 | 기능 분석 | Functional Analysis |
+| 카테고리 중분류 | 농축 분석 | Enrichment Analysis |
 | 태그 | ATAC-seq, clusterProfiler, GO, enrichment, OrgDb | |
 | 레퍼런스 URL | https://bioconductor.org/packages/clusterProfiler/ | |
 | 컨테이너 이미지 | bx_functional_enrichment.1.0 | |
@@ -1100,7 +1110,8 @@ Rscript functional_enrichment.1.1.R \
 | 모듈명 | replicate_consistency | replicate_consistency |
 | 서브 타이틀 | 반복 실험 peak 재현성(IDR) | Replicate consistency (IDR) |
 | 버전 | 1.1 | |
-| 카테고리 (제안) | Quality Control / Reproducibility | |
+| 카테고리 대분류 | 품질 관리 | Quality Control |
+| 카테고리 중분류 | 재현성 평가 | Reproducibility |
 | 태그 | ATAC-seq, IDR, reproducibility, replicate, MACS3 | |
 | 레퍼런스 URL | https://github.com/nboley/idr | |
 | 컨테이너 이미지 | bx_replicate_consistency.1.0 | |
