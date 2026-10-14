@@ -115,8 +115,8 @@ ChIPseeker로 peak 주석(유전자 위치 분류, TSS 거리)과 그림을 만�
 |---|---|---|---|---|---|
 | Input | `sample_data` | File (CSV) | 필수 | | 샘플 시트. (A) `SampleID,Condition,bamReads,Peaks` 형식이면 파일 경로를 그대로 사용, (B) `SampleID,Condition`만 있으면 `input_dir`, `peak_dir`에서 SampleID로 찾음 |
 | Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체(peak GC 계산) |
-| Input | `input_dir` | Directory | 조건부 | | (B) 형식일 때 필수. BAM 폴더. ATAC_QC의 `output_dir`이면 `03_shifted_bam` 사용. BAM 인덱스가 있어야 함 |
-| Input | `peak_dir` | Directory | 조건부 | | (B) 형식일 때 필수. MACS3의 `output_dir` |
+| Input | `input_dir` | Directory | 필수(포탈) | | (B) 형식일 때 쓰는 BAM 폴더. ATAC_QC의 `output_dir`이면 `03_shifted_bam` 사용. BAM 인덱스가 있어야 함. 파이프라인은 (B) 형식이라 포탈에는 필수로 등록(A 형식이면 무시됨) |
+| Input | `peak_dir` | Directory | 필수(포탈) | | (B) 형식일 때 쓰는 peak 폴더. MACS3의 `output_dir`. 포탈에는 필수로 등록(A 형식이면 무시됨) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. atac_motif의 `input_dir` |
 | Option | `control_name` | String | 선택 | `control` | 기준(분모) 조건 이름. logFC = log2(다른 조건 / control_name) |
 | Option | `fdr` | Float | 선택 | `0.05` | 유의 기준 FDR |
@@ -133,7 +133,7 @@ ChIPseeker로 peak 주석(유전자 위치 분류, TSS 거리)과 그림을 만�
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 조건부 | | differential_accessibility의 `output_dir`. `input_dir`과 `da_csv` 중 하나는 필수 |
+| Input | `input_dir` | Directory | 필수(포탈) | | differential_accessibility의 `output_dir`. `da_csv`를 주면 `da_csv`를 대신 사용. 파이프라인에서 연결하는 입력이라 포탈에는 필수로 등록 |
 | Input | `da_csv` | File (CSV) | 조건부 | | 차등 접근성 결과 CSV를 직접 지정할 때 |
 | Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. **.fai 인덱스가 미리 있어야 함** |
 | Input | `motif_db` | File (MEME) | 필수 | | 모티프 데이터베이스(MEME 형식) |
@@ -163,7 +163,7 @@ TOBIAS로 조건별 전사인자 footprint와 비교(BINDetect).
 | Input | `metadata` | File (TSV/CSV) | 필수 | | 샘플 정보. `SampleID`, `Condition` 컬럼, 조건 2개 이상 |
 | Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. .fai가 없으면 FASTA 옆에 만든다 |
 | Input | `motif_db` | File | 필수 | | 모티프 데이터베이스 |
-| Input | `macs_dir` | Directory | 조건부 | | MACS3의 `output_dir`. `peak_file`이 없을 때 필수(peak를 합쳐 공통 peak 생성) |
+| Input | `macs_dir` | Directory | 필수(포탈) | | MACS3의 `output_dir`. peak를 합쳐 공통 peak를 만든다. `peak_file`을 주면 `peak_file`을 대신 사용. 파이프라인에서 연결하는 입력이라 포탈에는 필수로 등록 |
 | Input | `peak_file` | File | 선택 | | 미리 합친 공통 peak 파일(BED/narrowPeak/broadPeak). 주면 `macs_dir` 대신 사용 |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
 | Option | `sample_col` | String | 선택 | `SampleID` | metadata의 샘플 컬럼 이름 |

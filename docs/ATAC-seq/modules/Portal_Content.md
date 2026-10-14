@@ -523,10 +523,10 @@ Counts reads in consensus peaks of two conditions and finds regions with increas
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Required | File | sample_data | /data/da_sample_data.csv | 샘플 정보 CSV. (A) SampleID,Condition,bamReads,Peaks 또는 (B) SampleID,Condition | Sample sheet CSV: (A) SampleID,Condition,bamReads,Peaks or (B) SampleID,Condition |
+| Input | Required | File | sample_data | /data/da_sample_data.csv | 샘플 정보 CSV. 파이프라인에서는 (B) SampleID,Condition 형식을 쓰고 BAM과 peak는 input_dir, peak_dir에서 찾음. (A) SampleID,Condition,bamReads,Peaks 형식은 CSV에 파일 경로를 직접 적을 때 | Sample sheet CSV. In the pipeline use format (B) SampleID,Condition, with BAM and peak files found in input_dir and peak_dir; format (A) SampleID,Condition,bamReads,Peaks lists file paths in the CSV itself |
 | Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA(peak GC 계산) | Reference genome FASTA (peak GC content) |
-| Input | Optional | Directory | input_dir | | (B) 형식일 때 필수. BAM 폴더(ATAC_QC의 output_dir이면 03_shifted_bam 사용) | Required for format (B): BAM folder (03_shifted_bam of an ATAC_QC output_dir) |
-| Input | Optional | Directory | peak_dir | | (B) 형식일 때 필수. MACS3의 output_dir | Required for format (B): MACS3 output_dir |
+| Input | Required | Directory | input_dir | /data/atac_qc | Tn5 보정 BAM 폴더. ATAC_QC의 output_dir(03_shifted_bam 사용). 샘플 정보가 (A) 형식이면 무시됨 | Tn5-shifted BAM folder: the ATAC_QC output_dir (03_shifted_bam is used). Ignored when the sample sheet is format (A) |
+| Input | Required | Directory | peak_dir | /data/macs3 | peak 폴더. MACS3_callpeak_ATAC의 output_dir. 샘플 정보가 (A) 형식이면 무시됨 | Peak folder: the MACS3_callpeak_ATAC output_dir. Ignored when the sample sheet is format (A) |
 | Output | Required | Directory | output_dir | /data/da | 결과 폴더 | Output folder |
 | Option | Optional | String | control_name | control | 기준(분모) 조건 이름. 샘플 정보의 Condition 값 중 하나와 정확히 같아야 함. logFC = log2(다른 조건 / 기준 조건) | Reference (denominator) condition; must match one Condition value exactly. logFC = log2(other condition / reference) |
 | Option | Optional | Float | fdr | 0.05 | 유의 기준 FDR | FDR cutoff |
@@ -623,7 +623,7 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Optional | Directory | input_dir | | differential_accessibility의 output_dir. input_dir과 da_csv 중 하나는 필수 | differential_accessibility output_dir; one of input_dir or da_csv is required |
+| Input | Required | Directory | input_dir | /data/da | differential_accessibility의 output_dir. da_csv를 주면 da_csv를 대신 사용 | differential_accessibility output_dir; da_csv is used instead when given |
 | Input | Optional | File | da_csv | | 차등 접근성 결과 CSV를 직접 지정 | Differential accessibility CSV given directly |
 | Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA(.fai 인덱스가 미리 있어야 함) | Reference genome FASTA (the .fai index must exist) |
 | Input | Required | File | motif_db | /ref/motifs.meme | 모티프 데이터베이스(MEME 형식) | Motif database (MEME format) |
@@ -724,7 +724,7 @@ Corrects Tn5 cleavage signals per condition with TOBIAS, computes footprint scor
 | Input | Required | File | metadata | /data/metadata.tsv | 샘플 정보 TSV/CSV(SampleID, Condition), 조건 2개 이상 | Sample information TSV/CSV (SampleID, Condition) with two or more conditions |
 | Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA. .fai가 없으면 옆에 생성 | Reference genome FASTA; a missing .fai is created beside it |
 | Input | Required | File | motif_db | /ref/motifs.meme | 모티프 데이터베이스(MEME/JASPAR 형식) | Motif database (MEME/JASPAR format) |
-| Input | Optional | Directory | macs_dir | | MACS3의 output_dir. peak_file이 없으면 필수 | MACS3 output_dir; required without peak_file |
+| Input | Required | Directory | macs_dir | /data/macs3 | MACS3_callpeak_ATAC의 output_dir. peak_file을 주면 peak_file을 대신 사용 | MACS3_callpeak_ATAC output_dir; peak_file is used instead when given |
 | Input | Optional | File | peak_file | | 미리 합친 공통 peak(BED/narrowPeak/broadPeak) | Pre-merged consensus peaks (BED/narrowPeak/broadPeak) |
 | Output | Required | Directory | output_dir | /data/tf_footprinting | 결과 폴더 | Output folder |
 | Option | Optional | String | sample_col | SampleID | metadata의 샘플 컬럼 이름 | Sample column name in metadata |
