@@ -24,14 +24,14 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 |---|---|---|
 | 모듈명 | bowtie2 | bowtie2 |
 | 서브 타이틀 | 참조 유전체 정렬 | Read alignment to the reference genome |
-| 버전 | 1.2 | |
+| 버전 | 1.3 | |
 | 카테고리 대분류 | 정렬 | Alignment |
 | 카테고리 아이콘 | 선택 예정(Alignment 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | read 정렬 | Read Alignment |
 | 태그 | ATAC-seq, bowtie2, alignment, SAM, BAM, samtools | |
 | 레퍼런스 URL | https://bowtie-bio.sourceforge.net/bowtie2/ | |
 | 컨테이너 이미지 | bowtie2.1.0 | |
-| 실행 스크립트 파일 | bowtie2.1.2.sh | |
+| 실행 스크립트 파일 | bowtie2.1.3.sh | |
 | Processor Core (제안) | 최대 4코어 (bowtie2, samtools sort가 여러 코어 사용) | Up to 4 cores (bowtie2 and samtools sort are multi-threaded) |
 
 ### 실행 이미지
@@ -78,7 +78,7 @@ Aligns FASTQ reads to the reference genome with bowtie2. R1/R2 pairs are found f
 
 ### 스크립트 사용 예제
 ```
-bash bowtie2.1.2.sh \
+bash bowtie2.1.3.sh \
   input_dir=/data/fastq \
   output_dir=/data/bowtie2 \
   ref_genome=/ref/genome.fa \
