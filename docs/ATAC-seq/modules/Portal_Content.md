@@ -90,8 +90,8 @@ Aligns FASTQ reads to the reference genome with bowtie2. R1/R2 pairs are found f
 ### 분석 개념 이미지
 그림: `docs/ATAC-seq/modules/figures/module_concepts/bowtie2_concept.png`
 
-- 레전드(국문): **그림. bowtie2 정렬.** (A) 참조 유전체 FASTA로 bowtie2 인덱스(.bt2 파일 6개)를 만든다. 인덱스가 이미 있으면 그대로 쓴다. (B) 짝을 이룬 두 read(R1, R2)를 참조 유전체에 서로 마주 보는 방향으로 정렬하며, 두 read 바깥 끝 사이가 fragment 길이다. bowtie2 기본 설정에서는 500 bp까지의 짝만 정상 짝(concordant)으로 본다. (C) 샘플마다 SAM 파일이 만들어지고, post_process_bam=yes이면 정렬 전 BAM을 거쳐 좌표 순 BAM과 인덱스가 만들어진다. 정렬 요약은 샘플별 로그에 남는다(숫자는 예시).
-- 레전드(영문): **Figure. Alignment with bowtie2.** (A) A bowtie2 index (six .bt2 files) is built from the reference FASTA; an existing index is used as is. (B) The two reads of a pair (R1, R2) align to the reference facing each other, and the span between their outer ends is the fragment length. With the bowtie2 defaults only pairs up to 500 bp are concordant. (C) Each sample gives a SAM file, and with post_process_bam=yes an unsorted BAM and then a coordinate-sorted BAM with its index. The alignment summary is written to a per-sample log (numbers are illustrative).
+- 레전드(국문): **그림. bowtie2 정렬.** (A) 참조 유전체 FASTA로 bowtie2 인덱스(.bt2 파일 6개)를 만든다. 인덱스가 이미 있으면 그대로 쓴다. (B) 짝을 이룬 두 read(R1, R2)를 참조 유전체에 서로 마주 보는 방향으로 정렬하며, 두 read 바깥 끝 사이가 fragment 길이다. bowtie2 기본 설정에서는 500 bp까지의 짝만 정상 짝(concordant)으로 본다. (C) 샘플마다 SAM 파일이 만들어지고, post_process_bam=yes이면 정렬 전 BAM을 거쳐 좌표 순 BAM과 인덱스가 만들어진다. 샘플마다 read group(@RG; ID, SM, LB = 샘플 이름, PL = ILLUMINA)이 붙는다. 정렬 요약은 샘플별 로그에 남는다(숫자는 예시).
+- 레전드(영문): **Figure. Alignment with bowtie2.** (A) A bowtie2 index (six .bt2 files) is built from the reference FASTA; an existing index is used as is. (B) The two reads of a pair (R1, R2) align to the reference facing each other, and the span between their outer ends is the fragment length. With the bowtie2 defaults only pairs up to 500 bp are concordant. (C) Each sample gives a SAM file, and with post_process_bam=yes an unsorted BAM and then a coordinate-sorted BAM with its index. Each sample gets a read group (@RG; ID, SM, and LB = the sample name, PL = ILLUMINA). The alignment summary is written to a per-sample log (numbers are illustrative).
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -182,7 +182,11 @@ Finds and marks PCR and optical duplicate reads in aligned BAM files. Read pairs
 | SRA에서 받은 데이터는 read 이름(SRR...1)에 좌표가 없어 "read name ... did not start with a parsable number" 경고가 나옵니다. 광학 중복만 구분하지 못할 뿐 중복 표시는 정상입니다. | Data from SRA has read names (SRR...1) without flowcell coordinates, so a "read name ... did not start with a parsable number" warning appears. Only optical duplicates cannot be told apart; duplicate marking works normally. |
 
 ### 분석 개념 이미지
-등록 메모: 개념도는 아직 만들지 않았다.
+그림: `docs/ATAC-seq/modules/figures/module_concepts/GATK_MarkDuplicates_concept.png`
+
+- 레전드(국문): **그림. 중복 read 표시(MarkDuplicates).** (A) 같은 위치에서 같은 방향으로 시작하는 read 쌍(점선)은 PCR·광학 중복으로 본다. 그중 염기 품질 합이 가장 높은 쌍만 남기고 나머지는 중복으로 표시하며, 시작 위치가 다른 쌍은 중복이 아니다. (B) 중복 read는 지우지 않고 정렬 정보를 그대로 둔 채 FLAG에 중복 표시(0x400, 1024)만 더한다(예: 99 → 1123). 이후 단계는 이 표시로 중복을 뺄 수 있다. 입력 BAM에는 read group(@RG)이 있어야 한다. (C) 샘플마다 중복 표시 BAM과 인덱스, 중복 통계(duplicate_metrics.txt), GATK 실행 로그가 만들어진다(숫자는 예시).
+- 레전드(영문): **Figure. Duplicate marking (MarkDuplicates).** (A) Read pairs that start at the same position in the same orientation (dashed line) are PCR or optical duplicates. The pair with the highest base-quality sum is kept and the others are marked; a pair with a different start is not a duplicate. (B) Duplicate reads are not removed: their alignment stays and only the duplicate flag (0x400, 1024) is added to FLAG (for example 99 → 1123), so later steps can exclude them. The input BAM needs read groups (@RG). (C) Each sample gives a duplicate-marked BAM with its index, duplicate metrics (duplicate_metrics.txt), and the GATK log (numbers are illustrative).
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```

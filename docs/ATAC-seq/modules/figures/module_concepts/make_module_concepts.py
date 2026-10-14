@@ -163,6 +163,7 @@ def bowtie2():
         if k < 2:
             g.append(arrow(1140, yy + 50, 1140, yy + 74, SUB, 2.5))
     g.append(t(1305, 201, "post_process_bam=yes", 13, 700, ORANGE, "start") + t(1305, 221, "(samtools view, sort, index)", 13, 500, SUB, "start"))
+    g.append(t(990, 330, "Read group per sample: @RG ID, SM, LB = <sample>, PL = ILLUMINA", 13, 700, POINT, "start"))
     g.append(t(990, 365, "<sample>_bowtie.log (alignment summary, excerpt)", 14, 700, SUB, "start"))
     summary = ["10000000 reads; of these:", "  10000000 (100.00%) were paired; of these:",
                "    412000 (4.12%) aligned concordantly 0 times", "    8930000 (89.30%) aligned concordantly exactly 1 time",
@@ -173,6 +174,52 @@ def bowtie2():
                  f'fill="{POINT if k == 5 else MAIN}" font-weight="{700 if k == 5 else 400}" '
                  f'dominant-baseline="middle" xml:space="preserve">{escape(row)}</text>')
     return svg("".join(g))
+
+# ---------------------------------------------------------------- 0b. GATK_MarkDuplicates
+def gatk_markduplicates():
+    g = [panel(40, "A", "Find duplicate pairs")]
+    yref = 470
+    g.append(line(70, yref, 540, yref, SUB, 5) + t(70, yref + 30, "reference", 14, 600, SUB, "start"))
+    g.append(line(120, 95, 120, yref, POINT, 2, "6,5"))
+    g.append(t(128, 92, "same 5′ start and orientation", 14, 700, POINT, "start"))
+    pairs = [(150, 120, "Σ base quality 1240", True), (210, 120, "Σ base quality 1180", False),
+             (270, 120, "Σ base quality 1105", False), (350, 175, "other start: not a duplicate", None)]
+    for y, x0, label, kept in pairs:
+        c1, c2 = (POINT, ORANGE) if kept is not False else (GRAY, GRAY)
+        g.append(rect(x0, y - 8, 100, 16, c1, 3) + rect(x0 + 260, y - 8, 100, 16, c2, 3))
+        g.append(line(x0 + 100, y, x0 + 260, y, PALE, 2, "4,4"))
+        col = POINT if kept else (SUB if kept is None else GRAY)
+        g.append(t(x0 + 180, y + 22, label, 13, 700 if kept else 500, col))
+    g.append(t(500, 150, "kept", 15, 800, POINT, "start"))
+    g.append(t(500, 210, "duplicate", 15, 700, GRAY, "start") + t(500, 270, "duplicate", 15, 700, GRAY, "start"))
+    g.append(t(70, 540, "Of each set, the pair with the highest base-quality", 14, 500, SUB, "start"))
+    g.append(t(70, 564, "sum is kept; the others are marked as duplicates", 14, 500, SUB, "start"))
+
+    g.append(panel(620, "B", "Marked, not removed"))
+    rows = [("pair 1 R1", "99", "kept"), ("pair 1 R2", "147", "kept"),
+            ("pair 2 R1", "1123", "duplicate (99 + 1024)"), ("pair 2 R2", "1171", "duplicate (147 + 1024)"),
+            ("pair 3 R1", "1123", "duplicate (99 + 1024)"), ("pair 3 R2", "1171", "duplicate (147 + 1024)")]
+    g.append(table(650, 100, ["read", "FLAG", "status"], rows, [120, 80, 220],
+                   {0: POINT, 1: POINT, 2: GRAY, 3: GRAY, 4: GRAY, 5: GRAY}))
+    g.append(rect(650, 390, 420, 150, PALE, 10))
+    g.append(t(670, 420, "Duplicates keep their alignment and get", 14, 600, MAIN, "start"))
+    g.append(t(670, 446, "the duplicate flag 0x400 (1024) added.", 14, 600, MAIN, "start"))
+    g.append(t(670, 478, "Later steps can skip them by this flag.", 14, 500, SUB, "start"))
+    g.append(t(670, 510, "Input BAM needs a read group (@RG)", 14, 700, ORANGE, "start"))
+
+    g.append(panel(1120, "C", "Outputs per sample"))
+    outs = [("<sample>_marked.bam + .bai", TINT, POINT), ("<sample>_duplicate_metrics.txt", PALE, MAIN),
+            ("<sample>_markduplicates.log (GATK log)", PALE, MAIN)]
+    for k, (lab, fill, col) in enumerate(outs):
+        yy = 90 + k * 62
+        g.append(rect(1150, yy, 400, 46, fill, 8, col if k == 0 else None) + t(1350, yy + 23, lab, 15, 700, col))
+    g.append(t(1150, 300, "duplicate_metrics.txt (excerpt)", 14, 700, SUB, "start"))
+    g.append(table(1150, 318, ["metric", "value"],
+                   [("READ_PAIRS_EXAMINED", "9,200,000"), ("READ_PAIR_DUPLICATES", "1,104,000"),
+                    ("READ_PAIR_OPTICAL_DUPLICATES", "0"), ("PERCENT_DUPLICATION", "0.12"),
+                    ("ESTIMATED_LIBRARY_SIZE", "38,500,000")], [290, 110], {3: POINT}))
+    return svg("".join(g))
+
 
 # ---------------------------------------------------------------- 1. organellar_filter
 def organellar_filter():
@@ -652,7 +699,7 @@ def replicate_consistency():
 
 
 FIGS = {
-    "bowtie2": bowtie2,
+    "bowtie2": bowtie2, "GATK_MarkDuplicates": gatk_markduplicates,
     "organellar_filter": organellar_filter, "ATAC_QC": atac_qc, "ATAC_QC_plot": atac_qc_plot,
     "MACS3_callpeak_ATAC": macs3, "peak_annotation": peak_annotation,
     "differential_accessibility": differential_accessibility, "atac_motif": atac_motif,
