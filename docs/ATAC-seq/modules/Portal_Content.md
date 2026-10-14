@@ -523,10 +523,10 @@ Counts reads in consensus peaks of two conditions and finds regions with increas
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Required | File | sample_data | /data/da_sample_data.csv | 샘플 정보 CSV. 파이프라인에서는 (B) SampleID,Condition 형식을 쓰고 BAM과 peak는 input_dir, peak_dir에서 찾음. (A) SampleID,Condition,bamReads,Peaks 형식은 CSV에 파일 경로를 직접 적을 때 | Sample sheet CSV. In the pipeline use format (B) SampleID,Condition, with BAM and peak files found in input_dir and peak_dir; format (A) SampleID,Condition,bamReads,Peaks lists file paths in the CSV itself |
+| Input | Required | File | sample_data | /data/da_sample_data.csv | 샘플 정보 CSV(SampleID, Condition). BAM과 peak는 input_dir, peak_dir에서 찾음. CSV 안에 파일 경로(bamReads, Peaks 열)를 적는 방식은 포탈에서 쓸 수 없음(인자로 받은 경로만 컨테이너에 연결됨) | Sample sheet CSV (SampleID, Condition); BAM and peak files are found in input_dir and peak_dir. File paths inside the CSV (bamReads, Peaks columns) cannot be used on the portal, because only paths given as arguments are bound into the container |
 | Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA(peak GC 계산) | Reference genome FASTA (peak GC content) |
-| Input | Required | Directory | input_dir | /data/atac_qc | Tn5 보정 BAM 폴더. ATAC_QC의 output_dir(03_shifted_bam 사용). 샘플 정보가 (A) 형식이면 무시됨 | Tn5-shifted BAM folder: the ATAC_QC output_dir (03_shifted_bam is used). Ignored when the sample sheet is format (A) |
-| Input | Required | Directory | peak_dir | /data/macs3 | peak 폴더. MACS3_callpeak_ATAC의 output_dir. 샘플 정보가 (A) 형식이면 무시됨 | Peak folder: the MACS3_callpeak_ATAC output_dir. Ignored when the sample sheet is format (A) |
+| Input | Required | Directory | input_dir | /data/atac_qc | Tn5 보정 BAM 폴더. ATAC_QC의 output_dir(03_shifted_bam 사용) | Tn5-shifted BAM folder: the ATAC_QC output_dir (03_shifted_bam is used) |
+| Input | Required | Directory | peak_dir | /data/macs3 | peak 폴더. MACS3_callpeak_ATAC의 output_dir | Peak folder: the MACS3_callpeak_ATAC output_dir |
 | Output | Required | Directory | output_dir | /data/da | 결과 폴더 | Output folder |
 | Option | Optional | String | control_name | control | 기준(분모) 조건 이름. 샘플 정보의 Condition 값 중 하나와 정확히 같아야 함. logFC = log2(다른 조건 / 기준 조건) | Reference (denominator) condition; must match one Condition value exactly. logFC = log2(other condition / reference) |
 | Option | Optional | Float | fdr | 0.05 | 유의 기준 FDR | FDR cutoff |
@@ -539,9 +539,9 @@ Counts reads in consensus peaks of two conditions and finds regions with increas
 ### 샘플시트
 - 제목(국문): 샘플 정보 파일(sample_data)
 - 제목(영문): Sample sheet (sample_data)
-- 본문(국문): 두 가지 형식을 지원합니다. (A) SampleID, Condition, bamReads, Peaks 컬럼이 있으면 파일 경로를 그대로 사용합니다(DiffBind 형식). (B) SampleID, Condition만 있으면 input_dir과 peak_dir에서 SampleID로 BAM과 peak 파일을 찾습니다. Condition은 정확히 두 종류여야 합니다.
-- 본문(영문): Two formats are supported. (A) With the SampleID, Condition, bamReads, and Peaks columns, the file paths are used as given (DiffBind style). (B) With only SampleID and Condition, BAM and peak files are found by SampleID in input_dir and peak_dir. Condition must have exactly two values.
-- 예시 제목: da_sample_data.csv (B 형식)
+- 본문(국문): SampleID와 Condition 두 열을 적습니다. BAM과 peak 파일은 input_dir과 peak_dir에서 SampleID로 찾습니다. Condition은 정확히 두 종류여야 합니다. 파일 경로를 CSV에 직접 적는 방식(bamReads, Peaks 열)은 포탈에서 쓸 수 없습니다.
+- 본문(영문): List the SampleID and Condition columns. BAM and peak files are found by SampleID in input_dir and peak_dir. Condition must have exactly two values. File paths in the CSV (bamReads, Peaks columns) cannot be used on the portal.
+- 예시 제목: da_sample_data.csv
 - 예시 본문:
 ```
 SampleID,Condition

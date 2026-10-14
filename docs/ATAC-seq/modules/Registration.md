@@ -115,8 +115,8 @@ ChIPseeker로 peak 주석(유전자 위치 분류, TSS 거리)과 그림을 만�
 |---|---|---|---|---|---|
 | Input | `sample_data` | File (CSV) | 필수 | | 샘플 시트. (A) `SampleID,Condition,bamReads,Peaks` 형식이면 파일 경로를 그대로 사용, (B) `SampleID,Condition`만 있으면 `input_dir`, `peak_dir`에서 SampleID로 찾음 |
 | Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체(peak GC 계산) |
-| Input | `input_dir` | Directory | 필수(포탈) | | (B) 형식일 때 쓰는 BAM 폴더. ATAC_QC의 `output_dir`이면 `03_shifted_bam` 사용. BAM 인덱스가 있어야 함. 파이프라인은 (B) 형식이라 포탈에는 필수로 등록(A 형식이면 무시됨) |
-| Input | `peak_dir` | Directory | 필수(포탈) | | (B) 형식일 때 쓰는 peak 폴더. MACS3의 `output_dir`. 포탈에는 필수로 등록(A 형식이면 무시됨) |
+| Input | `input_dir` | Directory | 필수(포탈) | | (B) 형식일 때 쓰는 BAM 폴더. ATAC_QC의 `output_dir`이면 `03_shifted_bam` 사용. BAM 인덱스가 있어야 함. 포탈은 (B) 형식만 쓸 수 있어 필수로 등록(CSV 안의 경로는 컨테이너에 연결되지 않음) |
+| Input | `peak_dir` | Directory | 필수(포탈) | | (B) 형식일 때 쓰는 peak 폴더. MACS3의 `output_dir`. 포탈에는 필수로 등록 |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. atac_motif의 `input_dir` |
 | Option | `control_name` | String | 선택 | `control` | 기준(분모) 조건 이름. logFC = log2(다른 조건 / control_name) |
 | Option | `fdr` | Float | 선택 | `0.05` | 유의 기준 FDR |
