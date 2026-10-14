@@ -293,8 +293,8 @@ Plots heatmaps and average profiles of the signal around TSSs from the fragment-
 | Output | Required | Directory | output_dir | /data/atac_qc_plot | 결과 폴더 | Output folder |
 | Option | Optional | Integer | upstream | 1010 | TSS 상류 범위(bp) | Upstream range from the TSS (bp) |
 | Option | Optional | Integer | downstream | 1010 | TSS 하류 범위(bp) | Downstream range from the TSS (bp) |
-| Option | Optional | Integer | ntile | 101 | 구간을 나누는 칸 수 | Number of bins |
-| Option | Optional | Float | tss_filter | 0.5 | TSS 신호 필터 기준(ATACseqQC TSS.filter) | TSS signal filter (ATACseqQC TSS.filter) |
+| Option | Optional | Integer | ntile | 101 | TSS 창(upstream+downstream)을 나누는 칸 수. 칸 크기 = (upstream+downstream)/ntile. 홀수로 두어야 가운데 칸이 TSS에 옴(기본 2020/101 = 20 bp) | Bins across the TSS window (upstream+downstream); bin size = (upstream+downstream)/ntile. Keep it odd so the middle bin sits on the TSS (default 2020/101 = 20 bp) |
+| Option | Optional | Float | tss_filter | 0.5 | 신호가 약한 TSS를 빼는 기준(ATACseqQC TSS.filter). TSS 창의 평균 신호가 이 값보다 커야 그림에 넣음. 0이면 필터 없음 | Drops weak TSSs (ATACseqQC TSS.filter): a TSS is kept when its mean signal over the window exceeds this value; 0 disables the filter |
 | Option | Optional | List | harmonize_mode | auto | auto: 염색체 이름이 다르면 자동으로 맞춤, strict: 다르면 중단 | auto: harmonize chromosome names; strict: stop if they differ |
 
 ### 주요 사항
@@ -351,14 +351,14 @@ Rscript ATAC_QC_plot.1.1.R \
 
 ### 내용(국문)
 MACS3 callpeak의 paired-end 모드(BAMPE)로 Tn5 보정 BAM에서 열린 염색질 peak를 검출합니다.
-- peak_type으로 atac(기본), narrow, broad, tf 설정을 고릅니다.
+- peak_type으로 MACS3 peak 모드를 고릅니다. ATAC-seq은 narrow(기본), 넓은 신호는 broad입니다.
 - CONTROL_로 시작하는 BAM이 있으면 같은 이름의 처리군과 짝지어 실행합니다.
 - 샘플별 FRiP(peak 안에 들어간 read 비율)를 계산해 frip_summary.tsv에 정리합니다.
 - 결과는 peak_annotation, differential_accessibility, tf_footprinting의 입력으로 사용합니다.
 
 ### 내용(영문)
 Calls open-chromatin peaks from Tn5-corrected BAM files with MACS3 callpeak in paired-end mode (BAMPE).
-- peak_type selects the atac (default), narrow, broad, or tf preset.
+- peak_type selects the MACS3 peak mode: narrow (default) for ATAC-seq, or broad for wide signals.
 - BAM files starting with CONTROL_ are paired with the treatment of the same name.
 - FRiP (fraction of reads in peaks) is computed per sample and written to frip_summary.tsv.
 - The outputs feed peak_annotation, differential_accessibility, and tf_footprinting.
@@ -369,10 +369,10 @@ Calls open-chromatin peaks from Tn5-corrected BAM files with MACS3 callpeak in p
 | Input | Required | Directory | input_dir | /data/atac_qc | Tn5 보정 BAM 폴더. ATAC_QC의 output_dir이면 03_shifted_bam만 검색 | Folder of Tn5-shifted BAM files; for an ATAC_QC output_dir only 03_shifted_bam is searched |
 | Output | Required | Directory | output_dir | /data/macs3 | 결과 폴더 | Output folder |
 | Option | Required | String | genome_size | | 유효 유전체 크기. hs, mm, ce, dm 또는 숫자 | Effective genome size: hs, mm, ce, dm, or a number |
-| Option | Optional | List | peak_type | atac | atac, narrow, broad, tf | atac, narrow, broad, tf |
+| Option | Optional | List | peak_type | narrow | MACS3 peak 모드. narrow(기본): 좁은 peak(.narrowPeak), ATAC-seq은 narrow 사용. broad: 넓은 peak(.broadPeak), broad_cutoff를 함께 사용하며 peak_annotation의 peak_suffix를 .broadPeak로 바꿔야 함 | MACS3 peak mode. narrow (default): narrow peaks (.narrowPeak), used for ATAC-seq. broad: broad peaks (.broadPeak); uses broad_cutoff, and peak_annotation needs peak_suffix=.broadPeak |
 | Option | Optional | String | alignment_suffix | .shifted.bam | 검색할 BAM 파일 이름 끝부분 | BAM file name suffix to search |
-| Option | Optional | Float | qvalue | 0.05 | q-value 기준 | q-value cutoff |
-| Option | Optional | Float | broad_cutoff | 0.1 | broad peak 기준(peak_type=broad일 때) | Broad peak cutoff (peak_type=broad) |
+| Option | Optional | Float | qvalue | 0.05 | peak로 인정하는 q-value 상한(MACS3 -q). 이보다 작은 구간만 peak. 작을수록 엄격 | Upper q-value for a peak (MACS3 -q); only regions below it are peaks. Smaller is stricter |
+| Option | Optional | Float | broad_cutoff | 0.1 | peak_type=broad일 때만 사용(narrow면 무시). 강한 구간 주변의 약한 구간을 이어 붙이는 느슨한 q-value 기준(MACS3 --broad-cutoff)으로, qvalue보다 크거나 같아야 함 | Used only with peak_type=broad (ignored for narrow). Looser q-value for linking weaker nearby regions to strong ones (MACS3 --broad-cutoff); must be at least qvalue |
 
 ### 주요 사항
 | 국문 | 영문 |
@@ -395,7 +395,7 @@ bash MACS3_callpeak_ATAC.1.3.sh \
   input_dir=/data/atac_qc \
   output_dir=/data/macs3 \
   genome_size=1.2e8 \
-  peak_type=atac \
+  peak_type=narrow \
   alignment_suffix=.shifted.bam \
   qvalue=0.05 \
   broad_cutoff=0.1
@@ -446,7 +446,7 @@ Classifies peaks into genomic features such as promoter, exon, intron, and inter
 | Input | Required | File | genome_gff | /ref/genes.gff3 | 유전자 주석 GFF3/GTF(.gz 가능) | Gene annotation GFF3/GTF (.gz allowed) |
 | Output | Required | Directory | output_dir | /data/peak_annotation | 결과 폴더 | Output folder |
 | Option | Optional | String | genome_label | custom_genome | 로그와 그림에 쓰는 유전체 이름 | Genome name shown in logs and plots |
-| Option | Optional | String | peak_suffix | .narrowPeak | peak 파일 이름 끝부분 | Peak file name suffix |
+| Option | Optional | String | peak_suffix | .narrowPeak | peak 파일 이름 끝부분. MACS3를 peak_type=broad로 돌렸으면 .broadPeak | Peak file name ending; use .broadPeak when MACS3 ran with peak_type=broad |
 | Option | Optional | Integer | tss_upstream | 3000 | 프로모터 상류 범위(bp) | Promoter upstream range (bp) |
 | Option | Optional | Integer | tss_downstream | 3000 | 프로모터 하류 범위(bp) | Promoter downstream range (bp) |
 | Option | Optional | String | max_files | NA | 처리할 최대 peak 파일 수. NA는 전부 | Maximum number of peak files; NA processes all |
@@ -528,10 +528,10 @@ Counts reads in consensus peaks of two conditions and finds regions with increas
 | Input | Optional | Directory | input_dir | | (B) 형식일 때 필수. BAM 폴더(ATAC_QC의 output_dir이면 03_shifted_bam 사용) | Required for format (B): BAM folder (03_shifted_bam of an ATAC_QC output_dir) |
 | Input | Optional | Directory | peak_dir | | (B) 형식일 때 필수. MACS3의 output_dir | Required for format (B): MACS3 output_dir |
 | Output | Required | Directory | output_dir | /data/da | 결과 폴더 | Output folder |
-| Option | Optional | String | control_name | control | 기준(분모) 조건 이름. logFC = log2(비교 조건 / 기준 조건) | Baseline (denominator) condition; logFC = log2(other / baseline) |
+| Option | Optional | String | control_name | control | 기준(분모) 조건 이름. 샘플 정보의 Condition 값 중 하나와 정확히 같아야 함. logFC = log2(다른 조건 / 기준 조건) | Reference (denominator) condition; must match one Condition value exactly. logFC = log2(other condition / reference) |
 | Option | Optional | Float | fdr | 0.05 | 유의 기준 FDR | FDR cutoff |
-| Option | Optional | String | gc_bin_chr | | GC 편향 그림에 쓸 염색체. 비우면 가장 긴 염색체 | Chromosome for the GC bias plot; empty uses the longest |
-| Option | Optional | Integer | tile_width | 5000 | GC 편향 그림의 구간 크기(bp) | Bin size for the GC bias plot (bp) |
+| Option | Optional | String | gc_bin_chr | | GC 편향 그림에만 쓰는 염색체(분석 결과에는 영향 없음). 비우면 가장 긴 염색체 | Chromosome for the GC-bias plot only (no effect on results); empty uses the longest chromosome |
+| Option | Optional | Integer | tile_width | 5000 | GC 편향 그림에만 쓰는 구간 크기(bp, 분석 결과에는 영향 없음) | Bin size for the GC-bias plot only (bp; no effect on results) |
 | Option | Optional | List | paired | TRUE | paired-end로 read 계산(TRUE/FALSE) | Count reads as paired-end (TRUE/FALSE) |
 | Option | Optional | List | run_edaseq | TRUE | EDASeq GC 보정 실행(TRUE/FALSE) | Run EDASeq GC normalization (TRUE/FALSE) |
 | Option | Optional | List | run_cqn | TRUE | CQN GC 보정 실행(TRUE/FALSE) | Run CQN GC normalization (TRUE/FALSE) |
@@ -634,10 +634,10 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 | Option | Optional | Integer | n_per_bin | 400 | 구간당 peak 수 | Peaks per bin |
 | Option | Optional | Float | min_abs_logfc | 0.3 | 구간 나눌 때 쓰는 최소 abs(logFC) | Minimum abs(logFC) used for binning |
 | Option | Optional | Float | padj_cutoff | 4.0 | 강하게 농축된 모티프 기준(−log10 조정 p-value) | Strong enrichment cutoff (−log10 adjusted p-value) |
-| Option | Optional | Integer | kmer_len | 6 | k-mer 길이 | k-mer length |
+| Option | Optional | Integer | kmer_len | 6 | k-mer 길이. run_kmer=TRUE일 때만 사용 | k-mer length; used only with run_kmer=TRUE |
 | Option | Optional | Float | min_motif_score | 10.0 | 모티프 hit 최소 점수 | Minimum motif hit score |
-| Option | Optional | Float | stabsel_cutoff | 0.8 | 안정성 선택 기준(0~1] | Stability selection cutoff (0–1] |
-| Option | Optional | Integer | seed | 123 | 난수 시드 | Random seed |
+| Option | Optional | Float | stabsel_cutoff | 0.8 | 안정성 선택 기준(0~1]. run_regression=TRUE일 때만 사용 | Stability selection cutoff (0-1]; used only with run_regression=TRUE |
+| Option | Optional | Integer | seed | 123 | 회귀 분석(안정성 선택)을 재현하기 위한 난수 시드. run_regression=TRUE일 때만 사용 | Random seed that makes the regression (stability selection) reproducible; used only with run_regression=TRUE |
 | Option | Optional | List | run_kmer | TRUE | k-mer 분석 실행(TRUE/FALSE) | Run k-mer analysis (TRUE/FALSE) |
 | Option | Optional | List | run_regression | TRUE | 회귀 분석 실행(TRUE/FALSE) | Run regression analysis (TRUE/FALSE) |
 
@@ -829,16 +829,16 @@ Analyzes with clusterProfiler which biological functions (GO) are enriched among
 | Option | Optional | List | ont | BP | GO 분류(BP, MF, CC, ALL) | GO ontology (BP, MF, CC, ALL) |
 | Option | Optional | String | max_distance_to_tss | 3000 | TSS에서 이 거리(bp) 안의 peak에 연결된 유전자만 사용. NA는 전부 | Use genes whose peak is within this distance of the TSS (bp); NA uses all |
 | Option | Optional | String | universe | auto | 배경 유전자(auto, all, 또는 파일 경로) | Background genes (auto, all, or a file path) |
-| Option | Optional | Float | pvalue_cutoff | 0.05 | 조정 p-value 기준 | Adjusted p-value cutoff |
-| Option | Optional | Float | qvalue_cutoff | 0.2 | q-value 기준 | q-value cutoff |
+| Option | Optional | Float | pvalue_cutoff | 0.05 | 유의 GO 항목의 조정 p-value(p.adjust) 기준. p_adjust_method로 보정한 값에 적용 | Adjusted p-value (p.adjust) cutoff for significant GO terms, after p_adjust_method |
+| Option | Optional | Float | qvalue_cutoff | 0.2 | 유의 GO 항목의 q-value 기준. pvalue_cutoff와 둘 다 만족해야 유의 | q-value cutoff for significant GO terms; a term must pass both this and pvalue_cutoff |
 | Option | Optional | List | p_adjust_method | BH | 다중검정 보정(BH, bonferroni, holm, hochberg, hommel, BY, fdr, none) | Multiple testing correction (BH, bonferroni, holm, hochberg, hommel, BY, fdr, none) |
 | Option | Optional | Integer | min_gs_size | 10 | GO 항목 최소 유전자 수 | Minimum genes per GO term |
 | Option | Optional | Integer | max_gs_size | 500 | GO 항목 최대 유전자 수 | Maximum genes per GO term |
 | Option | Optional | Float | min_mapped_fraction | 0.5 | 주석에서 찾은 ID 비율이 이보다 낮으면 중단 | Stop if fewer IDs than this fraction are found in the annotation |
 | Option | Optional | Integer | show_category | 20 | 그림에 보일 GO 항목 수 | GO terms shown in plots |
-| Option | Optional | List | da_norm | TMM | da_dir에서 읽을 정규화 결과(TMM, EDASeq, CQN) | Normalization result to read from da_dir (TMM, EDASeq, CQN) |
-| Option | Optional | Float | da_fdr | 0.05 | up/down peak FDR 기준 | FDR cutoff for up/down peaks |
-| Option | Optional | Float | da_min_abs_logfc | 0 | up/down peak 최소 abs(logFC) | Minimum abs(logFC) for up/down peaks |
+| Option | Optional | List | da_norm | TMM | da_dir에서 읽을 정규화 결과(TMM, EDASeq, CQN). da_dir일 때만 사용 | Normalization result read from da_dir (TMM, EDASeq, CQN); used only with da_dir |
+| Option | Optional | Float | da_fdr | 0.05 | up/down peak FDR 기준. da_dir 또는 da_file일 때만 사용 | FDR cutoff for up/down peaks; used only with da_dir or da_file |
+| Option | Optional | Float | da_min_abs_logfc | 0 | up/down peak 최소 abs(logFC). da_dir 또는 da_file일 때만 사용 | Minimum abs(logFC) for up/down peaks; used only with da_dir or da_file |
 
 ### 주요 사항
 | 국문 | 영문 |

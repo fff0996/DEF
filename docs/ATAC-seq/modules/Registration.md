@@ -85,10 +85,10 @@ MACS3 callpeak(paired-end, BAMPE)로 peak를 찾는다.
 | Input | `input_dir` | Directory | 필수 | | Tn5 shift된 BAM 폴더. ATAC_QC의 `output_dir`을 주면 `03_shifted_bam`만 검색. `CONTROL_*.bam`이 있으면 처리군과 짝지어 실행 |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. peak_annotation, differential_accessibility(`peak_dir`), tf_footprinting(`macs_dir`)의 입력 |
 | Option | `genome_size` | String | **필수** | | 유효 유전체 크기. `hs`, `mm`, `ce`, `dm` 또는 숫자(예: 애기장대 약 `119000000`) |
-| Option | `peak_type` | List (`atac`, `narrow`, `broad`, `tf`) | 선택 | `atac` | peak 호출 방식 |
+| Option | `peak_type` | List (`narrow`, `broad`) | 선택 | `narrow` | MACS3 peak 모드. 스크립트는 `atac`, `tf`도 받지만 `narrow`와 같은 설정이라 포탈 목록에는 넣지 않음 |
 | Option | `alignment_suffix` | String | 선택 | `.shifted.bam` | 검색할 BAM 파일 끝부분 |
 | Option | `qvalue` | Float | 선택 | `0.05` | q-value 기준 |
-| Option | `broad_cutoff` | Float | 선택 | `0.1` | broad peak 기준(`peak_type=broad`일 때) |
+| Option | `broad_cutoff` | Float | 선택 | `0.1` | `peak_type=broad`일 때만 사용(narrow면 무시). `qvalue`보다 크거나 같아야 함 |
 
 결과: `<sample>_peaks.narrowPeak`(broad면 `.broadPeak`) 등 MACS3 출력, `<sample>_macs3.log`/`.stderr.log`. 일부 샘플만 실패하면 경고 후 종료 코드 0. 1.2는 추가로 `frip_summary.tsv`(샘플별 peak 수, 전체 read, peak 안 read, FRiP)를 만든다. FRiP 참고: ENCODE ATAC-seq 기준 0.3 초과 좋음, 0.2 초과 허용.
 
