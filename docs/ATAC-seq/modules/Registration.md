@@ -159,13 +159,11 @@ TOBIAS로 조건별 전사인자 footprint와 비교(BINDetect).
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | BAM 폴더(파일 이름에 SampleID 포함). ATAC_QC의 `output_dir`이면 `03_shifted_bam`의 `*.shifted.bam` 사용. 인덱스가 없으면 BAM 옆에 만든다 |
-| Input | `metadata` | File (TSV/CSV) | 필수 | | 샘플 정보. `SampleID`, `Condition` 컬럼, 조건 2개 이상 |
+| Input | `sample_data` | File (CSV/TSV) | 필수 | | 샘플 정보. `SampleID`, `Condition` 컬럼, 조건 2개 이상. ATAC_QC의 `sample_data`를 그대로 써도 된다(1.2까지는 이름이 `metadata`) |
 | Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. .fai가 없으면 FASTA 옆에 만든다 |
 | Input | `motif_db` | File | 필수 | | 모티프 데이터베이스 |
 | Input | `macs_dir` | Directory | 필수 | | MACS3의 `output_dir`. 그 안의 peak를 합쳐 공통 peak를 만든다(1.3부터 `peak_file` 인자 없음) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
-| Option | `sample_col` | String | 선택 | `SampleID` | metadata의 샘플 컬럼 이름 |
-| Option | `condition_col` | String | 선택 | `Condition` | metadata의 조건 컬럼 이름 |
 | Option | `cores` | String | 선택 | `auto` | 코어 수. auto = 할당된 코어 수. **포탈에 등록하지 않음**(Processor Core 선택으로 결정). 할당보다 크면 줄이고 경고 |
 
 결과: `00_metadata`, `01_peak_merge`, `02_merged_bam_by_condition`, `03_tobias_tracks`(bigWig), `04_BINDetect`, `summary/`.

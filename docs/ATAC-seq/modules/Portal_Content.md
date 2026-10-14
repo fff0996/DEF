@@ -720,29 +720,27 @@ Corrects Tn5 cleavage signals per condition with TOBIAS, computes footprint scor
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
 | Input | Required | Directory | input_dir | /data/atac_qc | BAM 폴더. ATAC_QC의 output_dir이면 03_shifted_bam 사용 | BAM folder; 03_shifted_bam of an ATAC_QC output_dir |
-| Input | Required | File | metadata | /data/metadata.tsv | 샘플 정보 TSV/CSV(SampleID, Condition), 조건 2개 이상 | Sample information TSV/CSV (SampleID, Condition) with two or more conditions |
+| Input | Required | File | sample_data | /data/sample_data.csv | 샘플 정보 CSV/TSV(SampleID, Condition), 조건 2개 이상. ATAC_QC의 sample_data를 그대로 써도 됨 | Sample sheet CSV/TSV (SampleID, Condition) with two or more conditions; the ATAC_QC sample_data can be used as is |
 | Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA. .fai가 없으면 FASTA 옆에 만들므로 그 폴더에 쓰기 권한이 필요. 공유 참조는 .fai를 미리 만들어 둘 것(samtools faidx) | Reference genome FASTA. A missing .fai is created beside the FASTA, so the folder must be writable; prepare the .fai in advance for shared references (samtools faidx) |
 | Input | Required | File | motif_db | /ref/motifs.meme | 모티프 데이터베이스(MEME/JASPAR 형식) | Motif database (MEME/JASPAR format) |
 | Input | Required | Directory | macs_dir | /data/macs3 | MACS3_callpeak_ATAC의 output_dir. 그 안의 샘플별 peak를 합쳐 공통 peak를 만듦 | MACS3_callpeak_ATAC output_dir; the sample peaks in it are merged into common peaks |
 | Output | Required | Directory | output_dir | /data/tf_footprinting | 결과 폴더 | Output folder |
-| Option | Optional | String | sample_col | SampleID | metadata의 샘플 컬럼 이름 | Sample column name in metadata |
-| Option | Optional | String | condition_col | Condition | metadata의 조건 컬럼 이름 | Condition column name in metadata |
 
 코어 수(`cores`)는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)으로 정해지며, 스크립트 기본값 `auto`가 그 코어 수를 쓴다.
 
 ### 샘플시트
-- 제목(국문): 샘플 정보 파일(metadata)
-- 제목(영문): Sample information (metadata)
-- 본문(국문): 탭 또는 쉼표로 구분한 파일이며 SampleID와 Condition 컬럼이 필요합니다. 컬럼 이름이 다르면 sample_col, condition_col로 지정합니다. BAM 파일 이름에 SampleID가 포함되어 있어야 합니다.
-- 본문(영문): A tab- or comma-separated file with the SampleID and Condition columns; set sample_col and condition_col if the names differ. Each BAM file name must contain its SampleID.
-- 예시 제목: metadata.tsv
+- 제목(국문): 샘플 정보 파일(sample_data)
+- 제목(영문): Sample sheet (sample_data)
+- 본문(국문): 쉼표 또는 탭으로 구분한 파일이며 SampleID와 Condition 컬럼이 필요합니다. ATAC_QC에 쓴 sample_data(Replicate 열 포함)를 그대로 써도 됩니다. BAM 파일 이름에 SampleID가 포함되어 있어야 합니다.
+- 본문(영문): A comma- or tab-separated file with the SampleID and Condition columns; the ATAC_QC sample_data (with its Replicate column) can be used as is. Each BAM file name must contain its SampleID.
+- 예시 제목: sample_data.csv
 - 예시 본문:
 ```
-SampleID	Condition
-ctrl_1	control
-ctrl_2	control
-trt_1	treated
-trt_2	treated
+SampleID,Condition,Replicate
+ctrl_1,control,1
+ctrl_2,control,2
+trt_1,treated,1
+trt_2,treated,2
 ```
 
 ### 주요 사항
@@ -763,13 +761,11 @@ trt_2	treated
 ```
 bash tf_footprinting.1.3.sh \
   input_dir=/data/atac_qc \
-  metadata=/data/metadata.tsv \
+  sample_data=/data/sample_data.csv \
   macs_dir=/data/macs3 \
   genome_fasta=/ref/genome.fa \
   motif_db=/ref/JASPAR2024_CORE_plants.meme \
-  output_dir=/data/tf_footprinting \
-  sample_col=SampleID \
-  condition_col=Condition
+  output_dir=/data/tf_footprinting
 ```
 
 ### 주요 결과 이미지

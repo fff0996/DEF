@@ -2,7 +2,11 @@
 # Version 1.3 (changes from tf_footprinting.1.2.sh):
 #   Peaks are always merged from macs_dir (required). The peak_file argument
 #   is no longer accepted: a non-empty value stops the run, an empty one is
-#   ignored. Everything else is unchanged.
+#   ignored.
+#   The sample sheet argument is sample_data, as in the other modules
+#   (metadata in 1.2), and its columns are fixed to SampleID and Condition:
+#   metadata, sample_col and condition_col with a value stop the run.
+#   Everything else is unchanged.
 #
 # Version 1.2 (changes from tf_footprinting.1.1.sh):
 #   A cores value above the allocated cores is still capped, and a warning
@@ -24,26 +28,23 @@
 # Usage:
 #   ./tf_footprinting.1.3.sh \
 #     input_dir="..." \
-#     metadata="..." \
+#     sample_data="..." \
 #     macs_dir="..." \
 #     genome_fasta="..." \
 #     motif_db="..." \
 #     output_dir="..." \
-#     [sample_col="SampleID"] \
-#     [condition_col="Condition"] \
 #     [cores="auto"]
 #
 # Required:
 #   input_dir      - Directory containing BAM files. BAM filenames must include SampleID.
-#   metadata       - Metadata TSV/CSV with SampleID and Condition columns.
+#   sample_data    - Sample sheet CSV/TSV with SampleID and Condition columns
+#                    (the ATAC_QC sample_data can be used as is).
 #   macs_dir       - MACS3_callpeak_ATAC output directory; its peaks are merged.
 #   genome_fasta   - Reference genome FASTA.
 #   motif_db       - Motif DB file. Plant/animal/custom motif DB can be used.
 #   output_dir     - Output directory.
 #
 # Optional:
-#   sample_col     - Metadata sample column name. Default: SampleID
-#   condition_col  - Metadata condition column name. Default: Condition
 #   cores          - CPU cores: auto (allocated cores) or a number capped by
 #                    them. Default: auto
 #
@@ -56,7 +57,7 @@
 #
 # Workflow:
 #   1. Check input data shape
-#   2. Read metadata
+#   2. Read sample_data
 #   3. Resolve BAM files by SampleID
 #   4. Merge BAMs by Condition
 #   5. Create merged/common peak BED from the MACS outputs in macs_dir
@@ -110,8 +111,15 @@ if [ -z "${input_dir:-}" ]; then
 	exit 1
 fi
 
-if [ -z "${metadata:-}" ]; then
-	echo "Error: Required parameter 'metadata' is missing" >&2
+for removed in metadata sample_col condition_col; do
+	if [ -n "${!removed:-}" ]; then
+		echo "Error: $removed is not accepted from version 1.3; give the sample sheet as sample_data (columns SampleID and Condition)" >&2
+		exit 1
+	fi
+done
+
+if [ -z "${sample_data:-}" ]; then
+	echo "Error: Required parameter 'sample_data' is missing" >&2
 	exit 1
 fi
 
@@ -130,8 +138,8 @@ if [ -z "${output_dir:-}" ]; then
 	exit 1
 fi
 
-sample_col="${sample_col:-SampleID}"
-condition_col="${condition_col:-Condition}"
+sample_col="SampleID"
+condition_col="Condition"
 cores="${cores:-auto}"
 macs_dir="${macs_dir:-}"
 peak_file="${peak_file:-}"
@@ -168,7 +176,7 @@ export OMP_NUM_THREADS="$cores" OPENBLAS_NUM_THREADS="$cores" MKL_NUM_THREADS="$
 # output_dir is cleaned below, so it must not be or contain an input.
 # ------------------------------------------------------------
 output_real="$(realpath -m -- "$output_dir")"
-for input_path in "$input_dir" "$metadata" "$genome_fasta" "$motif_db" "$macs_dir" "$peak_file"; do
+for input_path in "$input_dir" "$sample_data" "$genome_fasta" "$motif_db" "$macs_dir" "$peak_file"; do
 	[ -n "$input_path" ] || continue
 	input_real="$(realpath -m -- "$input_path")"
 	case "$input_real/" in
@@ -205,14 +213,12 @@ echo ""
 
 echo "parameters:"
 echo "  input_dir     = $input_dir"
-echo "  metadata      = $metadata"
+echo "  sample_data   = $sample_data"
 echo "  macs_dir      = ${macs_dir:-not_provided}"
 echo "  peak_file     = ${peak_file:-auto_from_macs_dir}"
 echo "  genome_fasta  = $genome_fasta"
 echo "  motif_db      = $motif_db"
 echo "  output_dir    = $output_dir"
-echo "  sample_col    = $sample_col"
-echo "  condition_col = $condition_col"
 echo "  cores         = $cores (requested $cores_requested, allocated $allocated_cores)"
 echo ""
 if [ "${cores_capped:-0}" = 1 ]; then
@@ -227,8 +233,8 @@ if [ ! -d "$input_dir" ]; then
 	exit 1
 fi
 
-if [ ! -f "$metadata" ]; then
-	echo "Error: metadata file not found: $metadata" >&2
+if [ ! -f "$sample_data" ]; then
+	echo "Error: sample_data file not found: $sample_data" >&2
 	exit 1
 fi
 
@@ -322,11 +328,11 @@ fi
 echo "############################## Input data shape check"
 echo ""
 
-echo "[metadata]"
-echo "  path: $metadata"
-echo "  size: $(du -h "$metadata" | awk '{print $1}')"
+echo "[sample_data]"
+echo "  path: $sample_data"
+echo "  size: $(du -h "$sample_data" | awk '{print $1}')"
 echo "  preview:"
-head -n 10 "$metadata" | sed 's/^/    /'
+head -n 10 "$sample_data" | sed 's/^/    /'
 echo ""
 
 echo "[input_dir BAM candidates]"
@@ -373,7 +379,7 @@ echo ""
 # ------------------------------------------------------------
 # Detect metadata delimiter
 # ------------------------------------------------------------
-header_line=$(head -n 1 "$metadata" | tr -d '\r')
+header_line=$(head -n 1 "$sample_data" | tr -d '\r')
 
 if echo "$header_line" | grep -q $'\t'; then
 	delim=$'\t'
@@ -383,7 +389,7 @@ else
 	delim_name="comma"
 fi
 
-echo "metadata delimiter detected: $delim_name"
+echo "sample_data delimiter detected: $delim_name"
 echo ""
 
 # ------------------------------------------------------------
@@ -408,24 +414,24 @@ get_col_index() {
 	' "$file"
 }
 
-sample_idx=$(get_col_index "$sample_col" "$metadata" "$delim")
-condition_idx=$(get_col_index "$condition_col" "$metadata" "$delim")
+sample_idx=$(get_col_index "$sample_col" "$sample_data" "$delim")
+condition_idx=$(get_col_index "$condition_col" "$sample_data" "$delim")
 
 if [ -z "$sample_idx" ]; then
-	echo "Error: sample_col not found in metadata: $sample_col" >&2
+	echo "Error: column $sample_col not found in sample_data" >&2
 	echo "Header:" >&2
 	echo "  $header_line" >&2
 	exit 1
 fi
 
 if [ -z "$condition_idx" ]; then
-	echo "Error: condition_col not found in metadata: $condition_col" >&2
+	echo "Error: column $condition_col not found in sample_data" >&2
 	echo "Header:" >&2
 	echo "  $header_line" >&2
 	exit 1
 fi
 
-echo "metadata columns:"
+echo "sample_data columns:"
 echo "  ${sample_col}    = column ${sample_idx}"
 echo "  ${condition_col} = column ${condition_idx}"
 echo ""
@@ -455,9 +461,9 @@ awk -v FS="$delim" -v OFS="\t" \
 
 		print sample, condition
 	}
-' "$metadata" > "$mapping_tsv"
+' "$sample_data" > "$mapping_tsv"
 
-echo "normalized metadata:"
+echo "normalized sample_data:"
 echo "  $mapping_tsv"
 echo "  rows: $(wc -l < "$mapping_tsv" | awk '{print $1}')"
 echo "  preview:"
@@ -465,7 +471,7 @@ cat "$mapping_tsv" | sed 's/^/    /'
 echo ""
 
 if [ ! -s "$mapping_tsv" ]; then
-	echo "Error: normalized metadata is empty" >&2
+	echo "Error: normalized sample_data is empty" >&2
 	exit 1
 fi
 
@@ -896,7 +902,7 @@ summary_file="${summary_dir}/tf_footprinting_summary.tsv"
 
 {
 	echo -e "key\tvalue"
-	echo -e "metadata\t${metadata}"
+	echo -e "sample_data\t${sample_data}"
 	echo -e "input_dir\t${input_dir}"
 	echo -e "macs_dir\t${macs_dir:-not_used}"
 	echo -e "peak_file\t${peak_file}"
@@ -916,7 +922,7 @@ echo "  $summary_file"
 echo ""
 
 echo "done:"
-echo "  metadata table = $mapping_tsv"
+echo "  sample table = $mapping_tsv"
 echo "  resolved BAMs  = $resolved_tsv"
 echo "  peak file      = $peak_file"
 echo "  merged BAM dir = $merged_bam_dir"
