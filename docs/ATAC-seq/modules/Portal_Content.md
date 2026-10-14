@@ -150,7 +150,7 @@ trt_2,treated,2
 
 - 레전드(국문): **그림. ATAC-seq 품질 평가와 Tn5 보정.** (A) Tn5 절단 위치에 따라 뉴클레오솜 사이 열린 DNA에서는 짧은 NFR fragment가, 뉴클레오솜 하나 또는 둘을 사이에 두면 mononucleosome·dinucleosome fragment가 생긴다. (B) 좋은 라이브러리의 fragment 길이 분포는 NFR 봉우리와 약 200 bp 간격의 뉴클레오솜 주기를 보이며, 약 10.5 bp의 DNA 나선 주기도 나타난다(작은 그림: 로그 척도). (C) Tn5는 두 가닥에 9 bp 간격으로 삽입되므로 + 가닥 read는 +4 bp, − 가닥 read는 −5 bp 옮겨 실제 삽입 중심을 표시한다. (B)는 Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1을 수정(CC BY 4.0).
 - 레전드(영문): **Figure. ATAC-seq quality control and Tn5 shift.** (A) Depending on the Tn5 cut sites, open DNA between nucleosomes gives short NFR fragments, and fragments spanning one or two nucleosomes are mononucleosome or dinucleosome fragments. (B) A good library shows an NFR peak and nucleosome periodicity of about 200 bp in the fragment size distribution, with the ~10.5 bp helical pitch visible (inset: log scale). (C) Tn5 inserts into the two strands 9 bp apart, so plus-strand reads are shifted +4 bp and minus-strand reads −5 bp to mark the insertion center. Panel B adapted from Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1 (CC BY 4.0).
-- 출처: Adapted from Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1 (CC BY 4.0).
+- 출처: Ou J, Liu H, Yu J, Kelliher MA, Castilla LH, Lawson ND, Zhu LJ. ATACseqQC: a Bioconductor package for post-alignment quality assessment of ATAC-seq data. *BMC Genomics* 19, 169 (2018). https://doi.org/10.1186/s12864-018-4559-3, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ### 스크립트 사용 예제
 ```
@@ -215,7 +215,7 @@ Plots heatmaps and average profiles of the signal around TSSs from the fragment-
 
 - 레전드(국문): **그림. TSS 주변 신호.** (A) 모든 TSS를 기준으로 정렬한 nucleosome-free(왼쪽)와 nucleosome-bound(오른쪽) 신호 heatmap. 각 행은 하나의 TSS다. (B) 평균 신호. 좋은 데이터에서는 NFR 신호가 TSS에 모이고, 뉴클레오솜 신호는 그 양옆(−1, +1 뉴클레오솜)에 나타난다. Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1을 수정(CC BY 4.0).
 - 레전드(영문): **Figure. Signal around TSSs.** (A) Heatmaps of nucleosome-free (left) and nucleosome-bound (right) signal aligned at all TSSs; each row is one TSS. (B) Averaged coverage. In good data the NFR signal concentrates at the TSS and the nucleosome signal flanks it (−1 and +1 nucleosomes). Adapted from Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1 (CC BY 4.0).
-- 출처: Adapted from Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1 (CC BY 4.0).
+- 출처: Ou J, Liu H, Yu J, Kelliher MA, Castilla LH, Lawson ND, Zhu LJ. ATACseqQC: a Bioconductor package for post-alignment quality assessment of ATAC-seq data. *BMC Genomics* 19, 169 (2018). https://doi.org/10.1186/s12864-018-4559-3, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ### 스크립트 사용 예제
 ```
@@ -607,7 +607,7 @@ trt_2	treated
 
 - 레전드(국문): **그림. 전사인자 footprint 분석.** (A) 단백질이 결합한 DNA는 Tn5가 자르지 못해, 절단 신호에 움푹 패인 footprint가 생긴다. (B) 관찰된 절단 신호에서 Tn5 서열 선호도로 예측한 기대 신호를 빼서 편향을 보정한다(ATACorrect). (C) 조건 간 footprint 점수를 비교해(BINDetect), 결합이 늘거나 준 전사인자를 volcano plot으로 보여 준다. Bentsen M. et al., Nat Commun 11, 4267 (2020), Fig. 1을 수정(CC BY 4.0).
 - 레전드(영문): **Figure. Transcription factor footprinting.** (A) DNA bound by a protein is protected from Tn5, leaving a footprint in the cut-site signal. (B) Tn5 sequence bias is corrected by subtracting the cutting expected from Tn5 sequence preference from the observed cut sites (ATACorrect). (C) Footprint scores are compared between conditions (BINDetect), and factors with increased or decreased binding are shown in a volcano plot. Adapted from Bentsen M. et al., Nat Commun 11, 4267 (2020), Fig. 1 (CC BY 4.0).
-- 출처: Adapted from Bentsen M. et al., Nat Commun 11, 4267 (2020), Fig. 1 (CC BY 4.0).
+- 출처: Bentsen M, Goymann P, Schultheis H, Klee K, Petrova A, Wiegandt R, Fust A, Preussner J, Kuenne C, Braun T, Kim J, Looso M. ATAC-seq footprinting unravels kinetics of transcription factor binding during zygotic genome activation. *Nat Commun* 11, 4267 (2020). https://doi.org/10.1038/s41467-020-18035-1, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ### 스크립트 사용 예제
 ```

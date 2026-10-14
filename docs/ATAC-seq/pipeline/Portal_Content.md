@@ -74,7 +74,8 @@ Motif enrichment along accessibility changes and footprinting results are review
 - 국문: ATAC-seq 원리 모식도. Tn5가 뉴클레오솜 사이 열린 염색질을 잘라 생긴 NFR·mononucleosome fragment, 이로부터 검출한 peak, 전사인자 결합 자리의 footprint를 보여 줌.
 - English: Schematic of ATAC-seq: Tn5 cuts open chromatin between nucleosomes, producing NFR and mononucleosome fragments, from which peaks and transcription factor footprints are identified.
 
-출처 확인 필요: 원래 그림을 받은 곳에서 논문과 라이선스(CC BY 4.0)를 확인한 뒤 게시한다.
+### 출처 / Reference
+Yan F, Powell DR, Curtis DJ, Wong NC. From reads to insight: a hitchhiker's guide to ATAC-seq data analysis. *Genome Biol* 21, 22 (2020). https://doi.org/10.1186/s13059-020-1929-3, Fig. 1A를 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ---
 
