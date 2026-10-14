@@ -13,7 +13,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 버전은 각 실행 스크립트 파일 이름에 적힌 버전을 쓴다(예: organellar_filter.1.1.sh → 1.1).
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지운다.
 - 카테고리는 기능(분석 단계) 기준의 대분류·중분류로 정했다(`docs/CLOSHA_Portal_Guide_v1.md` 5.2). 아이콘은 대분류마다 하나다.
-- 주요 결과 이미지는 실제 데이터로 실행한 결과에서 가져와 `docs/ATAC-seq/modules/figures/module_results/<모듈>_result.{png,svg}`로 PNG(등록용)와 SVG(원본)를 함께 저장한다(A/B 두 그림이면 `_result_A`, `_result_B`). PDF는 `pdftocairo -png -r 200 -singlefile <그림>.pdf <모듈>_result`와 `pdftocairo -svg <그림>.pdf <모듈>_result.svg`로 바꾼다(여러 쪽이면 `-f <쪽> -l <쪽>`). 처음부터 PNG인 그림(IDR)과 표 캡처는 PNG만 저장한다.
+- 주요 결과 이미지는 실제 데이터로 실행한 결과에서 가져와 `docs/ATAC-seq/modules/figures/module_results/<모듈>_result_<N>.{png,svg}`로 PNG(등록용)와 SVG(원본)를 함께 저장한다(모듈마다 결과 그림을 여러 개 등록하며 순서대로 `_result_1`, `_result_2`, …로 이름 붙인다). PDF는 `pdftocairo -png -r 200 -singlefile <그림>.pdf <모듈>_result_<N>`와 `pdftocairo -svg <그림>.pdf <모듈>_result_<N>.svg`로 바꾼다(여러 쪽이면 `-f <쪽> -l <쪽>`). 처음부터 PNG인 그림(IDR)과 표 캡처는 PNG만 저장한다.
 
 ---
 
@@ -86,13 +86,13 @@ bash bowtie2.1.2.sh \
 ```
 
 ### 주요 결과 이미지
-등록할 그림: 화면 캡처 `<sample>_bowtie.log`의 정렬 요약 부분 (이 모듈은 그림을 만들지 않는다)
 
-**레전드(국문)**
-**샘플별 bowtie2 정렬 요약.** 전체 read 쌍 중 정상 짝으로 한 곳에 정렬된 비율(aligned concordantly exactly 1 time), 여러 곳에 정렬된 비율(>1 times), 정렬되지 않은 비율(0 times)과 전체 정렬률(overall alignment rate)을 보여 준다. ENCODE ATAC-seq 기준은 전체 정렬률 95% 이상이 바람직하고 80% 이상이면 허용하며, 여러 곳에 정렬된 비율이 높으면 반복 서열이나 오염을 의심할 수 있다.
-
-**Legend (English)**
-**bowtie2 alignment summary per sample.** The log shows the fractions of read pairs aligned concordantly exactly once, more than once, and not at all, and the overall alignment rate. The ENCODE ATAC-seq standard prefers an overall alignment rate of 95% or more and accepts 80% or more; a high multi-mapping fraction points to repeats or contamination.
+**결과 1. 정렬 요약**
+- 등록할 그림: 화면 캡처 `<sample>_bowtie.log`의 정렬 요약 부분 (이 모듈은 그림을 만들지 않는다)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/bowtie2_result_1.png`
+그림: `docs/ATAC-seq/modules/figures/module_results/bowtie2_result_1.png`
+- 레전드(국문): **샘플별 bowtie2 정렬 요약.** 전체 read 쌍 중 정상 짝으로 한 곳에 정렬된 비율(aligned concordantly exactly 1 time), 여러 곳에 정렬된 비율(>1 times), 정렬되지 않은 비율(0 times)과 전체 정렬률(overall alignment rate)을 보여 준다. ENCODE ATAC-seq 기준은 전체 정렬률 95% 이상이 바람직하고 80% 이상이면 허용하며, 여러 곳에 정렬된 비율이 높으면 반복 서열이나 오염을 의심할 수 있다.
+- 레전드(영문): **bowtie2 alignment summary per sample.** The log shows the fractions of read pairs aligned concordantly exactly once, more than once, and not at all, and the overall alignment rate. The ENCODE ATAC-seq standard prefers an overall alignment rate of 95% or more and accepts 80% or more; a high multi-mapping fraction points to repeats or contamination.
 
 ---
 
@@ -175,13 +175,13 @@ bash organellar_filter.1.2.sh \
 ```
 
 ### 주요 결과 이미지
-등록할 그림: 표 캡처 `04_summary/organellar_filter_summary.tsv` (이 모듈은 그림을 만들지 않는다)
 
-**레전드(국문)**
-**샘플별 소기관 contig 제거 요약.** 샘플마다 입력 BAM의 전체 contig 수, 제거한 소기관 contig(미토콘드리아·엽록체) 수, 남긴 contig 수, 필터링된 BAM 경로와 처리 상태를 보여 준다. status가 모든 샘플에서 정상이면 다음 단계(ATAC_QC)에 쓸 BAM이 준비된 것이다.
-
-**Legend (English)**
-**Organellar contig removal per sample.** For each sample the table lists the number of contigs in the input BAM, the organellar (mitochondrial or plastid) contigs removed, the contigs kept, the filtered BAM path and the run status. A normal status for every sample means the BAMs are ready for ATAC_QC.
+**결과 1. 소기관 contig 제거 요약**
+- 등록할 그림: 표 캡처 `04_summary/organellar_filter_summary.tsv` (이 모듈은 그림을 만들지 않는다)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/organellar_filter_result_1.png`
+그림: `docs/ATAC-seq/modules/figures/module_results/organellar_filter_result_1.png`
+- 레전드(국문): **샘플별 소기관 contig 제거 요약.** 샘플마다 입력 BAM의 전체 contig 수, 제거한 소기관 contig(미토콘드리아·엽록체) 수, 남긴 contig 수, 필터링된 BAM 경로와 처리 상태를 보여 준다. status가 모든 샘플에서 정상이면 다음 단계(ATAC_QC)에 쓸 BAM이 준비된 것이다.
+- 레전드(영문): **Organellar contig removal per sample.** For each sample the table lists the number of contigs in the input BAM, the organellar (mitochondrial or plastid) contigs removed, the contigs kept, the filtered BAM path and the run status. A normal status for every sample means the BAMs are ready for ATAC_QC.
 
 ---
 
@@ -301,13 +301,28 @@ Rscript ATAC_QC.1.2.R \
 ```
 
 ### 주요 결과 이미지
-등록할 그림: `01_fragment_size/<sample>/<sample>.fragSizeDist.pdf`, `07_tss_enrichment/<sample>.tss_enrichment.pdf` (대표 샘플 1개, 두 그림을 나란히)
+결과 그림 3개를 아래 순서대로 등록한다. 결과 1이 대표 그림이다.
 
-**레전드(국문)**
-**ATAC-seq 라이브러리 품질: fragment 크기 분포와 TSS enrichment.** (A) paired-end fragment 길이 분포. 100 bp 이하의 nucleosome-free 봉우리와 약 200 bp(mononucleosome), 약 400 bp(dinucleosome) 간격의 주기적인 봉우리가 보이면 Tn5 절단이 정상적으로 일어난 것이다. 작은 그림은 같은 분포를 로그 축으로 보여 준다. (B) TSS 주변(기본 ±1,000 bp)의 aggregate TSS score. TSS(0 bp)에서 신호가 뚜렷하게 높을수록 열린 염색질이 잘 포착된 것이며, 제목에 TSS enrichment score가 표시된다.
+**결과 1. Fragment 크기 분포**
+- 등록할 그림: `01_fragment_size/<sample>/<sample>.fragSizeDist.pdf` (대표 샘플 1개)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/ATAC_QC_result_1.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/ATAC_QC_result_1.png`
+- 레전드(국문): **Fragment 크기 분포.** paired-end fragment의 길이(가로축, bp)별 read 수(세로축)다. 100 bp 이하의 nucleosome-free 봉우리와 약 200 bp(mononucleosome), 약 400 bp(dinucleosome) 간격의 주기적인 봉우리가 보이면 Tn5 절단이 정상적으로 일어난 것이다. 작은 그림은 같은 분포를 로그 축으로 보여 주며, 짧은 구간의 약 10.5 bp 물결(DNA 나선 주기)도 여기서 보인다. 봉우리 없이 매끄럽게 줄어들면 Tn5 반응이 과하거나 세포 상태가 나쁜 경우다.
+- 레전드(영문): **Fragment size distribution.** Read counts (y-axis) by paired-end fragment length (x-axis, bp). A nucleosome-free peak below 100 bp followed by periodic peaks near 200 bp (mononucleosome) and 400 bp (dinucleosome) indicates proper Tn5 cutting. The inset shows the same distribution on a log scale, where the ~10.5 bp helical ripple of short fragments is also visible. A smooth decay without peaks points to over-tagmentation or poor cell condition.
 
-**Legend (English)**
-**ATAC-seq library quality: fragment size distribution and TSS enrichment.** (A) Paired-end fragment length distribution. A nucleosome-free peak below 100 bp followed by periodic peaks near 200 bp (mononucleosome) and 400 bp (dinucleosome) indicates proper Tn5 cutting; the inset shows the same distribution on a log scale. (B) Aggregate TSS score around transcription start sites (±1,000 bp by default). A sharp rise at the TSS (0 bp) indicates good capture of open chromatin; the TSS enrichment score is shown in the title.
+**결과 2. TSS enrichment**
+- 등록할 그림: `07_tss_enrichment/<sample>.tss_enrichment.pdf` (대표 샘플 1개)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/ATAC_QC_result_2.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/ATAC_QC_result_2.png`
+- 레전드(국문): **TSS enrichment.** 가로축은 TSS로부터의 거리(기본 ±1,000 bp), 세로축은 양 끝 구간 대비 신호 비율(aggregate TSS score)이다. TSS(0 bp, 점선)에서 신호가 뚜렷하게 솟을수록 열린 염색질이 잘 포착된 것이며, 제목에 TSS enrichment score가 표시된다. ENCODE는 사람(GRCh38, RefSeq TSS) 기준 7 이상을 이상적, 5~7을 허용으로 둔다. 값은 유전체와 TSS 주석에 따라 달라지므로 같은 실험의 샘플끼리 비교하는 데 주로 쓴다.
+- 레전드(영문): **TSS enrichment.** The x-axis is the distance from the TSS (±1,000 bp by default) and the y-axis the signal relative to the flanking ends (aggregate TSS score). A sharp rise at the TSS (0 bp, dashed line) indicates good capture of open chromatin; the TSS enrichment score is shown in the title. ENCODE considers 7 or more ideal and 5-7 acceptable for human (GRCh38, RefSeq TSS). The value depends on the genome and TSS annotation, so it is mainly used to compare samples within an experiment.
+
+**결과 3. 샘플별 QC 지표**
+- 등록할 그림: 표 캡처 `05_metadata/atac_qc_metrics.tsv`
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/ATAC_QC_result_3.png`
+그림: `docs/ATAC-seq/modules/figures/module_results/ATAC_QC_result_3.png`
+- 레전드(국문): **샘플별 QC 지표.** 샘플마다 입력 read 수(InputMappedReads), 정제 후 read 수(CleanMappedReads)와 그 비율(CleanFraction), Tn5 보정 후 read 수(ShiftedReads), TSS enrichment score(TSSEnrichment), fragment 분리 상태(SplitStatus)를 한 줄로 보여 준다. CleanFraction이 다른 샘플보다 크게 낮으면 중복·저품질 read가 많은 샘플이다. SplitStatus가 `empty_split:<분류>`이면 그 길이 분류에 fragment가 없다는 뜻이다(예: 긴 fragment가 적은 데이터의 trinucleosome).
+- 레전드(영문): **QC metrics per sample.** One row per sample with input reads (InputMappedReads), reads after cleaning (CleanMappedReads) and their fraction (CleanFraction), reads after the Tn5 shift (ShiftedReads), the TSS enrichment score (TSSEnrichment) and the fragment split status (SplitStatus). A CleanFraction far below the other samples indicates many duplicate or low-quality reads. `empty_split:<class>` means no fragments fell into that length class (for example trinucleosome in data with few long fragments).
 
 ---
 
@@ -401,13 +416,21 @@ Rscript ATAC_QC_plot.1.2.R \
 ```
 
 ### 주요 결과 이미지
-등록할 그림: `01_tss_signal/<sample>.Heatmap_splitbam.pdf` (대표 샘플 1개)
+결과 그림 2개를 아래 순서대로 등록한다. 결과 1이 대표 그림이다.
 
-**레전드(국문)**
-**TSS 주변의 nucleosome-free 신호와 nucleosome 신호.** 각 행은 TSS 하나이고, 가로축은 TSS 중심 ±1,010 bp 구간이다. 왼쪽 패널(NucleosomeFree)은 nucleosome-free fragment, 오른쪽 패널(그림에는 mononucleosome으로 표시)은 mono, di, trinucleosome fragment를 합친 nucleosome 신호이며, 신호(log2)를 노랑(낮음)에서 빨강(높음)으로 나타낸다. 정상적인 ATAC-seq에서는 nucleosome-free 신호가 TSS 바로 위에 모이고, nucleosome 신호는 TSS 양옆(nucleosome 자리)에 나타난다.
+**결과 1. TSS 주변 신호 heatmap**
+- 등록할 그림: `01_tss_signal/<sample>.Heatmap_splitbam.pdf` (대표 샘플 1개)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/ATAC_QC_plot_result_1.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/ATAC_QC_plot_result_1.png`
+- 레전드(국문): **TSS 주변의 nucleosome-free 신호와 nucleosome 신호.** 각 행은 TSS 하나이고, 가로축은 TSS 중심 ±1,010 bp 구간이다. 왼쪽 패널(NucleosomeFree)은 nucleosome-free fragment, 오른쪽 패널(그림에는 mononucleosome으로 표시)은 mono, di, trinucleosome fragment를 합친 nucleosome 신호이며, 신호(log2)를 노랑(낮음)에서 빨강(높음)으로 나타낸다. 정상적인 ATAC-seq에서는 nucleosome-free 신호가 TSS 바로 위에 모이고, nucleosome 신호는 TSS 양옆(nucleosome 자리)에 나타난다.
+- 레전드(영문): **Nucleosome-free and nucleosome signal around TSSs.** Each row is one TSS and the x-axis spans ±1,010 bp around its centre. The left panel (NucleosomeFree) shows nucleosome-free fragments and the right panel (labelled mononucleosome in the plot) the nucleosome signal of mono-, di-, and trinucleosome fragments combined, with signal (log2) from yellow (low) to red (high). In good ATAC-seq data the nucleosome-free signal concentrates at the TSS, while the nucleosome signal flanks it where nucleosomes sit.
 
-**Legend (English)**
-**Nucleosome-free and nucleosome signal around TSSs.** Each row is one TSS and the x-axis spans ±1,010 bp around its centre. The left panel (NucleosomeFree) shows nucleosome-free fragments and the right panel (labelled mononucleosome in the plot) the nucleosome signal of mono-, di-, and trinucleosome fragments combined, with signal (log2) from yellow (low) to red (high). In good ATAC-seq data the nucleosome-free signal concentrates at the TSS, while the nucleosome signal flanks it where nucleosomes sit.
+**결과 2. TSS 주변 평균 신호**
+- 등록할 그림: `01_tss_signal/<sample>.TSSprofile_splitbam.pdf` (결과 1과 같은 샘플)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/ATAC_QC_plot_result_2.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/ATAC_QC_plot_result_2.png`
+- 레전드(국문): **TSS 주변 평균 신호.** 결과 1의 heatmap을 모든 TSS에 대해 평균한 선 그래프다. 가로축은 TSS 기준 위치(−1 kb~+1 kb), 세로축은 각 신호를 0~1로 맞춘 값(Fraction of signal)이다. 검은 선은 NucleosomeFree, 빨간 선은 nucleosome 신호(그림에는 mononucleosome으로 표시, mono, di, trinucleosome fragment를 합친 신호)다. 정상적인 ATAC-seq에서는 검은 선이 TSS(가운데)에서 가장 높고, 빨간 선은 TSS에서 낮아졌다가 양옆(−1, +1 nucleosome 자리)에서 높아진다.
+- 레전드(영문): **Average signal around TSSs.** The heatmap of result 1 averaged over all TSSs. The x-axis is the position relative to the TSS (−1 kb to +1 kb) and the y-axis each signal scaled to 0-1 (fraction of signal). The black line is NucleosomeFree and the red line the nucleosome signal (labelled mononucleosome in the plot; mono-, di-, and trinucleosome fragments combined). In good ATAC-seq data the black line peaks at the TSS (centre), while the red line dips at the TSS and rises on both sides at the −1 and +1 nucleosome positions.
 
 ---
 
@@ -501,13 +524,13 @@ bash MACS3_callpeak_ATAC.1.3.sh \
 ```
 
 ### 주요 결과 이미지
-등록할 그림: 표 캡처 `frip_summary.tsv` (이 모듈은 그림을 만들지 않는다)
 
-**레전드(국문)**
-**샘플별 peak 수와 FRiP.** 샘플마다 MACS3로 찾은 peak 수(peaks), 전체 read 수(total_reads), peak 안에 들어간 read 수(reads_in_peaks), 그 비율(FRiP)을 보여 준다. FRiP는 신호 대 잡음의 지표로, ENCODE ATAC-seq 기준에서는 0.3 이상이 바람직하고 0.2 이상이면 허용한다.
-
-**Legend (English)**
-**Peak count and FRiP per sample.** For each sample the table lists the number of MACS3 peaks (peaks), total reads (total_reads), reads falling in peaks (reads_in_peaks) and their fraction (FRiP). FRiP is a signal-to-noise measure; the ENCODE ATAC-seq standard prefers 0.3 or higher and accepts 0.2 or higher.
+**결과 1. 샘플별 peak 수와 FRiP**
+- 등록할 그림: 표 캡처 `frip_summary.tsv` (이 모듈은 그림을 만들지 않는다)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/MACS3_callpeak_ATAC_result_1.png`
+그림: `docs/ATAC-seq/modules/figures/module_results/MACS3_callpeak_ATAC_result_1.png`
+- 레전드(국문): **샘플별 peak 수와 FRiP.** 샘플마다 MACS3로 찾은 peak 수(peaks), 전체 read 수(total_reads), peak 안에 들어간 read 수(reads_in_peaks), 그 비율(FRiP)을 보여 준다. FRiP는 신호 대 잡음의 지표로, ENCODE ATAC-seq 기준에서는 0.3 이상이 바람직하고 0.2 이상이면 허용한다.
+- 레전드(영문): **Peak count and FRiP per sample.** For each sample the table lists the number of MACS3 peaks (peaks), total reads (total_reads), reads falling in peaks (reads_in_peaks) and their fraction (FRiP). FRiP is a signal-to-noise measure; the ENCODE ATAC-seq standard prefers 0.3 or higher and accepts 0.2 or higher.
 
 ---
 
@@ -606,13 +629,35 @@ Rscript peak_annotation.1.1.R \
 ```
 
 ### 주요 결과 이미지
-등록할 그림: `plots/annotation_summary_percent_barplot.pdf`
+결과 그림 4개를 아래 순서대로 등록한다. 결과 1이 대표 그림이다.
 
-**레전드(국문)**
-**샘플별 peak의 유전체 영역 분포.** 막대 하나가 샘플 하나이며, peak가 promoter, UTR, exon, intron, distal intergenic 등 각 유전체 영역에 놓인 비율(%)을 색으로 나누어 보여 준다. ATAC-seq peak는 보통 promoter와 intron, distal intergenic에 많이 놓이며, 샘플 간 분포가 비슷한지로 데이터의 일관성을 확인할 수 있다.
+**결과 1. 샘플별 peak 유전체 영역 분포**
+- 등록할 그림: `plots/annotation_summary_percent_barplot.pdf`
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/peak_annotation_result_1.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/peak_annotation_result_1.png`
+- 레전드(국문): **샘플별 peak의 유전체 영역 분포.** 막대 하나가 샘플 하나이며, peak가 promoter, UTR, exon, intron, distal intergenic 등 각 유전체 영역에 놓인 비율(%)을 색으로 나누어 보여 준다. ATAC-seq peak는 보통 promoter와 intron, distal intergenic에 많이 놓이며, 샘플 간 분포가 비슷한지로 데이터의 일관성을 확인할 수 있다.
+- 레전드(영문): **Genomic distribution of peaks per sample.** Each bar is one sample, split by colour into the percentage of peaks in promoters, UTRs, exons, introns, distal intergenic regions and other features. ATAC-seq peaks are usually enriched in promoters, introns and distal intergenic regions; similar distributions across samples indicate consistent data.
 
-**Legend (English)**
-**Genomic distribution of peaks per sample.** Each bar is one sample, split by colour into the percentage of peaks in promoters, UTRs, exons, introns, distal intergenic regions and other features. ATAC-seq peaks are usually enriched in promoters, introns and distal intergenic regions; similar distributions across samples indicate consistent data.
+**결과 2. 겹치는 주석 영역(UpSet)**
+- 등록할 그림: `plots/<sample>.annotation_upset_vennpie.pdf` (대표 샘플 1개)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/peak_annotation_result_2.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/peak_annotation_result_2.png`
+- 레전드(국문): **peak가 동시에 걸치는 유전체 영역(UpSet plot).** peak 하나가 여러 영역(예: promoter이면서 exon)에 함께 걸칠 수 있으므로, 영역 조합별 peak 수를 보여 준다. 아래 점과 선은 영역 조합, 위 막대는 그 조합에 속한 peak 수다. 왼쪽 위의 원그래프(vennpie)는 전체 peak의 영역 구성을 요약한다. 결과 1의 막대는 우선순위에 따라 영역 하나만 고른 것이고, 이 그림은 겹침까지 보여 준다.
+- 레전드(영문): **Overlapping genomic features of peaks (UpSet plot).** A peak can fall in several features at once (for example promoter and exon), so the plot shows peak counts per feature combination: the dots and lines below define the combination and the bars above give its peak count. The pie (vennpie) at the top left summarises the feature composition of all peaks. Result 1 assigns each peak to one feature by priority; this plot shows the overlaps.
+
+**결과 3. TSS까지 거리 분포**
+- 등록할 그림: `plots/<sample>.distance_to_tss.pdf` (결과 2와 같은 샘플)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/peak_annotation_result_3.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/peak_annotation_result_3.png`
+- 레전드(국문): **peak에서 가장 가까운 TSS까지의 거리 분포.** 가로 막대는 peak의 비율(%)이며, 거리 구간(0~1 kb, 1~3 kb, 3~5 kb, 5~10 kb, 10~100 kb, 100 kb 이상)별로 색을 나누었다. 왼쪽(음수)은 유전자 상류, 오른쪽(양수)은 하류에 놓인 peak다. ATAC-seq peak는 TSS 가까이(0~3 kb)에 많이 모이며, 원거리 peak는 enhancer 같은 조절 부위의 후보다.
+- 레전드(영문): **Distance from peaks to the nearest TSS.** The horizontal bar gives the percentage of peaks in distance bins (0-1 kb, 1-3 kb, 3-5 kb, 5-10 kb, 10-100 kb, over 100 kb), with upstream peaks to the left (negative) and downstream peaks to the right (positive). ATAC-seq peaks concentrate near TSSs (0-3 kb), and distal peaks are candidates for regulatory elements such as enhancers.
+
+**결과 4. TSS 주변 peak 분포**
+- 등록할 그림: `plots/<sample>.tss_profile.pdf` (결과 2와 같은 샘플)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/peak_annotation_result_4.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/peak_annotation_result_4.png`
+- 레전드(국문): **TSS 주변 peak 분포.** 가로축은 TSS 기준 위치(기본 −3,000~+3,000 bp, 옵션 tss_upstream·tss_downstream), 세로축은 그 위치를 덮는 peak의 빈도(Peak Count Frequency)다. ATAC-seq에서는 TSS(0 bp) 바로 위에서 가장 높은 봉우리가 나타나며, 이는 promoter가 열려 있다는 뜻이다.
+- 레전드(영문): **Peak distribution around TSSs.** The x-axis is the position relative to the TSS (−3,000 to +3,000 bp by default; options tss_upstream and tss_downstream) and the y-axis how often peaks cover that position (peak count frequency). ATAC-seq data show the highest peak right at the TSS (0 bp), meaning that promoters are open.
 
 ---
 
@@ -740,13 +785,35 @@ Rscript differential_accessibility.1.2.R \
 
 
 ### 주요 결과 이미지
-등록할 그림: `04_plots/PCA_plot.pdf`, `04_plots/MD_plot.pdf` (두 그림을 나란히)
+결과 그림 4개를 아래 순서대로 등록한다. 결과 1이 대표 그림이다.
 
-**레전드(국문)**
-**샘플 간 차이와 조건 간 접근성 변화.** (A) PCA. 변동이 큰 peak의 log CPM으로 샘플을 2차원에 놓은 그림으로, 점 하나가 샘플 하나이고 색은 조건이다. 같은 조건의 반복 샘플이 모이고 조건끼리 떨어져 있으면 조건 간 차이가 반복 간 차이보다 크다는 뜻이다. (B) MD plot. 점 하나가 peak 하나이며, 가로축은 평균 접근성(log CPM), 세로축은 조건 간 변화(log2 fold change)다. 유의하게 열린 peak와 닫힌 peak가 색으로 구분된다.
+**결과 1. PCA**
+- 등록할 그림: `04_plots/PCA_plot.pdf`
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/differential_accessibility_result_1.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/differential_accessibility_result_1.png`
+- 레전드(국문): **샘플 PCA.** 변동이 큰 peak(최대 5,000개)의 log2 CPM으로 샘플을 2차원에 놓은 그림이다. 점 하나가 샘플 하나이고 색은 조건이며, 축 이름에 각 주성분이 설명하는 변동(%)이 붙는다. 같은 조건의 반복 샘플이 모이고 조건끼리 떨어져 있으면 조건 간 차이가 반복 간 차이보다 크다는 뜻이다. 샘플이 3개 이상일 때 만든다.
+- 레전드(영문): **Sample PCA.** Samples placed in two dimensions by the log2 CPM of the most variable peaks (up to 5,000). Each point is a sample coloured by condition, and each axis label gives the variance explained (%). Replicates clustering together and conditions separating indicate that the condition effect exceeds replicate variation. Drawn with three or more samples.
 
-**Legend (English)**
-**Sample relationships and accessibility changes between conditions.** (A) PCA of samples based on log CPM of the most variable peaks; each point is a sample coloured by condition. Replicates clustering together and conditions separating indicate that the condition effect exceeds replicate variation. (B) MD plot; each point is a peak, with mean accessibility (log CPM) on the x-axis and the change between conditions (log2 fold change) on the y-axis. Significantly gained and lost peaks are highlighted in colour.
+**결과 2. 샘플 상관 heatmap**
+- 등록할 그림: `04_plots/sample_correlation_heatmap.pdf`
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/differential_accessibility_result_2.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/differential_accessibility_result_2.png`
+- 레전드(국문): **샘플 간 상관 heatmap.** 모든 샘플 쌍의 Pearson 상관계수(log2 CPM 기준)를 칸마다 숫자와 색(연한 파랑 낮음, 진한 남색 높음)으로 보여 준다. 비슷한 샘플끼리 가깝게 놓이도록 계층 군집 순서로 정렬했다. 같은 조건의 반복끼리 상관이 가장 높아야 하며, 한 샘플만 다른 샘플과 상관이 낮으면 이상 샘플을 의심한다.
+- 레전드(영문): **Sample correlation heatmap.** Pearson correlation (log2 CPM) for every pair of samples, shown as numbers and colour (light blue low, dark navy high), with samples ordered by hierarchical clustering so similar ones sit together. Replicates of the same condition should correlate most strongly; a single sample with low correlation to all others suggests an outlier.
+
+**결과 3. MD plot**
+- 등록할 그림: `04_plots/MD_plot.pdf`
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/differential_accessibility_result_3.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/differential_accessibility_result_3.png`
+- 레전드(국문): **조건 간 접근성 변화(MD plot).** 점 하나가 peak 하나다. 가로축은 평균 접근성(average log CPM), 세로축은 조건 간 변화(log2 fold change)이며 빨간 점선이 0이다. 유의하게 열린 peak(Up)와 닫힌 peak(Down)가 색으로 구분된다. 대부분의 peak가 0 근처에 모이고 유의한 peak가 위아래로 갈라지면 정규화가 잘 된 것이다. 반복 샘플이 없으면 유의성 없이 fold change만 그린다.
+- 레전드(영문): **Accessibility changes between conditions (MD plot).** Each point is a peak, with mean accessibility (average log CPM) on the x-axis and the change between conditions (log2 fold change) on the y-axis; the red dashed line marks 0. Significantly gained (Up) and lost (Down) peaks are coloured. Most peaks centred on 0 with significant peaks splitting above and below indicate good normalization. Without replicates only the fold change is drawn, without significance.
+
+**결과 4. GC 구간별 logFC**
+- 등록할 그림: `04_plots/logFC_by_GC_bin_TMM.pdf` (EDASeq·CQN을 실행했으면 `_EDASeq`, `_CQN` 그림과 비교)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/differential_accessibility_result_4.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/differential_accessibility_result_4.png`
+- 레전드(국문): **GC 함량 구간별 log2 fold change.** peak를 GC 함량에 따라 20개 구간으로 나누고(가로축), 구간마다 logFC 분포를 바이올린과 상자 그림으로 보여 준다. 점선은 logFC 0이다. 구간별 분포가 모두 0 근처에 있으면 GC 편향이 없는 것이고, GC가 높거나 낮은 쪽으로 갈수록 분포가 한쪽으로 기울면 GC 편향이 있다는 뜻이다. 이때 EDASeq이나 CQN으로 보정한 결과를 쓴다.
+- 레전드(영문): **log2 fold change by GC-content bin.** Peaks are split into 20 bins by GC content (x-axis), and the logFC distribution of each bin is shown as a violin and box plot; the dashed line is logFC 0. Bins all centred on 0 mean no GC bias, while distributions drifting with GC content indicate GC bias, in which case the EDASeq or CQN results should be used.
 
 ---
 
@@ -863,13 +930,35 @@ Rscript atac_motif.1.3.R \
 
 
 ### 주요 결과 이미지
-등록할 그림: `02_binned_enrichment/binned_motif_heatmap.pdf`
+결과 그림 4개를 아래 순서대로 등록한다. 결과 1이 대표 그림이다.
 
-**레전드(국문)**
-**접근성 변화 구간별 모티프 농축.** peak를 접근성 변화(log2 fold change) 크기에 따라 여러 구간(bin)으로 나누고, 구간마다 각 전사인자 모티프가 배경보다 얼마나 많은지를 색으로 보여 준다. 행은 유의하게 농축된 모티프이며, 서로 비슷한 모티프끼리 묶어 정렬했고 왼쪽에 서열 로고와 GC 비율을 붙였다. 첫 heatmap은 농축도(log2 enrichment; 빨강 농축, 파랑 결핍), 둘째는 보정 p-value(−log10; 진할수록 유의)다. 열린 쪽 구간에서만 진하게 나타나는 모티프는 조건 변화로 활성이 커진 전사인자의 후보다.
+**결과 1. 구간별 모티프 농축 heatmap**
+- 등록할 그림: `02_binned_enrichment/binned_motif_heatmap.pdf`
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/atac_motif_result_1.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/atac_motif_result_1.png`
+- 레전드(국문): **접근성 변화 구간별 모티프 농축.** peak를 접근성 변화(log2 fold change) 크기에 따라 여러 구간(bin)으로 나누고, 구간마다 각 전사인자 모티프가 배경보다 얼마나 많은지를 색으로 보여 준다. 행은 유의하게 농축된 모티프이며, 서로 비슷한 모티프끼리 묶어 정렬했고 왼쪽에 서열 로고와 GC 비율을 붙였다. 첫 heatmap은 농축도(log2 enrichment; 빨강 농축, 파랑 결핍), 둘째는 보정 p-value(−log10; 진할수록 유의)다. 열린 쪽 구간에서만 진하게 나타나는 모티프는 조건 변화로 활성이 커진 전사인자의 후보다.
+- 레전드(영문): **Motif enrichment across bins of accessibility change.** Peaks are grouped into bins by log2 fold change in accessibility, and the colour shows how strongly each transcription factor motif is enriched in each bin relative to background. Rows are significantly enriched motifs, clustered by motif similarity and shown with sequence logos and GC content. The first heatmap is log2 enrichment (red enriched, blue depleted) and the second the adjusted p-value (−log10; darker is more significant). Motifs enriched only in the gained-accessibility bins point to transcription factors that become more active.
 
-**Legend (English)**
-**Motif enrichment across bins of accessibility change.** Peaks are grouped into bins by log2 fold change in accessibility, and the colour shows how strongly each transcription factor motif is enriched in each bin relative to background. Rows are significantly enriched motifs, clustered by motif similarity and shown with sequence logos and GC content. The first heatmap is log2 enrichment (red enriched, blue depleted) and the second the adjusted p-value (−log10; darker is more significant). Motifs enriched only in the gained-accessibility bins point to transcription factors that become more active.
+**결과 2. logFC 구간 나누기**
+- 등록할 그림: `01_qc/bin_density.pdf`
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/atac_motif_result_2.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/atac_motif_result_2.png`
+- 레전드(국문): **logFC 분포와 구간(bin).** 모든 peak의 log2 fold change 분포(가로축 logFC, 세로축 밀도) 위에 구간 경계를 색으로 나누어 보여 준다. 구간마다 peak 수가 같도록 나누며, 변화가 작은 peak(|logFC| < min_abs_logfc)는 가운데 하나의 구간으로 묶는다. 결과 1의 heatmap 열이 이 구간이다.
+- 레전드(영문): **logFC distribution and bins.** The distribution of log2 fold change over all peaks (x-axis logFC, y-axis density), coloured by bin. Bins hold equal numbers of peaks, and peaks with small changes (|logFC| < min_abs_logfc) are pooled into one central bin. These bins are the columns of the heatmap in result 1.
+
+**결과 3. 모티프 선택 확률(회귀)**
+- 등록할 그림: `04_regression/selection_probability.pdf` (run_regression=TRUE일 때)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/atac_motif_result_3.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/atac_motif_result_3.png`
+- 레전드(국문): **안정성 선택 회귀로 고른 전사인자.** 모든 모티프를 함께 넣어 peak의 logFC를 설명하는 회귀(randomized lasso stability selection)에서, 각 모티프가 선택된 확률을 막대로 보여 준다. 막대 방향은 그 모티프가 접근성 증가(위)와 감소(아래) 중 어느 쪽과 관련되는지이며, 점선은 선택 기준(stabsel_cutoff, 기본 0.8)이다. 기준을 넘은 모티프는 비슷한 모티프끼리 겹치는 효과를 걸러낸 뒤에도 남은 핵심 전사인자 후보다.
+- 레전드(영문): **Transcription factors chosen by stability-selection regression.** In a regression that explains peak logFC with all motifs together (randomized lasso stability selection), the bars show how often each motif was selected. Bar direction shows whether the motif is linked to gained (up) or lost (down) accessibility, and the dashed line is the selection cutoff (stabsel_cutoff, default 0.8). Motifs above the cutoff are core candidates that remain after redundancy between similar motifs is removed.
+
+**결과 4. k-mer와 모티프 유사도**
+- 등록할 그림: `03_kmer/kmer_motif_similarity.pdf` (run_kmer=TRUE일 때)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/atac_motif_result_4.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/atac_motif_result_4.png`
+- 레전드(국문): **농축된 k-mer와 선택된 모티프의 유사도.** 모티프 데이터베이스와 상관없이 접근성 변화 구간에서 농축된 짧은 서열(k-mer, 기본 6 bp)을 찾고, 결과 1의 유의한 모티프와 얼마나 닮았는지를 색(연회색 0, 주황 0.5, 진한 빨강 1)으로 보여 준다. 행은 모티프(왼쪽에 서열 로고), 열은 k-mer다. 데이터베이스 모티프와 닮은 k-mer가 많으면 모티프 결과가 서열 자체에서도 지지된다는 뜻이고, 어느 모티프와도 닮지 않은 k-mer는 데이터베이스에 없는 새 서열 후보다.
+- 레전드(영문): **Similarity between enriched k-mers and selected motifs.** Short sequences (k-mers, 6 bp by default) enriched across bins of accessibility change are found independently of the motif database and compared with the significant motifs of result 1, with similarity in colour (light grey 0, orange 0.5, dark red 1). Rows are motifs (with sequence logos) and columns are k-mers. Many k-mers resembling database motifs support the motif result from the sequence itself, and k-mers resembling no motif are candidates for sequences missing from the database.
 
 ---
 
@@ -979,13 +1068,21 @@ bash tf_footprinting.1.3.sh \
 ```
 
 ### 주요 결과 이미지
-등록할 그림: `04_BINDetect/bindetect_figures.pdf`의 volcano plot 쪽
+결과 그림 2개를 아래 순서대로 등록한다. 결과 1이 대표 그림이다.
 
-**레전드(국문)**
-**조건 간 전사인자 결합 변화(BINDetect volcano plot).** 점 하나가 전사인자(모티프) 하나다. 가로축은 두 조건 사이의 결합 점수 차이(differential binding score)다. 조건 이름을 알파벳순으로 놓았을 때 양수(오른쪽, 빨강)는 첫 번째 조건에서, 음수(왼쪽, 파랑)는 두 번째 조건에서 결합이 더 강하다는 뜻이다. 세로축은 그 차이의 유의성(−log10 p-value)이며, 변화가 크거나 유의한 전사인자는 색과 이름으로 표시된다.
+**결과 1. BINDetect volcano plot**
+- 등록할 그림: `04_BINDetect/bindetect_figures.pdf`의 volcano plot 쪽
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/tf_footprinting_result_1.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/tf_footprinting_result_1.png`
+- 레전드(국문): **조건 간 전사인자 결합 변화(BINDetect volcano plot).** 점 하나가 전사인자(모티프) 하나다. 가로축은 두 조건 사이의 결합 점수 차이(differential binding score)다. 조건 이름을 알파벳순으로 놓았을 때 양수(오른쪽, 빨강)는 첫 번째 조건에서, 음수(왼쪽, 파랑)는 두 번째 조건에서 결합이 더 강하다는 뜻이다. 세로축은 그 차이의 유의성(−log10 p-value)이며, 변화가 크거나 유의한 전사인자는 색과 이름으로 표시된다.
+- 레전드(영문): **Differential transcription factor binding between conditions (BINDetect volcano plot).** Each point is one transcription factor motif. The x-axis is the differential binding score between the two conditions; with the condition names in alphabetical order, positive scores (right, red) mean stronger binding in the first condition and negative scores (left, blue) in the second. The y-axis is its significance (−log10 p-value), and factors with large or significant changes are coloured and labelled.
 
-**Legend (English)**
-**Differential transcription factor binding between conditions (BINDetect volcano plot).** Each point is one transcription factor motif. The x-axis is the differential binding score between the two conditions; with the condition names in alphabetical order, positive scores (right, red) mean stronger binding in the first condition and negative scores (left, blue) in the second. The y-axis is its significance (−log10 p-value), and factors with large or significant changes are coloured and labelled.
+**결과 2. 조건별 footprint 점수 분포**
+- 등록할 그림: `04_BINDetect/bindetect_figures.pdf`의 점수 분포 쪽(정규화 후, Normalized)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/tf_footprinting_result_2.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/tf_footprinting_result_2.png`
+- 레전드(국문): **조건별 footprint 점수 분포.** 모든 모티프 결합 후보 자리의 footprint 점수(가로축) 분포를 조건마다 다른 색의 선으로 겹쳐 보여 준다. 같은 PDF에 정규화 전(Raw)과 후(Normalized) 분포가 따로 있으며, BINDetect는 조건 간 점수 분포를 맞춘(정규화한) 뒤 결과 1의 차이를 계산한다. 정규화 뒤 두 조건의 분포가 거의 겹치면 결과 1의 차이가 전체 신호 세기 차이가 아니라 전사인자별 결합 변화를 반영한다는 뜻이다.
+- 레전드(영문): **Footprint score distribution per condition.** The distribution of footprint scores (x-axis) over all candidate motif sites, one coloured line per condition. The PDF holds the distributions before (raw) and after (normalized) normalization; BINDetect normalizes the score distributions between conditions before computing the differences in result 1. Nearly overlapping distributions after normalization mean that the differences in result 1 reflect factor-specific binding changes rather than overall signal strength.
 
 ---
 
@@ -1106,13 +1203,28 @@ Rscript functional_enrichment.1.1.R \
 ```
 
 ### 주요 결과 이미지
-등록할 그림: `03_plots/<list>.GO_BP.dotplot.pdf` (대표 목록 1개)
+결과 그림 3개를 아래 순서대로 등록한다. 결과 1이 대표 그림이다.
 
-**레전드(국문)**
-**유전자 목록의 GO 생물학적 과정 농축.** 행은 유의하게 농축된 GO term이다. 가로축은 목록 유전자 중 그 term에 속한 비율(GeneRatio), 점의 크기는 해당 유전자 수, 색은 보정된 p-value(p.adjust)다. peak 근처 유전자들이 어떤 생물학적 과정에 모여 있는지를 보여 준다.
+**결과 1. GO 농축 dot plot**
+- 등록할 그림: `03_plots/<list>.GO_BP.dotplot.pdf` (대표 목록 1개; DA 입력이면 `<da_norm>.up`)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/functional_enrichment_result_1.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/functional_enrichment_result_1.png`
+- 레전드(국문): **유전자 목록의 GO 생물학적 과정 농축(dot plot).** 행은 유의하게 농축된 GO term이다. 가로축은 목록 유전자 중 그 term에 속한 비율(GeneRatio), 점의 크기는 해당 유전자 수(Count), 색은 보정된 p-value(p.adjust; 빨강일수록 유의)다. peak 근처 유전자들이 어떤 생물학적 과정에 모여 있는지를 보여 준다.
+- 레전드(영문): **GO biological process enrichment of a gene list (dot plot).** Rows are significantly enriched GO terms. The x-axis is the fraction of list genes in each term (GeneRatio), point size is the gene count (Count), and colour is the adjusted p-value (p.adjust; redder is more significant). The plot shows which biological processes the genes near the peaks converge on.
 
-**Legend (English)**
-**GO biological process enrichment of a gene list.** Rows are significantly enriched GO terms. The x-axis is the fraction of list genes in each term (GeneRatio), point size is the gene count, and colour is the adjusted p-value (p.adjust). The plot shows which biological processes the genes near the peaks converge on.
+**결과 2. GO 농축 bar plot**
+- 등록할 그림: `03_plots/<list>.GO_BP.barplot.pdf` (결과 1과 같은 목록)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/functional_enrichment_result_2.{png,svg}`
+그림: `docs/ATAC-seq/modules/figures/module_results/functional_enrichment_result_2.png`
+- 레전드(국문): **유전자 목록의 GO 생물학적 과정 농축(bar plot).** 결과 1과 같은 GO term을 막대로 보여 준다. 막대 길이는 그 term에 속한 목록 유전자 수(Count), 색은 보정된 p-value(p.adjust)다. 유전자 수가 많은 term과 유의성이 높은 term을 한눈에 비교할 수 있다.
+- 레전드(영문): **GO biological process enrichment of a gene list (bar plot).** The same GO terms as result 1 shown as bars, with bar length the number of list genes in the term (Count) and colour the adjusted p-value (p.adjust). It compares terms with many genes and terms with strong significance at a glance.
+
+**결과 3. 목록별 농축 요약**
+- 등록할 그림: 표 캡처 `04_summary/enrichment_summary.tsv`
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/functional_enrichment_result_3.png`
+그림: `docs/ATAC-seq/modules/figures/module_results/functional_enrichment_result_3.png`
+- 레전드(국문): **유전자 목록별 농축 요약.** 목록마다 유전자 수(genes), 주석에서 찾은 유전자 수(genes_annotated), 검정한 GO term 수(terms_tested), 유의한 term 수(significant_terms), GO 영역(ont), 사용한 주석 파일(annotation)과 ID 형식(keytype), 처리 상태(status)를 보여 준다. genes_annotated가 genes보다 크게 적으면 유전자 ID 형식이 주석과 맞지 않는 것이다.
+- 레전드(영문): **Enrichment summary per gene list.** For each list the table gives the number of genes (genes), genes found in the annotation (genes_annotated), GO terms tested (terms_tested) and significant (significant_terms), the GO ontology (ont), the annotation file (annotation), the ID type (keytype) and the status. genes_annotated far below genes means that the gene ID format does not match the annotation.
 
 ---
 
@@ -1222,10 +1334,18 @@ bash replicate_consistency.1.1.sh \
 ```
 
 ### 주요 결과 이미지
-등록할 그림: `02_idr/<condition>/<repA>_vs_<repB>.idr.png` (대표 조건 1개)
+결과 그림 2개를 아래 순서대로 등록한다. 결과 1이 대표 그림이다.
 
-**레전드(국문)**
-**반복 샘플 간 peak 재현성(IDR).** 두 반복 샘플에서 찾은 peak를 짝지어 비교한 그림이다. 위쪽 패널은 두 반복의 peak 순위와 신호 세기를 서로 대응시킨 산점도로, 검은 점은 IDR 기준을 통과한 재현성 있는 peak, 빨간 점은 통과하지 못한 peak다. 아래쪽 패널은 peak 순위에 따른 IDR 값을 보여 준다. 강한 peak일수록 두 반복에서 함께 나타나고, 약한 peak로 갈수록 재현성이 떨어진다.
+**결과 1. IDR 그림**
+- 등록할 그림: `02_idr/<condition>/<repA>_vs_<repB>.idr.png` (대표 조건 1개)
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/replicate_consistency_result_1.png`
+그림: `docs/ATAC-seq/modules/figures/module_results/replicate_consistency_result_1.png`
+- 레전드(국문): **반복 샘플 간 peak 재현성(IDR).** 두 반복 샘플에서 찾은 peak를 짝지어 비교한 그림이다. 위쪽 패널은 두 반복의 peak 순위와 신호 세기를 서로 대응시킨 산점도로, 검은 점은 IDR 기준을 통과한 재현성 있는 peak, 빨간 점은 통과하지 못한 peak다. 아래쪽 패널은 peak 순위에 따른 IDR 값을 보여 준다. 강한 peak일수록 두 반복에서 함께 나타나고, 약한 peak로 갈수록 재현성이 떨어진다.
+- 레전드(영문): **Peak reproducibility between replicates (IDR).** Peaks from two replicates are matched and compared. The upper panels plot the ranks and signal strengths of matched peaks against each other; black points pass the IDR threshold (reproducible) and red points do not. The lower panels show IDR values along the peak ranks. Strong peaks tend to appear in both replicates, and reproducibility falls off for weaker peaks.
 
-**Legend (English)**
-**Peak reproducibility between replicates (IDR).** Peaks from two replicates are matched and compared. The upper panels plot the ranks and signal strengths of matched peaks against each other; black points pass the IDR threshold (reproducible) and red points do not. The lower panels show IDR values along the peak ranks. Strong peaks tend to appear in both replicates, and reproducibility falls off for weaker peaks.
+**결과 2. 조건별 IDR 요약**
+- 등록할 그림: 표 캡처 `04_summary/idr_summary.tsv`
+- 저장 파일: `docs/ATAC-seq/modules/figures/module_results/replicate_consistency_result_2.png`
+그림: `docs/ATAC-seq/modules/figures/module_results/replicate_consistency_result_2.png`
+- 레전드(국문): **조건별 IDR 요약.** 조건과 반복 쌍마다 각 반복의 peak 수(peaks_a, peaks_b), 두 반복을 합쳐 찾은 peak 수(pooled_peaks), IDR 기준을 통과한 peak 수(idr_passed), 처리 상태(status)를 보여 준다. 두 반복의 peak 수가 크게 다르거나, idr_passed가 각 반복의 peak 수보다 크게 적으면 반복 간 재현성이 낮은 것이다. 반복이 하나뿐인 조건은 `skipped_single_replicate`로 표시된다.
+- 레전드(영문): **IDR summary per condition.** For each condition and replicate pair the table gives the peaks in each replicate (peaks_a, peaks_b), the peaks called on the pooled replicates (pooled_peaks), the peaks passing the IDR threshold (idr_passed) and the status. Very different peak counts between the replicates, or idr_passed far below the peaks of each replicate, indicate poor reproducibility. A condition with a single replicate is marked `skipped_single_replicate`.
