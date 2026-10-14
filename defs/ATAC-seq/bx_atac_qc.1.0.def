@@ -160,6 +160,9 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   under the fakeroot command with read-only helpers under
 #   /.singularity.d/libs and the host devtmpfs /dev and /dev/shm. The mount
 #   allowlist now accepts those, and /dev/shm is covered with a private tmpfs.
+#   2026-10-14: a production build also bound the host getopt read-only at
+#   /.singularity.d/libs/getopt (the fakeroot wrapper script calls getopt);
+#   the allowlist accepts it like the other read-only fakeroot helpers.
 #   Local test builds with those blocks (2026-10-06/07, GitHub Codespace,
 #   x86_64, Apptainer 1.4.5 with the same apptainer.conf as production)
 #   succeeded as root and with --fakeroot, including %test, for all seven
@@ -245,7 +248,9 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     # (now covered above), private /etc/hosts and /etc/resolv.conf copies, and
     # kernel pseudo-filesystems under /dev, /proc, and /sys, plus, in builds
     # that run %post under the fakeroot command (no /etc/subuid entry), the
-    # read-only fakeroot helpers Apptainer places under /.singularity.d/libs.
+    # read-only fakeroot helpers Apptainer places under /.singularity.d/libs
+    # (fakeroot, faked, libfakeroot.so, and getopt, which the fakeroot wrapper
+    # script calls; getopt was seen in the 2026-10-14 production build log).
     # This rejects host paths added through APPTAINER_BINDPATH or
     # APPTAINER_MOUNT, which the build passes into %post from the caller's
     # environment.
@@ -259,7 +264,7 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
         (mp == "/sys" || mp ~ /^\/sys\//) &&
             fs ~ /^(sysfs|cgroup|cgroup2|securityfs|selinuxfs|debugfs|tracefs|bpf|fusectl|configfs|pstore|efivarfs)$/ { next }
         mp == "/.singularity.d/libs" && fs == "tmpfs" && opt ~ /^ro(,|$)/ { next }
-        mp ~ /^\/\.singularity\.d\/libs\/(fakeroot|faked|libfakeroot\.so)$/ && opt ~ /^ro(,|$)/ { next }
+        mp ~ /^\/\.singularity\.d\/libs\/(fakeroot|faked|libfakeroot\.so|getopt)$/ && opt ~ /^ro(,|$)/ { next }
         { print "Unexpected mount in build container: " mp " (" fs ")" > "/dev/stderr"; bad = 1 }
         END { exit bad }
     ' /proc/self/mountinfo || { echo "Build stopped: remove extra bind settings and rebuild" >&2; exit 1; }
