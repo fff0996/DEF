@@ -277,7 +277,7 @@ trt_2,treated,2
 | Paired-end BAM만 지원합니다. | Only paired-end BAM files are supported. |
 | BAM, txs_bed, genome_fasta의 염색체 이름 표기가 같아야 합니다(chr1과 1은 서로 다름). | Chromosome names must match between the BAM, txs_bed, and genome_fasta (chr1 and 1 differ). |
 | TSS enrichment는 ENCODE 사람(hg38) 기준 7 초과 양호, 5 미만 주의입니다. 다른 종은 주석 품질에 따라 범위가 다릅니다. | TSS enrichment above 7 is good and below 5 is concerning for human (hg38, ENCODE); the range for other species depends on the annotation. |
-| clean BAM은 proper pair만 남기므로 긴 fragment가 적은 데이터에서는 trinucleosome 분할이 비어 있을 수 있습니다. ATAC_QC_plot은 빈 분할을 빼고 그립니다. | The clean BAM keeps proper pairs only, so the trinucleosome split can be empty when long fragments are rare; ATAC_QC_plot skips empty classes. |
+| clean BAM은 proper pair만 남기므로 긴 fragment가 적은 데이터에서는 trinucleosome 분할이 비어 있을 수 있습니다. 빈 분할은 read가 없는 것으로 기록됩니다. | The clean BAM keeps proper pairs only, so the trinucleosome split can be empty when long fragments are rare; an empty split is recorded as having no reads. |
 
 
 ### 분석 개념 이미지
@@ -318,14 +318,14 @@ Rscript ATAC_QC.1.2.R \
 |---|---|---|
 | 모듈명 | ATAC_QC_plot | ATAC_QC_plot |
 | 서브 타이틀 | TSS 주변 신호 시각화 | TSS signal visualization |
-| 버전 | 1.1 | |
+| 버전 | 1.2 | |
 | 카테고리 대분류 | 품질 관리 | Quality Control |
 | 카테고리 아이콘 | 선택 예정(Quality Control 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 정렬 품질 평가 | Alignment QC |
 | 태그 | ATAC-seq, ATACseqQC, TSS, heatmap, nucleosome | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ATACseqQC/ | |
 | 컨테이너 이미지 | bx_atac_qc.1.0 | |
-| 실행 스크립트 파일 | ATAC_QC_plot.1.1.R | |
+| 실행 스크립트 파일 | ATAC_QC_plot.1.2.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 실행 이미지
@@ -354,13 +354,13 @@ Rscript ATAC_QC.1.2.R \
 
 ### 내용(국문)
 ATAC_QC가 만든 fragment 종류별 BAM으로 TSS 주변 신호의 heatmap과 평균 profile을 그립니다. 좋은 ATAC-seq 데이터에서는 NFR 신호가 TSS 바로 위에 모이고, mononucleosome 신호는 TSS 양옆에 나타납니다.
-- 종류별(NFR, mononucleosome 등) TSS 주변 신호 heatmap과 profile을 PDF와 TSV로 저장합니다.
-- 비어 있는 종류는 빼고 그리며, 샘플별로 사용한 종류와 제외한 종류를 요약합니다.
+- nucleosome-free 신호와 nucleosome 신호(mono, di, trinucleosome을 합친 것) 두 가지의 TSS 주변 heatmap과 profile을 PDF와 TSV로 저장합니다.
+- 비어 있는 종류(예: trinucleosome)는 read가 없는 것으로 계산하며, 샘플별로 read가 있던 종류와 비어 있던 종류를 요약합니다.
 
 ### 내용(영문)
 Plots heatmaps and average profiles of the signal around TSSs from the fragment-class BAM files made by ATAC_QC. In good ATAC-seq data, the NFR signal concentrates on the TSS and the mononucleosome signal flanks it.
-- TSS heatmaps and profiles per class (NFR, mononucleosome, and so on) are saved as PDF and TSV.
-- Empty classes are skipped, and the used and skipped classes are summarized per sample.
+- TSS heatmaps and profiles of two signals, nucleosome-free and nucleosome (mono-, di-, and trinucleosome combined), are saved as PDF and TSV.
+- An empty class (for example trinucleosome) counts as having no reads, and the classes with and without reads are summarized per sample.
 
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
@@ -383,13 +383,13 @@ Plots heatmaps and average profiles of the signal around TSSs from the fragment-
 ### 분석 개념 이미지
 그림: `docs/ATAC-seq/modules/figures/module_concepts/ATAC_QC_plot_concept.png`
 
-- 레전드(국문): **그림. TSS 주변 신호.** (A) 모든 TSS를 기준으로 정렬한 NucleosomeFree(왼쪽)와 mononucleosome(오른쪽) 신호 heatmap. 각 행은 하나의 TSS이며, dinucleosome·trinucleosome에 read가 있으면 그 패널도 함께 그려진다. (B) 평균 신호. 좋은 데이터에서는 NFR 신호가 TSS에 모이고, 뉴클레오솜 신호는 그 양옆(−1, +1 뉴클레오솜)에 나타난다. Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1을 수정(CC BY 4.0).
-- 레전드(영문): **Figure. Signal around TSSs.** (A) Heatmaps of NucleosomeFree (left) and mononucleosome (right) signal aligned at all TSSs; each row is one TSS, and dinucleosome and trinucleosome panels are added when they have reads. (B) Averaged coverage. In good data the NFR signal concentrates at the TSS and the nucleosome signal flanks it (−1 and +1 nucleosomes). Adapted from Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1 (CC BY 4.0).
+- 레전드(국문): **그림. TSS 주변 신호.** (A) 모든 TSS를 기준으로 정렬한 NucleosomeFree(왼쪽)와 nucleosome(오른쪽) 신호 heatmap. 오른쪽은 결과 그림에 mononucleosome으로 표시되지만 mono, di, trinucleosome fragment를 합친 신호다. 각 행은 하나의 TSS다. (B) 평균 신호. 좋은 데이터에서는 NFR 신호가 TSS에 모이고, 뉴클레오솜 신호는 그 양옆(−1, +1 뉴클레오솜)에 나타난다. Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1을 수정(CC BY 4.0).
+- 레전드(영문): **Figure. Signal around TSSs.** (A) Heatmaps of NucleosomeFree (left) and nucleosome (right) signal aligned at all TSSs; the right panel is labelled mononucleosome in the output but combines mono-, di-, and trinucleosome fragments. Each row is one TSS. (B) Averaged coverage. In good data the NFR signal concentrates at the TSS and the nucleosome signal flanks it (−1 and +1 nucleosomes). Adapted from Ou J. et al., BMC Genomics 19, 169 (2018), Fig. 1 (CC BY 4.0).
 - 출처: Ou J, Liu H, Yu J, Kelliher MA, Castilla LH, Lawson ND, Zhu LJ. ATACseqQC: a Bioconductor package for post-alignment quality assessment of ATAC-seq data. *BMC Genomics* 19, 169 (2018). https://doi.org/10.1186/s12864-018-4559-3, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ### 스크립트 사용 예제
 ```
-Rscript ATAC_QC_plot.1.1.R \
+Rscript ATAC_QC_plot.1.2.R \
   input_dir=/data/atac_qc \
   tss_bed=/ref/tss.bed \
   output_dir=/data/atac_qc_plot \
@@ -404,10 +404,10 @@ Rscript ATAC_QC_plot.1.1.R \
 등록할 그림: `01_tss_signal/<sample>.Heatmap_splitbam.pdf` (대표 샘플 1개)
 
 **레전드(국문)**
-**TSS 주변의 nucleosome-free 신호와 mononucleosome 신호.** 각 행은 TSS 하나이고, 가로축은 TSS 중심 ±1,010 bp 구간이다. 패널은 fragment 종류별(NucleosomeFree, mononucleosome, 그리고 read가 있으면 dinucleosome, trinucleosome)이며, 신호(log2)를 색으로 나타낸다. 정상적인 ATAC-seq에서는 nucleosome-free 신호가 TSS 바로 위에 모이고, mononucleosome 신호는 TSS 양옆(nucleosome 자리)에 나타난다.
+**TSS 주변의 nucleosome-free 신호와 nucleosome 신호.** 각 행은 TSS 하나이고, 가로축은 TSS 중심 ±1,010 bp 구간이다. 왼쪽 패널(NucleosomeFree)은 nucleosome-free fragment, 오른쪽 패널(그림에는 mononucleosome으로 표시)은 mono, di, trinucleosome fragment를 합친 nucleosome 신호이며, 신호(log2)를 노랑(낮음)에서 빨강(높음)으로 나타낸다. 정상적인 ATAC-seq에서는 nucleosome-free 신호가 TSS 바로 위에 모이고, nucleosome 신호는 TSS 양옆(nucleosome 자리)에 나타난다.
 
 **Legend (English)**
-**Nucleosome-free and mononucleosome signal around TSSs.** Each row is one TSS and the x-axis spans ±1,010 bp around its centre. Panels are per fragment class (NucleosomeFree, mononucleosome, and dinucleosome and trinucleosome when they have reads), with signal (log2) as a colour scale. In good ATAC-seq data the nucleosome-free signal concentrates at the TSS, while the mononucleosome signal flanks it where nucleosomes sit.
+**Nucleosome-free and nucleosome signal around TSSs.** Each row is one TSS and the x-axis spans ±1,010 bp around its centre. The left panel (NucleosomeFree) shows nucleosome-free fragments and the right panel (labelled mononucleosome in the plot) the nucleosome signal of mono-, di-, and trinucleosome fragments combined, with signal (log2) from yellow (low) to red (high). In good ATAC-seq data the nucleosome-free signal concentrates at the TSS, while the nucleosome signal flanks it where nucleosomes sit.
 
 ---
 

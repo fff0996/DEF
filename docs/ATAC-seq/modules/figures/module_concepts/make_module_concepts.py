@@ -282,7 +282,7 @@ def atac_qc_plot():
     """Redrawn after ATACseqQC (Ou et al., BMC Genomics 2018) Fig. 1b, c."""
     g = [panel(40, "A", "Signal heatmaps around TSSs")]
     random.seed(21)
-    for k, (title, kind) in enumerate([("NucleosomeFree", "nfr"), ("mononucleosome", "nuc")]):
+    for k, (title, kind) in enumerate([("NucleosomeFree", "nfr"), ("mononucleosome*", "nuc")]):
         x0, y0, cw, rh = 70 + k * 360, 110, 13, 14
         g.append(t(x0 + 150, 88, title, 16, 700, POINT if kind == "nfr" else SUB))
         for r in range(26):
@@ -299,7 +299,7 @@ def atac_qc_plot():
         g.append(t(x0, y0 + 26 * rh + 22, "−1 kb", 14, 600, SUB) + t(x0 + 11.5 * cw, y0 + 26 * rh + 22, "TSS", 14, 700, ORANGE)
                  + t(x0 + 23 * cw, y0 + 26 * rh + 22, "+1 kb", 14, 600, SUB))
     g.append(t(370, 560, "Each row is one TSS (genes sorted by signal)", 15, 500, SUB))
-    g.append(t(370, 586, "dinucleosome and trinucleosome panels follow when they have reads", 14, 500, SUB))
+    g.append(t(370, 586, "* labelled mononucleosome in the output: mono-, di- and trinucleosome combined", 14, 500, SUB))
 
     g.append(panel(780, "B", "Averaged coverage around TSSs"))
     x0, y0, w, h = 860, 120, 600, 340
@@ -315,7 +315,7 @@ def atac_qc_plot():
         x = x0 + w / 2 + sgn * 0.31 * w / 2
         g.append(nucleosome(x, 95, 14) + t(x + 28 * sgn, 95, lab, 14, 700, SUB))
     g.append(t(x0, y0 + h + 24, "−1000", 13, 600, SUB) + t(x0 + w, y0 + h + 24, "1000", 13, 600, SUB))
-    g.append(legend(1290, 140, [("line", POINT, "NucleosomeFree"), ("dash", SUB, "mononucleosome")]))
+    g.append(legend(1290, 140, [("line", POINT, "NucleosomeFree"), ("dash", SUB, "mononucleosome*")]))
     g.append(t(1160, 560, "Good library: NFR peak at the TSS, nucleosomes positioned on both sides", 15, 600, POINT))
     return svg("".join(g))
 
