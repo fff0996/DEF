@@ -10,7 +10,7 @@ KOBIC 포탈 매뉴얼 웹페이지에 올릴 ATAC-seq 실행 이미지 설명�
 
 ### 국문
 ATAC-seq 파이프라인의 각 모듈은 분석 도구를 미리 설치한 Apptainer 이미지(SIF) 안에서 실행됩니다. 이미지는 모듈 또는 같은 도구를 쓰는 모듈 묶음마다 하나씩 있습니다.
-- **기반 운영체제:** Rocky Linux 9.8 공식 이미지(`rockylinux/rockylinux:9.8.20260525.0`)를 고유 식별값(digest)으로 고정하여, 언제 만들어도 같은 기반을 씁니다.
+- **기반 운영체제:** Rocky Linux 9.8 공식 이미지(`rockylinux/rockylinux:9.8.20260525.0`)를 고유 식별값(digest)으로 고정하여, 언제 만들어도 같은 기반을 씁니다. 단, WGS 파이프라인과 같이 쓰는 bowtie2, gatk 이미지는 `rockylinux/rockylinux:9`(Rocky Linux 9 최신)를 씁니다.
   - Bootstrap: `docker`
   - From: `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f`
 - **도구 설치:** Miniforge로 conda-forge와 bioconda 채널에서만 설치합니다. Anaconda 저장소(defaults 채널, repo.anaconda.com)는 사용하지 않습니다.
@@ -21,7 +21,7 @@ ATAC-seq 파이프라인의 각 모듈은 분석 도구를 미리 설치한 Appt
 
 ### English
 Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with its analysis tools preinstalled. There is one image per module, or per group of modules that use the same tools.
-- **Base OS:** the official Rocky Linux 9.8 image (`rockylinux/rockylinux:9.8.20260525.0`), pinned by its digest so every build starts from the same base.
+- **Base OS:** the official Rocky Linux 9.8 image (`rockylinux/rockylinux:9.8.20260525.0`), pinned by its digest so every build starts from the same base. The bowtie2 and gatk images, shared with the WGS pipeline, use `rockylinux/rockylinux:9` (latest Rocky Linux 9) instead.
   - Bootstrap: `docker`
   - From: `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f`
 - **Tool installation:** Miniforge, from the conda-forge and bioconda channels only. Anaconda repositories (the defaults channel, repo.anaconda.com) are not used.
@@ -36,6 +36,8 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 
 | 이미지 | 버전 | 사용하는 모듈 (스크립트) | 주요 도구 |
 |---|---|---|---|
+| bowtie2 (`bx_bowtie2_1.0.def`) | 1.0 | bowtie2 (bowtie2.1.3.sh) | bowtie2 2.5.4, SAMtools 1.24 |
+| gatk (`bx_gatk_1.0.def`) | 1.0 | GATK_MarkDuplicates (GATK_MarkDuplicates_1.0.sh) | GATK 4.6.2.0, SAMtools 1.24, OpenJDK 17 |
 | bx_organellar_filter | 1.0 | organellar_filter (organellar_filter.1.2.sh) | SAMtools 1.23.1 |
 | bx_atac_qc | 1.0 | ATAC_QC (ATAC_QC.1.2.R), ATAC_QC_plot (ATAC_QC_plot.1.2.R) | R 4.5.3, ATACseqQC 1.34.0, ChIPpeakAnno 3.44.0 |
 | bx_macs3_callpeak_atac | 1.0 | MACS3_callpeak_ATAC (MACS3_callpeak_ATAC.1.3.sh) | MACS3 3.0.4, SAMtools 1.23.1 |
@@ -46,13 +48,51 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 | bx_functional_enrichment | 1.0 | functional_enrichment (functional_enrichment.1.1.R) | R 4.5.3, clusterProfiler 4.18.4 |
 | bx_replicate_consistency | 1.0 | replicate_consistency (replicate_consistency.1.1.sh) | IDR 2.0.4.2, MACS3 3.0.4, SAMtools 1.23.1 |
 
-공통: Bootstrap `docker`, From `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8), Miniforge3 26.7.2-0 (conda-forge, bioconda)
+bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정 없음), Miniforge3 26.5.3-0 (conda-forge, bioconda). WGS 파이프라인과 같이 쓰는 이미지다.
+
+나머지(bx_): Bootstrap `docker`, From `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8), Miniforge3 26.7.2-0 (conda-forge, bioconda)
 
 ---
 
 ## 3. 이미지별 상세 / Image details
 
-### 3.1 bx_organellar_filter 1.0
+### 3.1 bowtie2 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_bowtie2_1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux:9` (Rocky Linux 9, digest 고정 없음) |
+| conda 설치 도구 / installer | Miniforge3 26.5.3-0 (conda-forge, bioconda) |
+
+- **설명(국문):** bowtie2로 read를 참조 유전체에 정렬하고 SAMtools로 BAM 변환·정렬·인덱스를 만드는 환경입니다. WGS 파이프라인과 같이 쓰는 이미지입니다.
+- **Description (English):** Environment for aligning reads to the reference genome with bowtie2 and converting, sorting, and indexing BAM files with SAMtools. The image is shared with the WGS pipeline.
+
+| 도구 | 버전 |
+|---|---|
+| bowtie2 | 2.5.4 |
+| SAMtools | 1.24 |
+
+### 3.2 gatk 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_gatk_1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux:9` (Rocky Linux 9, digest 고정 없음) |
+| conda 설치 도구 / installer | Miniforge3 26.5.3-0 (conda-forge, bioconda) |
+
+- **설명(국문):** GATK(Picard)로 BAM의 중복 read를 표시하는 환경입니다. WGS 파이프라인의 다른 GATK 모듈(BaseRecalibrator, ApplyBQSR, Mutect2 등)과 같이 쓰는 이미지입니다.
+- **Description (English):** GATK (Picard) environment for marking duplicate reads in BAM files. The image is shared with the other GATK modules of the WGS pipeline (BaseRecalibrator, ApplyBQSR, Mutect2 and others).
+
+| 도구 | 버전 |
+|---|---|
+| GATK | 4.6.2.0 |
+| SAMtools | 1.24 |
+| HTSlib | 1.24 |
+| OpenJDK | 17 |
+
+### 3.3 bx_organellar_filter 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|
@@ -69,7 +109,7 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 | SAMtools | 1.23.1 |
 | HTSlib | 1.23.1 |
 
-### 3.2 bx_atac_qc 1.0
+### 3.4 bx_atac_qc 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|
@@ -92,7 +132,7 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 | GenomeInfoDb | 1.46.2 |
 | IRanges | 2.44.0 |
 
-### 3.3 bx_macs3_callpeak_atac 1.0
+### 3.5 bx_macs3_callpeak_atac 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|
@@ -111,7 +151,7 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 | SAMtools | 1.23.1 |
 | HTSlib | 1.23.1 |
 
-### 3.4 bx_peak_annotation 1.0
+### 3.6 bx_peak_annotation 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|
@@ -136,7 +176,7 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 | dplyr | 1.2.1 |
 | ggupset | 0.4.1 |
 
-### 3.5 bx_differential_accessibility 1.0
+### 3.7 bx_differential_accessibility 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|
@@ -161,7 +201,7 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 | hexbin | 1.28.6 |
 | wesanderson | 0.3.7 |
 
-### 3.6 bx_atac_motif 1.0
+### 3.8 bx_atac_motif 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|
@@ -186,7 +226,7 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 | KernSmooth | 2.23-27 |
 | ggplot2 | 4.0.3 |
 
-### 3.7 bx_tf_footprinting 1.0
+### 3.9 bx_tf_footprinting 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|
@@ -207,7 +247,7 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 | HTSlib | 1.24 |
 | bedtools | 2.31.1 |
 
-### 3.8 bx_functional_enrichment 1.0
+### 3.10 bx_functional_enrichment 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|
@@ -228,7 +268,7 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 | GO.db | 3.22.0 |
 | ggplot2 | 4.0.3 |
 
-### 3.9 bx_replicate_consistency 1.0
+### 3.11 bx_replicate_consistency 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|

@@ -9,7 +9,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 선택(Optional) 입력은 빈 값이 "사용 안 함"이다. 경로를 넣어 두면 그 경로를 실제로 찾으므로 Value를 비워 둔다.
 - 스크립트 사용 예제는 모든 옵션을 기본값으로 적었다(기본값이 없는 옵션은 제외). 예시 값은 애기장대(TAIR10, 유전체 약 1.2e8 bp) 기준이다.
 - 형식(Type)은 포탈 목록에 맞춰 고른다. 원고에는 Directory, File, String, Integer, Float, List로 적었다.
-- 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다르다. 기반 이미지(From)는 DEF의 `rockylinux/rockylinux:9.8` (digest `sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f`)이며 모든 모듈이 같다.
+- 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다르다. 기반 이미지(From)는 DEF의 `rockylinux/rockylinux:9.8` (digest `sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f`)이며 bowtie2와 GATK_MarkDuplicates를 뺀 모든 모듈이 같다. 이 두 모듈은 WGS 파이프라인과 같이 쓰는 이미지라 `rockylinux/rockylinux:9`(digest 고정 없음)와 Miniforge3 26.5.3-0을 쓴다.
 - 버전은 각 실행 스크립트 파일 이름에 적힌 버전을 쓴다(예: organellar_filter.1.1.sh → 1.1).
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지운다.
 - 카테고리는 기능(분석 단계) 기준의 대분류·중분류로 정했다(`docs/CLOSHA_Portal_Guide_v1.md` 5.2). 아이콘은 대분류마다 하나다.
@@ -35,7 +35,22 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 | Processor Core (제안) | 최대 4코어 (bowtie2, samtools sort가 여러 코어 사용) | Up to 4 cores (bowtie2 and samtools sort are multi-threaded) |
 
 ### 실행 이미지
-등록 메모: bowtie2 DEF는 아직 저장소에 없어 보류한다(bowtie2 2.5.4, SAMtools 1.24 구성 예정).
+이미지: bowtie2 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_bowtie2_1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux:9` (Rocky Linux 9, digest 고정 없음) |
+| conda 설치 도구 / installer | Miniforge3 26.5.3-0 (conda-forge, bioconda) |
+
+- **설명(국문):** bowtie2로 read를 참조 유전체에 정렬하고 SAMtools로 BAM 변환·정렬·인덱스를 만드는 환경입니다.
+- **Description (English):** Environment for aligning reads to the reference genome with bowtie2 and converting, sorting, and indexing BAM files with SAMtools.
+
+| 도구 | 버전 |
+|---|---|
+| bowtie2 | 2.5.4 |
+| SAMtools | 1.24 |
 
 ### 내용(국문)
 FASTQ read를 bowtie2로 참조 유전체에 정렬합니다. 폴더 안의 FASTQ 파일 이름에서 R1/R2 짝을 찾아 paired-end로 정렬하고, 짝이 없는 파일은 single-end로 정렬합니다.
