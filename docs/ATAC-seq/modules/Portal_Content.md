@@ -208,8 +208,8 @@ Assesses ATAC-seq data quality with ATACseqQC and prepares Tn5-corrected BAM fil
 ### 샘플시트
 - 제목(국문): 샘플 정보 파일(sample_data)
 - 제목(영문): Sample sheet (sample_data)
-- 본문(국문): 쉼표로 구분한 CSV 파일이며 SampleID, Condition, Replicate 컬럼이 필요합니다. BAM 파일 이름에 SampleID가 포함되어 있어야 자동으로 연결됩니다. replicate_consistency 모듈에도 같은 파일을 사용합니다.
-- 본문(영문): A comma-separated CSV with the SampleID, Condition, and Replicate columns. Each BAM file name must contain its SampleID for automatic matching. The same file is used by replicate_consistency.
+- 본문(국문): 쉼표로 구분한 CSV 파일이며 SampleID, Condition, Replicate 컬럼이 필요합니다. BAM 파일 이름에 SampleID가 포함되어 있어야 자동으로 연결됩니다.
+- 본문(영문): A comma-separated CSV with the SampleID, Condition, and Replicate columns. Each BAM file name must contain its SampleID for automatic matching.
 - 예시 제목: sample_data.csv
 - 예시 본문:
 ```
@@ -368,7 +368,7 @@ Calls open-chromatin peaks from Tn5-corrected BAM files with MACS3 callpeak in p
 |---|---|---|---|---|---|---|
 | Input | Required | Directory | input_dir | /data/atac_qc | Tn5 보정 BAM 폴더. ATAC_QC의 output_dir이면 03_shifted_bam만 검색. BAM 인덱스(.bai)가 없으면 BAM 옆에 만들므로 그 폴더에 쓰기 권한이 필요(앞 모듈 결과에는 인덱스가 있음) | Folder of Tn5-shifted BAM files; for an ATAC_QC output_dir only 03_shifted_bam is searched. A missing BAM index (.bai) is created beside the BAM, so the folder must be writable (outputs of the previous module already have one) |
 | Output | Required | Directory | output_dir | /data/macs3 | 결과 폴더 | Output folder |
-| Option | Required | String | genome_size | | 유효 유전체 크기. hs, mm, ce, dm 또는 숫자 | Effective genome size: hs, mm, ce, dm, or a number |
+| Option | Required | String | genome_size | | MACS3에 넘기는 유효 유전체 크기(-g). hs(사람), mm(쥐), ce(예쁜꼬마선충), dm(초파리) 또는 숫자(예: 애기장대 1.2e8) | Effective genome size passed to MACS3 (-g): hs (human), mm (mouse), ce (C. elegans), dm (fruit fly), or a number (for example 1.2e8 for Arabidopsis) |
 | Option | Optional | List | peak_type | narrow | MACS3 peak 모드. narrow(기본): 좁은 peak(.narrowPeak), ATAC-seq은 narrow 사용. broad: 넓은 peak(.broadPeak), broad_cutoff를 함께 사용하며 peak_annotation의 peak_suffix를 .broadPeak로 바꿔야 함 | MACS3 peak mode. narrow (default): narrow peaks (.narrowPeak), used for ATAC-seq. broad: broad peaks (.broadPeak); uses broad_cutoff, and peak_annotation needs peak_suffix=.broadPeak |
 | Option | Optional | String | alignment_suffix | .shifted.bam | 검색할 BAM 파일 이름 끝부분 | BAM file name suffix to search |
 | Option | Optional | Float | qvalue | 0.05 | peak로 인정하는 q-value 상한(MACS3 -q). 이보다 작은 구간만 peak. 작을수록 엄격 | Upper q-value for a peak (MACS3 -q); only regions below it are peaks. Smaller is stricter |
@@ -720,7 +720,7 @@ Corrects Tn5 cleavage signals per condition with TOBIAS, computes footprint scor
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
 | Input | Required | Directory | input_dir | /data/atac_qc | BAM 폴더. ATAC_QC의 output_dir이면 03_shifted_bam 사용 | BAM folder; 03_shifted_bam of an ATAC_QC output_dir |
-| Input | Required | File | sample_data | /data/sample_data.csv | 샘플 정보 CSV/TSV(SampleID, Condition), 조건 2개 이상. ATAC_QC의 sample_data를 그대로 써도 됨 | Sample sheet CSV/TSV (SampleID, Condition) with two or more conditions; the ATAC_QC sample_data can be used as is |
+| Input | Required | File | sample_data | /data/sample_data.csv | 샘플 정보 CSV/TSV. SampleID(BAM 파일 이름에 들어 있는 샘플 이름), Condition(조건 이름) 열이 필요하고 조건은 2개 이상. 다른 열(Replicate 등)은 있어도 됨 | Sample sheet CSV/TSV with SampleID (the sample name contained in each BAM file name) and Condition (condition name) columns, two or more conditions; other columns such as Replicate may be present |
 | Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA. .fai가 없으면 FASTA 옆에 만들므로 그 폴더에 쓰기 권한이 필요. 공유 참조는 .fai를 미리 만들어 둘 것(samtools faidx) | Reference genome FASTA. A missing .fai is created beside the FASTA, so the folder must be writable; prepare the .fai in advance for shared references (samtools faidx) |
 | Input | Required | File | motif_db | /ref/motifs.meme | 모티프 데이터베이스(MEME/JASPAR 형식) | Motif database (MEME/JASPAR format) |
 | Input | Required | Directory | macs_dir | /data/macs3 | MACS3_callpeak_ATAC의 output_dir. 그 안의 샘플별 peak를 합쳐 공통 peak를 만듦 | MACS3_callpeak_ATAC output_dir; the sample peaks in it are merged into common peaks |
@@ -731,8 +731,8 @@ Corrects Tn5 cleavage signals per condition with TOBIAS, computes footprint scor
 ### 샘플시트
 - 제목(국문): 샘플 정보 파일(sample_data)
 - 제목(영문): Sample sheet (sample_data)
-- 본문(국문): 쉼표 또는 탭으로 구분한 파일이며 SampleID와 Condition 컬럼이 필요합니다. ATAC_QC에 쓴 sample_data(Replicate 열 포함)를 그대로 써도 됩니다. BAM 파일 이름에 SampleID가 포함되어 있어야 합니다.
-- 본문(영문): A comma- or tab-separated file with the SampleID and Condition columns; the ATAC_QC sample_data (with its Replicate column) can be used as is. Each BAM file name must contain its SampleID.
+- 본문(국문): 쉼표 또는 탭으로 구분한 파일이며 SampleID와 Condition 컬럼이 필요합니다. Replicate 같은 다른 열은 있어도 됩니다. BAM 파일 이름에 SampleID가 포함되어 있어야 합니다.
+- 본문(영문): A comma- or tab-separated file with the SampleID and Condition columns; other columns such as Replicate may be present. Each BAM file name must contain its SampleID.
 - 예시 제목: sample_data.csv
 - 예시 본문:
 ```
@@ -913,16 +913,28 @@ Evaluates peak reproducibility between replicates with the ENCODE-style IDR (Irr
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
 | Input | Required | Directory | input_dir | /data/atac_qc | Tn5 보정 BAM 폴더. ATAC_QC의 output_dir이면 03_shifted_bam에서 찾음. BAM 인덱스(.bai)가 없으면 BAM 옆에 만들므로 그 폴더에 쓰기 권한이 필요(앞 모듈 결과에는 인덱스가 있음) | Folder of Tn5-shifted BAM files; 03_shifted_bam of an ATAC_QC output_dir. A missing BAM index (.bai) is created beside the BAM, so the folder must be writable (outputs of the previous module already have one) |
-| Input | Required | File | sample_data | /data/sample_data.csv | ATAC_QC와 같은 샘플 정보 CSV(SampleID, Condition, Replicate) | Same sample sheet CSV as ATAC_QC (SampleID, Condition, Replicate) |
+| Input | Required | File | sample_data | /data/sample_data.csv | 샘플 정보 CSV. SampleID(BAM 파일 이름에 들어 있는 샘플 이름), Condition(조건 이름), Replicate(반복 번호) 열이 필요. 조건마다 반복 2개 이상 | Sample sheet CSV with SampleID (the sample name contained in each BAM file name), Condition (condition name), and Replicate (replicate number) columns; two or more replicates per condition |
 | Output | Required | Directory | output_dir | /data/replicate_consistency | 결과 폴더 | Output folder |
-| Option | Required | String | genome_size | | 유효 유전체 크기(MACS3와 같음). hs, mm, ce, dm 또는 숫자 | Effective genome size (as for MACS3): hs, mm, ce, dm, or a number |
+| Option | Required | String | genome_size | | MACS3에 넘기는 유효 유전체 크기(-g). hs(사람), mm(쥐), ce(예쁜꼬마선충), dm(초파리) 또는 숫자(예: 애기장대 1.2e8) | Effective genome size passed to MACS3 (-g): hs (human), mm (mouse), ce (C. elegans), dm (fruit fly), or a number (for example 1.2e8 for Arabidopsis) |
 | Option | Optional | String | alignment_suffix | .shifted.bam | BAM 파일 이름 끝부분 | BAM file name suffix |
 | Option | Optional | Float | pvalue | 0.01 | 느슨한 peak 기준(p-value) | Relaxed peak threshold (p-value) |
 | Option | Optional | Float | idr_threshold | 0.05 | 재현 peak 기준(global IDR) | Reproducible peak threshold (global IDR) |
 | Option | Optional | Integer | max_peaks | 300000 | 반복 실험마다 p-value 순으로 남길 최대 peak 수 | Maximum relaxed peaks kept per replicate, by p-value |
 
 ### 샘플시트
-ATAC_QC와 같은 sample_data.csv를 사용한다(2번 모듈의 샘플시트 내용을 그대로 등록).
+- 제목(국문): 샘플 정보 파일(sample_data)
+- 제목(영문): Sample sheet (sample_data)
+- 본문(국문): 쉼표로 구분한 CSV 파일이며 SampleID, Condition, Replicate 컬럼이 필요합니다. BAM 파일 이름에 SampleID가 포함되어 있어야 자동으로 연결됩니다. 조건마다 반복 실험이 2개 이상이어야 재현성을 계산합니다.
+- 본문(영문): A comma-separated CSV with the SampleID, Condition, and Replicate columns. Each BAM file name must contain its SampleID for automatic matching. Each condition needs two or more replicates for the reproducibility analysis.
+- 예시 제목: sample_data.csv
+- 예시 본문:
+```
+SampleID,Condition,Replicate
+ctrl_1,control,1
+ctrl_2,control,2
+trt_1,treated,1
+trt_2,treated,2
+```
 
 ### 주요 사항
 | 국문 | 영문 |
