@@ -1,0 +1,191 @@
+Bootstrap: docker
+From: rockylinux/rockylinux:9
+# =============================================================================
+# gatk.1.0
+#
+#   Target scripts:
+#     - GATK_ApplyBQSR.1.0.sh
+#     - GATK_BaseRecalibrator.1.0.sh
+#     - GATK_CountBases.1.0.sh
+#     - GATK_MarkDuplicates.1.0.sh
+#     - GATK_Mutect2.1.0.sh
+#
+#   [MANDATORY BUILD RULES]
+#   1) Base OS must be Rocky Linux 9. Rocky 8 is not allowed: it causes
+#      environment conflicts on the customer's servers.
+#   2) Anaconda Inc. repositories are strictly prohibited. Specifically:
+#        - repo.anaconda.com and the defaults / main / r / anaconda channels
+#          are never used.
+#        - The Anaconda Distribution and the Miniconda installer are never
+#          used, because the Miniconda installer is served from
+#          repo.anaconda.com and ships defaults-channel packages.
+#      conda is therefore provided by Miniforge, which is published by the
+#      conda-forge project on GitHub and defaults to the conda-forge channel.
+#      Only conda-forge and bioconda (community channels, free-licence, merely
+#      hosted on conda.anaconda.org) plus Rocky 9 BaseOS / AppStream are used.
+#      Every conda command below passes --override-channels so that no channel
+#      outside this list can ever be consulted.
+#
+#   [TOOL LOCATION]
+#   Every image in this pipeline installs its tools into the same prefix,
+#   /opt/bio, so a tool that appears in more than one image (samtools, tabix,
+#   ...) always resolves to the same path. The pipeline scripts were changed
+#   from the legacy /opt/apps/<tool>/current/... layout to /opt/bio/bin/<tool>
+#   for two reasons: that layout does not exist on the host, and the standard
+#   `apptainer exec` line binds -B /opt/apps:/opt/apps, which would shadow the
+#   tools inside the image wherever the host does happen to have /opt/apps.
+# =============================================================================
+%labels
+    Maintainer       KOBIC Bio-Express
+    Pipeline         WGS Somatic Variant Analysis
+    Component        gatk
+    Version          1.0
+    BaseOS           RockyLinux9
+    CondaInstaller   Miniforge3-26.5.3-0
+    AnacondaRepoFree true
+%environment
+    export LANG=en_US.UTF-8
+    export LC_ALL=en_US.UTF-8
+    export TZ=Asia/Seoul
+    # The image is run with --cleanenv, so the environment that "conda activate"
+    # would normally set up has to be reproduced here by hand.
+    export CONDA_PREFIX=/opt/bio
+    export PATH=/opt/bio/bin:$PATH
+    # Replay the environment's own activation hooks (JAVA_HOME, R_HOME and
+    # similar) without needing a conda shell function.
+    if [ -d /opt/bio/etc/conda/activate.d ]; then
+        set +u
+        for _act in /opt/bio/etc/conda/activate.d/*.sh; do
+            [ -r "$_act" ] && . "$_act"
+        done
+        unset _act
+    fi
+    export MPLBACKEND=Agg
+    export MPLCONFIGDIR=${MPLCONFIGDIR:-/tmp/mplconfig}
+    export XDG_CACHE_HOME=${XDG_CACHE_HOME:-/tmp/xdg-cache}
+    export XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-/tmp/xdg-config}
+    # Safety net only. Thread allocation is the pipeline scripts' job; these
+    # defaults only cover a bare `apptainer exec` that bypasses them, and stay
+    # overridable with --env.
+    export OPENBLAS_NUM_THREADS=${OPENBLAS_NUM_THREADS:-1}
+    export OMP_NUM_THREADS=${OMP_NUM_THREADS:-1}
+    export MKL_NUM_THREADS=${MKL_NUM_THREADS:-1}
+    export NUMEXPR_NUM_THREADS=${NUMEXPR_NUM_THREADS:-1}
+%post
+    set -eux
+    MINIFORGE_VERSION=26.5.3-0
+    # -------------------------------------------------------------------------
+    # 1. Minimal OS dependencies. Everything scientific comes from conda, so
+    #    only what the installer and the runtime itself need is installed here.
+    # -------------------------------------------------------------------------
+    dnf -y --allowerasing install \
+        bzip2 tar curl wget which procps-ng findutils \
+        glibc-langpack-en tzdata ca-certificates
+    dnf clean all
+    rm -rf /var/cache/dnf/*
+    ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime
+    # -------------------------------------------------------------------------
+    # 2. Miniforge -- conda-forge's minimal conda installer, published on GitHub.
+    #    This is the only permitted conda installer: the Miniconda installer is
+    #    served from repo.anaconda.com and is therefore prohibited.
+    # -------------------------------------------------------------------------
+    MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/${MINIFORGE_VERSION}/Miniforge3-Linux-x86_64.sh"
+    MINIFORGE_SHA256=14db468222ad564658656f769506056209b6dc375f5e7dfd31eb5ebbf08fa529
+    # A silently corrupted download reaches the installer as a valid-looking file
+    # and only fails much later ("md5sum mismatch of tar archive"), so the
+    # checksum is verified before use and a bad copy is retried.
+    for _try in 1 2 3; do
+        rm -f /tmp/miniforge.sh
+        curl -fL --retry 5 --retry-delay 5 --retry-all-errors \
+             -o /tmp/miniforge.sh "${MINIFORGE_URL}" || true
+        if echo "${MINIFORGE_SHA256}  /tmp/miniforge.sh" | sha256sum -c --status; then
+            break
+        fi
+        echo "miniforge download attempt ${_try} failed checksum, retrying" >&2
+        sleep 10
+    done
+    echo "${MINIFORGE_SHA256}  /tmp/miniforge.sh" | sha256sum -c
+    bash /tmp/miniforge.sh -b -p /opt/conda
+    rm -f /tmp/miniforge.sh
+    export PATH=/opt/conda/bin:$PATH
+    # -------------------------------------------------------------------------
+    # 3. Pin the channel configuration to conda-forge and bioconda only.
+    #    conda carries a built-in default_channels list pointing at
+    #    repo.anaconda.com/pkgs/main and /pkgs/r. It is reachable only through
+    #    the "defaults" channel, which is never used here, but the whole file is
+    #    written explicitly so that no Anaconda Inc. URL survives anywhere in
+    #    the configuration.
+    # -------------------------------------------------------------------------
+    cat > /opt/conda/.condarc <<'CONDARC'
+channels:
+  - conda-forge
+  - bioconda
+default_channels:
+  - https://conda.anaconda.org/conda-forge
+  - https://conda.anaconda.org/bioconda
+channel_alias: https://conda.anaconda.org
+channel_priority: strict
+always_yes: true
+auto_update_conda: false
+CONDARC
+    # Compliance gate: fail the build if any Anaconda Inc. repository or the
+    # defaults channel ever ends up in the configuration.
+    conda config --show channels default_channels channel_alias
+    if conda config --show channels default_channels channel_alias \
+         | grep -Eiq "repo\.anaconda\.com|^ *- *defaults$|/pkgs/(main|r|free)"; then
+        echo "FATAL: an Anaconda Inc. repository is configured" >&2
+        exit 1
+    fi
+    # -------------------------------------------------------------------------
+    # 4. Tools, installed into the shared /opt/bio prefix.
+    # -------------------------------------------------------------------------
+    conda create -y -p /opt/bio --override-channels \
+        -c conda-forge \
+        -c bioconda \
+        gatk4=4.6.2.0 \
+        samtools=1.24 \
+        htslib=1.24 \
+        openjdk=17
+    conda clean -afy
+    # -------------------------------------------------------------------------
+    # 5. Installation verification
+    # -------------------------------------------------------------------------
+    export CONDA_PREFIX=/opt/bio
+    export PATH=/opt/bio/bin:$PATH
+    set +u
+    for _act in /opt/bio/etc/conda/activate.d/*.sh; do
+        [ -r "$_act" ] && . "$_act"
+    done
+    set -u
+    export MPLCONFIGDIR=/tmp/mplconfig
+    export XDG_CACHE_HOME=/tmp/xdg-cache
+    mkdir -p "$MPLCONFIGDIR" "$XDG_CACHE_HOME"
+    echo "=== Installation Verification ==="
+    gatk --version 2>&1 | head -2
+    samtools --version | head -1
+    tabix --version | head -1
+    java -version 2>&1 | head -1
+    echo "=== OK ==="
+    chmod -R a+rX /opt/bio /opt/conda
+%runscript
+    exec /bin/bash "$@"
+%help
+    WGS Somatic Variant Analysis -- gatk image.
+    Scripts covered:
+      GATK_ApplyBQSR.1.0.sh
+      GATK_BaseRecalibrator.1.0.sh
+      GATK_CountBases.1.0.sh
+      GATK_MarkDuplicates.1.0.sh
+      GATK_Mutect2.1.0.sh
+    Example:
+      apptainer exec \
+        --cleanenv \
+        --env TZ=Asia/Seoul \
+        --env OPENBLAS_NUM_THREADS=1 \
+        --env OMP_NUM_THREADS=1 \
+        --env MKL_NUM_THREADS=1 \
+        --env NUMEXPR_NUM_THREADS=1 \
+        -B /BiO/K-BDS/USER/<user>:/<user> \
+        -B /BiO/K-BDS/BiO-EXPRESS/script_public:/script_public \
+        gatk.1.0.sif \
+        bash /script_public/.../<script>.1.1.sh input_dir=... output_dir=...
