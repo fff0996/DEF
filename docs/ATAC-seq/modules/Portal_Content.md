@@ -790,38 +790,36 @@ bash tf_footprinting.1.3.sh \
 |---|---|---|
 | 모듈명 | functional_enrichment | functional_enrichment |
 | 서브 타이틀 | GO 기능 농축 분석 | GO enrichment analysis |
-| 버전 | 1.0 | |
+| 버전 | 1.1 | |
 | 카테고리 (제안) | Functional Analysis / Enrichment | |
 | 태그 | ATAC-seq, clusterProfiler, GO, enrichment, OrgDb | |
 | 레퍼런스 URL | https://bioconductor.org/packages/clusterProfiler/ | |
 | 컨테이너 이미지 | bx_functional_enrichment.1.0 | |
-| 실행 스크립트 파일 | functional_enrichment.1.0.R | |
+| 실행 스크립트 파일 | functional_enrichment.1.1.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 내용(국문)
 열린 영역 또는 접근성이 변한 영역 근처 유전자가 어떤 생물학적 기능(GO)에 몰려 있는지 clusterProfiler로 분석합니다.
-- peak_annotation 결과(input_dir)를 주면 샘플별 연관 유전자 목록을 분석합니다.
-- differential_accessibility 결과(da_dir)를 주면 peak마다 가장 가까운 유전자를 찾아 접근성 증가(up)·감소(down) 유전자 목록을 분석합니다.
-- 종별 OrgDb 파일 또는 유전자–GO 대응표(GAF 등)를 사용하며, 유전자 ID 종류는 자동으로 맞춥니다.
+- 앞 모듈의 결과 폴더(input_dir)를 받아, 안의 파일을 보고 어떤 결과인지 스스로 판단합니다.
+- peak_annotation 결과이면 샘플별 연관 유전자 목록을 분석합니다.
+- differential_accessibility 결과이면 peak마다 가장 가까운 유전자를 찾아 접근성 증가(up)·감소(down) 유전자 목록을 분석합니다.
+- 종별 OrgDb 파일을 사용하며, 유전자 ID 종류는 자동으로 맞춥니다.
 - GO 항목별 결과표와 dotplot, barplot을 만듭니다.
 
 ### 내용(영문)
 Analyzes with clusterProfiler which biological functions (GO) are enriched among genes near open regions or regions with changed accessibility.
-- With a peak_annotation output (input_dir), the gene list of each sample is analyzed.
-- With a differential_accessibility output (da_dir), each peak is assigned to the nearest gene and the up and down gene lists are analyzed.
-- An OrgDb file for the species or a gene-to-GO table (GAF and others) is used, and the gene ID type is matched automatically.
+- The output folder of the previous module (input_dir) is read, and its contents tell which module produced it.
+- For a peak_annotation output, the gene list of each sample is analyzed.
+- For a differential_accessibility output, each peak is assigned to the nearest gene and the up and down gene lists are analyzed.
+- An OrgDb file for the species is used, and the gene ID type is matched automatically.
 - Result tables per GO term, dot plots, and bar plots are produced.
 
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Optional | Directory | input_dir | | peak_annotation의 output_dir. 아래 4개 입력 중 하나만 | peak_annotation output_dir; give only one of the four inputs |
-| Input | Optional | File | gene_file | | 유전자 목록 파일 하나 | One gene list file |
-| Input | Optional | Directory | da_dir | | differential_accessibility의 output_dir | differential_accessibility output_dir |
-| Input | Optional | File | da_file | | 차등 접근성 결과 파일 하나(seqnames/chr, start, end, logFC, FDR) | One differential accessibility table (seqnames/chr, start, end, logFC, FDR) |
-| Input | Optional | File | genome_gff | | da_dir/da_file일 때 필수. 유전자 주석 GFF3/GTF | Required with da_dir/da_file: gene annotation GFF3/GTF |
-| Input | Optional | File | orgdb_file | | OrgDb SQLite 파일. go_table과 둘 중 하나 | OrgDb SQLite file; one of orgdb_file or go_table |
-| Input | Optional | File | go_table | | 유전자–GO 대응표(GAF/TSV/CSV) | Gene-to-GO table (GAF/TSV/CSV) |
+| Input | Required | Directory | input_dir | /data/peak_annotation | 앞 모듈의 output_dir. peak_annotation(gene_lists/*.annotated_gene_list.tsv) 또는 differential_accessibility(03_results/diff_accessibility_<da_norm>.csv) 결과를 안의 파일로 구분 | Output_dir of the previous module: a peak_annotation (gene_lists/*.annotated_gene_list.tsv) or differential_accessibility (03_results/diff_accessibility_<da_norm>.csv) output, told apart by its files |
+| Input | Required | File | genome_gff | /ref/genes.gff3 | 유전자 주석 GFF3/GTF. differential_accessibility 결과일 때 peak를 가장 가까운 유전자에 연결하는 데 사용(peak_annotation 결과면 쓰지 않음) | Gene annotation GFF3/GTF, used to link differential peaks to their nearest genes (not used for a peak_annotation output) |
+| Input | Required | File | orgdb_file | /ref/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite | 분석 종의 OrgDb SQLite 파일(tools/download_orgdb.R로 저장) | OrgDb SQLite file of the species (saved with tools/download_orgdb.R) |
 | Output | Required | Directory | output_dir | /data/functional_enrichment | 결과 폴더 | Output folder |
 | Option | Optional | String | gene_keytype | auto | OrgDb ID 종류(TAIR, ENTREZID, SYMBOL 등). auto는 자동 선택 | OrgDb key type (TAIR, ENTREZID, SYMBOL, ...); auto selects it |
 | Option | Optional | List | ont | BP | GO 분류(BP, MF, CC, ALL) | GO ontology (BP, MF, CC, ALL) |
@@ -834,17 +832,17 @@ Analyzes with clusterProfiler which biological functions (GO) are enriched among
 | Option | Optional | Integer | max_gs_size | 500 | GO 항목 최대 유전자 수 | Maximum genes per GO term |
 | Option | Optional | Float | min_mapped_fraction | 0.5 | 주석에서 찾은 ID 비율이 이보다 낮으면 중단 | Stop if fewer IDs than this fraction are found in the annotation |
 | Option | Optional | Integer | show_category | 20 | 그림에 보일 GO 항목 수 | GO terms shown in plots |
-| Option | Optional | List | da_norm | TMM | da_dir에서 읽을 정규화 결과(TMM, EDASeq, CQN). da_dir일 때만 사용 | Normalization result read from da_dir (TMM, EDASeq, CQN); used only with da_dir |
-| Option | Optional | Float | da_fdr | 0.05 | up/down peak FDR 기준. da_dir 또는 da_file일 때만 사용 | FDR cutoff for up/down peaks; used only with da_dir or da_file |
-| Option | Optional | Float | da_min_abs_logfc | 0 | up/down peak 최소 abs(logFC). da_dir 또는 da_file일 때만 사용 | Minimum abs(logFC) for up/down peaks; used only with da_dir or da_file |
+| Option | Optional | List | da_norm | TMM | differential_accessibility 결과에서 읽을 정규화 결과(TMM, EDASeq, CQN). 그 결과일 때만 사용 | Normalization result read from a differential_accessibility output (TMM, EDASeq, CQN); used only for that input |
+| Option | Optional | Float | da_fdr | 0.05 | up/down peak FDR 기준. differential_accessibility 결과일 때만 사용 | FDR cutoff for up/down peaks; used only for a differential_accessibility output |
+| Option | Optional | Float | da_min_abs_logfc | 0 | up/down peak 최소 abs(logFC). differential_accessibility 결과일 때만 사용 | Minimum abs(logFC) for up/down peaks; used only for a differential_accessibility output |
 
 ### 주요 사항
 | 국문 | 영문 |
 |---|---|
-| 분석 종의 OrgDb 파일(tools/download_orgdb.R로 저장) 또는 유전자–GO 대응표가 필요합니다. | An OrgDb file for the species (saved with tools/download_orgdb.R) or a gene-to-GO table is required. |
+| 분석 종의 OrgDb 파일(tools/download_orgdb.R로 저장)이 필요합니다. | An OrgDb file for the species (saved with tools/download_orgdb.R) is required. |
 | 인터넷 연결 없이 수행하므로 KEGG 경로 분석은 지원하지 않습니다. | The analysis runs offline, so KEGG pathway analysis is not supported. |
 | genome_gff의 유전자 ID가 OrgDb에서 절반 이상 찾아지지 않으면 중단합니다. 종과 ID 체계를 확인해 주세요. | The run stops if fewer than half of the genome_gff gene IDs are found in the OrgDb; check the species and ID type. |
-| 입력은 input_dir, gene_file, da_dir, da_file 중 하나만 지정합니다. | Give only one of input_dir, gene_file, da_dir, or da_file. |
+| 파이프라인에서 peak_annotation 뒤와 differential_accessibility 뒤에 같은 모듈을 쓰며, 앞 모듈의 output_dir만 input_dir에 연결하면 됩니다. | In the pipeline the same module follows peak_annotation and differential_accessibility; connect the previous module's output_dir to input_dir. |
 
 
 ### 분석 개념 이미지
@@ -856,8 +854,8 @@ Analyzes with clusterProfiler which biological functions (GO) are enriched among
 
 ### 스크립트 사용 예제
 ```
-Rscript functional_enrichment.1.0.R \
-  da_dir=/data/da \
+Rscript functional_enrichment.1.1.R \
+  input_dir=/data/da \
   genome_gff=/ref/genes.gff3 \
   orgdb_file=/ref/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite \
   output_dir=/data/functional_enrichment \

@@ -9,7 +9,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 [organellar_filter] ─output_dir─> [ATAC_QC] ─output_dir─┬─> [ATAC_QC_plot]
                                                          ├─> [MACS3_callpeak] ─output_dir─┬─> [peak_annotation] ─output_dir─> [functional_enrichment] (input_dir)
                                                          │                                ├─> [differential_accessibility] ─output_dir─┬─> [atac_motif]
-                                                         │                                │                                            └─> [functional_enrichment] (da_dir)
+                                                         │                                │                                            └─> [functional_enrichment] (input_dir)
                                                          │                                └─> [tf_footprinting] (macs_dir)
                                                          ├─> [differential_accessibility] (input_dir)
                                                          ├─> [tf_footprinting] (input_dir)
@@ -26,7 +26,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 | differential_accessibility | `differential_accessibility.1.2.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.2.R key=value ...` |
 | atac_motif | `atac_motif.1.3.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.3.R key=value ...` |
 | tf_footprinting | `tf_footprinting.1.3.sh` | bx_tf_footprinting.1.0 | `bash tf_footprinting.1.3.sh key=value ...` |
-| functional_enrichment | `functional_enrichment.1.0.R` | bx_functional_enrichment.1.0 | `Rscript functional_enrichment.1.0.R key=value ...` |
+| functional_enrichment | `functional_enrichment.1.1.R` | bx_functional_enrichment.1.0 | `Rscript functional_enrichment.1.1.R key=value ...` |
 | replicate_consistency | `replicate_consistency.1.1.sh` | bx_replicate_consistency.1.0 | `bash replicate_consistency.1.1.sh key=value ...` |
 
 `ATAC_QC.1.2`(또는 1.1)와 `ATAC_QC_plot.1.1`은 함께 쓴다(1.1 이후 QC는 clean BAM을 쓰므로 trinucleosome이 비어 있을 수 있고, 1.1 plot은 빈 종류를 빼고 그린다). 1.2 버전(ATAC_QC, MACS3, differential_accessibility)은 1.1에 QC 지표만 더한 것이라 같은 이미지에서 돌고, 기존 결과 파일은 그대로다.
@@ -171,17 +171,13 @@ TOBIAS로 조건별 전사인자 footprint와 비교(BINDetect).
 결과: `00_metadata`, `01_peak_merge`, `02_merged_bam_by_condition`, `03_tobias_tracks`(bigWig), `04_BINDetect`, `summary/`.
 
 ## 9. functional_enrichment
-GO 농축 분석(clusterProfiler). 종별 데이터는 이미지에 없고, `tools/download_orgdb.R`로 받은 OrgDb 파일이나 유전자-GO 대응표를 입력으로 받는다. 실행 중 인터넷 접속이 없으므로 KEGG는 쓰지 않는다.
+GO 농축 분석(clusterProfiler). 종별 데이터는 이미지에 없고, `tools/download_orgdb.R`로 받은 OrgDb 파일을 입력으로 받는다. 1.1부터 입력 폴더는 `input_dir` 하나이며, 안의 파일을 보고 peak_annotation 결과인지 differential_accessibility 결과인지 판단한다. 실행 중 인터넷 접속이 없으므로 KEGG는 쓰지 않는다.
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 조건부 | | peak_annotation의 `output_dir`. `gene_lists/*.annotated_gene_list.tsv`를 목록별로 분석. 아래 4개 입력 중 하나만 |
-| Input | `gene_file` | File (TSV/CSV/TXT) | 조건부 | | 유전자 목록 파일 하나(geneId/gene_id/gene 컬럼, 또는 한 줄에 ID 하나) |
-| Input | `da_dir` | Directory | 조건부 | | differential_accessibility의 `output_dir`. `03_results/diff_accessibility_<da_norm>.csv`를 읽어 up/down 영역 근처 유전자를 분석 |
-| Input | `da_file` | File (CSV/TSV) | 조건부 | | 차등 접근성 결과 파일 하나(seqnames 또는 chr, start, end, logFC, FDR 컬럼) |
-| Input | `genome_gff` | File (GFF3/GTF, .gz 가능) | 조건부 | | `da_dir`/`da_file`일 때 필수. peak마다 가장 가까운 유전자 TSS를 찾는 데 사용 |
-| Input | `orgdb_file` | File (SQLite) | 조건부 | | `download_orgdb.R`로 받은 `<종>.<AH id>.OrgDb.sqlite`. `go_table`과 둘 중 하나 |
-| Input | `go_table` | File (GAF/TSV/CSV) | 조건부 | | 유전자-GO 대응표. OrgDb가 없는 종에 사용 |
+| Input | `input_dir` | Directory | 필수 | | 앞 모듈의 `output_dir`. `03_results/diff_accessibility_<da_norm>.csv`가 있으면 differential_accessibility 결과로 보고 up/down 영역 근처 유전자를 분석, `gene_lists/*.annotated_gene_list.tsv`가 있으면 peak_annotation 결과로 보고 목록별로 분석. 둘 다 없으면 멈춤 |
+| Input | `genome_gff` | File (GFF3/GTF, .gz 가능) | 필수 | | differential_accessibility 결과일 때 peak마다 가장 가까운 유전자 TSS를 찾는 데 사용(peak_annotation 결과면 쓰지 않음) |
+| Input | `orgdb_file` | File (SQLite) | 필수 | | `download_orgdb.R`로 받은 `<종>.<AH id>.OrgDb.sqlite` |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
 | Option | `gene_keytype` | String | 선택 | `auto` | OrgDb의 ID 종류(TAIR, ENTREZID, SYMBOL, ENSEMBL 등). auto = 가장 많이 맞는 종류를 자동 선택 |
 | Option | `ont` | List (`BP`, `MF`, `CC`, `ALL`) | 선택 | `BP` | GO 분류 |
@@ -194,11 +190,11 @@ GO 농축 분석(clusterProfiler). 종별 데이터는 이미지에 없고, `too
 | Option | `max_gs_size` | Integer | 선택 | `500` | GO 항목의 최대 유전자 수 |
 | Option | `min_mapped_fraction` | Float | 선택 | `0.5` | 입력 ID 중 주석에서 찾은 비율이 이보다 낮으면 멈춤(종이나 ID 종류가 다를 때) |
 | Option | `show_category` | Integer | 선택 | `20` | 그림에 보일 GO 항목 수 |
-| Option | `da_norm` | List (`TMM`, `EDASeq`, `CQN`) | 선택 | `TMM` | `da_dir`에서 읽을 정규화 결과 |
+| Option | `da_norm` | List (`TMM`, `EDASeq`, `CQN`) | 선택 | `TMM` | differential_accessibility 결과에서 읽을 정규화 결과 |
 | Option | `da_fdr` | Float | 선택 | `0.05` | up/down peak를 고르는 FDR 기준 |
 | Option | `da_min_abs_logfc` | Float | 선택 | `0` | up/down peak의 최소 \|logFC\| |
 
-결과: `01_gene_lists`(목록별 유전자, DA 입력이면 `da_peak_to_gene.tsv`), `02_enrichment/<목록>.GO_<ont>.tsv`, `03_plots`(dotplot·barplot PDF), `04_summary/enrichment_summary.tsv`. DA 입력이면 목록은 `<da_norm>.up`(treated에서 더 열림)과 `<da_norm>.down`이다.
+결과: `01_gene_lists`(목록별 유전자, DA 결과 입력이면 `da_peak_to_gene.tsv`), `02_enrichment/<목록>.GO_<ont>.tsv`, `03_plots`(dotplot·barplot PDF), `04_summary/enrichment_summary.tsv`. DA 입력이면 목록은 `<da_norm>.up`(treated에서 더 열림)과 `<da_norm>.down`이다.
 
 ## 10. replicate_consistency
 반복 실험 간 peak 재현성(IDR, ENCODE 방식). 조건별로 반복 실험마다, 그리고 합친 BAM으로 MACS3를 느슨한 기준(p-value)으로 돌리고, 반복 실험 쌍마다 IDR을 계산한다. 조건마다 반복 실험이 2개 이상이어야 한다.
