@@ -90,6 +90,7 @@ Yan F, Powell DR, Curtis DJ, Wong NC. From reads to insight: a hitchhiker's guid
 4. **참조 자료를 한 종, 한 버전으로 맞춰 주세요.** 유전체(FASTA), 유전자 주석(GFF3/GTF), TSS BED, OrgDb, 모티프 DB가 같은 종이어야 하며, 염색체 이름 표기도 같아야 합니다(`chr1`과 `1`은 서로 다름).
 5. **결과 해석 전에 품질 지표를 확인해 주세요.** Fragment 크기 분포, TSS enrichment, FRiP, 샘플 상관·PCA를 확인합니다. 기준값은 각 모듈 설명을 참고하세요.
 6. **모든 분석은 인터넷 연결 없이 수행됩니다.** KEGG 경로 분석은 지원하지 않으며, GO 분석에는 미리 준비한 OrgDb 파일을 사용합니다.
+7. **참조 유전체 FASTA에는 인덱스(.fai)를 미리 만들어 두세요.** 인덱스가 없으면 일부 모듈이 FASTA 옆에 만들려고 하는데, 공유 데이터 폴더는 쓰기가 막혀 있을 수 있어 실패합니다(`samtools faidx genome.fa`).
 
 ### English
 1. **Only paired-end data are supported.** Fragment lengths are used to resolve nucleosome positions and to call peaks, so single-end data cannot be analyzed.
@@ -98,3 +99,4 @@ Yan F, Powell DR, Curtis DJ, Wong NC. From reads to insight: a hitchhiker's guid
 4. **Use reference data from one species and one version.** The genome (FASTA), gene annotation (GFF3/GTF), TSS BED, OrgDb, and motif database must be for the same species with the same chromosome naming (`chr1` and `1` are different).
 5. **Check quality metrics before interpreting results.** Review the fragment size distribution, TSS enrichment, FRiP, and sample correlation and PCA. See each module for reference values.
 6. **All analyses run without internet access.** KEGG pathway analysis is not supported, and GO analysis uses a prepared OrgDb file.
+7. **Prepare the index (.fai) of the reference FASTA in advance.** Without it some modules try to create one beside the FASTA, which fails in shared data folders that are not writable (`samtools faidx genome.fa`).

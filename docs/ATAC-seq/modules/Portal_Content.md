@@ -121,7 +121,7 @@ Removes reads aligned to organellar chromosomes such as mitochondria and chlorop
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Required | Directory | input_dir | /data/bam | 좌표 정렬된 BAM 폴더(*.unsorted.bam 제외). 인덱스가 없으면 BAM 옆에 생성 | Folder of coordinate-sorted BAM files (*.unsorted.bam excluded); missing indexes are created beside the BAM |
+| Input | Required | Directory | input_dir | /data/bam | 좌표 정렬된 BAM 폴더(*.unsorted.bam 제외). BAM 인덱스(.bai)가 없으면 BAM 옆에 만들므로 그 폴더에 쓰기 권한이 필요(앞 모듈 결과에는 인덱스가 있음) | Folder of coordinate-sorted BAM files (*.unsorted.bam excluded). A missing BAM index (.bai) is created beside the BAM, so the folder must be writable (outputs of the previous module already have one) |
 | Output | Required | Directory | output_dir | /data/organellar_filter | 결과 폴더. ATAC_QC의 input_dir | Output folder; input_dir of ATAC_QC |
 | Option | Optional | String | organellar_pattern | (^chrM$\|^MT$\|^Mt$\|mitochond\|mitochondrion\|mitochondrial\|chloroplast\|plastid\|^Pt$\|^PT$\|^chrC$) | 세포소기관 염색체 이름 정규식(대소문자 무시) | Regular expression for organellar contig names (case-insensitive) |
 
@@ -196,10 +196,10 @@ Assesses ATAC-seq data quality with ATACseqQC and prepares Tn5-corrected BAM fil
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Required | Directory | input_dir | /data/organellar_filter | shift 전 BAM 폴더. organellar_filter의 output_dir 권장 | Folder of pre-shift BAM files; the organellar_filter output_dir is recommended |
+| Input | Required | Directory | input_dir | /data/organellar_filter | shift 전 BAM 폴더. organellar_filter의 output_dir 권장. BAM 인덱스(.bai)가 없으면 BAM 옆에 만들므로 그 폴더에 쓰기 권한이 필요(앞 모듈 결과에는 인덱스가 있음) | Folder of pre-shift BAM files; the organellar_filter output_dir is recommended. A missing BAM index (.bai) is created beside the BAM, so the folder must be writable (outputs of the previous module already have one) |
 | Input | Required | File | sample_data | /data/sample_data.csv | 샘플 정보 CSV(SampleID, Condition, Replicate) | Sample sheet CSV (SampleID, Condition, Replicate) |
 | Input | Required | File | txs_bed | /ref/genes.bed | 전사체/TSS 영역 BED(6열 권장: chr start end name score strand) | Transcript/TSS BED (6 columns recommended: chr start end name score strand) |
-| Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA. .fai가 없으면 옆에 생성 | Reference genome FASTA; a missing .fai is created beside it |
+| Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA. .fai가 없으면 FASTA 옆에 만들므로 그 폴더에 쓰기 권한이 필요. 공유 참조는 .fai를 미리 만들어 둘 것(samtools faidx) | Reference genome FASTA. A missing .fai is created beside the FASTA, so the folder must be writable; prepare the .fai in advance for shared references (samtools faidx) |
 | Output | Required | Directory | output_dir | /data/atac_qc | 결과 폴더 | Output folder |
 | Option | Optional | String | seqlev | auto | 사용할 염색체(쉼표 구분). auto는 BAM과 txs_bed에 공통인 염색체 전부 | Chromosomes to use (comma-separated); auto uses all chromosomes shared by the BAM and txs_bed |
 | Option | Optional | Integer | tss_flank | 1000 | TSS enrichment 계산 범위(TSS 앞뒤 bp, 200 이상) | Flank around each TSS for the TSS enrichment score (bp, at least 200) |
@@ -366,7 +366,7 @@ Calls open-chromatin peaks from Tn5-corrected BAM files with MACS3 callpeak in p
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Required | Directory | input_dir | /data/atac_qc | Tn5 보정 BAM 폴더. ATAC_QC의 output_dir이면 03_shifted_bam만 검색 | Folder of Tn5-shifted BAM files; for an ATAC_QC output_dir only 03_shifted_bam is searched |
+| Input | Required | Directory | input_dir | /data/atac_qc | Tn5 보정 BAM 폴더. ATAC_QC의 output_dir이면 03_shifted_bam만 검색. BAM 인덱스(.bai)가 없으면 BAM 옆에 만들므로 그 폴더에 쓰기 권한이 필요(앞 모듈 결과에는 인덱스가 있음) | Folder of Tn5-shifted BAM files; for an ATAC_QC output_dir only 03_shifted_bam is searched. A missing BAM index (.bai) is created beside the BAM, so the folder must be writable (outputs of the previous module already have one) |
 | Output | Required | Directory | output_dir | /data/macs3 | 결과 폴더 | Output folder |
 | Option | Required | String | genome_size | | 유효 유전체 크기. hs, mm, ce, dm 또는 숫자 | Effective genome size: hs, mm, ce, dm, or a number |
 | Option | Optional | List | peak_type | narrow | MACS3 peak 모드. narrow(기본): 좁은 peak(.narrowPeak), ATAC-seq은 narrow 사용. broad: 넓은 peak(.broadPeak), broad_cutoff를 함께 사용하며 peak_annotation의 peak_suffix를 .broadPeak로 바꿔야 함 | MACS3 peak mode. narrow (default): narrow peaks (.narrowPeak), used for ATAC-seq. broad: broad peaks (.broadPeak); uses broad_cutoff, and peak_annotation needs peak_suffix=.broadPeak |
@@ -722,7 +722,7 @@ Corrects Tn5 cleavage signals per condition with TOBIAS, computes footprint scor
 |---|---|---|---|---|---|---|
 | Input | Required | Directory | input_dir | /data/atac_qc | BAM 폴더. ATAC_QC의 output_dir이면 03_shifted_bam 사용 | BAM folder; 03_shifted_bam of an ATAC_QC output_dir |
 | Input | Required | File | metadata | /data/metadata.tsv | 샘플 정보 TSV/CSV(SampleID, Condition), 조건 2개 이상 | Sample information TSV/CSV (SampleID, Condition) with two or more conditions |
-| Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA. .fai가 없으면 옆에 생성 | Reference genome FASTA; a missing .fai is created beside it |
+| Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA. .fai가 없으면 FASTA 옆에 만들므로 그 폴더에 쓰기 권한이 필요. 공유 참조는 .fai를 미리 만들어 둘 것(samtools faidx) | Reference genome FASTA. A missing .fai is created beside the FASTA, so the folder must be writable; prepare the .fai in advance for shared references (samtools faidx) |
 | Input | Required | File | motif_db | /ref/motifs.meme | 모티프 데이터베이스(MEME/JASPAR 형식) | Motif database (MEME/JASPAR format) |
 | Input | Required | Directory | macs_dir | /data/macs3 | MACS3_callpeak_ATAC의 output_dir. peak_file을 주면 peak_file을 대신 사용 | MACS3_callpeak_ATAC output_dir; peak_file is used instead when given |
 | Input | Optional | File | peak_file | | 미리 합친 공통 peak(BED/narrowPeak/broadPeak) | Pre-merged consensus peaks (BED/narrowPeak/broadPeak) |
@@ -920,7 +920,7 @@ Evaluates peak reproducibility between replicates with the ENCODE-style IDR (Irr
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Required | Directory | input_dir | /data/atac_qc | Tn5 보정 BAM 폴더. ATAC_QC의 output_dir이면 03_shifted_bam에서 찾음 | Folder of Tn5-shifted BAM files; 03_shifted_bam of an ATAC_QC output_dir |
+| Input | Required | Directory | input_dir | /data/atac_qc | Tn5 보정 BAM 폴더. ATAC_QC의 output_dir이면 03_shifted_bam에서 찾음. BAM 인덱스(.bai)가 없으면 BAM 옆에 만들므로 그 폴더에 쓰기 권한이 필요(앞 모듈 결과에는 인덱스가 있음) | Folder of Tn5-shifted BAM files; 03_shifted_bam of an ATAC_QC output_dir. A missing BAM index (.bai) is created beside the BAM, so the folder must be writable (outputs of the previous module already have one) |
 | Input | Required | File | sample_data | /data/sample_data.csv | ATAC_QC와 같은 샘플 정보 CSV(SampleID, Condition, Replicate) | Same sample sheet CSV as ATAC_QC (SampleID, Condition, Replicate) |
 | Output | Required | Directory | output_dir | /data/replicate_consistency | 결과 폴더 | Output folder |
 | Option | Required | String | genome_size | | 유효 유전체 크기(MACS3와 같음). hs, mm, ce, dm 또는 숫자 | Effective genome size (as for MACS3): hs, mm, ce, dm, or a number |
