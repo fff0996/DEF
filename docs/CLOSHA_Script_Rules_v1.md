@@ -37,6 +37,35 @@ CLOSHA 분석 스크립트 작성 규칙 1.0
 - 실행 중 외부 네트워크에 접속하지 않는다. 패키지 설치와 데이터 다운로드를 하지 않는다(필요한 것은 DEF에서 설치).
 - R은 패키지를 붙인 뒤에도 다른 패키지와 이름이 겹치는 함수는 `pkg::function`으로 부른다(예: `ChIPpeakAnno::estLibSize`, `ATACseqQC::enrichedFragments`).
 
+### 2.1 운영 실행 명령 (기준)
+포탈(Slurm + Apptainer)이 모듈마다 던지는 실제 명령이다(2026-10-14 받은 Amplicon 모듈 예, 사용자 이름은 `<user>`로 바꿈). 스크립트는 이 환경을 기준으로 작성하고 확인한다.
+
+```
+apptainer exec \
+	--cleanenv \
+	--env TZ=Asia/Seoul \
+	--env OPENBLAS_NUM_THREADS=1 \
+	--env OMP_NUM_THREADS=1 \
+	--env MKL_NUM_THREADS=1 \
+	--env NUMEXPR_NUM_THREADS=1 \
+	-B /BiO/K-BDS/USER/<user>:/<user> \
+	-B /BiO/K-BDS/BiO-EXPRESS/script_public:/script_public \
+	-B /BiO/K-BDS/USER/bio-hub:/bio-hub \
+	-B /BiO/K-BDS/USER/bio-workflow/example:/bio-workflow/example \
+	'/BiO/K-BDS/BiO-EXPRESS/apptainer/images/<uuid>.sif' /bin/bash \
+	'/script_public/bio-workflow/Omics/<pipeline>/<uuid>.sh' \
+	"input_dir"='/bio-hub/...' "output_dir"='/<user>/.../output' "trunc_len_f"='150' ...
+```
+
+이 명령에서 스크립트가 지켜야 할 것:
+- **경로는 인자로만 받는다.** 컨테이너 안에서 보이는 호스트 경로는 `-B`로 연결한 네 곳(`/<user>`, `/script_public`, `/bio-hub`, `/bio-workflow/...`)뿐이다. 입력 파일 안에 적힌 경로(예: 샘플 정보 CSV의 BAM 경로)는 이 네 곳 밖이면 열 수 없으므로, 파일과 폴더는 `key=value` 인자로 받는다.
+- **앞 모듈이 남긴 절대 경로는 같은 연결 안에서만 유효하다.** 연결 위치가 작업마다 같으므로 앞 모듈이 결과 파일에 적은 경로(예: ATAC_QC의 `05_metadata/atac_qc_manifest.tsv`)를 다음 작업이 그대로 열 수 있다. 위 네 곳 밖을 가리키는 경로는 쓰지 않는다.
+- **환경 변수는 넘어오지 않는다(`--cleanenv`).** 필요한 값은 인자나 DEF의 `%environment`로 받는다.
+- **`OMP_NUM_THREADS` 등은 포탈이 정한다.** 싱글 코어 작업은 1이다. 코어 수는 11절대로 `nproc`으로 읽는다(`nproc`이 `OMP_NUM_THREADS`를 따른다).
+- **스크립트 파일 이름은 바뀐다.** 포탈은 스크립트를 `<uuid>.sh`로 복사해 실행하므로, 스크립트 이름이나 위치(`$0`, `BASH_SOURCE`)로 다른 파일을 찾지 않는다. Bash 스크립트는 `/bin/bash <스크립트>`로 실행된다(실행 권한이나 `#!` 줄에 기대지 않는다).
+- **인자는 `"key"='value'` 꼴로 넘어온다.** 셸이 따옴표를 벗겨 스크립트에는 `key=value`로 들어온다. 값에 공백이나 `|`, `$` 같은 문자가 있어도 그대로 전달된다.
+- `/opt/apps` 같은 호스트 도구 폴더는 연결되지 않는다. 도구는 이미지 안의 PATH에서 찾는다.
+
 ## 3. 머리 주석
 스크립트 맨 위에 아래 형식으로 쓴다. 이 내용이 CLOSHA 모듈 등록(Input/Output/Option 설명)의 근거가 된다.
 ```
