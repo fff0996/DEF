@@ -110,8 +110,15 @@ KOBIC 포탈의 파이프라인 페이지와 모듈 등록 화면에 넣을 원�
 - 모듈마다 대표 그림 하나를 고른다. 두 그림을 함께 봐야 이해되면 A/B로 나란히 둔다. 샘플이나 조건별로 여러 개 나오는 그림은 대표 하나만 쓴다.
 - 원고에는 `output_dir` 기준의 정확한 파일 경로를 적는다. 파일 이름은 스크립트에서 확인한다.
 - 그림을 만들지 않는 모듈은 요약표(TSV)를 화면 캡처해 등록한다.
-- PDF는 PNG로 바꿔 등록한다. 여러 쪽짜리는 `-f <쪽> -l <쪽>`로 쪽을 고른다.
-  `pdftoppm -png -r 200 -singlefile <그림>.pdf <그림>`
+- 다른 그림과 같이 **PNG(포탈 등록용)와 SVG(원본)를 함께 저장**해 커밋한다.
+  - 위치와 이름: `docs/<파이프라인>/modules/figures/module_results/<모듈>_result.{png,svg}`
+  - A/B 두 그림이면 `<모듈>_result_A`, `<모듈>_result_B`로 나눈다.
+- PDF 결과는 PNG와 SVG로 각각 바꾼다. 여러 쪽짜리는 `-f <쪽> -l <쪽>`로 쪽을 고른다.
+  ```
+  pdftocairo -png -r 200 -singlefile <그림>.pdf <모듈>_result
+  pdftocairo -svg <그림>.pdf <모듈>_result.svg
+  ```
+- 결과가 처음부터 PNG인 그림(예: IDR의 `.idr.png`)과 표 캡처는 SVG를 만들 수 없으니 PNG만 저장한다.
 - 레전드에는 세 가지를 쓴다.
   - 그림 읽는 법: 축, 점·색의 뜻
   - 정상 결과가 어떻게 보이는지
@@ -146,4 +153,5 @@ NODE_PATH=<scratch>/docxgen/node_modules node docs/tools/make_portal_docx.js \
 - [ ] 개념도와 결과 그림마다 레전드(국문·영문)가 있다.
 - [ ] 논문 그림은 CC BY만 썼고, 출처 줄에 전체 서지, DOI, 라이선스 링크가 있다.
 - [ ] 주요 사항에 모듈 설치 안내가 들어가지 않았다.
+- [ ] 결과 그림을 `module_results/`에 PNG와 SVG로 저장했다(PNG만 나오는 그림 제외).
 - [ ] Word 파일을 md에서 다시 만들어 함께 커밋했다.

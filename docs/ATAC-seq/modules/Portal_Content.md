@@ -9,7 +9,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 버전은 각 실행 스크립트 파일 이름에 적힌 버전을 쓴다(예: organellar_filter.1.1.sh → 1.1).
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지운다.
 - 카테고리와 아이콘은 포탈 목록에서 고른다. 원고의 카테고리는 제안이다.
-- 주요 결과 이미지는 실제 데이터로 실행한 결과에서 가져온다. PDF는 PNG로 바꿔 등록한다: `pdftoppm -png -r 200 -singlefile <그림>.pdf <그림>` (여러 쪽이면 `-f <쪽> -l <쪽>`로 쪽을 고른다). 표는 화면 캡처해 등록한다.
+- 주요 결과 이미지는 실제 데이터로 실행한 결과에서 가져와 `docs/ATAC-seq/modules/figures/module_results/<모듈>_result.{png,svg}`로 PNG(등록용)와 SVG(원본)를 함께 저장한다(A/B 두 그림이면 `_result_A`, `_result_B`). PDF는 `pdftocairo -png -r 200 -singlefile <그림>.pdf <모듈>_result`와 `pdftocairo -svg <그림>.pdf <모듈>_result.svg`로 바꾼다(여러 쪽이면 `-f <쪽> -l <쪽>`). 처음부터 PNG인 그림(IDR)과 표 캡처는 PNG만 저장한다.
 
 ---
 
