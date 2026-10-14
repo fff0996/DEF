@@ -17,17 +17,17 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 ```
 | 모듈 | 스크립트 | 실행 이미지 | 실행 명령 |
 |---|---|---|---|
-| bowtie2 | `bowtie2.1.1.sh` | bowtie2.1.0 | `bash bowtie2.1.1.sh key=value ...` |
+| bowtie2 | `bowtie2.1.2.sh` | bowtie2.1.0 | `bash bowtie2.1.2.sh key=value ...` |
 | organellar_filter | `organellar_filter.1.2.sh` | bx_organellar_filter.1.0 | `bash organellar_filter.1.2.sh key=value ...` |
 | ATAC_QC | `ATAC_QC.1.2.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC.1.2.R key=value ...` |
 | ATAC_QC_plot | `ATAC_QC_plot.1.1.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC_plot.1.1.R key=value ...` |
-| MACS3_callpeak | `MACS3_callpeak_ATAC.1.2.sh` | bx_macs3_callpeak_atac.1.0 | `bash MACS3_callpeak_ATAC.1.2.sh key=value ...` |
+| MACS3_callpeak | `MACS3_callpeak_ATAC.1.3.sh` | bx_macs3_callpeak_atac.1.0 | `bash MACS3_callpeak_ATAC.1.3.sh key=value ...` |
 | peak_annotation | `peak_annotation.1.1.R` | bx_peak_annotation.1.0 | `Rscript peak_annotation.1.1.R key=value ...` |
 | differential_accessibility | `differential_accessibility.1.2.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.2.R key=value ...` |
-| atac_motif | `atac_motif.1.1.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.1.R key=value ...` |
+| atac_motif | `atac_motif.1.2.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.2.R key=value ...` |
 | tf_footprinting | `tf_footprinting.1.2.sh` | bx_tf_footprinting.1.0 | `bash tf_footprinting.1.2.sh key=value ...` |
 | functional_enrichment | `functional_enrichment.1.0.R` | bx_functional_enrichment.1.0 | `Rscript functional_enrichment.1.0.R key=value ...` |
-| replicate_consistency | `replicate_consistency.1.0.sh` | bx_replicate_consistency.1.0 | `bash replicate_consistency.1.0.sh key=value ...` |
+| replicate_consistency | `replicate_consistency.1.1.sh` | bx_replicate_consistency.1.0 | `bash replicate_consistency.1.1.sh key=value ...` |
 
 `ATAC_QC.1.2`(또는 1.1)와 `ATAC_QC_plot.1.1`은 함께 쓴다(1.1 이후 QC는 clean BAM을 쓰므로 trinucleosome이 비어 있을 수 있고, 1.1 plot은 빈 종류를 빼고 그린다). 1.2 버전(ATAC_QC, MACS3, differential_accessibility)은 1.1에 QC 지표만 더한 것이라 같은 이미지에서 돌고, 기존 결과 파일은 그대로다.
 
@@ -38,7 +38,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | 정렬된 BAM이 있는 폴더. `*.unsorted.bam`은 제외. BAM은 좌표 정렬되어 있어야 함. 인덱스(.bai)가 없으면 BAM 옆에 만든다 |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. 다음 모듈(ATAC_QC)의 `input_dir` |
-| Option | `threads` | String | 선택 | `auto` | 스레드 수. auto = 실행 환경에 할당된 코어 수. 숫자는 할당량 이하로 줄임. **화면에서 빼도 됨** |
+| Option | `threads` | String | 선택 | `auto` | 스레드 수. auto = 실행 환경에 할당된 코어 수. 숫자는 할당량 이하로 줄임. **포탈에 등록하지 않음**(Processor Core 선택으로 결정). 할당보다 크면 줄이고 경고 |
 | Option | `organellar_pattern` | String | 선택 | `(^chrM$\|^MT$\|^Mt$\|mitochond\|...\|^Pt$\|^PT$\|^chrC$)` | 세포소기관 contig 이름 정규식(대소문자 무시) |
 
 결과: `03_filtered_bam/*.organellar_removed.bam`(+ .bai), idxstats, flagstat(전/후), contig 목록, 요약 TSV.
@@ -148,7 +148,7 @@ ChIPseeker로 peak 주석(유전자 위치 분류, TSS 거리)과 그림을 만�
 | Option | `min_motif_score` | Float | 선택 | `10.0` | 모티프 hit 최소 점수 |
 | Option | `stabsel_cutoff` | Float | 선택 | `0.8` | randomized lasso 안정성 선택 기준(0~1] |
 | Option | `seed` | Integer | 선택 | `123` | 난수 시드 |
-| Option | `threads` | String | 선택 | `auto` | 스레드 수. auto = 할당된 코어 수. **화면에서 빼도 됨** |
+| Option | `threads` | String | 선택 | `auto` | 스레드 수. auto = 할당된 코어 수. **포탈에 등록하지 않음**(Processor Core 선택으로 결정). 할당보다 크면 줄이고 경고 |
 | Option | `run_kmer` | List (`TRUE`, `FALSE`) | 선택 | `TRUE` | k-mer 농축 분석 실행 |
 | Option | `run_regression` | List (`TRUE`, `FALSE`) | 선택 | `TRUE` | 안정성 선택 회귀 분석 실행 |
 
@@ -168,7 +168,7 @@ TOBIAS로 조건별 전사인자 footprint와 비교(BINDetect).
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
 | Option | `sample_col` | String | 선택 | `SampleID` | metadata의 샘플 컬럼 이름 |
 | Option | `condition_col` | String | 선택 | `Condition` | metadata의 조건 컬럼 이름 |
-| Option | `cores` | String | 선택 | `auto` | 코어 수. auto = 할당된 코어 수. **화면에서 빼도 됨** |
+| Option | `cores` | String | 선택 | `auto` | 코어 수. auto = 할당된 코어 수. **포탈에 등록하지 않음**(Processor Core 선택으로 결정). 할당보다 크면 줄이고 경고 |
 
 결과: `00_metadata`, `01_peak_merge`, `02_merged_bam_by_condition`, `03_tobias_tracks`(bigWig), `04_BINDetect`, `summary/`.
 
@@ -219,6 +219,6 @@ GO 농축 분석(clusterProfiler). 종별 데이터는 이미지에 없고, `too
 결과: `01_relaxed_peaks/<조건>/`, `02_idr/<조건>/`(쌍별 IDR 표, 통과 peak, 그림), `03_reproducible_peaks/<조건>.conservative_peaks.narrowPeak`(통과 peak가 가장 많은 쌍), `04_summary/idr_summary.tsv`. 반복 실험이 1개인 조건은 건너뛴다. 의사 반복(pseudo-replicate) 분석은 하지 않는다.
 
 ## 11. 공통 참고
-- `threads`/`cores`는 실행 환경에서 할당한 코어 수를 자동으로 쓰므로 등록 화면에서 빼도 된다. 로그에 `requested`, `allocated`가 함께 남는다.
+- `threads`/`cores`는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)을 스크립트가 `nproc`으로 읽어 쓴다. 로그에 `requested`, `allocated`가 함께 남고, 할당보다 큰 값은 줄이면서 오류 로그에 경고를 남긴다. bowtie2 1.2, MACS3_callpeak_ATAC 1.3, replicate_consistency 1.1도 내부 인자 `threads`(기본 `auto`)로 같은 방식을 쓴다. 1코어만 쓰는 도구(MACS3, idr, ChIPseeker, edgeR, clusterProfiler 등)가 중심인 모듈은 싱글 코어로 실행한다.
 - 입력 옆에 인덱스(.bai, .fai)를 만드는 모듈(organellar_filter, ATAC_QC, MACS3, tf_footprinting, replicate_consistency)은 입력 위치에 쓰기 권한이 있거나 인덱스가 미리 있어야 한다.
 - 빈 값으로 두는 선택 인자는 기본값으로 동작한다.

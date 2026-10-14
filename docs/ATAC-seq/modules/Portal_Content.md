@@ -24,12 +24,13 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 |---|---|---|
 | 모듈명 | bowtie2 | bowtie2 |
 | 서브 타이틀 | 참조 유전체 정렬 | Read alignment to the reference genome |
-| 버전 | 1.1 | |
+| 버전 | 1.2 | |
 | 카테고리 (제안) | Alignment / Read Alignment | |
 | 태그 | ATAC-seq, bowtie2, alignment, SAM, BAM, samtools | |
 | 레퍼런스 URL | https://bowtie-bio.sourceforge.net/bowtie2/ | |
 | 컨테이너 이미지 | bowtie2.1.0 | |
-| 실행 스크립트 파일 | bowtie2.1.1.sh | |
+| 실행 스크립트 파일 | bowtie2.1.2.sh | |
+| Processor Core (제안) | 최대 4코어 (bowtie2, samtools sort가 여러 코어 사용) | Up to 4 cores (bowtie2 and samtools sort are multi-threaded) |
 
 ### 내용(국문)
 FASTQ read를 bowtie2로 참조 유전체에 정렬합니다. 폴더 안의 FASTQ 파일 이름에서 R1/R2 짝을 찾아 paired-end로 정렬하고, 짝이 없는 파일은 single-end로 정렬합니다.
@@ -60,7 +61,7 @@ Aligns FASTQ reads to the reference genome with bowtie2. R1/R2 pairs are found f
 | bowtie2 기본 설정(end-to-end, 짝 read 사이 최대 500 bp)으로 정렬합니다. 500 bp보다 긴 fragment는 정상 짝으로 정렬되지 않아, 뉴클레오솜 2~3개 길이의 fragment가 적게 잡힐 수 있습니다. | Alignment uses the bowtie2 defaults (end-to-end, pairs up to 500 bp apart). Fragments longer than 500 bp are not aligned as concordant pairs, so di- and trinucleosome fragments may be under-represented. |
 | 인덱스가 없으면 FASTA와 같은 폴더에 만들므로 그 폴더에 쓰기 권한이 필요하고, 큰 유전체는 시간이 오래 걸립니다. 미리 만든 인덱스 이름을 지정하는 것을 권장합니다. | Without an index, one is built in the FASTA folder, which must be writable, and a large genome takes long. Giving a prebuilt index prefix is recommended. |
 | 샘플 이름은 FASTQ 이름에서 R1/R2 표시와 _trimmed, _HQ를 뺀 것입니다. 이후 모듈이 SampleID로 BAM을 찾으므로, 샘플 정보 파일의 SampleID가 이 이름에 들어 있어야 합니다. | The sample name is the FASTQ name without the R1/R2 tag and _trimmed or _HQ. Later modules find BAM files by SampleID, so each SampleID in the sample sheet must appear in this name. |
-| 스레드 수는 4로 고정되어 있습니다. | The thread count is fixed at 4. |
+| 스레드 수는 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)을 따릅니다. 최대 4코어를 고르면 정렬이 빨라집니다. | The thread count follows the Processor Core selection (single core or up to 4 cores); choosing up to 4 cores speeds up alignment. |
 | 결과 폴더에 SAM과 정렬 전 BAM(.unsorted.bam)도 남아 용량을 차지합니다. | SAM files and unsorted BAM files (.unsorted.bam) also remain in the output folder and take up space. |
 
 ### 분석 개념 이미지
@@ -72,7 +73,7 @@ Aligns FASTQ reads to the reference genome with bowtie2. R1/R2 pairs are found f
 
 ### 스크립트 사용 예제
 ```
-bash bowtie2.1.1.sh \
+bash bowtie2.1.2.sh \
   input_dir=/data/fastq \
   output_dir=/data/bowtie2 \
   ref_genome=/ref/genome.fa \
@@ -103,6 +104,7 @@ bash bowtie2.1.1.sh \
 | 레퍼런스 URL | https://www.htslib.org/ | |
 | 컨테이너 이미지 | bx_organellar_filter.1.0 | |
 | 실행 스크립트 파일 | organellar_filter.1.2.sh | |
+| Processor Core (제안) | 최대 4코어 (samtools가 여러 코어 사용) | Up to 4 cores (samtools is multi-threaded) |
 
 ### 내용(국문)
 정렬된 BAM 파일에서 미토콘드리아와 엽록체 등 세포소기관 염색체에 정렬된 read를 제거합니다. ATAC-seq에서는 Tn5가 뉴클레오솜이 없는 세포소기관 DNA를 많이 자르기 때문에 이 read의 비율이 높게 나타나며, 그대로 두면 peak 검출과 정규화에 영향을 줍니다.
@@ -171,6 +173,7 @@ bash organellar_filter.1.2.sh \
 | 레퍼런스 URL | https://bioconductor.org/packages/ATACseqQC/ | |
 | 컨테이너 이미지 | bx_atac_qc.1.0 | |
 | 실행 스크립트 파일 | ATAC_QC.1.2.R | |
+| Processor Core (제안) | 싱글 코어 (ATACseqQC는 1코어로 계산) | Single core (ATACseqQC runs on one core) |
 
 ### 내용(국문)
 ATACseqQC로 ATAC-seq 데이터의 품질을 평가하고, 이후 분석에 쓸 Tn5 보정 BAM을 만듭니다.
@@ -270,6 +273,7 @@ Rscript ATAC_QC.1.2.R \
 | 레퍼런스 URL | https://bioconductor.org/packages/ATACseqQC/ | |
 | 컨테이너 이미지 | bx_atac_qc.1.0 | |
 | 실행 스크립트 파일 | ATAC_QC_plot.1.1.R | |
+| Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 내용(국문)
 ATAC_QC가 만든 fragment 종류별 BAM으로 TSS 주변 신호의 heatmap과 평균 profile을 그립니다. 좋은 ATAC-seq 데이터에서는 NFR 신호가 TSS 바로 위에 모이고, mononucleosome 신호는 TSS 양옆에 나타납니다.
@@ -337,12 +341,13 @@ Rscript ATAC_QC_plot.1.1.R \
 |---|---|---|
 | 모듈명 | MACS3_callpeak_ATAC | MACS3_callpeak_ATAC |
 | 서브 타이틀 | ATAC-seq peak 검출 | ATAC-seq peak calling |
-| 버전 | 1.2 | |
+| 버전 | 1.3 | |
 | 카테고리 (제안) | Epigenomics / Peak Calling | |
 | 태그 | ATAC-seq, MACS3, peak calling, narrowPeak, FRiP | |
 | 레퍼런스 URL | https://github.com/macs3-project/MACS | |
 | 컨테이너 이미지 | bx_macs3_callpeak_atac.1.0 | |
-| 실행 스크립트 파일 | MACS3_callpeak_ATAC.1.2.sh | |
+| 실행 스크립트 파일 | MACS3_callpeak_ATAC.1.3.sh | |
+| Processor Core (제안) | 싱글 코어 (MACS3는 1코어로 계산) | Single core (MACS3 runs on one core) |
 
 ### 내용(국문)
 MACS3 callpeak의 paired-end 모드(BAMPE)로 Tn5 보정 BAM에서 열린 염색질 peak를 검출합니다.
@@ -386,7 +391,7 @@ Calls open-chromatin peaks from Tn5-corrected BAM files with MACS3 callpeak in p
 
 ### 스크립트 사용 예제
 ```
-bash MACS3_callpeak_ATAC.1.2.sh \
+bash MACS3_callpeak_ATAC.1.3.sh \
   input_dir=/data/atac_qc \
   output_dir=/data/macs3 \
   genome_size=1.2e8 \
@@ -420,6 +425,7 @@ bash MACS3_callpeak_ATAC.1.2.sh \
 | 레퍼런스 URL | https://bioconductor.org/packages/ChIPseeker/ | |
 | 컨테이너 이미지 | bx_peak_annotation.1.0 | |
 | 실행 스크립트 파일 | peak_annotation.1.1.R | |
+| Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 내용(국문)
 ChIPseeker로 peak를 promoter, exon, intron, intergenic 등 유전체 기능 영역으로 분류하고, 가장 가까운 유전자와 TSS까지의 거리를 붙입니다.
@@ -496,6 +502,7 @@ Rscript peak_annotation.1.1.R \
 | 레퍼런스 URL | https://bioconductor.org/packages/edgeR/ | |
 | 컨테이너 이미지 | bx_differential_accessibility.1.0 | |
 | 실행 스크립트 파일 | differential_accessibility.1.2.R | |
+| Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 내용(국문)
 두 조건의 공통 peak에서 read 수를 세어 edgeR로 접근성이 증가하거나 감소한 영역을 찾습니다.
@@ -595,12 +602,13 @@ Rscript differential_accessibility.1.2.R \
 |---|---|---|
 | 모듈명 | atac_motif | atac_motif |
 | 서브 타이틀 | 접근성 변화 연관 모티프 분석 | Motif enrichment by accessibility change |
-| 버전 | 1.1 | |
+| 버전 | 1.2 | |
 | 카테고리 (제안) | Epigenomics / Motif Analysis | |
 | 태그 | ATAC-seq, monaLisa, motif enrichment, JASPAR, k-mer | |
 | 레퍼런스 URL | https://bioconductor.org/packages/monaLisa/ | |
 | 컨테이너 이미지 | bx_atac_motif.1.0 | |
-| 실행 스크립트 파일 | atac_motif.1.1.R | |
+| 실행 스크립트 파일 | atac_motif.1.2.R | |
+| Processor Core (제안) | 최대 4코어 (모티프 계산을 여러 코어로 나눔) | Up to 4 cores (motif scoring is parallel) |
 
 ### 내용(국문)
 monaLisa로 접근성 변화량(logFC)에 따라 peak를 구간으로 나누고, 구간별로 많이 나타나는 전사인자 모티프를 찾습니다.
@@ -652,7 +660,7 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 
 ### 스크립트 사용 예제
 ```
-Rscript atac_motif.1.1.R \
+Rscript atac_motif.1.2.R \
   input_dir=/data/da \
   genome_fasta=/ref/genome.fa \
   motif_db=/ref/JASPAR2024_CORE_plants.meme \
@@ -695,6 +703,7 @@ Rscript atac_motif.1.1.R \
 | 레퍼런스 URL | https://github.com/loosolab/TOBIAS | |
 | 컨테이너 이미지 | bx_tf_footprinting.1.0 | |
 | 실행 스크립트 파일 | tf_footprinting.1.2.sh | |
+| Processor Core (제안) | 최대 4코어 (TOBIAS가 여러 코어 사용) | Up to 4 cores (TOBIAS is multi-threaded) |
 
 ### 내용(국문)
 TOBIAS로 조건별 Tn5 절단 신호를 보정하고 footprint 점수를 계산한 뒤, BINDetect로 조건 간 전사인자 결합 변화를 비교합니다.
@@ -789,6 +798,7 @@ bash tf_footprinting.1.2.sh \
 | 레퍼런스 URL | https://bioconductor.org/packages/clusterProfiler/ | |
 | 컨테이너 이미지 | bx_functional_enrichment.1.0 | |
 | 실행 스크립트 파일 | functional_enrichment.1.0.R | |
+| Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 내용(국문)
 열린 영역 또는 접근성이 변한 영역 근처 유전자가 어떤 생물학적 기능(GO)에 몰려 있는지 clusterProfiler로 분석합니다.
@@ -887,12 +897,13 @@ Rscript functional_enrichment.1.0.R \
 |---|---|---|
 | 모듈명 | replicate_consistency | replicate_consistency |
 | 서브 타이틀 | 반복 실험 peak 재현성(IDR) | Replicate consistency (IDR) |
-| 버전 | 1.0 | |
+| 버전 | 1.1 | |
 | 카테고리 (제안) | Quality Control / Reproducibility | |
 | 태그 | ATAC-seq, IDR, reproducibility, replicate, MACS3 | |
 | 레퍼런스 URL | https://github.com/nboley/idr | |
 | 컨테이너 이미지 | bx_replicate_consistency.1.0 | |
-| 실행 스크립트 파일 | replicate_consistency.1.0.sh | |
+| 실행 스크립트 파일 | replicate_consistency.1.1.sh | |
+| Processor Core (제안) | 싱글 코어 (MACS3, idr은 1코어로 계산) | Single core (MACS3 and idr run on one core) |
 
 ### 내용(국문)
 ENCODE 방식의 IDR(Irreproducible Discovery Rate)로 반복 실험 사이 peak 재현성을 평가합니다.
@@ -938,7 +949,7 @@ ATAC_QC와 같은 sample_data.csv를 사용한다(2번 모듈의 샘플시트 �
 
 ### 스크립트 사용 예제
 ```
-bash replicate_consistency.1.0.sh \
+bash replicate_consistency.1.1.sh \
   input_dir=/data/atac_qc \
   sample_data=/data/sample_data.csv \
   genome_size=1.2e8 \
