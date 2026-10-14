@@ -39,9 +39,9 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 | bx_organellar_filter | 1.0 | organellar_filter (organellar_filter.1.2.sh) | SAMtools 1.23.1 |
 | bx_atac_qc | 1.0 | ATAC_QC (ATAC_QC.1.2.R), ATAC_QC_plot (ATAC_QC_plot.1.2.R) | R 4.5.3, ATACseqQC 1.34.0, ChIPpeakAnno 3.44.0 |
 | bx_macs3_callpeak_atac | 1.0 | MACS3_callpeak_ATAC (MACS3_callpeak_ATAC.1.3.sh) | MACS3 3.0.4, SAMtools 1.23.1 |
-| bx_peak_annotation | 1.0 | peak_annotation (peak_annotation.1.1.R) | R 4.5.3, ChIPseeker 1.46.1 |
+| bx_peak_annotation | 1.0 | peak_annotation (peak_annotation.1.2.R) | R 4.5.3, ChIPseeker 1.46.1 |
 | bx_differential_accessibility | 1.0 | differential_accessibility (differential_accessibility.1.2.R) | R 4.5.3, edgeR 4.8.2, EDASeq 2.44.0, cqn 1.56.0 |
-| bx_atac_motif | 1.0 | atac_motif (atac_motif.1.3.R) | R 4.5.3, monaLisa 1.16.0 |
+| bx_atac_motif | 1.0 | atac_motif (atac_motif.1.4.R) | R 4.5.3, monaLisa 1.16.0 |
 | bx_tf_footprinting | 1.0 | tf_footprinting (tf_footprinting.1.3.sh) | TOBIAS 0.17.5, bedtools 2.31.1, SAMtools 1.24 |
 | bx_functional_enrichment | 1.0 | functional_enrichment (functional_enrichment.1.1.R) | R 4.5.3, clusterProfiler 4.18.4 |
 | bx_replicate_consistency | 1.0 | replicate_consistency (replicate_consistency.1.1.sh) | IDR 2.0.4.2, MACS3 3.0.4, SAMtools 1.23.1 |

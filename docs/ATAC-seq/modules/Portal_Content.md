@@ -525,14 +525,14 @@ bash MACS3_callpeak_ATAC.1.3.sh \
 |---|---|---|
 | 모듈명 | peak_annotation | peak_annotation |
 | 서브 타이틀 | Peak 유전체 주석 | Peak annotation |
-| 버전 | 1.1 | |
+| 버전 | 1.2 | |
 | 카테고리 대분류 | 주석 | Annotation |
 | 카테고리 아이콘 | 선택 예정(Annotation 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 유전체 영역 주석 | Genomic Feature Annotation |
 | 태그 | ATAC-seq, ChIPseeker, peak annotation, promoter, TSS | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ChIPseeker/ | |
 | 컨테이너 이미지 | bx_peak_annotation.1.0 | |
-| 실행 스크립트 파일 | peak_annotation.1.1.R | |
+| 실행 스크립트 파일 | peak_annotation.1.2.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 실행 이미지
@@ -601,7 +601,7 @@ Classifies peaks into genomic features such as promoter, exon, intron, and inter
 
 ### 스크립트 사용 예제
 ```
-Rscript peak_annotation.1.1.R \
+Rscript peak_annotation.1.2.R \
   input_dir=/data/macs3 \
   genome_gff=/ref/genes.gff3 \
   output_dir=/data/peak_annotation \
@@ -621,9 +621,9 @@ Rscript peak_annotation.1.1.R \
 - 레전드(영문): **Genomic distribution of peaks per sample.** Each bar is one sample, split by colour into the percentage of peaks in promoters, UTRs, exons, introns, distal intergenic regions and other features. ATAC-seq peaks are usually enriched in promoters, introns and distal intergenic regions; similar distributions across samples indicate consistent data.
 
 **결과 2. 겹치는 주석 영역(UpSet)**
-- 결과 파일: `plots/<sample>.annotation_upset_vennpie.pdf` (대표 샘플 1개)
-- 레전드(국문): **peak가 동시에 걸치는 유전체 영역(UpSet plot).** peak 하나가 여러 영역(예: promoter이면서 exon)에 함께 걸칠 수 있으므로, 영역 조합별 peak 수를 보여 준다. 아래 점과 선은 영역 조합, 위 막대는 그 조합에 속한 peak 수다. 왼쪽 위의 원그래프(vennpie)는 전체 peak의 영역 구성을 요약한다. 결과 1의 막대는 우선순위에 따라 영역 하나만 고른 것이고, 이 그림은 겹침까지 보여 준다.
-- 레전드(영문): **Overlapping genomic features of peaks (UpSet plot).** A peak can fall in several features at once (for example promoter and exon), so the plot shows peak counts per feature combination: the dots and lines below define the combination and the bars above give its peak count. The pie (vennpie) at the top left summarises the feature composition of all peaks. Result 1 assigns each peak to one feature by priority; this plot shows the overlaps.
+- 결과 파일: `plots/<sample>.annotation_upset.pdf` (대표 샘플 1개)
+- 레전드(국문): **peak가 동시에 걸치는 유전체 영역(UpSet plot).** peak 하나가 여러 영역(예: promoter이면서 exon)에 함께 걸칠 수 있으므로, 영역 조합별 peak 수를 보여 준다. 아래 점과 선은 영역 조합, 위 막대는 그 조합에 속한 peak 수다. 결과 1의 막대는 우선순위에 따라 영역 하나만 고른 것이고, 이 그림은 겹침까지 보여 준다.
+- 레전드(영문): **Overlapping genomic features of peaks (UpSet plot).** A peak can fall in several features at once (for example promoter and exon), so the plot shows peak counts per feature combination: the dots and lines below define the combination and the bars above give its peak count. Result 1 assigns each peak to one feature by priority; this plot shows the overlaps.
 
 **결과 3. TSS까지 거리 분포**
 - 결과 파일: `plots/<sample>.distance_to_tss.pdf` (결과 2와 같은 샘플)
@@ -792,14 +792,14 @@ Rscript differential_accessibility.1.2.R \
 |---|---|---|
 | 모듈명 | atac_motif | atac_motif |
 | 서브 타이틀 | 접근성 변화 연관 모티프 분석 | Motif enrichment by accessibility change |
-| 버전 | 1.3 | |
+| 버전 | 1.4 | |
 | 카테고리 대분류 | 유전자 조절 | Gene Regulation |
 | 카테고리 아이콘 | `docs/category_icons/gene_regulation.png` | |
 | 카테고리 중분류 | 모티프 분석 | Motif Analysis |
 | 태그 | ATAC-seq, monaLisa, motif enrichment, JASPAR, k-mer | |
 | 레퍼런스 URL | https://bioconductor.org/packages/monaLisa/ | |
 | 컨테이너 이미지 | bx_atac_motif.1.0 | |
-| 실행 스크립트 파일 | atac_motif.1.3.R | |
+| 실행 스크립트 파일 | atac_motif.1.4.R | |
 | Processor Core (제안) | 최대 4코어 (모티프 계산을 여러 코어로 나눔) | Up to 4 cores (motif scoring is parallel) |
 
 그림: `docs/category_icons/gene_regulation.png` (카테고리 아이콘)
@@ -878,7 +878,7 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 
 ### 스크립트 사용 예제
 ```
-Rscript atac_motif.1.3.R \
+Rscript atac_motif.1.4.R \
   input_dir=/data/da \
   genome_fasta=/ref/genome.fa \
   motif_db=/ref/JASPAR2024_CORE_plants.meme \
