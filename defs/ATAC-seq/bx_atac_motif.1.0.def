@@ -128,6 +128,13 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   from this DEF had no KernSmooth, so atac_motif stopped at smoothScatter()
 #   ("Must have the ('Recommended') package \"KernSmooth\" installed").
 #   Rebuild the SIF from this revision.
+#   Revision (2026-10-15): the production rebuild with KernSmooth stopped at
+#   the final workspace removal (rm: cannot remove
+#   '/__closha_build/work/miniforge/pkgs': Is a directory), the same fakeroot
+#   problem as bx_peak_annotation and bx_functional_enrichment. The cleanup
+#   now uses the same fallback as those DEFs: if rm fails, the base image's
+#   python3 removes the rest, unlinking each entry and treating only an
+#   EISDIR answer as a directory (no symlink following, same filesystem only).
 #
 # [VALIDATION STATUS AND REPRODUCIBILITY]
 #   Checked: supplied-script dependencies (library/requireNamespace/::), a
@@ -369,7 +376,59 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     [ -d "$WORK" ] || fail "workspace is missing"
     [ "$(realpath -e -- "$WORK")" = "$WORK" ] || fail "canonical path changed"
     [ "$(stat -c %d -- "$WORK")" = "$(stat -c %d -- /)" ] || fail "workspace is on another filesystem"
-    rm -rf --one-file-system -- "$WORK"
+    # Under the fakeroot command (production builds by an account without
+    # /etc/subuid entries), a stale fakeroot record can report a directory as
+    # a regular file. A production build showed this for miniforge/pkgs: rm
+    # and Python's shutil.rmtree both called unlink on it and stopped with
+    # "Is a directory". If rm fails, the rest is removed with the base
+    # image's Python, which decides by the kernel's answer instead of stat:
+    # it unlinks each entry and only on EISDIR opens it as a directory
+    # (O_NOFOLLOW, same filesystem as the workspace), empties it, and removes
+    # it with rmdir. Symbolic links are removed, never followed.
+    if ! rm -rf --one-file-system -- "$WORK"; then
+        echo "rm could not remove all of $WORK; retrying with python3" >&2
+        /usr/bin/env python3 - "$WORK" <<'PYCLEAN' || fail "python3 could not remove the workspace"
+import os, sys
+# Remove the workspace without trusting file types from stat: under the
+# fakeroot command a stale record can report a directory as a file. Each
+# entry is unlinked; only when the kernel answers EISDIR is it opened as a
+# directory (no symlink following, same device as the workspace), emptied,
+# and removed with rmdir.
+root = sys.argv[1]
+dir_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+root_fd = os.open(root, dir_flags)
+root_dev = os.fstat(root_fd).st_dev
+removed = [0, 0]
+
+def empty(dir_fd, where):
+    for name in os.listdir(dir_fd):
+        try:
+            os.unlink(name, dir_fd=dir_fd)
+            removed[0] += 1
+            continue
+        except FileNotFoundError:
+            continue
+        except IsADirectoryError:
+            pass
+        fd = os.open(name, dir_flags, dir_fd=dir_fd)
+        try:
+            if os.fstat(fd).st_dev != root_dev:
+                sys.exit("not removing a different filesystem: %s/%s" % (where, name))
+            empty(fd, where + "/" + name)
+        finally:
+            os.close(fd)
+        os.rmdir(name, dir_fd=dir_fd)
+        removed[1] += 1
+
+try:
+    empty(root_fd, root)
+finally:
+    os.close(root_fd)
+os.rmdir(root)
+print("python3 removed %d files and %d directories" % tuple(removed), file=sys.stderr)
+PYCLEAN
+    fi
+    [ ! -e "$WORK" ] || fail "workspace could not be removed"
     rmdir -- "$BUILD_ROOT"
 
 %runscript
