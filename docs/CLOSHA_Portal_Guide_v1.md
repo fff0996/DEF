@@ -58,17 +58,18 @@ KOBIC 포탈의 파이프라인 페이지와 모듈 등록 화면에 넣을 원�
 ### 5.1 항목
 | 항목 | 쓰는 법 |
 |---|---|
-| 기본 정보 | 모듈명, 서브 타이틀(국문·영문), 버전, 카테고리(5.2), 태그, 레퍼런스 URL(도구 홈페이지), 컨테이너 이미지(DEF 이름), 실행 스크립트 파일 |
+| 기본 정보 | 모듈명, 서브 타이틀(국문·영문), 버전, 카테고리(5.2), 태그, 레퍼런스 URL(도구 홈페이지), 컨테이너 이미지(DEF 이름), 실행 스크립트 파일, Processor Core(제안) |
+| 실행 이미지 | 이미지 이름과 버전, DEF 정보 표(DEF 파일, DEF Bootstrap, DEF From, conda 설치 도구), 이미지 설명(국문·영문), 설치 도구와 버전 표(5.5) |
 | 내용(국문/영문) | 첫 문단에 무엇을 왜 하는지, 이어서 bullet 3~4개(방법, 만드는 결과, 다음 모듈) |
 | 입출력 / 파라미터 | 표: 탭(Input/Output/Option), 필수, 형식, Name(인자 이름), Value(기본값), Description(국문), English Description |
 | 샘플시트 | 샘플 정보 파일을 받는 모듈만. 열 이름, 필수 여부, 예시 |
 | 주요 사항 | 국문·영문 두 열 표. 사용자가 실수하기 쉬운 입력 조건 위주 |
 | 분석 개념 이미지 | 그림 + 레전드(국문·영문) + 출처(5.3) |
-| 스크립트 사용 예제 | `key=value` 형식의 실행 한 줄 |
+| 스크립트 사용 예제 | `key=value` 형식. 포탈에 등록하는 인자와 기본값이 있는 옵션을 모두 적고 한 줄에 인자 하나 |
 | 주요 결과 이미지 | 등록할 결과 파일 + 레전드(국문·영문)(5.4) |
 
 등록 화면의 공통 값:
-- **기반 이미지 출처(Bootstrap):** `Apptainer`(작업이 SIF로 실행되므로)
+- **기반 이미지 출처(Bootstrap):** `Apptainer`(작업이 SIF로 실행되므로). DEF 파일 안의 `Bootstrap: docker`와 다르니 섞지 않는다.
 - **기반 이미지(From):** DEF의 `From` 값
 - **형식(Type):** 포탈 목록에서 고른다. 원고에는 Directory, File, String, Integer, Float, List로 적는다.
 - **필수 입력·출력의 Value:** 비어 있으면 등록이 안 되므로 예시 경로(`/data/<모듈>`, `/ref/genome.fa` 등)를 넣는다. 스크립트 사용 예제와 같은 경로를 쓴다. 기본값이 아니라 캔버스에서 실제 경로로 바꿀 자리이며, 그대로 넘어가면 스크립트가 "not found"로 멈춘다.
@@ -127,6 +128,35 @@ KOBIC 포탈의 파이프라인 페이지와 모듈 등록 화면에 넣을 원�
   - 정상 결과가 어떻게 보이는지
   - 기준값이 있으면 그 값과 출처. 예: FRiP는 ENCODE 기준 0.3 이상이 바람직하고 0.2 이상이면 허용한다.
 
+### 5.5 실행 이미지
+모듈이 도는 Apptainer 이미지 정보를 모듈마다 적는다. 매뉴얼 웹페이지의 이미지 설명도 이 절을 쓴다.
+
+- **값은 DEF 파일에서 옮긴다.** 기억이나 다른 문서에서 쓰지 않는다.
+
+  | 원고 항목 | DEF에서 가져오는 곳 |
+  |---|---|
+  | 이미지 이름, 버전 | 파일 이름 `<이미지>.<버전>.def`, `%labels`의 `Component`, `Version` |
+  | DEF Bootstrap, DEF From | 파일 첫 줄의 `Bootstrap:`, `From:` (From은 digest까지 그대로, 머리 주석의 태그를 괄호로 덧붙임) |
+  | conda 설치 도구 | `%labels`의 `CondaInstaller` |
+  | 설치 도구와 버전 | `%post`의 `conda create`·`conda install` 목록에서 버전을 지정한 패키지 |
+  | 이미지 설명 | `%labels`의 `Description`을 국문·영문으로 풀어 씀 |
+
+- **표 형식**
+
+  | 항목 / Item | 값 / Value |
+  |---|---|
+  | DEF 파일 | `defs/<파이프라인>/<이미지>.<버전>.def` |
+  | DEF Bootstrap | `docker` |
+  | DEF From | `rockylinux/rockylinux@sha256:...` (Rocky Linux 9.8, `9.8.20260525.0`) |
+  | conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+  그 아래 이미지 설명(국문·영문)과 `| 도구 | 버전 |` 표를 둔다.
+- **같은 이미지를 쓰는 모듈에도 각각 다 적는다**(3절 규칙). "ATAC_QC와 같은 이미지" 같은 문장을 쓰지 않는다.
+- **Bootstrap을 구분한다.** 포탈 등록 화면의 Bootstrap 칸(`Apptainer`)과 DEF 파일의 `Bootstrap: docker`는 다른 값이다. 원고 표에는 "DEF Bootstrap", "DEF From"으로 적는다.
+- **DEF가 저장소에 없으면** 표를 비워 두지 말고 `등록 메모:`로 보류 사유를 적는다.
+- **DEF를 고치면** 이 절도 같이 고친다. 분석 스크립트만 바뀐 경우에는 이미지가 같으므로 고치지 않는다.
+- 이미지 공통 설명(매뉴얼용): Rocky Linux 9.8을 digest로 고정, Miniforge로 conda-forge·bioconda만 사용(Anaconda 저장소 사용 안 함), 모든 도구 버전 고정과 설치 목록 기록(`/opt/bio/share/<이미지 이름, _는 ->/conda-explicit.txt`), 도구는 `/opt/bio/bin`, 분석 스크립트는 이미지에 넣지 않고 실행할 때 연결, 실행 중 인터넷 없음.
+
 ## 6. Word 만들기
 
 ```
@@ -157,4 +187,5 @@ NODE_PATH=<scratch>/docxgen/node_modules node docs/tools/make_portal_docx.js \
 - [ ] 논문 그림은 CC BY만 썼고, 출처 줄에 전체 서지, DOI, 라이선스 링크가 있다.
 - [ ] 주요 사항에 모듈 설치 안내가 들어가지 않았다.
 - [ ] 결과 그림을 `module_results/`에 PNG와 SVG로 저장했다(PNG만 나오는 그림 제외).
+- [ ] 모듈마다 실행 이미지 절이 있고, 값이 DEF 파일과 같다.
 - [ ] Word 파일을 md에서 다시 만들어 함께 커밋했다.
