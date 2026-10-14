@@ -1,6 +1,6 @@
 # ATAC-seq 파이프라인 포탈 등록 콘텐츠
 
-KOBIC 포탈의 ATAC-seq Analysis Pipeline 상세 페이지(https://kobic.re.kr/kobic/analysis/pipeline/go_detail?id=73)에 들어갈 국문/영문 원고다. 섹션 순서는 포탈 페이지 구성을 따른다. 모듈별 입력·옵션·결과는 `docs/ATAC-seq/modules/Registration.md`, 그림은 `docs/ATAC-seq/figures/`에 있다.
+KOBIC 포탈의 ATAC-seq Analysis Pipeline 상세 페이지(https://kobic.re.kr/kobic/analysis/pipeline/go_detail?id=73)에 들어갈 국문/영문 원고다. 섹션 순서는 포탈 페이지 구성을 따른다. 모듈별 입력·옵션·결과는 `docs/ATAC-seq/modules/Registration.md`, 그림은 `docs/ATAC-seq/pipeline/figures/`에 있다. 작성 방법은 `docs/CLOSHA_Portal_Guide_v1.md`를 따른다.
 
 포탈 스타일: 주 폰트 Pretendard, 포인트 폰트 GmarketSans, 주 폰트 컬러 #222222, 보조 #3A3A3A, 포인트 #32549C, 배경 #FFFFFF.
 

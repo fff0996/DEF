@@ -1,6 +1,6 @@
 # ATAC-seq 모듈 포탈 등록 콘텐츠
 
-KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 원고다. 항목 순서는 등록 화면을 따른다. 인자 정의는 `docs/ATAC-seq/modules/Registration.md`와 같다.
+KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 원고다. 항목 순서는 등록 화면을 따른다. 인자 정의는 `docs/ATAC-seq/modules/Registration.md`와 같다. 작성 방법은 `docs/CLOSHA_Portal_Guide_v1.md`를 따른다.
 
 등록 화면 공통 안내:
 - 모든 스크립트는 `key=value` 형식 인자를 받는다. 등록 화면의 Name은 인자 이름, Value는 기본값이다(빈칸은 기본값 없음).
