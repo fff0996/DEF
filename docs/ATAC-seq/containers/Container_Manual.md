@@ -183,6 +183,7 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 | circlize | 0.4.18 |
 | stabs | 0.7-1 |
 | glmnet | 5.0 |
+| KernSmooth | 2.23-27 |
 | ggplot2 | 4.0.3 |
 
 ### 3.7 bx_tf_footprinting 1.0

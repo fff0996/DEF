@@ -827,6 +827,7 @@ Rscript differential_accessibility.1.2.R \
 | circlize | 0.4.18 |
 | stabs | 0.7-1 |
 | glmnet | 5.0 |
+| KernSmooth | 2.23-27 |
 | ggplot2 | 4.0.3 |
 
 ### 내용(국문)
