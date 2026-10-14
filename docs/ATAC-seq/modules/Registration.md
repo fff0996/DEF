@@ -25,7 +25,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 | peak_annotation | `peak_annotation.1.1.R` | bx_peak_annotation.1.0 | `Rscript peak_annotation.1.1.R key=value ...` |
 | differential_accessibility | `differential_accessibility.1.2.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.2.R key=value ...` |
 | atac_motif | `atac_motif.1.3.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.3.R key=value ...` |
-| tf_footprinting | `tf_footprinting.1.2.sh` | bx_tf_footprinting.1.0 | `bash tf_footprinting.1.2.sh key=value ...` |
+| tf_footprinting | `tf_footprinting.1.3.sh` | bx_tf_footprinting.1.0 | `bash tf_footprinting.1.3.sh key=value ...` |
 | functional_enrichment | `functional_enrichment.1.0.R` | bx_functional_enrichment.1.0 | `Rscript functional_enrichment.1.0.R key=value ...` |
 | replicate_consistency | `replicate_consistency.1.1.sh` | bx_replicate_consistency.1.0 | `bash replicate_consistency.1.1.sh key=value ...` |
 
@@ -162,8 +162,7 @@ TOBIAS로 조건별 전사인자 footprint와 비교(BINDetect).
 | Input | `metadata` | File (TSV/CSV) | 필수 | | 샘플 정보. `SampleID`, `Condition` 컬럼, 조건 2개 이상 |
 | Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. .fai가 없으면 FASTA 옆에 만든다 |
 | Input | `motif_db` | File | 필수 | | 모티프 데이터베이스 |
-| Input | `macs_dir` | Directory | 필수(포탈) | | MACS3의 `output_dir`. peak를 합쳐 공통 peak를 만든다. `peak_file`을 주면 `peak_file`을 대신 사용. 파이프라인에서 연결하는 입력이라 포탈에는 필수로 등록 |
-| Input | `peak_file` | File | 선택 | | 미리 합친 공통 peak 파일(BED/narrowPeak/broadPeak). 주면 `macs_dir` 대신 사용 |
+| Input | `macs_dir` | Directory | 필수 | | MACS3의 `output_dir`. 그 안의 peak를 합쳐 공통 peak를 만든다(1.3부터 `peak_file` 인자 없음) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
 | Option | `sample_col` | String | 선택 | `SampleID` | metadata의 샘플 컬럼 이름 |
 | Option | `condition_col` | String | 선택 | `Condition` | metadata의 조건 컬럼 이름 |

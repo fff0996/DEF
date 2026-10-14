@@ -696,12 +696,12 @@ Rscript atac_motif.1.3.R \
 |---|---|---|
 | 모듈명 | tf_footprinting | tf_footprinting |
 | 서브 타이틀 | 전사인자 footprint 분석 | Transcription factor footprinting |
-| 버전 | 1.2 | |
+| 버전 | 1.3 | |
 | 카테고리 (제안) | Epigenomics / Footprinting | |
 | 태그 | ATAC-seq, TOBIAS, footprinting, BINDetect, transcription factor | |
 | 레퍼런스 URL | https://github.com/loosolab/TOBIAS | |
 | 컨테이너 이미지 | bx_tf_footprinting.1.0 | |
-| 실행 스크립트 파일 | tf_footprinting.1.2.sh | |
+| 실행 스크립트 파일 | tf_footprinting.1.3.sh | |
 | Processor Core (제안) | 최대 4코어 (TOBIAS가 여러 코어 사용) | Up to 4 cores (TOBIAS is multi-threaded) |
 
 ### 내용(국문)
@@ -723,8 +723,7 @@ Corrects Tn5 cleavage signals per condition with TOBIAS, computes footprint scor
 | Input | Required | File | metadata | /data/metadata.tsv | 샘플 정보 TSV/CSV(SampleID, Condition), 조건 2개 이상 | Sample information TSV/CSV (SampleID, Condition) with two or more conditions |
 | Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA. .fai가 없으면 FASTA 옆에 만들므로 그 폴더에 쓰기 권한이 필요. 공유 참조는 .fai를 미리 만들어 둘 것(samtools faidx) | Reference genome FASTA. A missing .fai is created beside the FASTA, so the folder must be writable; prepare the .fai in advance for shared references (samtools faidx) |
 | Input | Required | File | motif_db | /ref/motifs.meme | 모티프 데이터베이스(MEME/JASPAR 형식) | Motif database (MEME/JASPAR format) |
-| Input | Required | Directory | macs_dir | /data/macs3 | MACS3_callpeak_ATAC의 output_dir. peak_file을 주면 peak_file을 대신 사용 | MACS3_callpeak_ATAC output_dir; peak_file is used instead when given |
-| Input | Optional | File | peak_file | | 미리 합친 공통 peak(BED/narrowPeak/broadPeak) | Pre-merged consensus peaks (BED/narrowPeak/broadPeak) |
+| Input | Required | Directory | macs_dir | /data/macs3 | MACS3_callpeak_ATAC의 output_dir. 그 안의 샘플별 peak를 합쳐 공통 peak를 만듦 | MACS3_callpeak_ATAC output_dir; the sample peaks in it are merged into common peaks |
 | Output | Required | Directory | output_dir | /data/tf_footprinting | 결과 폴더 | Output folder |
 | Option | Optional | String | sample_col | SampleID | metadata의 샘플 컬럼 이름 | Sample column name in metadata |
 | Option | Optional | String | condition_col | Condition | metadata의 조건 컬럼 이름 | Condition column name in metadata |
@@ -762,7 +761,7 @@ trt_2	treated
 
 ### 스크립트 사용 예제
 ```
-bash tf_footprinting.1.2.sh \
+bash tf_footprinting.1.3.sh \
   input_dir=/data/atac_qc \
   metadata=/data/metadata.tsv \
   macs_dir=/data/macs3 \
