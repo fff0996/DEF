@@ -138,7 +138,7 @@ Conda 관련 경로·실행 파일 검사만으로 설치 이력이나 기반 �
         (mp == "/sys" || mp ~ /^\/sys\//) &&
             fs ~ /^(sysfs|cgroup|cgroup2|securityfs|selinuxfs|debugfs|tracefs|bpf|fusectl|configfs|pstore|efivarfs)$/ { next }
         mp == "/.singularity.d/libs" && fs == "tmpfs" && opt ~ /^ro(,|$)/ { next }
-        mp ~ /^\/\.singularity\.d\/libs\/(fakeroot|faked|libfakeroot\.so)$/ && opt ~ /^ro(,|$)/ { next }
+        mp ~ /^\/\.singularity\.d\/libs\/(fakeroot|faked|libfakeroot\.so|getopt)$/ && opt ~ /^ro(,|$)/ { next }
         { print "Unexpected mount in build container: " mp " (" fs ")" > "/dev/stderr"; bad = 1 }
         END { exit bad }
     ' /proc/self/mountinfo || { echo "Build stopped: remove extra bind settings and rebuild" >&2; exit 1; }
@@ -190,7 +190,7 @@ Conda 관련 경로·실행 파일 검사만으로 설치 이력이나 기반 �
 - `mount tmp`, `mount proc`, `mount sys`, `mount dev`는 켜진 채 남는다. 호스트 /tmp와 /var/tmp가 %post와 %test 모두에 쓰기 가능하게 연결된다.
 - /etc/hosts와 /etc/resolv.conf에는 빌드 임시 디렉터리(`bundle-temp-*`)에 만든 복사본이 연결된다. 호스트 원본이 아니다.
 - 빌드를 실행한 셸의 `APPTAINER_BINDPATH`, `APPTAINER_MOUNT`는 %post와 %test에 그대로 전달된다. 명령에 --bind가 없어도 임의의 호스트 경로가 연결될 수 있다(root·fakeroot 모두 실측).
-- subuid에 등록되지 않은 일반 계정이 빌드하면(운영 빌드, 2026-10-06 로그) Apptainer는 root-mapped namespace를 만들고 %post를 fakeroot 명령으로 실행한다. 이때 /.singularity.d/libs(tmpfs)와 그 아래 fakeroot, faked, libfakeroot.so가 호스트에서 읽기 전용(ro)으로 연결된다. /dev는 호스트 devtmpfs이고 호스트의 공유 메모리 /dev/shm과 /dev/hugepages가 함께 보인다. 이 방식에서도 tmpfs mount는 동작하고 %test는 uid 0으로 실행된다.
+- subuid에 등록되지 않은 일반 계정이 빌드하면(운영 빌드, 2026-10-06 로그) Apptainer는 root-mapped namespace를 만들고 %post를 fakeroot 명령으로 실행한다. 이때 /.singularity.d/libs(tmpfs)와 그 아래 fakeroot, faked, libfakeroot.so가 호스트에서 읽기 전용(ro)으로 연결된다. 노드에 따라 getopt도 함께 연결된다(fakeroot 실행 스크립트가 getopt를 쓴다. 2026-10-14 새 노드의 운영 빌드 로그에서 처음 확인했고, 그 전 노드에서는 없었다). /dev는 호스트 devtmpfs이고 호스트의 공유 메모리 /dev/shm과 /dev/hugepages가 함께 보인다. 이 방식에서도 tmpfs mount는 동작하고 %test는 uid 0으로 실행된다.
 - --fakeroot 빌드는 %post 전에 Apptainer의 fakeroot 엔진이 호스트 /tmp에 빈 `bind-mount-*` 디렉터리를 만들었다가 바로 지운다. TMPDIR로 옮겨지지 않으며 DEF로 막을 수 없다. Apptainer 자체 동작으로 기록한다.
 
 DEF 작성 규칙:
@@ -199,7 +199,7 @@ DEF 작성 규칙:
   2. /tmp와 /var/tmp에 전용 tmpfs를 mount하고 `stat -f -c %T` 결과가 tmpfs인지 확인한다. mount에 실패하면 빌드를 중단한다. 이 mount는 컨테이너 전용 mount namespace 안에서만 유효하며 호스트에 영향을 주지 않는다.
   3. /dev/shm이 있으면 전용 tmpfs를 mount하고, mountinfo에서 마지막 /dev/shm mount가 이 tmpfs(`closha-shm`)인지 확인한다. 호스트 /dev/shm도 tmpfs라 `stat`으로는 구분되지 않는다.
   4. `/proc/self/mountinfo`를 빌드 로그에 출력한다.
-  5. mount 허용 목록을 검사해, 목록 밖의 mount가 있으면 설치 전에 빌드를 중단한다. 허용 대상은 rootfs `/`, /tmp와 /var/tmp, `bundle-temp-*` 복사본인 /etc/hosts와 /etc/resolv.conf, /dev·/proc·/sys 아래의 커널 가상 파일시스템(참고 템플릿의 fstype 목록), 그리고 fakeroot 명령 방식에서 Apptainer가 읽기 전용으로 넣는 /.singularity.d/libs와 그 아래 fakeroot·faked·libfakeroot.so다. libs 연결이 읽기 전용이 아니면 거부한다. 새 환경에서 정상 mount가 거부되면 실측한 mount와 근거를 확인한 뒤 목록을 검토해 늘린다. 검사를 끄지 않는다.
+  5. mount 허용 목록을 검사해, 목록 밖의 mount가 있으면 설치 전에 빌드를 중단한다. 허용 대상은 rootfs `/`, /tmp와 /var/tmp, `bundle-temp-*` 복사본인 /etc/hosts와 /etc/resolv.conf, /dev·/proc·/sys 아래의 커널 가상 파일시스템(참고 템플릿의 fstype 목록), 그리고 fakeroot 명령 방식에서 Apptainer가 읽기 전용으로 넣는 /.singularity.d/libs와 그 아래 fakeroot·faked·libfakeroot.so·getopt다. libs 연결이 읽기 전용이 아니면 거부한다. 새 환경에서 정상 mount가 거부되면 실측한 mount와 근거를 확인한 뒤 목록을 검토해 늘린다. 검사를 끄지 않는다.
   6. 작업 경로 생성(6절) 직후 `HOME`, `TMPDIR`, `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME`을 작업 경로 아래로 옮긴다. 도구별 캐시 설정은 그 다음에 추가한다.
 - %test 첫 부분에서도 `id -u`가 0이면(root 또는 fakeroot 빌드) /tmp와 /var/tmp, 그리고 있으면 /dev/shm에 같은 tmpfs를 mount하고 확인한다. R은 시작할 때마다 /tmp에 세션 디렉터리를 만들고, Python은 임시 디렉터리를 고를 때 /tmp에 시험 파일을 만든다. 비특권 런타임 검사는 mount 권한이 없으므로 이 단계를 건너뛴다.
 - %post와 %test에서 /etc/hosts, /etc/localtime, /etc/resolv.conf, /proc, /sys, /dev 아래에 쓰지 않는다. 시간대 설정을 위해 /etc/localtime을 교체하는 레시피는 별도 검토 없이 쓰지 않는다.
@@ -402,8 +402,8 @@ verified in the mount table; the mount table printed to the build log; the
 approved mount allowlist check, stopping before any install step on any other
 mount; then the workspace, followed at once by HOME, TMPDIR, and XDG directories
 set below it. Start every %test with the same tmpfs mounts when id -u is 0.
-The allowlist accepts /.singularity.d/libs and its fakeroot helpers only when
-they are mounted read-only.
+The allowlist accepts /.singularity.d/libs and its fakeroot helpers (fakeroot,
+faked, libfakeroot.so, getopt) only when they are mounted read-only.
 Never write /etc/hosts, /etc/localtime, /etc/resolv.conf, /proc, /sys, or /dev.
 Do not disable the mount check; widen the allowlist only after reviewing the
 observed mount and its source.
