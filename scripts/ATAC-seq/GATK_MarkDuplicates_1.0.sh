@@ -1,5 +1,23 @@
 #!/bin/bash
 
+# v1.1  Changes from v1.0
+#
+#   1) Tool paths moved from the legacy /opt/apps/<tool>/current/... layout to
+#      the paths the Apptainer images actually provide (/opt/bio/bin/... , and a
+#      tool-specific prefix where the tool needs its own environment). The old
+#      layout does not exist on the host, and the standard `apptainer exec` line
+#      binds -B /opt/apps:/opt/apps, which would shadow the tools inside the
+#      image wherever the host does have /opt/apps.
+#
+#   2) A threads= argument is accepted for call-site uniformity, but GATK MarkDuplicates
+#      exposes no thread option so there is nothing to apply it to. Passing it
+#      changes nothing.
+#
+#   3) A file-level processing failure now makes the script exit non-zero.
+#      Until now the script ended with exit 0 even when it had processed 0 of N
+#      inputs, so a failed stage was silently carried over by any caller that
+#      chained these scripts together.
+
 # Usage: ./GATK_MarkDuplicates.sh <parameter1> <parameter2> ...
 # Example: ./GATK_MarkDuplicates.sh input="value" output="result"
 # Arguments:
@@ -8,6 +26,7 @@
 #   Output parameters:
 #     output_dir (Output, required) - Directory for output marked BAM files
 #   Option parameters:
+#     threads (Option, optional) - Thread count (default: 4)
 #     ref_genome (Option, required) - Reference genome FASTA file
 
 # Process all arguments (key=value format)
@@ -56,6 +75,32 @@ do
 	esac
 done
 
+# =============================================================================
+# Thread count
+# =============================================================================
+# Optional. When threads= is not supplied the original hard-coded value is used,
+# so existing call sites behave exactly as they did in v1.0.
+threads="${threads:-4}"
+if [[ ! "$threads" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Error: 'threads' must be a positive integer (got: $threads)" >&2
+    exit 1
+fi
+
+# =============================================================================
+# Failure tracking
+# =============================================================================
+# v1.1: these scripts used to end with exit 0 even when a per-file step failed.
+# Strelka2 actually reported "Processed: 0/1 tumor-normal pairs" and still
+# returned 0, so the calling runner logged the step as complete while no result
+# VCF existed. Chained into a pipeline, a failed stage is silently carried over.
+#
+# So log_error now drops a marker file, and the end of the script derives the
+# exit status from that marker. The marker is a file rather than a variable
+# because log_error is called from inside $( ) and subshells in a few places,
+# where an assignment would never reach the parent shell.
+SCRIPT_FAILED_FLAG="$(mktemp -u "${TMPDIR:-/tmp}/.$(basename "$0").failed.XXXXXX")"
+trap 'rm -f "$SCRIPT_FAILED_FLAG"' EXIT
+
 # Required parameter validation
 if [ -z "${input_dir:-}" ]; then
     echo "Error: Required parameter 'input_dir' is missing"
@@ -75,8 +120,8 @@ set -euo pipefail
 # =============================================================================
 # Constants
 # =============================================================================
-readonly program_gatk='/opt/apps/gatk/current/gatk'
-readonly program_samtools='/opt/apps/samtools/current/bin/samtools'
+readonly program_gatk='/opt/bio/bin/gatk'
+readonly program_samtools='/opt/bio/bin/samtools'
 readonly supported_extensions=("sorted.bam")
 
 # =============================================================================
@@ -101,6 +146,8 @@ log_message() {
 }
 
 log_error() {
+    # v1.1: drop the failure marker. See the Failure tracking section above.
+    : > "$SCRIPT_FAILED_FLAG"
     log_message_header "ERROR: $1" >&2
 }
 
@@ -319,4 +366,12 @@ main() {
 }
 
 # Execute main function
-main "$@"
+main_rc=0
+main "$@" || main_rc=$?
+
+# v1.1: surface per-file processing failures in the exit status. Even when main
+# itself returns 0, finish with a failure if log_error was called along the way.
+if [ -e "$SCRIPT_FAILED_FLAG" ] && [ "$main_rc" -eq 0 ]; then
+    main_rc=1
+fi
+exit "$main_rc"
