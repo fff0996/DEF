@@ -42,6 +42,7 @@ FASTQ read를 bowtie2로 참조 유전체에 정렬합니다. 폴더 안의 FAST
 - 참조 유전체는 bowtie2 인덱스 이름(prefix)이나 FASTA 파일로 지정합니다. 인덱스가 없으면 FASTA 옆에 인덱스를 만듭니다.
 - post_process_bam=yes이면 samtools로 정렬 결과를 좌표 순 BAM으로 바꾸고 인덱스(.bai)를 만듭니다.
 - 샘플별 정렬 요약(전체 정렬률 등)을 로그로 남깁니다.
+- 샘플마다 read group(ID, SM, LB = 샘플 이름, PL = ILLUMINA)을 붙입니다. GATK_MarkDuplicates는 read group이 있어야 실행됩니다.
 - 결과 BAM은 GATK_MarkDuplicates 모듈의 입력으로 사용합니다.
 
 ### 내용(영문)
@@ -49,6 +50,7 @@ Aligns FASTQ reads to the reference genome with bowtie2. R1/R2 pairs are found f
 - The reference is given as a bowtie2 index prefix or a FASTA file. If no index exists, one is built beside the FASTA.
 - With post_process_bam=yes, samtools converts the alignments to a coordinate-sorted BAM and builds its index (.bai).
 - An alignment summary per sample (overall alignment rate and so on) is written to a log.
+- Each sample gets a read group (ID, SM, and LB = the sample name, PL = ILLUMINA); GATK_MarkDuplicates needs read groups.
 - The BAM files are the input of the GATK_MarkDuplicates module.
 
 ### 입출력 / 파라미터
@@ -94,7 +96,96 @@ bash bowtie2.1.3.sh \
 
 ---
 
-## 2. organellar_filter
+## 2. GATK_MarkDuplicates
+
+### 기본 정보
+| 항목 | 국문 | 영문 |
+|---|---|---|
+| 모듈명 | GATK_MarkDuplicates | GATK_MarkDuplicates |
+| 서브 타이틀 | 중복 read 표시 | Duplicate read marking |
+| 버전 | 1.0 | |
+| 카테고리 대분류 | 정렬 | Alignment |
+| 카테고리 아이콘 | 선택 예정(Alignment 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
+| 카테고리 중분류 | 정렬 결과 처리 | Alignment Processing |
+| 태그 | ATAC-seq, GATK, Picard, MarkDuplicates, PCR duplicates, BAM | |
+| 레퍼런스 URL | https://gatk.broadinstitute.org/ | |
+| 컨테이너 이미지 | gatk.1.0 | |
+| 실행 스크립트 파일 | GATK_MarkDuplicates_1.0.sh | |
+| Processor Core (제안) | 싱글 코어 (MarkDuplicates는 한 코어로 실행) | Single core (MarkDuplicates runs on one core) |
+
+등록 메모: 스크립트 파일 이름은 1.0이지만 내용은 v1.1이다(도구 경로 /opt/bio/bin, 실패 시 종료 코드 1). Java 힙이 20GB로 고정(-Xmx20g)되어 있으므로 실행 메모리는 24GB 이상을 고른다. 스크립트가 받는 threads 인자는 쓰이지 않으므로 포탈에 등록하지 않는다.
+
+### 실행 이미지
+이미지: gatk 1.0
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/ATAC-seq/bx_gatk_1.0.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux:9` (Rocky Linux 9, digest 고정 없음) |
+| conda 설치 도구 / installer | Miniforge3 26.5.3-0 (conda-forge, bioconda) |
+
+- **설명(국문):** GATK(Picard)로 BAM의 중복 read를 표시하는 환경입니다. 같은 이미지가 WGS 파이프라인의 다른 GATK 모듈(BaseRecalibrator, ApplyBQSR, Mutect2 등)에도 쓰입니다.
+- **Description (English):** GATK (Picard) environment for marking duplicate reads in BAM files. The same image serves the other GATK modules of the WGS pipeline (BaseRecalibrator, ApplyBQSR, Mutect2 and others).
+
+| 도구 | 버전 |
+|---|---|
+| GATK | 4.6.2.0 |
+| SAMtools | 1.24 |
+| HTSlib | 1.24 |
+| OpenJDK | 17 |
+
+### 내용(국문)
+정렬된 BAM에서 PCR·광학 중복 read를 찾아 표시합니다. 같은 위치에서 시작하고 같은 방향인 read 쌍을 중복으로 보고, 그중 염기 품질 합이 가장 높은 쌍 하나만 남기고 나머지에 중복 표시(flag 0x400)를 붙입니다.
+- read는 지우지 않고 표시만 합니다. 이후 모듈은 이 표시를 보고 중복을 뺄 수 있습니다.
+- 샘플마다 중복 표시된 BAM과 인덱스(.bai), 중복 통계(duplicate metrics)를 만듭니다.
+- 입력 폴더에서 *sorted.bam을 모두 찾아(하위 폴더 포함, *unsorted.bam 제외) 차례로 처리합니다.
+- 결과 BAM은 organellar_filter 모듈의 입력으로 사용합니다.
+
+### 내용(영문)
+Finds and marks PCR and optical duplicate reads in aligned BAM files. Read pairs that start at the same position in the same orientation are duplicates; the pair with the highest sum of base qualities is kept and the others get the duplicate flag (0x400).
+- Reads are marked, not removed, so later modules can exclude them by the flag.
+- Each sample gives a duplicate-marked BAM with its index (.bai) and duplicate metrics.
+- All *sorted.bam files in the input folder (subfolders included, *unsorted.bam excluded) are processed one after another.
+- The BAM files are the input of the organellar_filter module.
+
+### 입출력 / 파라미터
+| 탭 | 필수 | 형식 | Name | Value | Description | English Description |
+|---|---|---|---|---|---|---|
+| Input | Required | Directory | input_dir | /data/bowtie2 | 좌표 정렬된 BAM 폴더(*sorted.bam; 하위 폴더 포함, *unsorted.bam 제외). bowtie2의 output_dir. 임시 폴더를 이 안에 만들므로 쓰기 권한이 필요 | Folder of coordinate-sorted BAM files (*sorted.bam; subfolders included, *unsorted.bam excluded); output_dir of bowtie2. Temporary folders are made inside it, so it must be writable |
+| Output | Required | Directory | output_dir | /data/markdup | 결과 폴더(중복 표시 BAM, .bai, 중복 통계, 샘플별 로그). organellar_filter의 input_dir | Output folder (duplicate-marked BAM, .bai, duplicate metrics, per-sample logs); input_dir of organellar_filter |
+| Option | Required | File | ref_genome | /ref/genome.fa | 참조 유전체 FASTA. BAM을 정렬할 때 쓴 것과 같은 유전체 | Reference genome FASTA; the same genome the BAM files were aligned to |
+
+### 주요 사항
+| 국문 | 영문 |
+|---|---|
+| 입력 BAM에 read group(@RG)이 있어야 합니다. GATK 4.6은 read group이 없는 BAM에서 NullPointerException으로 멈춥니다. bowtie2 1.3 이상의 결과에는 read group이 들어 있으며, 이전 bowtie2 결과는 다시 정렬해 주세요. | The input BAM files need read groups (@RG). GATK 4.6 stops with a NullPointerException on BAM files without them. bowtie2 1.3 or later writes read groups; realign BAM files from earlier bowtie2 versions. |
+| Java 메모리가 20GB로 고정되어 있습니다. 실행 메모리는 24GB 이상을 골라 주세요. 그보다 작으면 큰 BAM에서 메모리 초과로 중단될 수 있습니다. | The Java heap is fixed at 20 GB. Choose 24 GB of memory or more; with less, a large BAM can be stopped for exceeding memory. |
+| 샘플별 임시 폴더(temp_<sample>_...)를 input_dir 안에 만들고 끝나면 지웁니다. input_dir에 쓰기 권한이 있어야 합니다. | A temporary folder per sample (temp_<sample>_...) is made inside input_dir and removed afterwards, so input_dir must be writable. |
+| GATK의 실행 기록과 오류는 실행 로그가 아니라 output_dir의 <sample>_markduplicates.log에 남습니다. 샘플이 실패하면 이 파일을 확인해 주세요. 한 샘플이라도 실패하면 모듈은 실패(종료 코드 1)로 끝납니다. | GATK's own output and errors go to <sample>_markduplicates.log in output_dir, not to the run log; check it when a sample fails. If any sample fails, the module ends as failed (exit code 1). |
+| SRA에서 받은 데이터는 read 이름(SRR...1)에 좌표가 없어 "read name ... did not start with a parsable number" 경고가 나옵니다. 광학 중복만 구분하지 못할 뿐 중복 표시는 정상입니다. | Data from SRA has read names (SRR...1) without flowcell coordinates, so a "read name ... did not start with a parsable number" warning appears. Only optical duplicates cannot be told apart; duplicate marking works normally. |
+
+### 분석 개념 이미지
+등록 메모: 개념도는 아직 만들지 않았다.
+
+### 스크립트 사용 예제
+```
+bash GATK_MarkDuplicates_1.0.sh \
+  input_dir=/data/bowtie2 \
+  output_dir=/data/markdup \
+  ref_genome=/ref/genome.fa
+```
+
+### 주요 결과 이미지
+
+**결과 1. 중복 통계**
+- 결과 파일: 표 캡처 `<sample>_duplicate_metrics.txt`의 METRICS CLASS 부분 (이 모듈은 그림을 만들지 않는다)
+- 레전드(국문): **샘플별 중복 read 통계.** 검사한 read 쌍 수(READ_PAIRS_EXAMINED), 중복으로 표시된 read 쌍 수(READ_PAIR_DUPLICATES), 그중 광학 중복 수(READ_PAIR_OPTICAL_DUPLICATES), 중복 비율(PERCENT_DUPLICATION, 0~1)과 추정 라이브러리 크기(ESTIMATED_LIBRARY_SIZE)를 보여 준다. 중복 비율은 시퀀싱 깊이와 시료 양에 따라 달라지므로, 같은 실험의 샘플끼리 비교해 다른 샘플보다 크게 높은 샘플을 찾는 데 쓴다.
+- 레전드(영문): **Duplicate read metrics per sample.** The table gives the read pairs examined (READ_PAIRS_EXAMINED), the pairs marked as duplicates (READ_PAIR_DUPLICATES) and the optical duplicates among them (READ_PAIR_OPTICAL_DUPLICATES), the duplicate fraction (PERCENT_DUPLICATION, 0-1), and the estimated library size (ESTIMATED_LIBRARY_SIZE). The duplicate fraction depends on sequencing depth and input amount, so it is used to compare samples of an experiment and find ones far above the rest.
+
+---
+
+## 3. organellar_filter
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -144,7 +235,7 @@ Removes reads aligned to organellar chromosomes such as mitochondria and chlorop
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Required | Directory | input_dir | /data/bam | 좌표 정렬된 BAM 폴더(*.unsorted.bam 제외). BAM 인덱스(.bai)가 없으면 BAM 옆에 만들므로 그 폴더에 쓰기 권한이 필요(앞 모듈 결과에는 인덱스가 있음) | Folder of coordinate-sorted BAM files (*.unsorted.bam excluded). A missing BAM index (.bai) is created beside the BAM, so the folder must be writable (outputs of the previous module already have one) |
+| Input | Required | Directory | input_dir | /data/bam | 좌표 정렬된 BAM 폴더(*.unsorted.bam 제외). GATK_MarkDuplicates의 output_dir. BAM 인덱스(.bai)가 없으면 BAM 옆에 만들므로 그 폴더에 쓰기 권한이 필요(앞 모듈 결과에는 인덱스가 있음) | Folder of coordinate-sorted BAM files (*.unsorted.bam excluded). A missing BAM index (.bai) is created beside the BAM, so the folder must be writable (outputs of the previous module already have one) |
 | Output | Required | Directory | output_dir | /data/organellar_filter | 결과 폴더. ATAC_QC의 input_dir | Output folder; input_dir of ATAC_QC |
 | Option | Optional | String | organellar_pattern | (^chrM$\|^MT$\|^Mt$\|mitochond\|mitochondrion\|mitochondrial\|chloroplast\|plastid\|^Pt$\|^PT$\|^chrC$) | 세포소기관 염색체 이름 정규식(대소문자 무시) | Regular expression for organellar contig names (case-insensitive) |
 
@@ -181,7 +272,7 @@ bash organellar_filter.1.2.sh \
 
 ---
 
-## 3. ATAC_QC
+## 4. ATAC_QC
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -316,7 +407,7 @@ Rscript ATAC_QC.1.2.R \
 
 ---
 
-## 4. ATAC_QC_plot
+## 5. ATAC_QC_plot
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -420,7 +511,7 @@ Rscript ATAC_QC_plot.1.2.R \
 
 ---
 
-## 5. MACS3_callpeak_ATAC
+## 6. MACS3_callpeak_ATAC
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -518,7 +609,7 @@ bash MACS3_callpeak_ATAC.1.3.sh \
 
 ---
 
-## 6. peak_annotation
+## 7. peak_annotation
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -637,7 +728,7 @@ Rscript peak_annotation.1.2.R \
 
 ---
 
-## 7. differential_accessibility
+## 8. differential_accessibility
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -785,7 +876,7 @@ Rscript differential_accessibility.1.2.R \
 
 ---
 
-## 8. atac_motif
+## 9. atac_motif
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -923,7 +1014,7 @@ Rscript atac_motif.1.4.R \
 
 ---
 
-## 9. tf_footprinting
+## 10. tf_footprinting
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -1043,7 +1134,7 @@ bash tf_footprinting.1.3.sh \
 
 ---
 
-## 10. functional_enrichment
+## 11. functional_enrichment
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
@@ -1179,7 +1270,7 @@ Rscript functional_enrichment.1.1.R \
 
 ---
 
-## 11. replicate_consistency
+## 12. replicate_consistency
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
