@@ -6,6 +6,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 모든 스크립트는 `key=value` 형식 인자를 받는다. 등록 화면의 Name은 인자 이름, Value는 기본값이다.
 - 필수(Required) 입력·출력은 Value가 비어 있으면 포탈에 등록되지 않으므로 예시 경로(`/data/…`, `/ref/…`)를 넣었다. 기본값이 아니며, 실행할 때 캔버스에서 실제 경로로 바꾼다. 예시 경로가 그대로 넘어가면 스크립트가 "not found"로 멈춘다.
 - 선택(Optional) 입력은 빈 값이 "사용 안 함"이다. 경로를 넣어 두면 그 경로를 실제로 찾으므로 Value를 비워 둔다.
+- 스크립트 사용 예제는 모든 옵션을 기본값으로 적었다(기본값이 없는 옵션은 제외). 예시 값은 애기장대(TAIR10, 유전체 약 1.2e8 bp) 기준이다.
 - 형식(Type)은 포탈 목록에 맞춰 고른다. 원고에는 Directory, File, String, Integer, Float, List로 적었다.
 - 기반 이미지 출처(Bootstrap)는 `Apptainer`다(작업이 SIF로 실행되므로). 기반 이미지(From)는 DEF의 `rockylinux/rockylinux:9.8` (digest `sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f`)이며 모든 모듈이 같다.
 - 버전은 각 실행 스크립트 파일 이름에 적힌 버전을 쓴다(예: organellar_filter.1.1.sh → 1.1).
@@ -65,7 +66,11 @@ Removes reads aligned to organellar chromosomes such as mitochondria and chlorop
 
 ### 스크립트 사용 예제
 ```
-bash organellar_filter.1.1.sh input_dir=/data/bam output_dir=/data/organellar_filter
+bash organellar_filter.1.1.sh \
+  input_dir=/data/bam \
+  output_dir=/data/organellar_filter \
+  threads=auto \
+  organellar_pattern='(^chrM$|^MT$|^Mt$|mitochond|mitochondrion|mitochondrial|chloroplast|plastid|^Pt$|^PT$|^chrC$)'
 ```
 
 ### 주요 결과 이미지
@@ -156,7 +161,15 @@ trt_2,treated,2
 
 ### 스크립트 사용 예제
 ```
-Rscript ATAC_QC.1.2.R input_dir=/data/organellar_filter sample_data=/data/sample_data.csv txs_bed=/ref/genes.bed genome_fasta=/ref/genome.fa output_dir=/data/atac_qc
+Rscript ATAC_QC.1.2.R \
+  input_dir=/data/organellar_filter \
+  sample_data=/data/sample_data.csv \
+  txs_bed=/ref/genes.bed \
+  genome_fasta=/ref/genome.fa \
+  output_dir=/data/atac_qc \
+  seqlev=auto \
+  tss_flank=1000 \
+  make_bigwig=TRUE
 ```
 
 ### 주요 결과 이미지
@@ -221,7 +234,15 @@ Plots heatmaps and average profiles of the signal around TSSs from the fragment-
 
 ### 스크립트 사용 예제
 ```
-Rscript ATAC_QC_plot.1.1.R input_dir=/data/atac_qc tss_bed=/ref/tss.bed output_dir=/data/atac_qc_plot
+Rscript ATAC_QC_plot.1.1.R \
+  input_dir=/data/atac_qc \
+  tss_bed=/ref/tss.bed \
+  output_dir=/data/atac_qc_plot \
+  upstream=1010 \
+  downstream=1010 \
+  ntile=101 \
+  tss_filter=0.5 \
+  harmonize_mode=auto
 ```
 
 ### 주요 결과 이미지
@@ -291,7 +312,14 @@ Calls open-chromatin peaks from Tn5-corrected BAM files with MACS3 callpeak in p
 
 ### 스크립트 사용 예제
 ```
-bash MACS3_callpeak_ATAC.1.2.sh input_dir=/data/atac_qc output_dir=/data/macs3 genome_size=hs
+bash MACS3_callpeak_ATAC.1.2.sh \
+  input_dir=/data/atac_qc \
+  output_dir=/data/macs3 \
+  genome_size=1.2e8 \
+  peak_type=atac \
+  alignment_suffix=.shifted.bam \
+  qvalue=0.05 \
+  broad_cutoff=0.1
 ```
 
 ### 주요 결과 이미지
@@ -359,7 +387,15 @@ Classifies peaks into genomic features such as promoter, exon, intron, and inter
 
 ### 스크립트 사용 예제
 ```
-Rscript peak_annotation.1.1.R input_dir=/data/macs3 genome_gff=/ref/genes.gff3 output_dir=/data/peak_annotation genome_label=TAIR10
+Rscript peak_annotation.1.1.R \
+  input_dir=/data/macs3 \
+  genome_gff=/ref/genes.gff3 \
+  output_dir=/data/peak_annotation \
+  genome_label=TAIR10 \
+  peak_suffix=.narrowPeak \
+  tss_upstream=3000 \
+  tss_downstream=3000 \
+  max_files=NA
 ```
 
 ### 주요 결과 이미지
@@ -451,8 +487,21 @@ trt_2,treated
 
 ### 스크립트 사용 예제
 ```
-Rscript differential_accessibility.1.2.R sample_data=/data/da_sample_data.csv genome_fasta=/ref/genome.fa input_dir=/data/atac_qc peak_dir=/data/macs3 output_dir=/data/da control_name=control
+Rscript differential_accessibility.1.2.R \
+  sample_data=/data/da_sample_data.csv \
+  genome_fasta=/ref/genome.fa \
+  input_dir=/data/atac_qc \
+  peak_dir=/data/macs3 \
+  output_dir=/data/da \
+  control_name=control \
+  fdr=0.05 \
+  tile_width=5000 \
+  paired=TRUE \
+  run_edaseq=TRUE \
+  run_cqn=TRUE
 ```
+기본값이 없는 옵션(`gc_bin_chr`)은 필요할 때만 넣는다.
+
 
 ### 주요 결과 이미지
 등록할 그림: `04_plots/PCA_plot.pdf`, `04_plots/MD_plot.pdf` (두 그림을 나란히)
@@ -528,8 +577,25 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 
 ### 스크립트 사용 예제
 ```
-Rscript atac_motif.1.1.R input_dir=/data/da genome_fasta=/ref/genome.fa motif_db=/ref/JASPAR2024_CORE_plants.meme output_dir=/data/atac_motif
+Rscript atac_motif.1.1.R \
+  input_dir=/data/da \
+  genome_fasta=/ref/genome.fa \
+  motif_db=/ref/JASPAR2024_CORE_plants.meme \
+  output_dir=/data/atac_motif \
+  norm=TMM \
+  n_per_bin=400 \
+  min_abs_logfc=0.3 \
+  padj_cutoff=4.0 \
+  kmer_len=6 \
+  min_motif_score=10.0 \
+  stabsel_cutoff=0.8 \
+  seed=123 \
+  threads=auto \
+  run_kmer=TRUE \
+  run_regression=TRUE
 ```
+기본값이 없는 옵션(`chrs`, `fdr_filter`)은 필요할 때만 넣는다.
+
 
 ### 주요 결과 이미지
 등록할 그림: `02_binned_enrichment/binned_motif_heatmap.pdf`
@@ -613,7 +679,16 @@ trt_2	treated
 
 ### 스크립트 사용 예제
 ```
-bash tf_footprinting.1.1.sh input_dir=/data/atac_qc metadata=/data/metadata.tsv macs_dir=/data/macs3 genome_fasta=/ref/genome.fa motif_db=/ref/JASPAR2024_CORE_plants.meme output_dir=/data/tf_footprinting
+bash tf_footprinting.1.1.sh \
+  input_dir=/data/atac_qc \
+  metadata=/data/metadata.tsv \
+  macs_dir=/data/macs3 \
+  genome_fasta=/ref/genome.fa \
+  motif_db=/ref/JASPAR2024_CORE_plants.meme \
+  output_dir=/data/tf_footprinting \
+  sample_col=SampleID \
+  condition_col=Condition \
+  cores=auto
 ```
 
 ### 주요 결과 이미지
@@ -699,7 +774,25 @@ Analyzes with clusterProfiler which biological functions (GO) are enriched among
 
 ### 스크립트 사용 예제
 ```
-Rscript functional_enrichment.1.0.R da_dir=/data/da genome_gff=/ref/genes.gff3 orgdb_file=/ref/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite output_dir=/data/functional_enrichment
+Rscript functional_enrichment.1.0.R \
+  da_dir=/data/da \
+  genome_gff=/ref/genes.gff3 \
+  orgdb_file=/ref/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite \
+  output_dir=/data/functional_enrichment \
+  gene_keytype=auto \
+  ont=BP \
+  max_distance_to_tss=3000 \
+  universe=auto \
+  pvalue_cutoff=0.05 \
+  qvalue_cutoff=0.2 \
+  p_adjust_method=BH \
+  min_gs_size=10 \
+  max_gs_size=500 \
+  min_mapped_fraction=0.5 \
+  show_category=20 \
+  da_norm=TMM \
+  da_fdr=0.05 \
+  da_min_abs_logfc=0
 ```
 
 ### 주요 결과 이미지
@@ -771,7 +864,15 @@ ATAC_QC와 같은 sample_data.csv를 사용한다(2번 모듈의 샘플시트 �
 
 ### 스크립트 사용 예제
 ```
-bash replicate_consistency.1.0.sh input_dir=/data/atac_qc sample_data=/data/sample_data.csv genome_size=hs output_dir=/data/replicate_consistency
+bash replicate_consistency.1.0.sh \
+  input_dir=/data/atac_qc \
+  sample_data=/data/sample_data.csv \
+  genome_size=1.2e8 \
+  output_dir=/data/replicate_consistency \
+  alignment_suffix=.shifted.bam \
+  pvalue=0.01 \
+  idr_threshold=0.05 \
+  max_peaks=300000
 ```
 
 ### 주요 결과 이미지
