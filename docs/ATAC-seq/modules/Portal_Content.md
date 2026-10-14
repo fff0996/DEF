@@ -5,6 +5,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 등록 화면 공통 안내:
 - 모든 스크립트는 `key=value` 형식 인자를 받는다. 등록 화면의 Name은 인자 이름, Value는 기본값이다.
 - 필수(Required) 입력·출력은 Value가 비어 있으면 포탈에 등록되지 않으므로 예시 경로(`/data/…`, `/ref/…`)를 넣었다. 기본값이 아니며, 실행할 때 캔버스에서 실제 경로로 바꾼다. 예시 경로가 그대로 넘어가면 스크립트가 "not found"로 멈춘다.
+- 스레드·코어 수 옵션(`threads`, `cores`)은 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택이 곧 스레드 수이며(스크립트가 `auto`로 할당된 코어 수를 읽는다), 같은 값을 두 번 고르다 엇갈리는 일을 막는다.
 - 선택(Optional) 입력은 빈 값이 "사용 안 함"이다. 경로를 넣어 두면 그 경로를 실제로 찾으므로 Value를 비워 둔다.
 - 스크립트 사용 예제는 모든 옵션을 기본값으로 적었다(기본값이 없는 옵션은 제외). 예시 값은 애기장대(TAIR10, 유전체 약 1.2e8 bp) 기준이다.
 - 형식(Type)은 포탈 목록에 맞춰 고른다. 원고에는 Directory, File, String, Integer, Float, List로 적었다.
@@ -96,12 +97,12 @@ bash bowtie2.1.1.sh \
 |---|---|---|
 | 모듈명 | organellar_filter | organellar_filter |
 | 서브 타이틀 | 세포소기관 read 제거 | Organellar read removal |
-| 버전 | 1.1 | |
+| 버전 | 1.2 | |
 | 카테고리 (제안) | Quality Control / Read Filtering | |
 | 태그 | ATAC-seq, mitochondria, chloroplast, samtools, BAM filtering | |
 | 레퍼런스 URL | https://www.htslib.org/ | |
 | 컨테이너 이미지 | bx_organellar_filter.1.0 | |
-| 실행 스크립트 파일 | organellar_filter.1.1.sh | |
+| 실행 스크립트 파일 | organellar_filter.1.2.sh | |
 
 ### 내용(국문)
 정렬된 BAM 파일에서 미토콘드리아와 엽록체 등 세포소기관 염색체에 정렬된 read를 제거합니다. ATAC-seq에서는 Tn5가 뉴클레오솜이 없는 세포소기관 DNA를 많이 자르기 때문에 이 read의 비율이 높게 나타나며, 그대로 두면 peak 검출과 정규화에 영향을 줍니다.
@@ -120,8 +121,9 @@ Removes reads aligned to organellar chromosomes such as mitochondria and chlorop
 |---|---|---|---|---|---|---|
 | Input | Required | Directory | input_dir | /data/bam | 좌표 정렬된 BAM 폴더(*.unsorted.bam 제외). 인덱스가 없으면 BAM 옆에 생성 | Folder of coordinate-sorted BAM files (*.unsorted.bam excluded); missing indexes are created beside the BAM |
 | Output | Required | Directory | output_dir | /data/organellar_filter | 결과 폴더. ATAC_QC의 input_dir | Output folder; input_dir of ATAC_QC |
-| Option | Optional | String | threads | auto | 스레드 수. auto는 할당된 코어 수 | Threads; auto uses the allocated cores |
 | Option | Optional | String | organellar_pattern | (^chrM$\|^MT$\|^Mt$\|mitochond\|mitochondrion\|mitochondrial\|chloroplast\|plastid\|^Pt$\|^PT$\|^chrC$) | 세포소기관 염색체 이름 정규식(대소문자 무시) | Regular expression for organellar contig names (case-insensitive) |
+
+스레드 수(`threads`)는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)으로 정해지며, 스크립트 기본값 `auto`가 그 코어 수를 쓴다.
 
 ### 주요 사항
 | 국문 | 영문 |
@@ -139,10 +141,9 @@ Removes reads aligned to organellar chromosomes such as mitochondria and chlorop
 
 ### 스크립트 사용 예제
 ```
-bash organellar_filter.1.1.sh \
+bash organellar_filter.1.2.sh \
   input_dir=/data/bam \
   output_dir=/data/organellar_filter \
-  threads=auto \
   organellar_pattern='(^chrM$|^MT$|^Mt$|mitochond|mitochondrion|mitochondrial|chloroplast|plastid|^Pt$|^PT$|^chrC$)'
 ```
 
@@ -629,9 +630,10 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 | Option | Optional | Float | min_motif_score | 10.0 | 모티프 hit 최소 점수 | Minimum motif hit score |
 | Option | Optional | Float | stabsel_cutoff | 0.8 | 안정성 선택 기준(0~1] | Stability selection cutoff (0–1] |
 | Option | Optional | Integer | seed | 123 | 난수 시드 | Random seed |
-| Option | Optional | String | threads | auto | 스레드 수. auto는 할당된 코어 수 | Threads; auto uses the allocated cores |
 | Option | Optional | List | run_kmer | TRUE | k-mer 분석 실행(TRUE/FALSE) | Run k-mer analysis (TRUE/FALSE) |
 | Option | Optional | List | run_regression | TRUE | 회귀 분석 실행(TRUE/FALSE) | Run regression analysis (TRUE/FALSE) |
+
+스레드 수(`threads`)는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)으로 정해지며, 스크립트 기본값 `auto`가 그 코어 수를 쓴다.
 
 ### 주요 사항
 | 국문 | 영문 |
@@ -663,7 +665,6 @@ Rscript atac_motif.1.1.R \
   min_motif_score=10.0 \
   stabsel_cutoff=0.8 \
   seed=123 \
-  threads=auto \
   run_kmer=TRUE \
   run_regression=TRUE
 ```
@@ -688,12 +689,12 @@ Rscript atac_motif.1.1.R \
 |---|---|---|
 | 모듈명 | tf_footprinting | tf_footprinting |
 | 서브 타이틀 | 전사인자 footprint 분석 | Transcription factor footprinting |
-| 버전 | 1.1 | |
+| 버전 | 1.2 | |
 | 카테고리 (제안) | Epigenomics / Footprinting | |
 | 태그 | ATAC-seq, TOBIAS, footprinting, BINDetect, transcription factor | |
 | 레퍼런스 URL | https://github.com/loosolab/TOBIAS | |
 | 컨테이너 이미지 | bx_tf_footprinting.1.0 | |
-| 실행 스크립트 파일 | tf_footprinting.1.1.sh | |
+| 실행 스크립트 파일 | tf_footprinting.1.2.sh | |
 
 ### 내용(국문)
 TOBIAS로 조건별 Tn5 절단 신호를 보정하고 footprint 점수를 계산한 뒤, BINDetect로 조건 간 전사인자 결합 변화를 비교합니다.
@@ -719,7 +720,8 @@ Corrects Tn5 cleavage signals per condition with TOBIAS, computes footprint scor
 | Output | Required | Directory | output_dir | /data/tf_footprinting | 결과 폴더 | Output folder |
 | Option | Optional | String | sample_col | SampleID | metadata의 샘플 컬럼 이름 | Sample column name in metadata |
 | Option | Optional | String | condition_col | Condition | metadata의 조건 컬럼 이름 | Condition column name in metadata |
-| Option | Optional | String | cores | auto | 코어 수. auto는 할당된 코어 수 | Cores; auto uses the allocated cores |
+
+코어 수(`cores`)는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)으로 정해지며, 스크립트 기본값 `auto`가 그 코어 수를 쓴다.
 
 ### 샘플시트
 - 제목(국문): 샘플 정보 파일(metadata)
@@ -752,7 +754,7 @@ trt_2	treated
 
 ### 스크립트 사용 예제
 ```
-bash tf_footprinting.1.1.sh \
+bash tf_footprinting.1.2.sh \
   input_dir=/data/atac_qc \
   metadata=/data/metadata.tsv \
   macs_dir=/data/macs3 \
@@ -760,8 +762,7 @@ bash tf_footprinting.1.1.sh \
   motif_db=/ref/JASPAR2024_CORE_plants.meme \
   output_dir=/data/tf_footprinting \
   sample_col=SampleID \
-  condition_col=Condition \
-  cores=auto
+  condition_col=Condition
 ```
 
 ### 주요 결과 이미지

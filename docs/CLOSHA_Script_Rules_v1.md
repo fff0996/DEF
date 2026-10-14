@@ -200,13 +200,16 @@ msg      <- function(...) { cat(..., "\n") }
 ## 11. 자원
 - CPU와 메모리는 CLOSHA 실행 환경 설정(예: 싱글 코어, 4코어)에서 노드마다 **할당된다.** 스크립트는 자원 크기를 고정하지 않는다.
 - 스레드 수는 **할당된 코어 수를 스크립트가 직접 확인해서** 쓴다.
-  - `threads` 인자는 선택이고 기본값은 `auto`(할당된 코어 수)다. 숫자를 주면 할당된 코어 수를 넘지 않게 줄인다.
+  - `threads` 인자는 선택이고 기본값은 `auto`(할당된 코어 수)다. 숫자를 주면 할당된 코어 수를 넘지 않게 줄이고, 줄였으면 로그 파일이 열린 뒤 stderr에 경고를 남긴다(예: `Warning: threads=16 requested, allocated cores: 4; using 4`). 스레드 수는 속도만 바꾸고 결과는 바꾸지 않으므로 멈추지 않는다. `auto`나 양의 정수가 아니면 오류로 멈춘다.
+  - 포탈에는 `threads`를 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)이 곧 스레드 수다. 둘을 따로 고르게 하면 서로 엇갈린다.
   - 확인 방법(할당 범위를 반영하는 값):
     | 언어 | 방법 | 쓰지 않는 것 |
     |---|---|---|
     | Bash | `nproc` | `/proc/cpuinfo` 줄 수 |
     | R | `length(parallel::mcaffinity())` (없으면 `as.integer(system("nproc", intern = TRUE))`) | `parallel::detectCores()` (서버 전체 코어 수) |
     | Python | `len(os.sched_getaffinity(0))` | `os.cpu_count()` (서버 전체 코어 수) |
+  - `nproc`은 `OMP_NUM_THREADS`가 있으면 그 값을 돌려준다. 싱글 코어 작업의 실행 명령에는 `--env OMP_NUM_THREADS=1`이 들어간다. 2026-10-14 운영 로그에서 Bash 스크립트의 `nproc`은 포탈 선택과 같았다(싱글 `allocated 1`, 최대 4코어 `allocated 4`). 그래서 `env -u OMP_NUM_THREADS nproc`처럼 이 값을 빼지 않는다.
+  - 최대 4코어 작업에서 이 4가 `OMP_NUM_THREADS`에서 왔는지 CPU 묶음(affinity)에서 왔는지는 아직 확인하지 않았다. R의 `mcaffinity()`와 Python의 `sched_getaffinity()`는 `OMP_NUM_THREADS`를 보지 않고 CPU 묶음만 세므로, CPU를 묶지 않는 환경이면 노드 전체 코어 수가 나올 수 있다. 확인은 `tools/diag/core_check.sh`를 최대 4코어로 실행해서 한다.
   - 결정한 값을 외부 도구에 넘기고(`samtools -@ "$threads"`, `TOBIAS ... --cores "$threads"`), 계산 라이브러리 스레드(`OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS`)도 같은 값으로 맞춘다.
   - 로그의 `parameters:`에 요청값과 실제값을 함께 남긴다. 예: `threads = 4 (requested auto, allocated 4)`
 - 실행 환경이 코어를 지정하지 않고 사용량만 제한하는 방식(Docker `--cpus`, Kubernetes `limits.cpu`)으로 바뀌면 위 방법은 서버 전체 코어 수를 돌려줄 수 있다. 그때는 cgroup `cpu.max` 값도 읽도록 규칙을 갱신한다.
