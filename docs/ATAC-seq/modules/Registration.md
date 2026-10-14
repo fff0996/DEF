@@ -24,7 +24,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 | MACS3_callpeak | `MACS3_callpeak_ATAC.1.3.sh` | bx_macs3_callpeak_atac.1.0 | `bash MACS3_callpeak_ATAC.1.3.sh key=value ...` |
 | peak_annotation | `peak_annotation.1.1.R` | bx_peak_annotation.1.0 | `Rscript peak_annotation.1.1.R key=value ...` |
 | differential_accessibility | `differential_accessibility.1.2.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.2.R key=value ...` |
-| atac_motif | `atac_motif.1.2.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.2.R key=value ...` |
+| atac_motif | `atac_motif.1.3.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.3.R key=value ...` |
 | tf_footprinting | `tf_footprinting.1.2.sh` | bx_tf_footprinting.1.0 | `bash tf_footprinting.1.2.sh key=value ...` |
 | functional_enrichment | `functional_enrichment.1.0.R` | bx_functional_enrichment.1.0 | `Rscript functional_enrichment.1.0.R key=value ...` |
 | replicate_consistency | `replicate_consistency.1.1.sh` | bx_replicate_consistency.1.0 | `bash replicate_consistency.1.1.sh key=value ...` |
@@ -133,8 +133,7 @@ ChIPseeker로 peak 주석(유전자 위치 분류, TSS 거리)과 그림을 만�
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 필수(포탈) | | differential_accessibility의 `output_dir`. `da_csv`를 주면 `da_csv`를 대신 사용. 파이프라인에서 연결하는 입력이라 포탈에는 필수로 등록 |
-| Input | `da_csv` | File (CSV) | 조건부 | | 차등 접근성 결과 CSV를 직접 지정할 때 |
+| Input | `input_dir` | Directory | 필수 | | differential_accessibility의 `output_dir`. 그 안의 `03_results/diff_accessibility_<norm>.csv`를 읽는다(1.3부터 `da_csv` 인자 없음) |
 | Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. **.fai 인덱스가 미리 있어야 함** |
 | Input | `motif_db` | File (MEME) | 필수 | | 모티프 데이터베이스(MEME 형식) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더 |

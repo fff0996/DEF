@@ -602,12 +602,12 @@ Rscript differential_accessibility.1.2.R \
 |---|---|---|
 | 모듈명 | atac_motif | atac_motif |
 | 서브 타이틀 | 접근성 변화 연관 모티프 분석 | Motif enrichment by accessibility change |
-| 버전 | 1.2 | |
+| 버전 | 1.3 | |
 | 카테고리 (제안) | Epigenomics / Motif Analysis | |
 | 태그 | ATAC-seq, monaLisa, motif enrichment, JASPAR, k-mer | |
 | 레퍼런스 URL | https://bioconductor.org/packages/monaLisa/ | |
 | 컨테이너 이미지 | bx_atac_motif.1.0 | |
-| 실행 스크립트 파일 | atac_motif.1.2.R | |
+| 실행 스크립트 파일 | atac_motif.1.3.R | |
 | Processor Core (제안) | 최대 4코어 (모티프 계산을 여러 코어로 나눔) | Up to 4 cores (motif scoring is parallel) |
 
 ### 내용(국문)
@@ -623,8 +623,7 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Required | Directory | input_dir | /data/da | differential_accessibility의 output_dir. da_csv를 주면 da_csv를 대신 사용 | differential_accessibility output_dir; da_csv is used instead when given |
-| Input | Optional | File | da_csv | | 차등 접근성 결과 CSV를 직접 지정 | Differential accessibility CSV given directly |
+| Input | Required | Directory | input_dir | /data/da | differential_accessibility의 output_dir. 그 안의 03_results/diff_accessibility_<norm>.csv를 읽음 | differential_accessibility output_dir; 03_results/diff_accessibility_<norm>.csv inside it is read |
 | Input | Required | File | genome_fasta | /ref/genome.fa | 참조 유전체 FASTA(.fai 인덱스가 미리 있어야 함) | Reference genome FASTA (the .fai index must exist) |
 | Input | Required | File | motif_db | /ref/motifs.meme | 모티프 데이터베이스(MEME 형식) | Motif database (MEME format) |
 | Output | Required | Directory | output_dir | /data/atac_motif | 결과 폴더 | Output folder |
@@ -660,7 +659,7 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 
 ### 스크립트 사용 예제
 ```
-Rscript atac_motif.1.2.R \
+Rscript atac_motif.1.3.R \
   input_dir=/data/da \
   genome_fasta=/ref/genome.fa \
   motif_db=/ref/JASPAR2024_CORE_plants.meme \
