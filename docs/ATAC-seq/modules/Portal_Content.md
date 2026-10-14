@@ -9,6 +9,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 버전은 각 실행 스크립트 파일 이름에 적힌 버전을 쓴다(예: organellar_filter.1.1.sh → 1.1).
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지운다.
 - 카테고리와 아이콘은 포탈 목록에서 고른다. 원고의 카테고리는 제안이다.
+- 주요 결과 이미지는 실제 데이터로 실행한 결과에서 가져온다. PDF는 PNG로 바꿔 등록한다: `pdftoppm -png -r 200 -singlefile <그림>.pdf <그림>` (여러 쪽이면 `-f <쪽> -l <쪽>`로 쪽을 고른다). 표는 화면 캡처해 등록한다.
 
 ---
 
@@ -65,8 +66,14 @@ Removes reads aligned to organellar chromosomes such as mitochondria and chlorop
 bash organellar_filter.1.1.sh input_dir=/data/bam output_dir=/data/organellar_filter
 ```
 
-### 주요 결과 이미지 (제안)
-제거 전후 read 수 요약표(TSV)를 표 이미지로 캡처해 등록한다.
+### 주요 결과 이미지
+등록할 그림: 표 캡처 `04_summary/organellar_filter_summary.tsv` (이 모듈은 그림을 만들지 않는다)
+
+**레전드(국문)**
+**샘플별 소기관 contig 제거 요약.** 샘플마다 입력 BAM의 전체 contig 수, 제거한 소기관 contig(미토콘드리아·엽록체) 수, 남긴 contig 수, 필터링된 BAM 경로와 처리 상태를 보여 준다. status가 모든 샘플에서 정상이면 다음 단계(ATAC_QC)에 쓸 BAM이 준비된 것이다.
+
+**Legend (English)**
+**Organellar contig removal per sample.** For each sample the table lists the number of contigs in the input BAM, the organellar (mitochondrial or plastid) contigs removed, the contigs kept, the filtered BAM path and the run status. A normal status for every sample means the BAMs are ready for ATAC_QC.
 
 ---
 
@@ -150,8 +157,14 @@ trt_2,treated,2
 Rscript ATAC_QC.1.2.R input_dir=/data/organellar_filter sample_data=/data/sample_data.csv txs_bed=/ref/genes.bed genome_fasta=/ref/genome.fa output_dir=/data/atac_qc
 ```
 
-### 주요 결과 이미지 (제안)
-`01_fragment_size/<sample>/<sample>.fragSizeDist.pdf`(fragment 크기 분포)와 `07_tss_enrichment/<sample>.tss_enrichment.pdf`를 PNG로 변환해 등록한다.
+### 주요 결과 이미지
+등록할 그림: `01_fragment_size/<sample>/<sample>.fragSizeDist.pdf`, `07_tss_enrichment/<sample>.tss_enrichment.pdf` (대표 샘플 1개, 두 그림을 나란히)
+
+**레전드(국문)**
+**ATAC-seq 라이브러리 품질: fragment 크기 분포와 TSS enrichment.** (A) paired-end fragment 길이 분포. 100 bp 이하의 nucleosome-free 봉우리와 약 200 bp(mononucleosome), 약 400 bp(dinucleosome) 간격의 주기적인 봉우리가 보이면 Tn5 절단이 정상적으로 일어난 것이다. 작은 그림은 같은 분포를 로그 축으로 보여 준다. (B) TSS 주변(기본 ±1,000 bp)의 aggregate TSS score. TSS(0 bp)에서 신호가 뚜렷하게 높을수록 열린 염색질이 잘 포착된 것이며, 제목에 TSS enrichment score가 표시된다.
+
+**Legend (English)**
+**ATAC-seq library quality: fragment size distribution and TSS enrichment.** (A) Paired-end fragment length distribution. A nucleosome-free peak below 100 bp followed by periodic peaks near 200 bp (mononucleosome) and 400 bp (dinucleosome) indicates proper Tn5 cutting; the inset shows the same distribution on a log scale. (B) Aggregate TSS score around transcription start sites (±1,000 bp by default). A sharp rise at the TSS (0 bp) indicates good capture of open chromatin; the TSS enrichment score is shown in the title.
 
 ---
 
@@ -209,8 +222,14 @@ Plots heatmaps and average profiles of the signal around TSSs from the fragment-
 Rscript ATAC_QC_plot.1.1.R input_dir=/data/atac_qc tss_bed=/ref/tss.bed output_dir=/data/atac_qc_plot
 ```
 
-### 주요 결과 이미지 (제안)
-`01_tss_signal`의 NFR·mononucleosome heatmap과 profile PDF를 PNG로 변환해 등록한다.
+### 주요 결과 이미지
+등록할 그림: `01_tss_signal/<sample>.Heatmap_splitbam.pdf` (대표 샘플 1개)
+
+**레전드(국문)**
+**TSS 주변의 nucleosome-free 신호와 mononucleosome 신호.** 각 행은 TSS 하나이고, 가로축은 TSS 중심 ±1,010 bp 구간이다. 왼쪽 패널은 nucleosome-free fragment, 오른쪽 패널은 mononucleosome fragment의 신호(log2)를 색으로 나타낸다. 정상적인 ATAC-seq에서는 nucleosome-free 신호가 TSS 바로 위에 모이고, mononucleosome 신호는 TSS 양옆(nucleosome 자리)에 나타난다.
+
+**Legend (English)**
+**Nucleosome-free and mononucleosome signal around TSSs.** Each row is one TSS and the x-axis spans ±1,010 bp around its centre. The left panel shows nucleosome-free fragment signal and the right panel mononucleosome fragment signal (log2, colour scale). In good ATAC-seq data the nucleosome-free signal concentrates at the TSS, while the mononucleosome signal flanks it where nucleosomes sit.
 
 ---
 
@@ -273,8 +292,14 @@ Calls open-chromatin peaks from Tn5-corrected BAM files with MACS3 callpeak in p
 bash MACS3_callpeak_ATAC.1.2.sh input_dir=/data/atac_qc output_dir=/data/macs3 genome_size=hs
 ```
 
-### 주요 결과 이미지 (제안)
-frip_summary.tsv를 표 이미지로 캡처하거나, peak 수와 FRiP를 막대그래프로 만들어 등록한다.
+### 주요 결과 이미지
+등록할 그림: 표 캡처 `frip_summary.tsv` (이 모듈은 그림을 만들지 않는다)
+
+**레전드(국문)**
+**샘플별 peak 수와 FRiP.** 샘플마다 MACS3로 찾은 peak 수(peaks), 전체 read 수(total_reads), peak 안에 들어간 read 수(reads_in_peaks), 그 비율(FRiP)을 보여 준다. FRiP는 신호 대 잡음의 지표로, ENCODE ATAC-seq 기준에서는 0.3 이상이 바람직하고 0.2 이상이면 허용한다.
+
+**Legend (English)**
+**Peak count and FRiP per sample.** For each sample the table lists the number of MACS3 peaks (peaks), total reads (total_reads), reads falling in peaks (reads_in_peaks) and their fraction (FRiP). FRiP is a signal-to-noise measure; the ENCODE ATAC-seq standard prefers 0.3 or higher and accepts 0.2 or higher.
 
 ---
 
@@ -335,8 +360,14 @@ Classifies peaks into genomic features such as promoter, exon, intron, and inter
 Rscript peak_annotation.1.1.R input_dir=/data/macs3 genome_gff=/ref/genes.gff3 output_dir=/data/peak_annotation genome_label=TAIR10
 ```
 
-### 주요 결과 이미지 (제안)
-`plots/`의 기능 영역 분포(annotation bar/pie)와 TSS 거리 분포 그림을 등록한다.
+### 주요 결과 이미지
+등록할 그림: `plots/annotation_summary_percent_barplot.pdf`
+
+**레전드(국문)**
+**샘플별 peak의 유전체 영역 분포.** 막대 하나가 샘플 하나이며, peak가 promoter, UTR, exon, intron, distal intergenic 등 각 유전체 영역에 놓인 비율(%)을 색으로 나누어 보여 준다. ATAC-seq peak는 보통 promoter와 intron, distal intergenic에 많이 놓이며, 샘플 간 분포가 비슷한지로 데이터의 일관성을 확인할 수 있다.
+
+**Legend (English)**
+**Genomic distribution of peaks per sample.** Each bar is one sample, split by colour into the percentage of peaks in promoters, UTRs, exons, introns, distal intergenic regions and other features. ATAC-seq peaks are usually enriched in promoters, introns and distal intergenic regions; similar distributions across samples indicate consistent data.
 
 ---
 
@@ -421,8 +452,14 @@ trt_2,treated
 Rscript differential_accessibility.1.2.R sample_data=/data/da_sample_data.csv genome_fasta=/ref/genome.fa input_dir=/data/atac_qc peak_dir=/data/macs3 output_dir=/data/da control_name=control
 ```
 
-### 주요 결과 이미지 (제안)
-`04_plots/MD_plot.pdf`, `PCA_plot.pdf`, `sample_correlation_heatmap.pdf`를 PNG로 변환해 등록한다.
+### 주요 결과 이미지
+등록할 그림: `04_plots/PCA_plot.pdf`, `04_plots/MD_plot.pdf` (두 그림을 나란히)
+
+**레전드(국문)**
+**샘플 간 차이와 조건 간 접근성 변화.** (A) PCA. 변동이 큰 peak의 log CPM으로 샘플을 2차원에 놓은 그림으로, 점 하나가 샘플 하나이고 색은 조건이다. 같은 조건의 반복 샘플이 모이고 조건끼리 떨어져 있으면 조건 간 차이가 반복 간 차이보다 크다는 뜻이다. (B) MD plot. 점 하나가 peak 하나이며, 가로축은 평균 접근성(log CPM), 세로축은 조건 간 변화(log2 fold change)다. 유의하게 열린 peak와 닫힌 peak가 색으로 구분된다.
+
+**Legend (English)**
+**Sample relationships and accessibility changes between conditions.** (A) PCA of samples based on log CPM of the most variable peaks; each point is a sample coloured by condition. Replicates clustering together and conditions separating indicate that the condition effect exceeds replicate variation. (B) MD plot; each point is a peak, with mean accessibility (log CPM) on the x-axis and the change between conditions (log2 fold change) on the y-axis. Significantly gained and lost peaks are highlighted in colour.
 
 ---
 
@@ -492,8 +529,14 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 Rscript atac_motif.1.1.R input_dir=/data/da genome_fasta=/ref/genome.fa motif_db=/ref/JASPAR2024_CORE_plants.meme output_dir=/data/atac_motif
 ```
 
-### 주요 결과 이미지 (제안)
-`02_binned_enrichment`의 모티프 농축 heatmap(seqlogo 포함)을 등록한다.
+### 주요 결과 이미지
+등록할 그림: `02_binned_enrichment/binned_motif_heatmap.pdf`
+
+**레전드(국문)**
+**접근성 변화 구간별 모티프 농축.** peak를 접근성 변화(log2 fold change) 크기에 따라 여러 구간(bin)으로 나누고, 구간마다 각 전사인자 모티프가 배경보다 얼마나 많은지를 색으로 보여 준다. 행은 유의하게 농축된 모티프이며, 서로 비슷한 모티프끼리 묶어 정렬했고 왼쪽에 서열 로고를 붙였다. 열린 쪽 구간에서만 진하게 나타나는 모티프는 조건 변화로 활성이 커진 전사인자의 후보다.
+
+**Legend (English)**
+**Motif enrichment across bins of accessibility change.** Peaks are grouped into bins by log2 fold change in accessibility, and the colour shows how strongly each transcription factor motif is enriched in each bin relative to background. Rows are significantly enriched motifs, clustered by motif similarity and shown with sequence logos. Motifs enriched only in the gained-accessibility bins point to transcription factors that become more active.
 
 ---
 
@@ -571,8 +614,14 @@ trt_2	treated
 bash tf_footprinting.1.1.sh input_dir=/data/atac_qc metadata=/data/metadata.tsv macs_dir=/data/macs3 genome_fasta=/ref/genome.fa motif_db=/ref/JASPAR2024_CORE_plants.meme output_dir=/data/tf_footprinting
 ```
 
-### 주요 결과 이미지 (제안)
-`04_BINDetect`의 volcano 그림(조건 간 결합 변화)을 등록한다.
+### 주요 결과 이미지
+등록할 그림: `04_BINDetect/bindetect_figures.pdf`의 volcano plot 쪽
+
+**레전드(국문)**
+**조건 간 전사인자 결합 변화(BINDetect volcano plot).** 점 하나가 전사인자(모티프) 하나다. 가로축은 두 조건 사이의 결합 점수 차이(differential binding score)로, 오른쪽은 두 번째 조건에서, 왼쪽은 첫 번째 조건에서 결합이 더 강하다는 뜻이다. 세로축은 그 차이의 유의성(−log10 p)이며, 유의하게 변한 전사인자는 색과 이름으로 표시된다.
+
+**Legend (English)**
+**Differential transcription factor binding between conditions (BINDetect volcano plot).** Each point is one transcription factor motif. The x-axis is the differential binding score between the two conditions (positive: stronger in the second condition; negative: stronger in the first), and the y-axis is its significance (−log10 p). Significantly changed factors are coloured and labelled.
 
 ---
 
@@ -651,8 +700,14 @@ Analyzes with clusterProfiler which biological functions (GO) are enriched among
 Rscript functional_enrichment.1.0.R da_dir=/data/da genome_gff=/ref/genes.gff3 orgdb_file=/ref/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite output_dir=/data/functional_enrichment
 ```
 
-### 주요 결과 이미지 (제안)
-`03_plots/<목록>.GO_BP.dotplot.pdf`를 PNG로 변환해 등록한다.
+### 주요 결과 이미지
+등록할 그림: `03_plots/<list>.GO_BP.dotplot.pdf` (대표 목록 1개)
+
+**레전드(국문)**
+**유전자 목록의 GO 생물학적 과정 농축.** 행은 유의하게 농축된 GO term이다. 가로축은 목록 유전자 중 그 term에 속한 비율(GeneRatio), 점의 크기는 해당 유전자 수, 색은 보정된 p-value(p.adjust)다. peak 근처 유전자들이 어떤 생물학적 과정에 모여 있는지를 보여 준다.
+
+**Legend (English)**
+**GO biological process enrichment of a gene list.** Rows are significantly enriched GO terms. The x-axis is the fraction of list genes in each term (GeneRatio), point size is the gene count, and colour is the adjusted p-value (p.adjust). The plot shows which biological processes the genes near the peaks converge on.
 
 ---
 
@@ -717,5 +772,11 @@ ATAC_QC와 같은 sample_data.csv를 사용한다(2번 모듈의 샘플시트 �
 bash replicate_consistency.1.0.sh input_dir=/data/atac_qc sample_data=/data/sample_data.csv genome_size=hs output_dir=/data/replicate_consistency
 ```
 
-### 주요 결과 이미지 (제안)
-`02_idr/<조건>/<쌍>.idr.txt.png`(IDR 산점도)를 등록한다.
+### 주요 결과 이미지
+등록할 그림: `02_idr/<condition>/<repA>_vs_<repB>.idr.png` (대표 조건 1개)
+
+**레전드(국문)**
+**반복 샘플 간 peak 재현성(IDR).** 두 반복 샘플에서 찾은 peak를 짝지어 비교한 그림이다. 위쪽 패널은 두 반복의 peak 순위와 신호 세기를 서로 대응시킨 산점도로, 검은 점은 IDR 기준을 통과한 재현성 있는 peak, 빨간 점은 통과하지 못한 peak다. 아래쪽 패널은 peak 순위에 따른 IDR 값을 보여 준다. 강한 peak일수록 두 반복에서 함께 나타나고, 약한 peak로 갈수록 재현성이 떨어진다.
+
+**Legend (English)**
+**Peak reproducibility between replicates (IDR).** Peaks from two replicates are matched and compared. The upper panels plot the ranks and signal strengths of matched peaks against each other; black points pass the IDR threshold (reproducible) and red points do not. The lower panels show IDR values along the peak ranks. Strong peaks tend to appear in both replicates, and reproducibility falls off for weaker peaks.
