@@ -36,7 +36,7 @@ Each module of the ATAC-seq pipeline runs inside an Apptainer image (SIF) with i
 
 | 이미지 | 버전 | 사용하는 모듈 (스크립트) | 주요 도구 |
 |---|---|---|---|
-| bowtie2 (`bx_bowtie2_1.0.def`) | 1.0 | bowtie2 (bowtie2.1.3.sh) | bowtie2 2.5.4, SAMtools 1.24 |
+| bowtie2 (`bx_bowtie2_1.0.def`) | 1.0 | bowtie2 (bowtie2.1.4.sh) | bowtie2 2.5.4, SAMtools 1.24 |
 | gatk (`bx_gatk_1.0.def`) | 1.0 | GATK_MarkDuplicates (GATK_MarkDuplicates_1.0.sh) | GATK 4.6.2.0, SAMtools 1.24, OpenJDK 17 |
 | bx_organellar_filter | 1.0 | organellar_filter (organellar_filter.1.2.sh) | SAMtools 1.23.1 |
 | bx_atac_qc | 1.0 | ATAC_QC (ATAC_QC.1.2.R), ATAC_QC_plot (ATAC_QC_plot.1.2.R) | R 4.5.3, ATACseqQC 1.34.0, ChIPpeakAnno 3.44.0 |

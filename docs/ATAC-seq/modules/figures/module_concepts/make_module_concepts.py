@@ -162,7 +162,7 @@ def bowtie2():
         g.append(rect(990, yy, 300, 46, fill, 8, col if k == 2 else None) + t(1140, yy + 23, lab, 15, 700, col))
         if k < 2:
             g.append(arrow(1140, yy + 50, 1140, yy + 74, SUB, 2.5))
-    g.append(t(1305, 201, "post_process_bam=yes", 13, 700, ORANGE, "start") + t(1305, 221, "(samtools view, sort, index)", 13, 500, SUB, "start"))
+    g.append(t(1305, 201, "samtools", 13, 700, ORANGE, "start") + t(1305, 221, "(view, sort, index)", 13, 500, SUB, "start"))
     g.append(t(990, 330, "Read group per sample: @RG ID, SM, LB = <sample>, PL = ILLUMINA", 13, 700, POINT, "start"))
     g.append(t(990, 365, "<sample>_bowtie.log (alignment summary, excerpt)", 14, 700, SUB, "start"))
     summary = ["10000000 reads; of these:", "  10000000 (100.00%) were paired; of these:",
