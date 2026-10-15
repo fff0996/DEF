@@ -74,12 +74,12 @@ Aligns FASTQ reads to the reference genome with bowtie2. R1/R2 pairs are found f
 | Input | Required | Directory | input_dir | /data/fastq | FASTQ 폴더(.fastq, .fq, .gz; 하위 폴더 포함). R1/R2 짝은 _R1/_R2, .R1/.R2, _1/_2 이름으로 찾음 | FASTQ folder (.fastq, .fq, .gz; subfolders included); pairs are matched by _R1/_R2, .R1/.R2, or _1/_2 |
 | Output | Required | Directory | output_dir | /data/bowtie2 | 결과 폴더. GATK_MarkDuplicates의 input_dir | Output folder; input_dir of GATK_MarkDuplicates |
 | Option | Required | File | ref_genome | /ref/genome.fa | bowtie2 인덱스 이름(prefix) 또는 FASTA. 인덱스가 없으면 FASTA 옆에 생성 | bowtie2 index prefix or FASTA; a missing index is built beside the FASTA |
-| Option | Optional | List | post_process_bam | no | yes/no(y/n). yes면 좌표 순 BAM(.sorted.bam)과 .bai 생성 | yes/no (y/n); yes writes a coordinate-sorted BAM (.sorted.bam) and .bai |
+| Option | Optional | List | post_process_bam | yes | yes/no(y/n). yes면 좌표 순 BAM(.sorted.bam)과 .bai 생성. no면 SAM만 남아 다음 모듈(GATK_MarkDuplicates)을 쓸 수 없음. 포탈 등록 값은 yes(스크립트 자체 기본값은 no) | yes/no (y/n); yes writes a coordinate-sorted BAM (.sorted.bam) and .bai. With no only SAM files remain and the next module (GATK_MarkDuplicates) cannot run. Registered as yes on the portal (the script's own default is no) |
 
 ### 주요 사항
 | 국문 | 영문 |
 |---|---|
-| ATAC-seq 파이프라인에서는 post_process_bam=yes로 실행해 주세요. 다음 단계(GATK_MarkDuplicates)는 *.sorted.bam만 읽습니다. 기본값(no)이면 SAM 파일만 만들어집니다. | In the ATAC-seq pipeline run with post_process_bam=yes. The next step (GATK_MarkDuplicates) reads *.sorted.bam only; with the default (no) only SAM files are written. |
+| post_process_bam은 yes로 두세요(포탈 기본값). 다음 단계(GATK_MarkDuplicates)는 *.sorted.bam만 읽습니다. no로 바꾸면 SAM 파일만 만들어집니다. | Keep post_process_bam=yes (the portal default). The next step (GATK_MarkDuplicates) reads *.sorted.bam only; with no, only SAM files are written. |
 | bowtie2 기본 설정(end-to-end, 짝 read 사이 최대 500 bp)으로 정렬합니다. 500 bp보다 긴 fragment는 정상 짝으로 정렬되지 않아, 뉴클레오솜 2~3개 길이의 fragment가 적게 잡힐 수 있습니다. | Alignment uses the bowtie2 defaults (end-to-end, pairs up to 500 bp apart). Fragments longer than 500 bp are not aligned as concordant pairs, so di- and trinucleosome fragments may be under-represented. |
 | 인덱스가 없으면 FASTA와 같은 폴더에 만들므로 그 폴더에 쓰기 권한이 필요하고, 큰 유전체는 시간이 오래 걸립니다. 미리 만든 인덱스 이름을 지정하는 것을 권장합니다. | Without an index, one is built in the FASTA folder, which must be writable, and a large genome takes long. Giving a prebuilt index prefix is recommended. |
 | 샘플 이름은 FASTQ 이름에서 R1/R2 표시와 _trimmed, _HQ를 뺀 것입니다. 이후 모듈이 SampleID로 BAM을 찾으므로, 샘플 정보 파일의 SampleID가 이 이름에 들어 있어야 합니다. | The sample name is the FASTQ name without the R1/R2 tag and _trimmed or _HQ. Later modules find BAM files by SampleID, so each SampleID in the sample sheet must appear in this name. |
