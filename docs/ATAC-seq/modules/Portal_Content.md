@@ -1239,6 +1239,8 @@ Analyzes with clusterProfiler which biological functions (GO) are enriched among
 | 인터넷 연결 없이 수행하므로 KEGG 경로 분석은 지원하지 않습니다. | The analysis runs offline, so KEGG pathway analysis is not supported. |
 | genome_gff의 유전자 ID가 OrgDb에서 절반 이상 찾아지지 않으면 중단합니다. 종과 ID 체계를 확인해 주세요. | The run stops if fewer than half of the genome_gff gene IDs are found in the OrgDb; check the species and ID type. |
 | 파이프라인에서 peak_annotation 뒤와 differential_accessibility 뒤에 같은 모듈을 쓰며, 앞 모듈의 output_dir만 input_dir에 연결하면 됩니다. | In the pipeline the same module follows peak_annotation and differential_accessibility; connect the previous module's output_dir to input_dir. |
+| 두 입력은 서로 다른 질문에 답합니다. peak_annotation 결과는 샘플마다 열린 peak 근처 유전자 전체(수천~수만 개)가 어떤 기능에 모여 있는지, differential_accessibility 결과는 조건 간에 유의하게 열리거나 닫힌 peak 근처 유전자가 어떤 기능과 관련 있는지를 봅니다. | The two inputs answer different questions: a peak_annotation output asks which functions the genes near each sample's open peaks (thousands of genes) share, and a differential_accessibility output asks which functions the genes near peaks that significantly gained or lost accessibility between conditions relate to. |
+| differential_accessibility 결과를 넣었는데 유의한 peak가 적으면(예: 수십 개 이하) 검정할 GO term이 없어 결과가 나오지 않습니다. 이때는 오류가 아니라 경고와 함께 정상 종료하며, 요약표 상태가 no_testable_terms(또는 empty)로 남습니다. peak_annotation 결과를 입력으로 쓰거나 da_fdr을 높여 주세요. | With a differential_accessibility input and few significant peaks (for example a few dozen or fewer), no GO term can be tested and no result is produced. The run then ends normally with a warning, and the summary table shows the status no_testable_terms (or empty). Use a peak_annotation output as input, or raise da_fdr. |
 
 
 ### 분석 개념 이미지

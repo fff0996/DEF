@@ -5,6 +5,10 @@
 #     a peak_annotation output_dir (one gene list per sample) or a
 #     differential_accessibility output_dir (genes near peaks that gained or lost
 #     accessibility). Gene annotation comes from an OrgDb file; runs offline.
+#   A gene list that is empty or gives no testable GO term (for example too few
+#     significant differential peaks) is reported with a warning and the status
+#     empty or no_testable_terms in enrichment_summary.tsv; the run still ends
+#     with exit code 0.
 #
 # Usage:
 #   Rscript functional_enrichment.1.0.R \
@@ -479,8 +483,14 @@ for (nm in names(gene_lists)) {
 empty_lists <- names(gene_lists)[lengths(gene_lists) == 0]
 if (length(empty_lists) > 0) warn_msg("empty gene list(s) skipped: ", paste(empty_lists, collapse = ", "))
 gene_lists <- gene_lists[lengths(gene_lists) > 0]
-if (length(gene_lists) == 0) stop_err("All gene lists are empty after the distance filter")
 msg("")
+
+# What to tell the user when a list gives no testable GO term.
+few_genes_hint <- if (da_mode) {
+	"too few significant differential peaks for GO enrichment; use a peak_annotation output_dir as input_dir, or raise da_fdr"
+} else {
+	"the list is too small, or its genes have no GO term of size min_gs_size to max_gs_size in the background"
+}
 
 universe_ids <- NULL
 if (universe == "auto" && da_mode) {
@@ -609,6 +619,7 @@ for (nm in names(gene_lists)) {
 	msg("############################## Processing gene list: ", nm)
 	genes <- unique(convert_ids(gene_lists[[nm]]))
 	tag <- paste0(nm, ".GO_", ont)
+	res_error <- FALSE
 	res <- tryCatch({
 		if (keytype_used == "go_table") {
 			clusterProfiler::enricher(
@@ -625,12 +636,18 @@ for (nm in names(gene_lists)) {
 		}
 	}, error = function(e) {
 		warn_msg(nm, ": enrichment failed: ", conditionMessage(e))
+		res_error <<- TRUE
 		NULL
 	})
 
 	n_tested <- 0
 	n_sig <- 0
-	status <- "failed"
+	status <- if (res_error) "failed" else "no_testable_terms"
+	if (is.null(res) && !res_error) {
+		warn_msg(nm, ": no GO term with ", min_gs_size, "-", max_gs_size, " genes contains any of its ",
+				length(genes), " genes, so nothing could be tested (", few_genes_hint, ")")
+		msg("  genes: ", length(genes), " / terms tested: 0 (no testable GO term)")
+	}
 	if (!is.null(res)) {
 		tab <- as.data.frame(res)
 		n_tested <- nrow(tab)
@@ -683,15 +700,24 @@ for (nm in names(gene_lists)) {
 	msg("")
 }
 
+for (nm in empty_lists) {
+	summary_rows[[nm]] <- data.frame(
+			gene_list = nm, genes = 0, genes_annotated = 0, terms_tested = 0, significant_terms = 0, ont = ont,
+			annotation = ifelse(nzchar(orgdb_file), basename(orgdb_file), basename(go_table)),
+			keytype = keytype_used, status = "empty", stringsAsFactors = FALSE
+	)
+}
 summary_df <- do.call(rbind, summary_rows)
 write.table(summary_df, file.path(summary_dir, "enrichment_summary.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 n_done <- sum(summary_df$status == "done")
 n_failed <- sum(summary_df$status == "failed")
+n_untestable <- sum(summary_df$status %in% c("no_testable_terms", "empty"))
 
 msg("############################## Summary")
 msg("  gene lists         : ", nrow(summary_df))
 msg("  analysed           : ", n_done)
+msg("  no testable GO term: ", n_untestable, " (empty list or no GO term of the allowed size)")
 msg("  failed             : ", n_failed)
 msg("  with significant GO: ", sum(summary_df$significant_terms > 0))
 msg("")
@@ -700,5 +726,7 @@ msg("summary    = ", file.path(summary_dir, "enrichment_summary.tsv"))
 msg("output_dir = ", output_dir)
 msg("End time   = ", format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
 
-if (n_done == 0) stop_err("enrichment failed for all gene lists")
+if (n_done == 0 && n_failed > 0) stop_err("enrichment failed for all gene lists")
+if (n_done == 0) warn_msg("no gene list could be tested for GO enrichment (", few_genes_hint, "); see ",
+			file.path(summary_dir, "enrichment_summary.tsv"))
 if (n_failed > 0) warn_msg(n_failed, " gene list(s) failed. Check the error log: ", err_file)

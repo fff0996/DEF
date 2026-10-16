@@ -31,7 +31,7 @@ MODULES = [
     ("differential_accessibility", "differential_accessibility.1.4.R", "differential_accessibility.1.3.R", "differential_accessibility.1.2.R", "bx_differential_accessibility 1.0"),
     ("atac_motif", "atac_motif.1.5.R", "atac_motif.1.2.R", "atac_motif.1.1.R", "bx_atac_motif 1.0"),
     ("tf_footprinting", "tf_footprinting.1.4.sh", "tf_footprinting.1.1.sh", "tf_footprinting.1.0.sh", "bx_tf_footprinting 1.0"),
-    ("functional_enrichment", "functional_enrichment.1.1.R", "functional_enrichment.1.0.R", None, "bx_functional_enrichment 1.0"),
+    ("functional_enrichment", "functional_enrichment.1.2.R", "functional_enrichment.1.0.R", None, "bx_functional_enrichment 1.0"),
     ("replicate_consistency", "replicate_consistency.1.1.sh", "replicate_consistency.1.0.sh", None, "bx_replicate_consistency 1.0"),
 ]
 
@@ -130,7 +130,11 @@ Footprinting and BINDetect results are unchanged.""",
     "functional_enrichment": """GO enrichment (clusterProfiler) of genes near ATAC-seq peaks. input_dir is
   a peak_annotation output_dir (one gene list per sample) or a
   differential_accessibility output_dir (genes near peaks that gained or lost
-  accessibility). Gene annotation comes from an OrgDb file; runs offline.""",
+  accessibility). Gene annotation comes from an OrgDb file; runs offline.
+A gene list that is empty or gives no testable GO term (for example too few
+  significant differential peaks) is reported with a warning and the status
+  empty or no_testable_terms in enrichment_summary.tsv; the run still ends
+  with exit code 0.""",
     "replicate_consistency": """Replicate consistency of ATAC-seq peaks with IDR (ENCODE style): relaxed
   MACS3 peaks per replicate and for the pooled replicates, IDR for every
   replicate pair, and a reproducible peak set per condition.""",
