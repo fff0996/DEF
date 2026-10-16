@@ -22,7 +22,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 | organellar_filter | `organellar_filter.1.2.sh` | bx_organellar_filter.1.0 | `bash organellar_filter.1.2.sh key=value ...` |
 | ATAC_QC | `ATAC_QC.1.2.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC.1.2.R key=value ...` |
 | ATAC_QC_plot | `ATAC_QC_plot.1.2.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC_plot.1.2.R key=value ...` |
-| MACS3_callpeak | `MACS3_callpeak_ATAC.1.3.sh` | bx_macs3_callpeak_atac.1.0 | `bash MACS3_callpeak_ATAC.1.3.sh key=value ...` |
+| MACS3_callpeak | `MACS3_callpeak_ATAC.1.4.sh` | bx_macs3_callpeak_atac.1.0 | `bash MACS3_callpeak_ATAC.1.4.sh key=value ...` |
 | peak_annotation | `peak_annotation.1.2.R` | bx_peak_annotation.1.0 | `Rscript peak_annotation.1.2.R key=value ...` |
 | differential_accessibility | `differential_accessibility.1.2.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.2.R key=value ...` |
 | atac_motif | `atac_motif.1.4.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.4.R key=value ...` |

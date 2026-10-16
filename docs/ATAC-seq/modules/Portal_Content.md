@@ -538,14 +538,14 @@ Rscript ATAC_QC_plot.1.2.R \
 |---|---|---|
 | 모듈명 | MACS3_callpeak_ATAC | MACS3_callpeak_ATAC |
 | 서브 타이틀 | ATAC-seq peak 검출 | ATAC-seq peak calling |
-| 버전 | 1.3 | |
+| 버전 | 1.4 | |
 | 카테고리 대분류 | 특징 검출 | Feature Detection |
 | 카테고리 아이콘 | 선택 예정(Feature Detection 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | peak 검출 | Peak Calling |
 | 태그 | ATAC-seq, MACS3, peak calling, narrowPeak, FRiP | |
 | 레퍼런스 URL | https://github.com/macs3-project/MACS | |
 | 컨테이너 이미지 | bx_macs3_callpeak_atac.1.0 | |
-| 실행 스크립트 파일 | MACS3_callpeak_ATAC.1.3.sh | |
+| 실행 스크립트 파일 | MACS3_callpeak_ATAC.1.4.sh | |
 | Processor Core (제안) | 싱글 코어 (MACS3는 1코어로 계산) | Single core (MACS3 runs on one core) |
 
 ### 실행 이미지
@@ -610,7 +610,7 @@ Calls open-chromatin peaks from Tn5-corrected BAM files with MACS3 callpeak in p
 
 ### 스크립트 사용 예제
 ```
-bash MACS3_callpeak_ATAC.1.3.sh \
+bash MACS3_callpeak_ATAC.1.4.sh \
   input_dir=/data/atac_qc \
   output_dir=/data/macs3 \
   genome_size=1.2e8 \
