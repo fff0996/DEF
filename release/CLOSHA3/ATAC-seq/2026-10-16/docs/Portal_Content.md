@@ -735,27 +735,55 @@ Rscript peak_annotation.1.1.R \
 ```
 
 ### 주요 결과 이미지
-결과 그림 4개를 아래 순서대로 등록합니다. 결과 1이 대표 그림입니다.
+결과 그림 8개를 아래 순서대로 등록합니다. 결과 1이 대표 그림입니다. 샘플마다 나오는 그림(결과 3~8)은 대표 샘플 하나(예시: SRR24197771)를 씁니다.
 
-**결과 1. 샘플별 peak 유전체 영역 분포**
+**결과 1. 샘플별 peak 유전체 영역 비율**
 - 결과 파일: `plots/annotation_summary_percent_barplot.pdf`
-- 레전드(국문): **샘플별 peak의 유전체 영역 분포.** 막대 하나가 샘플 하나이며, peak가 promoter, UTR, exon, intron, distal intergenic 등 각 유전체 영역에 놓인 비율(%)을 색으로 나누어 보여 줍니다. ATAC-seq peak는 보통 promoter와 intron, distal intergenic에 많이 놓이며, 샘플 간 분포가 비슷한지로 데이터의 일관성을 확인할 수 있습니다.
-- 레전드(영문): **Genomic distribution of peaks per sample.** Each bar is one sample, split by colour into the percentage of peaks in promoters, UTRs, exons, introns, distal intergenic regions and other features. ATAC-seq peaks are usually enriched in promoters, introns and distal intergenic regions; similar distributions across samples indicate consistent data.
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/peak_annotation/portal/peak_annotation_result_1.png`
+- 레전드(국문): **샘플별 peak의 유전체 영역 비율.** 막대 하나가 샘플 하나이며, peak가 각 유전체 영역(Promoter, 3' UTR, Exon, Intron, Downstream, Distal Intergenic 등)에 놓인 비율(%)을 색으로 나누어 보여 줍니다. 영역 이름은 비슷한 분류를 묶어 간단히 한 것입니다(예: Promoter (<=1kb), (1-2kb), (2-3kb) → Promoter). 샘플 간 분포가 비슷한지로 데이터의 일관성을 확인합니다. 예시 데이터(애기장대)에서는 8개 샘플 모두 peak의 90% 이상이 Promoter였습니다. 애기장대처럼 유전자가 촘촘한 유전체에서는 promoter 범위(기본 TSS ±3 kb, 옵션 tss_upstream·tss_downstream)가 유전체 대부분을 덮어 Promoter 비율이 높게 나오며, 범위를 줄이면(예: ±1 kb) 다른 영역의 비율이 늘어납니다.
+- 레전드(영문): **Genomic distribution of peaks per sample (%).** Each bar is one sample, split by colour into the percentage of peaks in each genomic feature (Promoter, 3' UTR, Exon, Intron, Downstream, Distal Intergenic, and so on). Similar categories are merged (for example Promoter (<=1kb), (1-2kb), and (2-3kb) become Promoter). Similar distributions across samples indicate consistent data. In the example data (Arabidopsis) over 90% of peaks were Promoter in all eight samples. In a gene-dense genome such as Arabidopsis the promoter window (TSS ±3 kb by default; options tss_upstream and tss_downstream) covers most of the genome, so the Promoter share is high; a narrower window (for example ±1 kb) moves peaks into the other features.
 
-**결과 2. 겹치는 주석 영역(UpSet)**
-- 결과 파일: `plots/<sample>.annotation_upset.pdf` (대표 샘플 1개)
-- 레전드(국문): **peak가 동시에 걸치는 유전체 영역(UpSet plot).** peak 하나가 여러 영역(예: promoter이면서 exon)에 함께 걸칠 수 있으므로, 영역 조합별 peak 수를 보여 줍니다. 아래 점과 선은 영역 조합, 위 막대는 그 조합에 속한 peak 수입니다. 결과 1의 막대는 우선순위에 따라 영역 하나만 고른 것이고, 이 그림은 겹침까지 보여 줍니다.
-- 레전드(영문): **Overlapping genomic features of peaks (UpSet plot).** A peak can fall in several features at once (for example promoter and exon), so the plot shows peak counts per feature combination: the dots and lines below define the combination and the bars above give its peak count. Result 1 assigns each peak to one feature by priority; this plot shows the overlaps.
+**결과 2. 샘플별 peak 유전체 영역 개수**
+- 결과 파일: `plots/annotation_summary_barplot.pdf`
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/peak_annotation/portal/peak_annotation_result_2.png`
+- 레전드(국문): **샘플별 peak의 유전체 영역 개수.** 결과 1과 같은 분류를 비율 대신 peak 개수(Peak count)로 쌓은 막대그래프입니다. 막대 높이가 샘플의 전체 peak 수이므로, 샘플 간 peak 수 차이와 영역 구성을 함께 볼 수 있습니다. 예시 데이터에서는 샘플당 약 18,000~22,000개 peak 대부분이 Promoter에 놓였습니다.
+- 레전드(영문): **Genomic distribution of peaks per sample (counts).** The same categories as result 1, stacked as peak counts instead of percentages. Bar height is the sample's total peak number, so differences in peak numbers and feature composition can be seen together. In the example data most of the about 18,000-22,000 peaks per sample lie in promoters.
 
-**결과 3. TSS까지 거리 분포**
-- 결과 파일: `plots/<sample>.distance_to_tss.pdf` (결과 2와 같은 샘플)
-- 레전드(국문): **peak에서 가장 가까운 TSS까지의 거리 분포.** 가로 막대는 peak의 비율(%)이며, 거리 구간(0~1 kb, 1~3 kb, 3~5 kb, 5~10 kb, 10~100 kb, 100 kb 이상)별로 색을 나누었습니다. 왼쪽(음수)은 유전자 상류, 오른쪽(양수)은 하류에 놓인 peak다. ATAC-seq peak는 TSS 가까이(0~3 kb)에 많이 모이며, 원거리 peak는 enhancer 같은 조절 부위의 후보입니다.
-- 레전드(영문): **Distance from peaks to the nearest TSS.** The horizontal bar gives the percentage of peaks in distance bins (0-1 kb, 1-3 kb, 3-5 kb, 5-10 kb, 10-100 kb, over 100 kb), with upstream peaks to the left (negative) and downstream peaks to the right (positive). ATAC-seq peaks concentrate near TSSs (0-3 kb), and distal peaks are candidates for regulatory elements such as enhancers.
+**결과 3. 영역 원그래프**
+- 결과 파일: `plots/<sample>.annotation_pie.pdf` (대표 샘플 1개)
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/peak_annotation/portal/peak_annotation_result_3.png`
+- 레전드(국문): **한 샘플의 peak 유전체 영역 구성(원그래프).** ChIPseeker의 세부 분류로 peak가 놓인 영역의 비율을 보여 주며, 범례에 영역별 비율(%)이 적혀 있습니다. promoter는 TSS로부터의 거리에 따라 ≤1 kb, 1~2 kb, 2~3 kb로 나뉘고, 한 peak가 여러 영역에 걸치면 Promoter > 5' UTR > 3' UTR > Exon > Intron > Downstream > Intergenic 순서로 하나만 셉니다. 예시 데이터(SRR24197771)에서는 Promoter ≤1 kb 79.1%, 1~2 kb 10.6%, 2~3 kb 4.8%, Distal Intergenic 4.2%였습니다.
+- 레전드(영문): **Genomic features of one sample's peaks (pie chart).** The share of peaks in each ChIPseeker feature, with the percentage of each feature in the legend. Promoters are split by distance from the TSS (≤1 kb, 1-2 kb, 2-3 kb), and a peak overlapping several features is counted once, in the order Promoter > 5' UTR > 3' UTR > Exon > Intron > Downstream > Intergenic. In the example data (SRR24197771): Promoter ≤1 kb 79.1%, 1-2 kb 10.6%, 2-3 kb 4.8%, Distal Intergenic 4.2%.
 
-**결과 4. TSS 주변 peak 분포**
-- 결과 파일: `plots/<sample>.tss_profile.pdf` (결과 2와 같은 샘플)
-- 레전드(국문): **TSS 주변 peak 분포.** 가로축은 TSS 기준 위치(기본 −3,000~+3,000 bp, 옵션 tss_upstream·tss_downstream), 세로축은 그 위치를 덮는 peak의 빈도(Peak Count Frequency)다. ATAC-seq에서는 TSS(0 bp) 바로 위에서 가장 높은 봉우리가 나타나며, 이는 promoter가 열려 있다는 뜻입니다.
-- 레전드(영문): **Peak distribution around TSSs.** The x-axis is the position relative to the TSS (−3,000 to +3,000 bp by default; options tss_upstream and tss_downstream) and the y-axis how often peaks cover that position (peak count frequency). ATAC-seq data show the highest peak right at the TSS (0 bp), meaning that promoters are open.
+**결과 4. 영역 가로 막대**
+- 결과 파일: `plots/<sample>.annotation_bar.pdf` (결과 3과 같은 샘플)
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/peak_annotation/portal/peak_annotation_result_4.png`
+- 레전드(국문): **한 샘플의 peak 유전체 영역 구성(가로 막대, Feature Distribution).** 결과 3의 원그래프와 같은 비율을 하나의 가로 막대로 나타낸 그림입니다. 가로축은 비율(%)이며, 작은 영역도 막대 길이로 비교하기 쉽습니다.
+- 레전드(영문): **Genomic features of one sample's peaks (horizontal bar, Feature Distribution).** The same percentages as the pie chart of result 3, drawn as one horizontal bar with percentage on the x-axis, which makes small features easier to compare.
+
+**결과 5. 겹치는 주석 영역(UpSet)**
+- 결과 파일: `plots/<sample>.annotation_upset.pdf` (결과 3과 같은 샘플)
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/peak_annotation/portal/peak_annotation_result_5.png`
+- 레전드(국문): **peak가 동시에 걸치는 유전체 영역(UpSet plot).** 한 peak가 여러 영역에 함께 걸칠 수 있으므로 영역 조합별 peak 수를 보여 줍니다. 아래의 점과 선이 영역 조합(Promoter, genic, Exon, fiveUTR, threeUTR, Intron, Intergenic, downstream, distal_intergenic), 위 막대가 그 조합에 속한 peak 수이며, peak가 많은 조합부터 최대 20개를 보여 줍니다. 결과 1~4는 우선순위로 영역 하나만 고른 것이고, 이 그림은 겹침까지 보여 줍니다. 예시 데이터에서는 Promoter·genic·Exon·fiveUTR에 함께 걸친 peak가 약 5,500개로 가장 많았습니다.
+- 레전드(영문): **Overlapping genomic features of peaks (UpSet plot).** A peak can fall in several features at once, so the plot shows peak counts per feature combination: dots and lines below mark the combination (Promoter, genic, Exon, fiveUTR, threeUTR, Intron, Intergenic, downstream, distal_intergenic) and bars above give its peak count, for up to 20 combinations from the largest. Results 1-4 assign each peak to one feature by priority; this plot shows the overlaps. In the example data the largest combination was Promoter, genic, Exon, and fiveUTR together (about 5,500 peaks).
+
+**결과 6. TSS까지 거리 분포**
+- 결과 파일: `plots/<sample>.distance_to_tss.pdf` (결과 3과 같은 샘플)
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/peak_annotation/portal/peak_annotation_result_6.png`
+- 레전드(국문): **peak에서 가장 가까운 TSS까지의 거리 분포.** 가로 막대는 peak의 비율(Binding sites, %)이며, 거리 구간(0~1 kb, 1~3 kb, 3~5 kb, 5~10 kb, 10~100 kb, 100 kb 초과)별로 색을 나누었습니다. TSS(세로선) 왼쪽은 유전자 상류, 오른쪽은 하류에 놓인 peak입니다. ATAC-seq peak는 TSS 가까이(0~3 kb)에 많이 모이며, 먼 peak는 enhancer 같은 원거리 조절 부위의 후보입니다. 예시 데이터에서는 거의 모든 peak가 TSS에서 3 kb 안에 있었고 상류와 하류에 거의 절반씩 나뉘었습니다.
+- 레전드(영문): **Distance from peaks to the nearest TSS.** The horizontal bar gives the percentage of peaks (binding sites, %) in distance bins (0-1 kb, 1-3 kb, 3-5 kb, 5-10 kb, 10-100 kb, over 100 kb), with upstream peaks left of the TSS line and downstream peaks to the right. ATAC-seq peaks concentrate near TSSs (0-3 kb), and distal peaks are candidates for regulatory elements such as enhancers. In the example data almost all peaks were within 3 kb of a TSS, split about evenly between upstream and downstream.
+
+**결과 7. TSS 주변 peak 분포**
+- 결과 파일: `plots/<sample>.tss_profile.pdf` (결과 3과 같은 샘플)
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/peak_annotation/portal/peak_annotation_result_7.png`
+- 레전드(국문): **TSS 주변 peak 분포.** 가로축은 TSS 기준 위치(기본 −3,000~+3,000 bp, 옵션 tss_upstream·tss_downstream), 세로축은 그 위치를 덮는 peak의 빈도(Peak Count Frequency)이며, 점선이 TSS입니다. ATAC-seq에서는 TSS 바로 위에서 가장 높은 봉우리가 나타나며, 이는 promoter가 열려 있다는 뜻입니다. 예시 데이터에서는 봉우리가 TSS 바로 상류에 있었습니다.
+- 레전드(영문): **Peak distribution around TSSs.** The x-axis is the position relative to the TSS (−3,000 to +3,000 bp by default; options tss_upstream and tss_downstream) and the y-axis how often peaks cover that position (Peak Count Frequency); the dashed line is the TSS. ATAC-seq data show the highest peak right at the TSS, meaning that promoters are open. In the example data the summit lies just upstream of the TSS.
+
+**결과 8. TSS 주변 peak heatmap**
+- 결과 파일: `plots/<sample>.tss_heatmap.pdf` (결과 3과 같은 샘플)
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/peak_annotation/portal/peak_annotation_result_8.png`
+- 레전드(국문): **TSS 주변 peak heatmap.** 각 행은 peak가 있는 promoter 하나이고, 가로축은 TSS 기준 −3,000~+3,000 bp입니다. 색은 그 위치를 덮는 peak 신호를 행마다 최댓값 1로 맞춘 값으로, 파랑(0)에서 빨강(1)으로 나타내며 신호가 많은 행이 위에 옵니다. 결과 7의 평균 곡선을 promoter별로 펼친 그림으로, 대부분의 행에서 TSS 근처에 빨간 띠가 모이면 promoter의 열린 영역이 고르게 잡힌 것입니다. 예시 데이터에서도 TSS 바로 상류에 빨간 띠가 뚜렷했습니다.
+- 레전드(영문): **Heatmap of peaks around TSSs.** Each row is one promoter with a peak, and the x-axis spans −3,000 to +3,000 bp around the TSS. Colour shows the peak signal at each position scaled to a row maximum of 1, from blue (0) to red (1), with the rows carrying most signal on top. It spreads the average curve of result 7 over individual promoters; a red band near the TSS in most rows means open promoter regions were captured consistently. The example data show a clear red band just upstream of the TSS.
 
 ---
 
