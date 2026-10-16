@@ -1,0 +1,115 @@
+############################## ATAC_QC_plot 
+Log file       :  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/logs/20261015_011754_390136.log 
+Error log file :  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/logs/20261015_011754_390136.error.log 
+Start time     :  2026-10-15 01:17:54 
+ 
+parameters: 
+  input_dir       =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output 
+  manifest_file   =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output/05_metadata/atac_qc_manifest.tsv 
+  tss_bed         =  /bio-hub/shared-data/REF/genomes/Arabidopsis_thaliana_TAIR10/Arabidopsis_thaliana.TAIR10.TSS.bed 
+  output_dir      =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output 
+  upstream        =  1010 
+  downstream      =  1010 
+  ntile           =  101 
+  tss_filter      =  0.5 
+  harmonize_mode  =  auto 
+ 
+############################## Step 1: Read manifest and TSS 
+manifest rows:  8 
+TSS count    :  27648 
+TSS seqlevels preview:  1, 2, 3, 4, 5, Mt, Pt 
+ 
+############################## Step 1.5: Harmonize tss_bed 
+manifest Seqlevels (union, preview):  1, 2, 3, 4, 5, Mt, Pt 
+no harmonization needed (tss_bed and manifest agree on seqnames) 
+ 
+############################## Processing sample:  SRR24197773 
+split BAM reads:  NucleosomeFree:1274168,mononucleosome:714206,dinucleosome:733782,trinucleosome:0 
+classes used:  NucleosomeFree,mononucleosome,dinucleosome 
+seqlev used:  1,2,3,4,5,Mt,Pt 
+TSS used   :  27648 
+outputs: 
+  heatmap =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197773.Heatmap_splitbam.pdf 
+  profile =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197773.TSSprofile_splitbam.pdf 
+  tsv     =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197773.TSSprofile_splitbam.tsv 
+ 
+############################## Processing sample:  SRR24197774 
+split BAM reads:  NucleosomeFree:2065188,mononucleosome:1125218,dinucleosome:1088180,trinucleosome:0 
+classes used:  NucleosomeFree,mononucleosome,dinucleosome 
+seqlev used:  1,2,3,4,5,Mt,Pt 
+TSS used   :  27648 
+outputs: 
+  heatmap =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197774.Heatmap_splitbam.pdf 
+  profile =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197774.TSSprofile_splitbam.pdf 
+  tsv     =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197774.TSSprofile_splitbam.tsv 
+ 
+############################## Processing sample:  SRR24197775 
+split BAM reads:  NucleosomeFree:4505078,mononucleosome:2489586,dinucleosome:2427624,trinucleosome:0 
+classes used:  NucleosomeFree,mononucleosome,dinucleosome 
+seqlev used:  1,2,3,4,5,Mt,Pt 
+TSS used   :  27648 
+outputs: 
+  heatmap =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197775.Heatmap_splitbam.pdf 
+  profile =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197775.TSSprofile_splitbam.pdf 
+  tsv     =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197775.TSSprofile_splitbam.tsv 
+ 
+############################## Processing sample:  SRR24197776 
+split BAM reads:  NucleosomeFree:2230184,mononucleosome:1184126,dinucleosome:1046152,trinucleosome:0 
+classes used:  NucleosomeFree,mononucleosome,dinucleosome 
+seqlev used:  1,2,3,4,5,Mt,Pt 
+TSS used   :  27648 
+outputs: 
+  heatmap =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197776.Heatmap_splitbam.pdf 
+  profile =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197776.TSSprofile_splitbam.pdf 
+  tsv     =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197776.TSSprofile_splitbam.tsv 
+ 
+############################## Processing sample:  SRR24197771 
+split BAM reads:  NucleosomeFree:5496374,mononucleosome:2799760,dinucleosome:2625820,trinucleosome:0 
+classes used:  NucleosomeFree,mononucleosome,dinucleosome 
+seqlev used:  1,2,3,4,5,Mt,Pt 
+TSS used   :  27648 
+outputs: 
+  heatmap =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197771.Heatmap_splitbam.pdf 
+  profile =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197771.TSSprofile_splitbam.pdf 
+  tsv     =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197771.TSSprofile_splitbam.tsv 
+ 
+############################## Processing sample:  SRR24197772 
+split BAM reads:  NucleosomeFree:8528108,mononucleosome:4287844,dinucleosome:3762056,trinucleosome:0 
+classes used:  NucleosomeFree,mononucleosome,dinucleosome 
+seqlev used:  1,2,3,4,5,Mt,Pt 
+TSS used   :  27648 
+outputs: 
+  heatmap =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197772.Heatmap_splitbam.pdf 
+  profile =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197772.TSSprofile_splitbam.pdf 
+  tsv     =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197772.TSSprofile_splitbam.tsv 
+ 
+############################## Processing sample:  SRR24197791 
+split BAM reads:  NucleosomeFree:6301718,mononucleosome:3098860,dinucleosome:3046218,trinucleosome:0 
+classes used:  NucleosomeFree,mononucleosome,dinucleosome 
+seqlev used:  1,2,3,4,5,Mt,Pt 
+TSS used   :  27648 
+outputs: 
+  heatmap =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197791.Heatmap_splitbam.pdf 
+  profile =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197791.TSSprofile_splitbam.pdf 
+  tsv     =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197791.TSSprofile_splitbam.tsv 
+ 
+############################## Processing sample:  SRR24197792 
+split BAM reads:  NucleosomeFree:6307260,mononucleosome:3271932,dinucleosome:3068900,trinucleosome:0 
+classes used:  NucleosomeFree,mononucleosome,dinucleosome 
+seqlev used:  1,2,3,4,5,Mt,Pt 
+TSS used   :  27648 
+outputs: 
+  heatmap =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197792.Heatmap_splitbam.pdf 
+  profile =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197792.TSSprofile_splitbam.pdf 
+  tsv     =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output/01_tss_signal/SRR24197792.TSSprofile_splitbam.tsv 
+ 
+############################## Summary 
+  total samples :  8 
+  plotted       :  8 
+  skipped       :  0 
+ 
+############################## Done 
+input_dir  =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output 
+tss_bed    =  /bio-hub/shared-data/REF/genomes/Arabidopsis_thaliana_TAIR10/Arabidopsis_thaliana.TAIR10.TSS.bed 
+output_dir =  /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC_plot/output 
+End time   =  2026-10-15 01:27:51 

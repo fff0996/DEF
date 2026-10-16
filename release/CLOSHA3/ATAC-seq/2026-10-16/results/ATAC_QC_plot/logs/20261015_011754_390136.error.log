@@ -1,0 +1,287 @@
+WARNING: SRR24197773  has empty class(es) counted as no reads:  trinucleosome  (SplitStatus= empty_split:trinucleosome )
+WARNING: Some start position of the peaks are less than 1!
+WARNING: Some start position of the peaks are less than 1!
+WARNING: SRR24197774  has empty class(es) counted as no reads:  trinucleosome  (SplitStatus= empty_split:trinucleosome )
+WARNING: Some start position of the peaks are less than 1!
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 2 out-of-bound ranges located on sequence 5. Note
+  that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: Some end position of the peaks are out of bound!
+WARNING: Some start position of the peaks are less than 1!
+WARNING: SRR24197775  has empty class(es) counted as no reads:  trinucleosome  (SplitStatus= empty_split:trinucleosome )
+WARNING: Some start position of the peaks are less than 1!
+WARNING: GRanges object contains 5 out-of-bound ranges located on sequences 4 and 5.
+  Note that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 5 out-of-bound ranges located on sequences 4 and 5.
+  Note that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 3 out-of-bound ranges located on sequence 4. Note
+  that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: Some end position of the peaks are out of bound!
+WARNING: Some start position of the peaks are less than 1!
+WARNING: SRR24197776  has empty class(es) counted as no reads:  trinucleosome  (SplitStatus= empty_split:trinucleosome )
+WARNING: Some start position of the peaks are less than 1!
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 4. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 4. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 4. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: Some end position of the peaks are out of bound!
+WARNING: Some start position of the peaks are less than 1!
+WARNING: SRR24197771  has empty class(es) counted as no reads:  trinucleosome  (SplitStatus= empty_split:trinucleosome )
+WARNING: Some start position of the peaks are less than 1!
+WARNING: GRanges object contains 3 out-of-bound ranges located on sequence 5. Note
+  that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 3 out-of-bound ranges located on sequence 5. Note
+  that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 7 out-of-bound ranges located on sequences 3, 4, and
+  5. Note that ranges located on a sequence whose length is unknown (NA) or on
+  a circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 1. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 5 out-of-bound ranges located on sequences 3, 4, and
+  5. Note that ranges located on a sequence whose length is unknown (NA) or on
+  a circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 4 out-of-bound ranges located on sequences 3, 4, and
+  5. Note that ranges located on a sequence whose length is unknown (NA) or on
+  a circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: Some start position of the peaks are less than 1!
+WARNING: Some end position of the peaks are out of bound!
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 1. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: Some start position of the peaks are less than 1!
+WARNING: SRR24197772  has empty class(es) counted as no reads:  trinucleosome  (SplitStatus= empty_split:trinucleosome )
+WARNING: Some start position of the peaks are less than 1!
+WARNING: GRanges object contains 3 out-of-bound ranges located on sequences 5 and 1.
+  Note that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 3 out-of-bound ranges located on sequences 5 and 1.
+  Note that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 10 out-of-bound ranges located on sequences 4, 5, and
+  1. Note that ranges located on a sequence whose length is unknown (NA) or on
+  a circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 9 out-of-bound ranges located on sequences 4, 5, and
+  1. Note that ranges located on a sequence whose length is unknown (NA) or on
+  a circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 8 out-of-bound ranges located on sequences 4, 5, and
+  1. Note that ranges located on a sequence whose length is unknown (NA) or on
+  a circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: Some start position of the peaks are less than 1!
+WARNING: Some end position of the peaks are out of bound!
+WARNING: Some start position of the peaks are less than 1!
+WARNING: SRR24197791  has empty class(es) counted as no reads:  trinucleosome  (SplitStatus= empty_split:trinucleosome )
+WARNING: Some start position of the peaks are less than 1!
+WARNING: GRanges object contains 3 out-of-bound ranges located on sequence 5. Note
+  that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 3 out-of-bound ranges located on sequence 5. Note
+  that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 16 out-of-bound ranges located on sequences 5, 1, 3,
+  and 4. Note that ranges located on a sequence whose length is unknown (NA) or
+  on a circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 15 out-of-bound ranges located on sequences 5, 1, 3,
+  and 4. Note that ranges located on a sequence whose length is unknown (NA) or
+  on a circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 13 out-of-bound ranges located on sequences 5, 1, 3,
+  and 4. Note that ranges located on a sequence whose length is unknown (NA) or
+  on a circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: Some start position of the peaks are less than 1!
+WARNING: Some end position of the peaks are out of bound!
+WARNING: Some start position of the peaks are less than 1!
+WARNING: SRR24197792  has empty class(es) counted as no reads:  trinucleosome  (SplitStatus= empty_split:trinucleosome )
+WARNING: Some start position of the peaks are less than 1!
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 1. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 1. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 3 out-of-bound ranges located on sequences 1 and 5.
+  Note that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 1 out-of-bound range located on sequence 5. Note that
+  ranges located on a sequence whose length is unknown (NA) or on a circular
+  sequence are not considered out-of-bound (use seqlengths() and isCircular()
+  to get the lengths and circularity flags of the underlying sequences). You
+  can use trim() to trim these ranges. See ?`trim,GenomicRanges-method` for
+  more information.
+WARNING: GRanges object contains 3 out-of-bound ranges located on sequences 1 and 5.
+  Note that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: GRanges object contains 2 out-of-bound ranges located on sequences 1 and 5.
+  Note that ranges located on a sequence whose length is unknown (NA) or on a
+  circular sequence are not considered out-of-bound (use seqlengths() and
+  isCircular() to get the lengths and circularity flags of the underlying
+  sequences). You can use trim() to trim these ranges. See
+  ?`trim,GenomicRanges-method` for more information.
+WARNING: Some start position of the peaks are less than 1!
+WARNING: Some end position of the peaks are out of bound!
+WARNING: Some start position of the peaks are less than 1!
