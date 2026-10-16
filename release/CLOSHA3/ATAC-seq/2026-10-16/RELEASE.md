@@ -20,7 +20,7 @@ CLOSHA 2.0의 ATAC-seq 파이프라인을 CLOSHA 3.0으로 옮긴 첫 배포입�
 | functional_enrichment | `functional_enrichment.1.0.R` | (3.0 신규) | `scripts/ATAC-seq/functional_enrichment.1.2.R` | bx_functional_enrichment 1.0 |
 | replicate_consistency | `replicate_consistency.1.0.sh` | (3.0 신규) | `scripts/ATAC-seq/replicate_consistency.1.1.sh` | bx_replicate_consistency 1.0 |
 
-- 작업 파일 기준 커밋: `5d560f7`
+- 작업 파일 기준 커밋: `2fbd958`
 - GATK_MarkDuplicates는 받은 스크립트(`GATK_MarkDuplicates_1.0.sh`, 이미지 `gatk 1.0`, `defs/ATAC-seq/bx_gatk_1.0.def`)를 그대로 쓰므로 이 폴더에 넣지 않았습니다.
 - 실행 순서: bowtie2 → GATK_MarkDuplicates → organellar_filter → ATAC_QC → (ATAC_QC_plot, MACS3_callpeak_ATAC, replicate_consistency) → (peak_annotation, differential_accessibility, tf_footprinting) → (atac_motif, functional_enrichment)
 
