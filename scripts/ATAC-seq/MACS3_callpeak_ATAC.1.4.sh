@@ -32,20 +32,20 @@
 #
 # Examples:
 #   General ATAC-seq:
-#     ./MACS3_callpeak_ATAC.1.3.sh \
+#     ./MACS3_callpeak_ATAC.1.4.sh \
 #       input_dir="/path/to/bam" \
 #       output_dir="/path/to/output" \
 #       genome_size="hs"
 #
 #   Broad peak mode:
-#     ./MACS3_callpeak_ATAC.1.3.sh \
+#     ./MACS3_callpeak_ATAC.1.4.sh \
 #       input_dir="/path/to/bam" \
 #       output_dir="/path/to/output" \
 #       genome_size="hs" \
 #       peak_type="broad"
 #
 #   NBIS tutorial-like broad output:
-#     ./MACS3_callpeak_ATAC.1.3.sh \
+#     ./MACS3_callpeak_ATAC.1.4.sh \
 #       input_dir="/path/to/bam" \
 #       output_dir="/path/to/output" \
 #       genome_size="195154279" \
