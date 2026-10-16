@@ -1,0 +1,138 @@
+############################## ATAC-seq Motif Analysis (NBIS / monaLisa)
+DEBUG_SCRIPT_VERSION: NBIS_MOTIF_SEQLOGO_PNG_20260629 
+Log file   : /bio-workflow/kobic_pipeline/ATAC_seq_copy/atac_motif/output/logs/20261015_033333_418002.log 
+Error log  : /bio-workflow/kobic_pipeline/ATAC_seq_copy/atac_motif/output/logs/20261015_033333_418002.error.log 
+Start time : 2026-10-15 03:33:33 
+
+parameters:
+  input_dir       = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/differential_accessibility/output 
+  da_csv          = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/differential_accessibility/output/03_results/diff_accessibility_TMM.csv 
+  norm            = TMM 
+  output_dir      = /bio-workflow/kobic_pipeline/ATAC_seq_copy/atac_motif/output 
+  genome_fasta    = /bio-hub/shared-data/REF/genomes/Arabidopsis_thaliana_TAIR10/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa 
+  motif_db        = /bio-hub/shared-data/REF/databases/JASPAR2026/JASPAR_CORE_plants.meme 
+  chrs            = <auto> 
+  fdr_filter      = <none> 
+  n_per_bin       = 400 
+  min_abs_logfc   = 0.3 
+  padj_cutoff     = 4 
+  kmer_len        = 6 
+  min_motif_score = 10 
+  stabsel_cutoff  = 0.8 
+  seed            = 123 
+  threads         = 4 (requested auto allocated 4 )
+  run_kmer        = TRUE 
+  run_regression  = TRUE 
+
+############################## Step 0: Load R packages
+Genome FASTA: /bio-hub/shared-data/REF/genomes/Arabidopsis_thaliana_TAIR10/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa 
+Reference sequences: 7 
+
+############################## Step 1: Read DA CSV and build GRanges
+Start time: 2026-10-15 03:33:43 
+
+DA table shape: 22275 x 11 
+columns: seqnames, start, end, width, peakID, gc, logFC, logCPM, F, PValue, FDR 
+
+dropped 0 rows with NA logFC
+GRanges built: 22275 ranges
+Chromosomes retained: 1,2,3,4,5 
+Chromosomes retained: 1,2,3,4,5 
+After chromosome filter: 22275 ranges
+Reference sequence lengths assigned: 5 
+
+region width summary BEFORE resize:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    176     632     906    1023    1269    6872 
+region width summary AFTER resize (target=906):
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    906     906     906     906     906     906 
+input GRanges saved: /bio-workflow/kobic_pipeline/ATAC_seq_copy/atac_motif/output/05_rds/motif_input_GRanges.rds 
+
+peaks for binning: 22275 (logFC < -0.3: 1400, logFC > 0.3: 598)
+logFC bins expected (n_per_bin=400): 5
+
+############################## Step 2: QC plots
+Start time: 2026-10-15 03:33:43 
+
+null device 
+          1 
+QC plots written to: /bio-workflow/kobic_pipeline/ATAC_seq_copy/atac_motif/output/01_qc 
+
+############################## Step 3: Bin by logFC
+Start time: 2026-10-15 03:33:44 
+
+bin table:
+bins
+ [-1.75,-0.488] (-0.488,-0.381] (-0.381,-0.323] (-0.323,-0.281]  (-0.281,0.357] 
+            400             400             400             400           20275 
+   (0.357,1.76] 
+            400 
+
+DEBUG: using NBIS tutorial plotting calls for bin density and diagnostics
+null device 
+          1 
+extracting DNA sequences ...
+null device 
+          1 
+null device 
+          1 
+bin diagnostics written.
+
+############################## Step 4: Load motif database
+Start time: 2026-10-15 03:33:45 
+
+Motif database file: /bio-hub/shared-data/REF/databases/JASPAR2026/JASPAR_CORE_plants.meme 
+
+PWMs loaded: 927 
+
+############################## Step 5: Binned motif enrichment
+Start time: 2026-10-15 03:33:46 
+
+strongly enriched motifs (-log10(padj) > 4 ): 63 
+null device 
+          1 
+seqLogo PNGs requested: 20 | written: 20 | skipped: 0
+seqLogo PNGs written to: /bio-workflow/kobic_pipeline/ATAC_seq_copy/atac_motif/output/02_binned_enrichment/seqlogos
+
+############################## Step 6: Binned k-mer enrichment
+Start time: 2026-10-15 03:36:29 
+
+enriched k-mers: 16 
+
+############################## Step 7: Regression (randLassoStabSel)
+Start time: 2026-10-15 03:37:21 
+
+scanning motif hits across enhancer sequences ...
+total motif hits: 8271934 
+predictor matrix dim: 22275 x 868 
+selected TFs (9): fracGC, MA1274.1_MA1274.1, MA2374.1_MA2374.1, MA1327.3_MA1327.3, MA2474.1_MA2474.1, MA1161.1_MA1161.1, MA2660.1_MA2660.1, MA1828.2_MA1828.2, MA2040.2_MA2040.2
+colData columns (23): selProb, selected, selAUC, regStep1, regStep2, regStep3, regStep4, regStep5, regStep6, regStep7, regStep8, regStep9, regStep10, regStep11, regStep12, regStep13, regStep14, regStep15, regStep16, regStep17, regStep18, regStep19, regStep20
+  [skip] stability_paths.pdf: The package 'ggrepel' is required for plotStabilityPaths(), but not installed.
+Install it using:
+install.packages("BiocManager")
+BiocManager::install(c("ggrepel"))
+  plotStabilityPaths(labels=...) failed (The package 'ggrepel' is required for plotStabilityPaths(), but not installed.
+Install it using:
+install.packages("BiocManager")
+BiocManager::install(c("ggrepel"))The package 'ggrepel' is required for     labels = c(), but not installed.
+Install it using:
+install.packages("BiocManager")
+BiocManager::install(c("ggrepel"))) - retrying without labels arg
+  [skip] stability_paths_GCpredictors.pdf: The package 'ggrepel' is required for plotStabilityPaths(), but not installed.
+Install it using:
+install.packages("BiocManager")
+BiocManager::install(c("ggrepel"))
+per-TF top enhancer tables: /bio-workflow/kobic_pipeline/ATAC_seq_copy/atac_motif/output/04_regression/top_enhancers_per_TF 
+regression step OK: TRUE 
+
+
+############################## Done
+  DA CSV used      = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/differential_accessibility/output/03_results/diff_accessibility_TMM.csv 
+  norm             = TMM 
+  input GRanges    = 22275 ranges
+  QC plots         = /bio-workflow/kobic_pipeline/ATAC_seq_copy/atac_motif/output/01_qc 
+  binned enrich    = /bio-workflow/kobic_pipeline/ATAC_seq_copy/atac_motif/output/02_binned_enrichment 
+  k-mer            = /bio-workflow/kobic_pipeline/ATAC_seq_copy/atac_motif/output/03_kmer 
+  regression       = /bio-workflow/kobic_pipeline/ATAC_seq_copy/atac_motif/output/04_regression 
+End time: 2026-10-15 03:40:09 
