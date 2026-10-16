@@ -32,5 +32,6 @@ CLOSHA 2.0의 ATAC-seq 파이프라인을 CLOSHA 3.0으로 옮긴 첫 배포입�
 
 ## 함께 넣은 것
 
-- `docs/`: 배포 시점의 포탈 원고(`Portal_Content.md`, `.docx`), 등록 정보(`Registration.md`), 실행 이미지 안내(`Container_Manual.md`)
+- `docs/pipeline/`: 파이프라인 페이지 원고(`Portal_Content.md`, `.docx`)와 대표 이미지(분석 흐름 `pipeline.png`, 분석 개념 `concept.png`, 원본 SVG)
+- `docs/`: 배포 시점의 모듈 원고(`Portal_Content.md`, `.docx`), 등록 정보(`Registration.md`), 실행 이미지 안내(`Container_Manual.md`)
 - `results/`: 배포본으로 실행한 결과를 올리는 곳(올릴 파일 목록은 `results/README.md`)
