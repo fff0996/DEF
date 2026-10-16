@@ -146,6 +146,18 @@ msg      <- function(...) { cat(..., "\n") }
 | **stdout** | 시작 정보, 파라미터, 단계 진행, 샘플별 처리 결과, 요약, 종료 시각 | `output_dir/logs/<YYYYMMDD_HHMMSS>_<PID>.log` |
 | **stderr** | `Error:`/`ERROR:` 오류, `Warning:`/`WARNING:` 경고, 외부 도구와 라이브러리가 stderr로 내는 메시지 | `output_dir/logs/<YYYYMMDD_HHMMSS>_<PID>.error.log` |
 - 두 스트림을 합치지 않는다. `2>&1`, `stderr=STDOUT`, R `sink(type = "message")`로 stderr를 stdout 쪽에 섞지 않는다.
+- **오류·경고 메시지는 첫 줄부터 마지막 줄까지 모두 stderr로 보낸다.** 오류 뒤에 붙는 설명(예상 폴더 구조, 찾은 파일 목록, 해결 방법 Tip 등)도 오류 메시지의 일부다. 첫 줄만 `>&2`로 보내고 나머지를 stdout으로 보내지 않는다. 여러 줄이면 묶어서 한 번에 보낸다.
+  ```bash
+  {
+  	echo "Error: No BAM files matching '*${suffix}' in $dir"
+  	echo "Available BAM files:"
+  	find "$dir" -name "*.bam" | sed 's/^/  /'
+  	echo "Tip: set alignment_suffix accordingly."
+  } >&2
+  exit 1
+  ```
+- **로그 파일을 열기 전(인자 해석, 필수 인자 확인) 단계의 오류도 stderr로 보낸다.** 예: `echo "Invalid argument format: $arg" >&2`.
+- `.log`와 `.error.log`는 다른 파일이다. stderr를 `.log`에 함께 쓰지 않는다(`exec 2> >(tee -a "$log_file" >&2)`처럼 같은 파일로 보내지 않는다).
 - 화면(플랫폼이 받는 stdout/stderr)과 로그 파일에 **둘 다** 남긴다. 같은 실행의 `.log`와 `.error.log`는 같은 `<stamp>`를 쓴다.
 - 외부 도구를 실행할 때도 stdout과 stderr를 따로 받는다. 도구의 진행 출력은 `.log`로, 오류 출력은 `.error.log`로 간다.
 - 실패 판단은 종료 코드로 한다(9절). stderr에 경고가 있다는 이유만으로 실패로 보지 않는다(예: AutoGluon의 torch 없음 경고).
@@ -254,6 +266,7 @@ msg      <- function(...) { cat(..., "\n") }
 - [ ] `key=value` 인자를 받고, 필수 인자 누락과 잘못된 형식은 종료 코드 1로 멈춘다.
 - [ ] `output_dir`에서 `logs/`만 남기고 정리한 뒤 시작한다(`/` 보호).
 - [ ] stdout(진행)과 stderr(오류·경고)가 나뉘어 화면과 `logs/<stamp>.log`, `logs/<stamp>.error.log`에 각각 남는다. `2>&1`로 합치지 않는다.
+- [ ] 오류·경고는 여러 줄 설명까지 모두 stderr로 가고, 인자 해석 단계의 오류도 stderr로 간다. 일부러 오류를 내 보고 stdout에 오류 문구가 남지 않는지 확인했다.
 - [ ] `.log`에 시작 시각, 파라미터(최종값), 단계, 요약, 종료 시각이 남는다.
 - [ ] 스레드 수를 고정하지 않고 할당된 코어 수(`threads=auto`)를 쓰며, 실제값을 로그에 남긴다.
 - [ ] 필요한 명령·패키지를 시작할 때 확인한다.
