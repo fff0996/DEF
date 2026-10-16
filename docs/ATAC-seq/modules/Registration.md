@@ -17,7 +17,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 ```
 | 모듈 | 스크립트 | 실행 이미지 | 실행 명령 |
 |---|---|---|---|
-| bowtie2 | `bowtie2.1.4.sh` | bowtie2.1.0 | `bash bowtie2.1.4.sh key=value ...` |
+| bowtie2 | `bowtie2.1.5.sh` | bowtie2.1.0 | `bash bowtie2.1.5.sh key=value ...` |
 | GATK_MarkDuplicates | `GATK_MarkDuplicates_1.0.sh` (내용 v1.1) | gatk.1.0 (`defs/ATAC-seq/bx_gatk_1.0.def`) | `bash GATK_MarkDuplicates_1.0.sh key=value ...` (Input `input_dir`, Output `output_dir`, Option `ref_genome` 필수; 메모리 24GB 이상) |
 | organellar_filter | `organellar_filter.1.2.sh` | bx_organellar_filter.1.0 | `bash organellar_filter.1.2.sh key=value ...` |
 | ATAC_QC | `ATAC_QC.1.2.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC.1.2.R key=value ...` |
@@ -26,7 +26,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 | peak_annotation | `peak_annotation.1.2.R` | bx_peak_annotation.1.0 | `Rscript peak_annotation.1.2.R key=value ...` |
 | differential_accessibility | `differential_accessibility.1.2.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.2.R key=value ...` |
 | atac_motif | `atac_motif.1.4.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.4.R key=value ...` |
-| tf_footprinting | `tf_footprinting.1.3.sh` | bx_tf_footprinting.1.0 | `bash tf_footprinting.1.3.sh key=value ...` |
+| tf_footprinting | `tf_footprinting.1.4.sh` | bx_tf_footprinting.1.0 | `bash tf_footprinting.1.4.sh key=value ...` |
 | functional_enrichment | `functional_enrichment.1.1.R` | bx_functional_enrichment.1.0 | `Rscript functional_enrichment.1.1.R key=value ...` |
 | replicate_consistency | `replicate_consistency.1.1.sh` | bx_replicate_consistency.1.0 | `bash replicate_consistency.1.1.sh key=value ...` |
 
