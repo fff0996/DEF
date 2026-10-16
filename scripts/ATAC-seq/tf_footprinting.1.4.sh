@@ -117,7 +117,7 @@ fi
 
 for removed in metadata sample_col condition_col; do
 	if [ -n "${!removed:-}" ]; then
-		echo "Error: $removed is not accepted from version 1.3; give the sample sheet as sample_data (columns SampleID and Condition)" >&2
+		echo "Error: $removed is no longer accepted; give the sample sheet as sample_data (columns SampleID and Condition)" >&2
 		exit 1
 	fi
 done
@@ -148,7 +148,7 @@ cores="${cores:-auto}"
 macs_dir="${macs_dir:-}"
 peak_file="${peak_file:-}"
 if [ -n "$peak_file" ]; then
-	echo "Error: peak_file is not accepted from version 1.3; give the MACS3_callpeak_ATAC output_dir as macs_dir" >&2
+	echo "Error: peak_file is no longer accepted; give the MACS3_callpeak_ATAC output_dir as macs_dir" >&2
 	exit 1
 fi
 if [ -z "$macs_dir" ]; then

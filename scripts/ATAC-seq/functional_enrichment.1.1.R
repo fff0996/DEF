@@ -149,7 +149,7 @@ if (!exists("output_dir", inherits = FALSE) || !nzchar(output_dir)) {
 }
 # 1.1 takes one input folder; the 1.0 alternatives stop the run if given.
 for (k in c("gene_file", "da_dir", "da_file", "go_table")) {
-	if (nzchar(get(k))) stop_err(k, " is not accepted from version 1.1; give the previous module's output_dir as input_dir")
+	if (nzchar(get(k))) stop_err(k, " is no longer accepted; give the previous module's output_dir as input_dir")
 }
 for (k in c("input_dir", "genome_gff", "orgdb_file")) {
 	if (!nzchar(get(k))) stop_err("Required parameter missing: ", k)
