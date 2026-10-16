@@ -1,33 +1,20 @@
 #!/usr/bin/env Rscript
 
 # Version 1.4 (changes from atac_motif.1.3.R):
-#   The run stops with a clear message when too few peaks remain to make the
-#   logFC bins (after fdr_filter and the chromosome filter). 1.3 went on and
-#   stopped inside monaLisa::bin() with "invalid number of intervals" (for
-#   example fdr_filter=0.05 kept 14 of 22,275 peaks). The check counts the
-#   bins the same way as monaLisa's equalN binning: the peaks below
-#   -min_abs_logfc and above +min_abs_logfc each give round(count /
-#   n_per_bin) bins (plus the central bin), or, when no peak lies within
-#   +/-min_abs_logfc, all peaks give round(count / n_per_bin) bins; at least
-#   2 bins outside the central one are needed. min_abs_logfc=0 is now passed
-#   to monaLisa as "no central bin" (1.3 passed 0, which monaLisa rejects).
-#   Everything else is unchanged.
-#
-# Version 1.3 (changes from atac_motif.1.2.R):
 #   The differential accessibility table is always taken from input_dir
 #   (03_results/diff_accessibility_<norm>.csv of a differential_accessibility
 #   output_dir); input_dir is required and the da_csv argument is no longer
 #   accepted (the run stops if it is given a value). Everything else is
 #   unchanged.
 #
-# Version 1.2 (changes from atac_motif.1.1.R):
+# Version 1.3 (changes from atac_motif.1.2.R):
 #   Allocated cores are read with nproc first, as in the Bash modules (nproc
 #   gives the portal's core selection); parallel::mcaffinity() is the
 #   fallback. A threads value above the allocation is capped with a warning
-#   in stderr and logs/<stamp>.error.log (1.1 capped silently). On the portal
+#   in stderr and logs/<stamp>.error.log (1.2 capped silently). On the portal
 #   threads is not registered: the selected core mode decides.
 #
-# Version 1.1 (changes from atac_motif.1.0.R):
+# Version 1.2 (changes from atac_motif.1.1.R):
 #   stdout and stderr are kept apart: progress goes to stdout and
 #   logs/<stamp>.log; errors, warnings, and package messages go to stderr
 #   and logs/<stamp>.error.log.
@@ -756,38 +743,6 @@ saveRDS(gr, file.path(rds_dir, "motif_input_GRanges.rds"))
 cat("input GRanges saved:", file.path(rds_dir, "motif_input_GRanges.rds"), "\n\n")
 
 # ------------------------------------------------------------
-# Check that the peaks are enough for the logFC bins
-# ------------------------------------------------------------
-# monaLisa's equalN binning: the peaks beyond -/+min_abs_logfc each give
-# round(count / n_per_bin) bins around a central bin; if no peak lies within
-# +/-min_abs_logfc, all peaks give round(count / n_per_bin) bins. monaLisa
-# ignores min_abs_logfc when all peaks lie on one side of it (or when it is 0).
-n_peaks <- length(gr)
-n_down <- sum(gr$logFC < -min_abs_logfc)
-n_up <- sum(gr$logFC > min_abs_logfc)
-use_min_abs <- min_abs_logfc > 0 &&
-		!(-min_abs_logfc > max(gr$logFC) || min_abs_logfc < min(gr$logFC))
-if (use_min_abs) {
-	n_bins <- round(n_down / n_per_bin) + round(n_up / n_per_bin)
-} else {
-	n_bins <- round(n_peaks / n_per_bin)
-}
-cat("peaks for binning: ", n_peaks, " (logFC < -", min_abs_logfc, ": ", n_down,
-		", logFC > ", min_abs_logfc, ": ", n_up, ")\n", sep = "")
-cat("logFC bins expected (n_per_bin=", n_per_bin, "): ", n_bins, "\n\n", sep = "")
-if (n_bins < 2) {
-	stop_err(paste0(
-			"too few peaks to make logFC bins: ", n_peaks, " peaks remain",
-			if (!is.na(fdr_filter_num)) paste0(" after fdr_filter=", fdr_filter) else "", " (",
-			n_down, " with logFC < -", min_abs_logfc, ", ", n_up, " with logFC > ", min_abs_logfc,
-			"), but n_per_bin=", n_per_bin, " needs about ", 2 * n_per_bin,
-			" peaks to make at least 2 bins. monaLisa compares bins of all peaks ",
-			"ordered by logFC, so leave fdr_filter empty to use every peak of the ",
-			"differential accessibility table, or lower n_per_bin."
-	))
-}
-
-# ------------------------------------------------------------
 # Step 2: QC plots
 # ------------------------------------------------------------
 cat("############################## Step 2: QC plots\n")
@@ -842,7 +797,7 @@ bins <- bin(
 		x = gr$logFC,
 		binmode = "equalN",
 		nElement = n_per_bin,
-		minAbsX = if (min_abs_logfc > 0) min_abs_logfc else NULL
+		minAbsX = min_abs_logfc
 )
 
 cat("bin table:\n")

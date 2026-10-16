@@ -1,5 +1,11 @@
 #!/usr/bin/env Rscript
 
+# Version 1.3 (changes from differential_accessibility.1.2.R):
+#   stdout and stderr are kept apart: progress goes to stdout and
+#   logs/<stamp>.log; errors, warnings, and package messages go to stderr
+#   and logs/<stamp>.error.log. The run stops if output_dir is or contains
+#   an input path.
+
 # ============================================================================
 # Differential Accessibility Analysis for ATAC-seq
 # NBIS Epigenomics Workshop 2025 style (edgeR-based)
@@ -44,9 +50,25 @@
 #   7. (optional) EDASeq full-quantile and CQN GC-aware normalisations
 # ============================================================================
 
+# Errors and warnings go to stderr and logs/<stamp>.error.log (err_con is
+# opened together with the log file); progress goes to stdout and
+# logs/<stamp>.log.
+err_con <- NULL
+emit_err <- function(txt) {
+	cat(txt, file = stderr())
+	if (!is.null(err_con)) {
+		cat(txt, file = err_con)
+		flush(err_con)
+	}
+}
+
+warn_msg <- function(...) {
+	emit_err(paste0("WARNING: ", paste(..., collapse = ""), "\n"))
+}
+
 stop_err <- function(...) {
 	msg <- paste(..., collapse = "")
-	cat("ERROR:", msg, "\n", file = stderr())
+	emit_err(paste0("ERROR: ", msg, "\n"))
 	quit(status = 1)
 }
 
@@ -135,6 +157,20 @@ if (nchar(peak_dir) > 0) {
 }
 
 # ------------------------------------------------------------
+# output_dir is cleaned below, so it must not be or contain an input.
+# ------------------------------------------------------------
+check_inputs_outside_output <- function(output_dir, inputs) {
+	out <- normalizePath(output_dir, mustWork = FALSE)
+	for (x in inputs[nzchar(inputs)]) {
+		inp <- normalizePath(x, mustWork = FALSE)
+		if (inp == out || startsWith(inp, paste0(out, "/"))) {
+			stop_err("input ", x, " is inside output_dir ", output_dir, ", which is cleaned on each run")
+		}
+	}
+}
+check_inputs_outside_output(output_dir, c(sample_data, genome_fasta, input_dir, peak_dir))
+
+# ------------------------------------------------------------
 # Clean output directory first except logs/
 # ------------------------------------------------------------
 if (dir.exists(output_dir) && normalizePath(output_dir, mustWork = FALSE) != "/") {
@@ -168,13 +204,30 @@ log_file <- file.path(
 log_con <- file(log_file, open = "at")
 sink(log_con, append = TRUE, split = TRUE)
 
+err_file <- sub("\\.log$", ".error.log", log_file)
+err_con <- file(err_file, open = "at")
+
+# Package messages and warnings (stderr) are also copied to the .error.log.
+globalCallingHandlers(
+		message = function(m) {
+			cat(conditionMessage(m), file = err_con)
+			flush(err_con)
+		},
+		warning = function(w) {
+			cat("WARNING: ", conditionMessage(w), "\n", sep = "", file = err_con)
+			flush(err_con)
+		}
+)
+
 on.exit({
 			try(sink(), silent = TRUE)
 			try(close(log_con), silent = TRUE)
+			try(close(err_con), silent = TRUE)
 		}, add = TRUE)
 
 cat("############################## Differential Accessibility Analysis (NBIS style)\n")
 cat("Log file   :", log_file, "\n")
+cat("Error log  :", err_file, "\n")
 cat("Start time :", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
 
 # ------------------------------------------------------------
@@ -776,8 +829,7 @@ if (nchar(gc_bin_chr) == 0) {
 }
 
 if (!gc_bin_chr_use %in% names(genome)) {
-	cat("WARNING: gc_bin_chr '", gc_bin_chr_use,
-			"' not in genome. Skipping bin-level GC bias plot.\n", sep = "")
+	warn_msg("gc_bin_chr '", gc_bin_chr_use, "' not in genome. Skipping bin-level GC bias plot.")
 } else {
 	chr_len <- genome_seqlengths[[gc_bin_chr_use]]
 	tile_starts <- seq(1L, chr_len, by = tile_width)
@@ -838,7 +890,7 @@ cat("Start time:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
 valid_gc <- !is.na(peak_gc)
 
 if (sum(valid_gc) < 50) {
-	cat("WARNING: not enough peaks with valid GC for hexbin plot. Skipping.\n")
+	warn_msg("not enough peaks with valid GC for hexbin plot. Skipping.")
 } else {
 	# Lowess fit per sample
 	lowListGC <- list()

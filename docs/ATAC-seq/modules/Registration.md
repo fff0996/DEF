@@ -24,13 +24,13 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 | ATAC_QC_plot | `ATAC_QC_plot.1.2.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC_plot.1.2.R key=value ...` |
 | MACS3_callpeak | `MACS3_callpeak_ATAC.1.4.sh` | bx_macs3_callpeak_atac.1.0 | `bash MACS3_callpeak_ATAC.1.4.sh key=value ...` |
 | peak_annotation | `peak_annotation.1.2.R` | bx_peak_annotation.1.0 | `Rscript peak_annotation.1.2.R key=value ...` |
-| differential_accessibility | `differential_accessibility.1.2.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.2.R key=value ...` |
-| atac_motif | `atac_motif.1.4.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.4.R key=value ...` |
+| differential_accessibility | `differential_accessibility.1.4.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.4.R key=value ...` |
+| atac_motif | `atac_motif.1.5.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.5.R key=value ...` |
 | tf_footprinting | `tf_footprinting.1.4.sh` | bx_tf_footprinting.1.0 | `bash tf_footprinting.1.4.sh key=value ...` |
 | functional_enrichment | `functional_enrichment.1.1.R` | bx_functional_enrichment.1.0 | `Rscript functional_enrichment.1.1.R key=value ...` |
 | replicate_consistency | `replicate_consistency.1.1.sh` | bx_replicate_consistency.1.0 | `bash replicate_consistency.1.1.sh key=value ...` |
 
-`ATAC_QC.1.2`(또는 1.1)와 `ATAC_QC_plot.1.2`를 함께 쓴다(1.1 이후 QC는 clean BAM을 쓰므로 trinucleosome이 비어 있을 수 있다. `ATAC_QC_plot.1.1`은 이 경우 `length(gal) == 4 is not TRUE`로 멈추고, 1.2는 빈 종류를 read 없음으로 계산한다). 1.2 버전(ATAC_QC, MACS3, differential_accessibility)은 1.1에 QC 지표만 더한 것이라 같은 이미지에서 돌고, 기존 결과 파일은 그대로다.
+`ATAC_QC.1.2`(또는 1.1)와 `ATAC_QC_plot.1.2`를 함께 쓴다(1.1 이후 QC는 clean BAM을 쓰므로 trinucleosome이 비어 있을 수 있다. `ATAC_QC_plot.1.1`은 이 경우 `length(gal) == 4 is not TRUE`로 멈추고, 1.2는 빈 종류를 read 없음으로 계산한다). ATAC_QC 1.2, MACS3 1.2, differential_accessibility 1.4는 바로 앞 버전에 QC 지표만 더한 것이라 같은 이미지에서 돌고, 기존 결과 파일은 그대로다.
 
 ## 1. organellar_filter
 미토콘드리아·엽록체 등 세포소기관 contig의 read를 BAM에서 제거한다.

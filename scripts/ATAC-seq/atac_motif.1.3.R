@@ -1,20 +1,13 @@
 #!/usr/bin/env Rscript
 
 # Version 1.3 (changes from atac_motif.1.2.R):
-#   The differential accessibility table is always taken from input_dir
-#   (03_results/diff_accessibility_<norm>.csv of a differential_accessibility
-#   output_dir); input_dir is required and the da_csv argument is no longer
-#   accepted (the run stops if it is given a value). Everything else is
-#   unchanged.
-#
-# Version 1.2 (changes from atac_motif.1.1.R):
 #   Allocated cores are read with nproc first, as in the Bash modules (nproc
 #   gives the portal's core selection); parallel::mcaffinity() is the
 #   fallback. A threads value above the allocation is capped with a warning
-#   in stderr and logs/<stamp>.error.log (1.1 capped silently). On the portal
+#   in stderr and logs/<stamp>.error.log (1.2 capped silently). On the portal
 #   threads is not registered: the selected core mode decides.
 #
-# Version 1.1 (changes from atac_motif.1.0.R):
+# Version 1.2 (changes from atac_motif.1.1.R):
 #   stdout and stderr are kept apart: progress goes to stdout and
 #   logs/<stamp>.log; errors, warnings, and package messages go to stderr
 #   and logs/<stamp>.error.log.
@@ -25,7 +18,7 @@
 #   blacklist).
 
 # Required:
-#   input_dir="..."                    # differential_accessibility output_dir
+#   input_dir="..." OR da_csv="..."
 #   output_dir="..."
 #   genome_fasta="/path/to/reference.fa"
 #   motif_db="/path/to/motifs.meme"
@@ -103,13 +96,10 @@ if (!exists("output_dir", inherits = FALSE)) {
 }
 
 if (!exists("input_dir", inherits = FALSE)) input_dir <- ""
-if (exists("da_csv", inherits = FALSE) && nchar(da_csv) > 0) {
-	stop_err("da_csv is not accepted from version 1.3; give the differential_accessibility output_dir as input_dir")
-}
-da_csv <- ""
+if (!exists("da_csv", inherits = FALSE)) da_csv <- ""
 
-if (nchar(input_dir) == 0) {
-	stop_err("Required parameter missing: input_dir")
+if (nchar(input_dir) == 0 && nchar(da_csv) == 0) {
+	stop_err("One of 'input_dir' or 'da_csv' is required")
 }
 
 if (!exists("norm", inherits = FALSE)) {
@@ -234,7 +224,12 @@ run_regression_logical <- toupper(run_regression) %in% c("TRUE", "T", "YES", "1"
 # ------------------------------------------------------------
 # Resolve DA CSV
 # ------------------------------------------------------------
-{
+if (nchar(da_csv) > 0) {
+	if (!file.exists(da_csv)) {
+		stop_err("da_csv not found: ", da_csv)
+	}
+	da_csv <- normalizePath(da_csv, mustWork = TRUE)
+} else {
 	if (!dir.exists(input_dir)) {
 		stop_err("input_dir not found: ", input_dir)
 	}
@@ -262,7 +257,7 @@ run_regression_logical <- toupper(run_regression) %in% c("TRUE", "T", "YES", "1"
 					"could not locate diff_accessibility_", norm_filename,
 					".csv under input_dir: ", input_dir,
 					". Expected at: ", primary,
-					". Use norm=TMM|EDASeq|CQN."
+					". Use norm=TMM|EDASeq|CQN or pass da_csv directly."
 			)
 		}
 		

@@ -5,7 +5,7 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 # bx_differential_accessibility.1.0
 #
 #   Target script:
-#     - differential_accessibility.1.0.R
+#     - differential_accessibility.1.2.R
 #
 #   [MANDATORY BUILD RULES]
 #   1) Base OS must be Rocky Linux 9. Rocky 8 is not allowed: it causes
@@ -181,7 +181,7 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   registered approved recipe.
 #
 # [CHANGELOG]
-#   2026-10-01 / 1.0: Created for differential_accessibility.1.0.R on Rocky
+#   2026-10-01 / 1.0: Created for differential_accessibility.1.2.R on Rocky
 #   Linux 9 with Miniforge (conda-forge/bioconda only), following policy 1.4.
 # =============================================================================
 
@@ -491,9 +491,9 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
     Check the image:
         apptainer test --cleanenv bx_differential_accessibility.1.0.sif
 
-    differential_accessibility.1.0.R is supplied externally through approved runtime binds.
+    differential_accessibility.1.2.R is supplied externally through approved runtime binds.
     This DEF does not run it during image construction:
-        apptainer exec bx_differential_accessibility.1.0.sif Rscript differential_accessibility.1.0.R key=value ...
+        apptainer exec bx_differential_accessibility.1.0.sif Rscript differential_accessibility.1.2.R key=value ...
 
     BAM index files must already exist beside the BAM files. Relative bamReads
     and Peaks paths are resolved from the sample_data directory, so those paths

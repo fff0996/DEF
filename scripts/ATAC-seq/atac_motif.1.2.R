@@ -1,13 +1,6 @@
 #!/usr/bin/env Rscript
 
 # Version 1.2 (changes from atac_motif.1.1.R):
-#   Allocated cores are read with nproc first, as in the Bash modules (nproc
-#   gives the portal's core selection); parallel::mcaffinity() is the
-#   fallback. A threads value above the allocation is capped with a warning
-#   in stderr and logs/<stamp>.error.log (1.1 capped silently). On the portal
-#   threads is not registered: the selected core mode decides.
-#
-# Version 1.1 (changes from atac_motif.1.0.R):
 #   stdout and stderr are kept apart: progress goes to stdout and
 #   logs/<stamp>.log; errors, warnings, and package messages go to stderr
 #   and logs/<stamp>.error.log.
@@ -185,19 +178,16 @@ kmer_len <- as.integer(kmer_len)
 min_motif_score <- as.numeric(min_motif_score)
 stabsel_cutoff <- as.numeric(stabsel_cutoff)
 seed <- as.integer(seed)
-# threads: the CPU cores allocated to this job, read with nproc as in the
-# Bash modules (nproc returns OMP_NUM_THREADS when set, which follows the
-# portal's core selection); parallel::mcaffinity() is the fallback. A larger
-# requested number is capped with a warning.
-allocated_threads <- suppressWarnings(as.integer(tryCatch(system("nproc", intern = TRUE), error = function(e) NA)))
-if (length(allocated_threads) != 1 || is.na(allocated_threads) || allocated_threads < 1) {
-	allocated_threads <- tryCatch(length(parallel::mcaffinity()), error = function(e) NA_integer_)
+# threads: the CPU cores allocated to this job (affinity mask / cgroup
+# cpuset); a requested number is capped by the allocation.
+allocated_threads <- tryCatch(length(parallel::mcaffinity()), error = function(e) NA_integer_)
+if (is.na(allocated_threads) || allocated_threads < 1) {
+	allocated_threads <- suppressWarnings(as.integer(system("nproc", intern = TRUE)))
 }
 if (is.na(allocated_threads) || allocated_threads < 1) allocated_threads <- 1L
 threads_requested <- threads
 threads <- if (threads %in% c("", "auto")) allocated_threads else suppressWarnings(as.integer(threads))
-threads_capped <- !is.na(threads) && threads > allocated_threads
-if (threads_capped) threads <- allocated_threads
+if (!is.na(threads) && threads > allocated_threads) threads <- allocated_threads
 Sys.setenv(OMP_NUM_THREADS = threads, OPENBLAS_NUM_THREADS = threads, MKL_NUM_THREADS = threads)
 
 if (is.na(n_per_bin) || n_per_bin <= 0) stop_err("n_per_bin must be positive integer")
@@ -367,10 +357,6 @@ cat("  seed            =", seed, "\n")
 cat("  threads         =", threads, "(requested", threads_requested, "allocated", allocated_threads, ")\n")
 cat("  run_kmer        =", run_kmer_logical, "\n")
 cat("  run_regression  =", run_regression_logical, "\n\n")
-if (threads_capped) {
-	emit_err(paste0("WARNING: threads=", threads_requested, " requested, allocated cores: ",
-			allocated_threads, "; using ", threads, "\n"))
-}
 
 # ------------------------------------------------------------
 # Output directories

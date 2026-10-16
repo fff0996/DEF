@@ -1,16 +1,5 @@
 #!/usr/bin/env Rscript
-
-# Version 1.2 (changes from differential_accessibility.1.1.R):
-#   Adds sample-level QC on the filtered, TMM-normalised log2 CPM matrix
-#   (Step 10b): a Pearson correlation heatmap between samples and a PCA
-#   plot (top variable peaks), with the correlation matrix and PC
-#   coordinates as TSV in 03_results. Differential testing is unchanged.
-#
-# Version 1.1 (changes from differential_accessibility.1.0.R):
-#   stdout and stderr are kept apart: progress goes to stdout and
-#   logs/<stamp>.log; errors, warnings, and package messages go to stderr
-#   and logs/<stamp>.error.log. The run stops if output_dir is or contains
-#   an input path.
+# CLOSHA 2.0 production version 1.2 (kept in this repository as 1.0 until 2026-10-16).
 
 # ============================================================================
 # Differential Accessibility Analysis for ATAC-seq
@@ -56,25 +45,9 @@
 #   7. (optional) EDASeq full-quantile and CQN GC-aware normalisations
 # ============================================================================
 
-# Errors and warnings go to stderr and logs/<stamp>.error.log (err_con is
-# opened together with the log file); progress goes to stdout and
-# logs/<stamp>.log.
-err_con <- NULL
-emit_err <- function(txt) {
-	cat(txt, file = stderr())
-	if (!is.null(err_con)) {
-		cat(txt, file = err_con)
-		flush(err_con)
-	}
-}
-
-warn_msg <- function(...) {
-	emit_err(paste0("WARNING: ", paste(..., collapse = ""), "\n"))
-}
-
 stop_err <- function(...) {
 	msg <- paste(..., collapse = "")
-	emit_err(paste0("ERROR: ", msg, "\n"))
+	cat("ERROR:", msg, "\n", file = stderr())
 	quit(status = 1)
 }
 
@@ -163,20 +136,6 @@ if (nchar(peak_dir) > 0) {
 }
 
 # ------------------------------------------------------------
-# output_dir is cleaned below, so it must not be or contain an input.
-# ------------------------------------------------------------
-check_inputs_outside_output <- function(output_dir, inputs) {
-	out <- normalizePath(output_dir, mustWork = FALSE)
-	for (x in inputs[nzchar(inputs)]) {
-		inp <- normalizePath(x, mustWork = FALSE)
-		if (inp == out || startsWith(inp, paste0(out, "/"))) {
-			stop_err("input ", x, " is inside output_dir ", output_dir, ", which is cleaned on each run")
-		}
-	}
-}
-check_inputs_outside_output(output_dir, c(sample_data, genome_fasta, input_dir, peak_dir))
-
-# ------------------------------------------------------------
 # Clean output directory first except logs/
 # ------------------------------------------------------------
 if (dir.exists(output_dir) && normalizePath(output_dir, mustWork = FALSE) != "/") {
@@ -210,30 +169,13 @@ log_file <- file.path(
 log_con <- file(log_file, open = "at")
 sink(log_con, append = TRUE, split = TRUE)
 
-err_file <- sub("\\.log$", ".error.log", log_file)
-err_con <- file(err_file, open = "at")
-
-# Package messages and warnings (stderr) are also copied to the .error.log.
-globalCallingHandlers(
-		message = function(m) {
-			cat(conditionMessage(m), file = err_con)
-			flush(err_con)
-		},
-		warning = function(w) {
-			cat("WARNING: ", conditionMessage(w), "\n", sep = "", file = err_con)
-			flush(err_con)
-		}
-)
-
 on.exit({
 			try(sink(), silent = TRUE)
 			try(close(log_con), silent = TRUE)
-			try(close(err_con), silent = TRUE)
 		}, add = TRUE)
 
 cat("############################## Differential Accessibility Analysis (NBIS style)\n")
 cat("Log file   :", log_file, "\n")
-cat("Error log  :", err_file, "\n")
 cat("Start time :", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
 
 # ------------------------------------------------------------
@@ -328,10 +270,6 @@ gc_bin_pdf     <- file.path(plot_dir, "GC_bias_in_genomic_bins.pdf")
 gc_peaks_pdf   <- file.path(plot_dir, "GC_bias_in_peaks.pdf")
 mds_pdf        <- file.path(plot_dir, "MDS_plot.pdf")
 md_pdf         <- file.path(plot_dir, "MD_plot.pdf")
-cor_pdf        <- file.path(plot_dir, "sample_correlation_heatmap.pdf")
-pca_pdf        <- file.path(plot_dir, "PCA_plot.pdf")
-cor_tsv        <- file.path(result_dir, "sample_correlation.tsv")
-pca_tsv        <- file.path(result_dir, "PCA_coordinates.tsv")
 lfc_gc_tmm_pdf <- file.path(plot_dir, "logFC_by_GC_bin_TMM.pdf")
 lfc_gc_eda_pdf <- file.path(plot_dir, "logFC_by_GC_bin_EDASeq.pdf")
 lfc_gc_cqn_pdf <- file.path(plot_dir, "logFC_by_GC_bin_CQN.pdf")
@@ -839,7 +777,8 @@ if (nchar(gc_bin_chr) == 0) {
 }
 
 if (!gc_bin_chr_use %in% names(genome)) {
-	warn_msg("gc_bin_chr '", gc_bin_chr_use, "' not in genome. Skipping bin-level GC bias plot.")
+	cat("WARNING: gc_bin_chr '", gc_bin_chr_use,
+			"' not in genome. Skipping bin-level GC bias plot.\n", sep = "")
 } else {
 	chr_len <- genome_seqlengths[[gc_bin_chr_use]]
 	tile_starts <- seq(1L, chr_len, by = tile_width)
@@ -900,7 +839,7 @@ cat("Start time:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
 valid_gc <- !is.na(peak_gc)
 
 if (sum(valid_gc) < 50) {
-	warn_msg("not enough peaks with valid GC for hexbin plot. Skipping.")
+	cat("WARNING: not enough peaks with valid GC for hexbin plot. Skipping.\n")
 } else {
 	# Lowess fit per sample
 	lowListGC <- list()
@@ -1063,94 +1002,6 @@ if (ncol(reads_dge_tmm) < 3) {
 		cat("MDS plot:\n  ", mds_pdf, "\n\n")
 	} else if (file.exists(mds_pdf)) {
 		unlink(mds_pdf, force = TRUE)
-	}
-}
-
-# ------------------------------------------------------------
-# Step 10b. Sample correlation heatmap and PCA
-# ------------------------------------------------------------
-cat("############################## Step 10b: Sample correlation and PCA\n")
-cat("Start time:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
-
-qc_log_cpm <- edgeR::cpm(reads_dge_tmm, log = TRUE, prior.count = 2,
-		normalized.lib.sizes = TRUE)
-group_cols <- c("#1B9E77", "#D95F02", "#7570B3", "#E7298A")[as.integer(groups)]
-
-if (ncol(qc_log_cpm) < 2) {
-	cat("correlation and PCA skipped: need at least 2 samples\n\n")
-} else {
-	cor_mat <- cor(qc_log_cpm, method = "pearson")
-	write.table(data.frame(SampleID = rownames(cor_mat), round(cor_mat, 4), check.names = FALSE),
-			cor_tsv, sep = "\t", quote = FALSE, row.names = FALSE)
-	
-	cor_ok <- tryCatch({
-				n <- ncol(cor_mat)
-				ord <- if (n > 2) hclust(as.dist(1 - cor_mat))$order else seq_len(n)
-				m <- cor_mat[ord, ord]
-				pdf(cor_pdf, width = 3 + 0.6 * n, height = 2.5 + 0.6 * n)
-				par(mar = c(8, 8, 3, 6))
-				rng <- range(m[upper.tri(m)])
-				if (diff(rng) == 0) rng <- rng + c(-0.01, 0.01)
-				pal <- colorRampPalette(c("#F7FBFF", "#6BAED6", "#08306B"))(100)
-				image(seq_len(n), seq_len(n), m[, n:1], col = pal, zlim = rng,
-						axes = FALSE, xlab = "", ylab = "",
-						main = "Sample correlation (Pearson, log2 CPM)")
-				axis(1, at = seq_len(n), labels = colnames(m), las = 2, cex.axis = 0.8)
-				axis(2, at = seq_len(n), labels = rev(colnames(m)), las = 2, cex.axis = 0.8)
-				text(rep(seq_len(n), n), rep(n:1, each = n), sprintf("%.3f", m), cex = 0.7,
-						col = ifelse(m > mean(rng), "white", "black"))
-				usr <- par("usr")
-				legend_y <- seq(usr[3], usr[4], length.out = 101)
-				rect(usr[2] + 0.2, legend_y[-101], usr[2] + 0.5, legend_y[-1],
-						col = pal, border = NA, xpd = TRUE)
-				text(usr[2] + 0.55, c(usr[3], usr[4]), sprintf("%.3f", rng), adj = 0, cex = 0.7, xpd = TRUE)
-				dev.off()
-				TRUE
-			}, error = function(e) {
-				try(dev.off(), silent = TRUE)
-				warn_msg("correlation heatmap skipped: ", conditionMessage(e))
-				FALSE
-			})
-	if (cor_ok) cat("correlation heatmap:\n  ", cor_pdf, "\n")
-	cat("correlation matrix:\n  ", cor_tsv, "\n\n")
-	
-	if (ncol(qc_log_cpm) < 3) {
-		cat("PCA skipped: need at least 3 samples\n\n")
-	} else {
-		pca_ok <- tryCatch({
-					vars <- apply(qc_log_cpm, 1, var)
-					n_top <- min(5000L, sum(vars > 0))
-					if (n_top < 2) stop("fewer than 2 variable peaks")
-					top <- order(vars, decreasing = TRUE)[seq_len(n_top)]
-					pca <- prcomp(t(qc_log_cpm[top, , drop = FALSE]), center = TRUE, scale. = FALSE)
-					pct <- round(100 * pca$sdev^2 / sum(pca$sdev^2), 1)
-					n_pc <- min(ncol(pca$x), 5L)
-					pc_df <- data.frame(SampleID = rownames(pca$x), Condition = as.character(groups),
-							round(pca$x[, seq_len(n_pc), drop = FALSE], 4), check.names = FALSE)
-					write.table(pc_df, pca_tsv, sep = "\t", quote = FALSE, row.names = FALSE)
-					cat("PCA variance explained (%):", paste0("PC", seq_len(n_pc), "=", pct[seq_len(n_pc)], collapse = " "), "\n")
-					cat("PCA peaks used (top variable):", n_top, "\n")
-					
-					pdf(pca_pdf, width = 7, height = 6)
-					par(mar = c(5, 5, 3, 2))
-					xr <- range(pca$x[, 1]); xr <- xr + c(-0.15, 0.15) * diff(xr)
-					plot(pca$x[, 1], pca$x[, 2], pch = 19, cex = 1.4, col = group_cols, xlim = xr,
-							xlab = paste0("PC1 (", pct[1], "%)"), ylab = paste0("PC2 (", pct[2], "%)"),
-							main = paste0("PCA (top ", n_top, " variable peaks, log2 CPM)"))
-					text(pca$x[, 1], pca$x[, 2], rownames(pca$x), pos = 3, cex = 0.75)
-					legend("topright", legend = levels(groups), pch = 19,
-							col = c("#1B9E77", "#D95F02", "#7570B3", "#E7298A")[seq_along(levels(groups))], bty = "n")
-					dev.off()
-					TRUE
-				}, error = function(e) {
-					try(dev.off(), silent = TRUE)
-					warn_msg("PCA skipped: ", conditionMessage(e))
-					FALSE
-				})
-		if (pca_ok) {
-			cat("PCA plot:\n  ", pca_pdf, "\n")
-			cat("PCA coordinates:\n  ", pca_tsv, "\n\n")
-		}
 	}
 }
 

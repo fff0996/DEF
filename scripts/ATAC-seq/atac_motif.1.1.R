@@ -1,14 +1,5 @@
 #!/usr/bin/env Rscript
-
-# Version 1.1 (changes from atac_motif.1.0.R):
-#   stdout and stderr are kept apart: progress goes to stdout and
-#   logs/<stamp>.log; errors, warnings, and package messages go to stderr
-#   and logs/<stamp>.error.log.
-#   threads defaults to auto: the CPU cores allocated to the job
-#   (parallel::mcaffinity()); a number is capped by the allocation.
-#   The run stops if output_dir is or contains an input path.
-#   A local data-frame variable was renamed to col_data (site command
-#   blacklist).
+# CLOSHA 2.0 production version 1.1 (kept in this repository as 1.0 until 2026-10-16).
 
 # Required:
 #   input_dir="..." OR da_csv="..."
@@ -27,27 +18,15 @@
 #   min_motif_score="10.0"
 #   stabsel_cutoff="0.8"
 #   seed="123"
-#   threads="auto"                     # auto = allocated CPU cores
+#   threads="4"
 #   run_kmer="TRUE"
 #   run_regression="TRUE"
 
 DEBUG_SCRIPT_VERSION <- "NBIS_MOTIF_SEQLOGO_PNG_20260629"
 
-# Errors and warnings go to stderr and logs/<stamp>.error.log (err_con is
-# opened together with the log file); progress goes to stdout and
-# logs/<stamp>.log.
-err_con <- NULL
-emit_err <- function(txt) {
-	cat(txt, file = stderr())
-	if (!is.null(err_con)) {
-		cat(txt, file = err_con)
-		flush(err_con)
-	}
-}
-
 stop_err <- function(...) {
 	msg <- paste(..., collapse = "")
-	emit_err(paste0("ERROR: ", msg, "\n"))
+	cat("ERROR:", msg, "\n", file = stderr())
 	quit(status = 1)
 }
 
@@ -153,7 +132,7 @@ if (!exists("kmer_len", inherits = FALSE)) kmer_len <- "6"
 if (!exists("min_motif_score", inherits = FALSE)) min_motif_score <- "10.0"
 if (!exists("stabsel_cutoff", inherits = FALSE)) stabsel_cutoff <- "0.8"
 if (!exists("seed", inherits = FALSE)) seed <- "123"
-if (!exists("threads", inherits = FALSE)) threads <- "auto"
+if (!exists("threads", inherits = FALSE)) threads <- "4"
 if (!exists("run_kmer", inherits = FALSE)) run_kmer <- "TRUE"
 if (!exists("run_regression", inherits = FALSE)) run_regression <- "TRUE"
 
@@ -178,17 +157,7 @@ kmer_len <- as.integer(kmer_len)
 min_motif_score <- as.numeric(min_motif_score)
 stabsel_cutoff <- as.numeric(stabsel_cutoff)
 seed <- as.integer(seed)
-# threads: the CPU cores allocated to this job (affinity mask / cgroup
-# cpuset); a requested number is capped by the allocation.
-allocated_threads <- tryCatch(length(parallel::mcaffinity()), error = function(e) NA_integer_)
-if (is.na(allocated_threads) || allocated_threads < 1) {
-	allocated_threads <- suppressWarnings(as.integer(system("nproc", intern = TRUE)))
-}
-if (is.na(allocated_threads) || allocated_threads < 1) allocated_threads <- 1L
-threads_requested <- threads
-threads <- if (threads %in% c("", "auto")) allocated_threads else suppressWarnings(as.integer(threads))
-if (!is.na(threads) && threads > allocated_threads) threads <- allocated_threads
-Sys.setenv(OMP_NUM_THREADS = threads, OPENBLAS_NUM_THREADS = threads, MKL_NUM_THREADS = threads)
+threads <- as.integer(threads)
 
 if (is.na(n_per_bin) || n_per_bin <= 0) stop_err("n_per_bin must be positive integer")
 if (is.na(min_abs_logfc) || min_abs_logfc < 0) stop_err("min_abs_logfc must be >= 0")
@@ -199,7 +168,7 @@ if (is.na(stabsel_cutoff) || stabsel_cutoff <= 0 || stabsel_cutoff > 1) {
 	stop_err("stabsel_cutoff must be in (0, 1]")
 }
 if (is.na(seed)) stop_err("seed must be integer")
-if (is.na(threads) || threads <= 0) stop_err("threads must be auto or a positive integer: ", threads_requested)
+if (is.na(threads) || threads <= 0) stop_err("threads must be positive integer")
 
 fdr_filter_num <- if (nchar(fdr_filter) > 0) as.numeric(fdr_filter) else NA_real_
 
@@ -256,20 +225,6 @@ if (nchar(da_csv) > 0) {
 }
 
 # ------------------------------------------------------------
-# output_dir is cleaned below, so it must not be or contain an input.
-# ------------------------------------------------------------
-check_inputs_outside_output <- function(output_dir, inputs) {
-	out <- normalizePath(output_dir, mustWork = FALSE)
-	for (x in inputs[nzchar(inputs)]) {
-		inp <- normalizePath(x, mustWork = FALSE)
-		if (inp == out || startsWith(inp, paste0(out, "/"))) {
-			stop_err("input ", x, " is inside output_dir ", output_dir, ", which is cleaned on each run")
-		}
-	}
-}
-check_inputs_outside_output(output_dir, c(input_dir, da_csv, genome_fasta, motif_db))
-
-# ------------------------------------------------------------
 # Clean output dir except logs
 # ------------------------------------------------------------
 if (dir.exists(output_dir) && normalizePath(output_dir, mustWork = FALSE) != "/") {
@@ -306,31 +261,14 @@ log_file <- file.path(
 log_con <- file(log_file, open = "at")
 sink(log_con, append = TRUE, split = TRUE)
 
-err_file <- sub("\\.log$", ".error.log", log_file)
-err_con <- file(err_file, open = "at")
-
-# Package messages and warnings (stderr) are also copied to the .error.log.
-globalCallingHandlers(
-		message = function(m) {
-			cat(conditionMessage(m), file = err_con)
-			flush(err_con)
-		},
-		warning = function(w) {
-			cat("WARNING: ", conditionMessage(w), "\n", sep = "", file = err_con)
-			flush(err_con)
-		}
-)
-
 on.exit({
 			try(sink(), silent = TRUE)
 			try(close(log_con), silent = TRUE)
-			try(close(err_con), silent = TRUE)
 		}, add = TRUE)
 
 cat("############################## ATAC-seq Motif Analysis (NBIS / monaLisa)\n")
 cat("DEBUG_SCRIPT_VERSION:", DEBUG_SCRIPT_VERSION, "\n")
 cat("Log file   :", log_file, "\n")
-cat("Error log  :", err_file, "\n")
 cat("Start time :", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
 
 cat("parameters:\n")
@@ -354,7 +292,7 @@ cat("  kmer_len        =", kmer_len, "\n")
 cat("  min_motif_score =", min_motif_score, "\n")
 cat("  stabsel_cutoff  =", stabsel_cutoff, "\n")
 cat("  seed            =", seed, "\n")
-cat("  threads         =", threads, "(requested", threads_requested, "allocated", allocated_threads, ")\n")
+cat("  threads         =", threads, "\n")
 cat("  run_kmer        =", run_kmer_logical, "\n")
 cat("  run_regression  =", run_regression_logical, "\n\n")
 
@@ -1335,7 +1273,7 @@ if (run_regression_logical) {
 						sep = ""
 				)
 				
-				col_data <- as.data.frame(
+				cd <- as.data.frame(
 						colData(se_reg),
 						optional = TRUE,
 						stringsAsFactors = FALSE
@@ -1343,9 +1281,9 @@ if (run_regression_logical) {
 				
 				cat(
 						"colData columns (",
-						ncol(col_data),
+						ncol(cd),
 						"): ",
-						paste(colnames(col_data), collapse = ", "),
+						paste(colnames(cd), collapse = ", "),
 						"\n",
 						sep = ""
 				)
@@ -1357,8 +1295,8 @@ if (run_regression_logical) {
 						stringsAsFactors = FALSE
 				)
 				
-				for (cn in colnames(col_data)) {
-					v <- col_data[[cn]]
+				for (cn in colnames(cd)) {
+					v <- cd[[cn]]
 					
 					if (length(v) == np) {
 						sel_df[[cn]] <- v

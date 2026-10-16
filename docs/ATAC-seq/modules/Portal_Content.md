@@ -755,14 +755,14 @@ Rscript peak_annotation.1.2.R \
 |---|---|---|
 | 모듈명 | differential_accessibility | differential_accessibility |
 | 서브 타이틀 | 조건 간 차등 접근성 분석 | Differential accessibility |
-| 버전 | 1.2 | |
+| 버전 | 1.4 | |
 | 카테고리 대분류 | 통계 분석 | Statistical Analysis |
 | 카테고리 아이콘 | 선택 예정(Statistical Analysis 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 차등 분석 | Differential Analysis |
 | 태그 | ATAC-seq, edgeR, differential accessibility, GC bias, PCA | |
 | 레퍼런스 URL | https://bioconductor.org/packages/edgeR/ | |
 | 컨테이너 이미지 | bx_differential_accessibility.1.0 | |
-| 실행 스크립트 파일 | differential_accessibility.1.2.R | |
+| 실행 스크립트 파일 | differential_accessibility.1.4.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 실행 이미지
@@ -855,7 +855,7 @@ trt_2,treated
 
 ### 스크립트 사용 예제
 ```
-Rscript differential_accessibility.1.2.R \
+Rscript differential_accessibility.1.4.R \
   sample_data=/data/da_sample_data.csv \
   genome_fasta=/ref/genome.fa \
   input_dir=/data/atac_qc \
@@ -903,14 +903,14 @@ Rscript differential_accessibility.1.2.R \
 |---|---|---|
 | 모듈명 | atac_motif | atac_motif |
 | 서브 타이틀 | 접근성 변화 연관 모티프 분석 | Motif enrichment by accessibility change |
-| 버전 | 1.4 | |
+| 버전 | 1.5 | |
 | 카테고리 대분류 | 유전자 조절 | Gene Regulation |
 | 카테고리 아이콘 | `docs/category_icons/gene_regulation.png` | |
 | 카테고리 중분류 | 모티프 분석 | Motif Analysis |
 | 태그 | ATAC-seq, monaLisa, motif enrichment, JASPAR, k-mer | |
 | 레퍼런스 URL | https://bioconductor.org/packages/monaLisa/ | |
 | 컨테이너 이미지 | bx_atac_motif.1.0 | |
-| 실행 스크립트 파일 | atac_motif.1.4.R | |
+| 실행 스크립트 파일 | atac_motif.1.5.R | |
 | Processor Core (제안) | 최대 4코어 (모티프 계산을 여러 코어로 나눔) | Up to 4 cores (motif scoring is parallel) |
 
 그림: `docs/category_icons/gene_regulation.png` (카테고리 아이콘)
@@ -990,7 +990,7 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 
 ### 스크립트 사용 예제
 ```
-Rscript atac_motif.1.4.R \
+Rscript atac_motif.1.5.R \
   input_dir=/data/da \
   genome_fasta=/ref/genome.fa \
   motif_db=/ref/JASPAR2024_CORE_plants.meme \

@@ -2,11 +2,11 @@ CLOSHA 분석 스크립트 작성 규칙 1.0
 
 작성일: 2026-10-07
 
-이 문서는 CLOSHA 파이프라인 노드에서 실행되는 분석 스크립트(Bash, R, Python)의 작성 규칙이다. 기준은 운영에서 쓰고 있는 `scripts/ATAC-seq/`의 1.0 스크립트(organellar_filter, ATAC_QC, ATAC_QC_plot, MACS3_callpeak_ATAC, peak_annotation, differential_accessibility, atac_motif, tf_footprinting)의 공통 형식이다. 실행 이미지(DEF) 규칙은 docs/CLOSHA_DEF_Generator_Agent_v1.md를 따른다.
+이 문서는 CLOSHA 파이프라인 노드에서 실행되는 분석 스크립트(Bash, R, Python)의 작성 규칙이다. 기준은 CLOSHA 2.0 운영에서 쓰던 `scripts/ATAC-seq/`의 원본 스크립트(organellar_filter, ATAC_QC, ATAC_QC_plot, MACS3_callpeak_ATAC, peak_annotation, tf_footprinting은 1.0, differential_accessibility는 1.2, atac_motif는 1.1)의 공통 형식이다. 실행 이미지(DEF) 규칙은 docs/CLOSHA_DEF_Generator_Agent_v1.md를 따른다.
 
-참고 예: Bash는 `organellar_filter.1.0.sh`, R은 `ATAC_QC.1.0.R`, `differential_accessibility.1.0.R`.
+참고 예: Bash는 `organellar_filter.1.0.sh`, R은 `ATAC_QC.1.0.R`, `differential_accessibility.1.2.R`.
 
-기존 1.0 스크립트 중 일부는 이 문서의 7절(stdout/stderr 구분)과 11절(스레드 자동 결정)을 따르지 않는다. 규칙에 맞춘 버전은 1.1이다(2026-10-07): `organellar_filter.1.1.sh`, `MACS3_callpeak_ATAC.1.1.sh`, `tf_footprinting.1.1.sh`, `ATAC_QC.1.1.R`, `ATAC_QC_plot.1.1.R`, `peak_annotation.1.1.R`, `differential_accessibility.1.1.R`, `atac_motif.1.1.R`. 각 파일 맨 위에 1.0과의 차이가 적혀 있다.
+원본 스크립트 중 일부는 이 문서의 7절(stdout/stderr 구분)과 11절(스레드 자동 결정)을 따르지 않는다. 규칙에 맞춘 첫 버전은 원본 다음 번호다(2026-10-07): `organellar_filter.1.1.sh`, `MACS3_callpeak_ATAC.1.1.sh`, `tf_footprinting.1.1.sh`, `ATAC_QC.1.1.R`, `ATAC_QC_plot.1.1.R`, `peak_annotation.1.1.R`, `differential_accessibility.1.3.R`, `atac_motif.1.2.R`. 각 파일 맨 위에 이전 버전과의 차이가 적혀 있다.
 
 ## 1. 위치, 이름, 버전
 - 위치: `scripts/{파이프라인명}/`. 예: `scripts/ATAC-seq/`.
@@ -19,6 +19,7 @@ CLOSHA 분석 스크립트 작성 규칙 1.0
 ### 1.1 버전 관리
 - 동작(입력 해석, 필터 기준, 결과 내용, 출력 구조)이 바뀌면 기존 파일을 고치지 않고 **새 버전 파일**을 만든다. 예: `ATAC_QC.1.0.R` → `ATAC_QC.1.1.R`.
 - 이전 버전은 지우지 않는다. 이전 결과를 같은 조건으로 다시 만들 수 있어야 한다.
+- 번호는 CLOSHA 2.0 운영 버전을 이어서 쓴다. 받은 원본은 운영에서 쓰던 번호 그대로 저장하고(예: 운영 differential_accessibility 1.2 → `differential_accessibility.1.2.R`), 고친 것은 그다음 번호로 만든다. 같은 번호를 다른 내용에 다시 쓰지 않는다.
 - 새 버전 파일의 맨 위(첫 줄 바로 아래)에 이전 버전과의 차이를 적는다.
   ```
   # Version 1.1 (changes from ATAC_QC.1.0.R):

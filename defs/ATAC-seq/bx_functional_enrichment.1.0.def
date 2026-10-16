@@ -151,7 +151,7 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   detected (100% of IDs), photosynthesis-enriched list gave 27 GO BP
 #   terms, random list gave 0; go_table with ont=ALL also ran.
 #   Rebuilt as root on 2026-10-08 and run on a synthetic
-#   differential_accessibility.1.2.R output (da_dir with genome_gff):
+#   differential_accessibility.1.4.R output (da_dir with genome_gff):
 #   peaks assigned to nearest gene TSS, up list (82 genes) gave 29 GO BP
 #   terms led by photosynthesis, down list (62 genes) gave 0.
 #   A production fakeroot-command build of bx_functional_enrichment

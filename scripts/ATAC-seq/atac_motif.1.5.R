@@ -1,7 +1,44 @@
 #!/usr/bin/env Rscript
 
+# Version 1.5 (changes from atac_motif.1.4.R):
+#   The run stops with a clear message when too few peaks remain to make the
+#   logFC bins (after fdr_filter and the chromosome filter). 1.4 went on and
+#   stopped inside monaLisa::bin() with "invalid number of intervals" (for
+#   example fdr_filter=0.05 kept 14 of 22,275 peaks). The check counts the
+#   bins the same way as monaLisa's equalN binning: the peaks below
+#   -min_abs_logfc and above +min_abs_logfc each give round(count /
+#   n_per_bin) bins (plus the central bin), or, when no peak lies within
+#   +/-min_abs_logfc, all peaks give round(count / n_per_bin) bins; at least
+#   2 bins outside the central one are needed. min_abs_logfc=0 is now passed
+#   to monaLisa as "no central bin" (1.4 passed 0, which monaLisa rejects).
+#   Everything else is unchanged.
+#
+# Version 1.4 (changes from atac_motif.1.3.R):
+#   The differential accessibility table is always taken from input_dir
+#   (03_results/diff_accessibility_<norm>.csv of a differential_accessibility
+#   output_dir); input_dir is required and the da_csv argument is no longer
+#   accepted (the run stops if it is given a value). Everything else is
+#   unchanged.
+#
+# Version 1.3 (changes from atac_motif.1.2.R):
+#   Allocated cores are read with nproc first, as in the Bash modules (nproc
+#   gives the portal's core selection); parallel::mcaffinity() is the
+#   fallback. A threads value above the allocation is capped with a warning
+#   in stderr and logs/<stamp>.error.log (1.2 capped silently). On the portal
+#   threads is not registered: the selected core mode decides.
+#
+# Version 1.2 (changes from atac_motif.1.1.R):
+#   stdout and stderr are kept apart: progress goes to stdout and
+#   logs/<stamp>.log; errors, warnings, and package messages go to stderr
+#   and logs/<stamp>.error.log.
+#   threads defaults to auto: the CPU cores allocated to the job
+#   (parallel::mcaffinity()); a number is capped by the allocation.
+#   The run stops if output_dir is or contains an input path.
+#   A local data-frame variable was renamed to col_data (site command
+#   blacklist).
+
 # Required:
-#   input_dir="..." OR da_csv="..."
+#   input_dir="..."                    # differential_accessibility output_dir
 #   output_dir="..."
 #   genome_fasta="/path/to/reference.fa"
 #   motif_db="/path/to/motifs.meme"
@@ -17,15 +54,27 @@
 #   min_motif_score="10.0"
 #   stabsel_cutoff="0.8"
 #   seed="123"
-#   threads="4"
+#   threads="auto"                     # auto = allocated CPU cores
 #   run_kmer="TRUE"
 #   run_regression="TRUE"
 
 DEBUG_SCRIPT_VERSION <- "NBIS_MOTIF_SEQLOGO_PNG_20260629"
 
+# Errors and warnings go to stderr and logs/<stamp>.error.log (err_con is
+# opened together with the log file); progress goes to stdout and
+# logs/<stamp>.log.
+err_con <- NULL
+emit_err <- function(txt) {
+	cat(txt, file = stderr())
+	if (!is.null(err_con)) {
+		cat(txt, file = err_con)
+		flush(err_con)
+	}
+}
+
 stop_err <- function(...) {
 	msg <- paste(..., collapse = "")
-	cat("ERROR:", msg, "\n", file = stderr())
+	emit_err(paste0("ERROR: ", msg, "\n"))
 	quit(status = 1)
 }
 
@@ -67,10 +116,13 @@ if (!exists("output_dir", inherits = FALSE)) {
 }
 
 if (!exists("input_dir", inherits = FALSE)) input_dir <- ""
-if (!exists("da_csv", inherits = FALSE)) da_csv <- ""
+if (exists("da_csv", inherits = FALSE) && nchar(da_csv) > 0) {
+	stop_err("da_csv is not accepted from version 1.3; give the differential_accessibility output_dir as input_dir")
+}
+da_csv <- ""
 
-if (nchar(input_dir) == 0 && nchar(da_csv) == 0) {
-	stop_err("One of 'input_dir' or 'da_csv' is required")
+if (nchar(input_dir) == 0) {
+	stop_err("Required parameter missing: input_dir")
 }
 
 if (!exists("norm", inherits = FALSE)) {
@@ -131,7 +183,7 @@ if (!exists("kmer_len", inherits = FALSE)) kmer_len <- "6"
 if (!exists("min_motif_score", inherits = FALSE)) min_motif_score <- "10.0"
 if (!exists("stabsel_cutoff", inherits = FALSE)) stabsel_cutoff <- "0.8"
 if (!exists("seed", inherits = FALSE)) seed <- "123"
-if (!exists("threads", inherits = FALSE)) threads <- "4"
+if (!exists("threads", inherits = FALSE)) threads <- "auto"
 if (!exists("run_kmer", inherits = FALSE)) run_kmer <- "TRUE"
 if (!exists("run_regression", inherits = FALSE)) run_regression <- "TRUE"
 
@@ -156,7 +208,20 @@ kmer_len <- as.integer(kmer_len)
 min_motif_score <- as.numeric(min_motif_score)
 stabsel_cutoff <- as.numeric(stabsel_cutoff)
 seed <- as.integer(seed)
-threads <- as.integer(threads)
+# threads: the CPU cores allocated to this job, read with nproc as in the
+# Bash modules (nproc returns OMP_NUM_THREADS when set, which follows the
+# portal's core selection); parallel::mcaffinity() is the fallback. A larger
+# requested number is capped with a warning.
+allocated_threads <- suppressWarnings(as.integer(tryCatch(system("nproc", intern = TRUE), error = function(e) NA)))
+if (length(allocated_threads) != 1 || is.na(allocated_threads) || allocated_threads < 1) {
+	allocated_threads <- tryCatch(length(parallel::mcaffinity()), error = function(e) NA_integer_)
+}
+if (is.na(allocated_threads) || allocated_threads < 1) allocated_threads <- 1L
+threads_requested <- threads
+threads <- if (threads %in% c("", "auto")) allocated_threads else suppressWarnings(as.integer(threads))
+threads_capped <- !is.na(threads) && threads > allocated_threads
+if (threads_capped) threads <- allocated_threads
+Sys.setenv(OMP_NUM_THREADS = threads, OPENBLAS_NUM_THREADS = threads, MKL_NUM_THREADS = threads)
 
 if (is.na(n_per_bin) || n_per_bin <= 0) stop_err("n_per_bin must be positive integer")
 if (is.na(min_abs_logfc) || min_abs_logfc < 0) stop_err("min_abs_logfc must be >= 0")
@@ -167,7 +232,7 @@ if (is.na(stabsel_cutoff) || stabsel_cutoff <= 0 || stabsel_cutoff > 1) {
 	stop_err("stabsel_cutoff must be in (0, 1]")
 }
 if (is.na(seed)) stop_err("seed must be integer")
-if (is.na(threads) || threads <= 0) stop_err("threads must be positive integer")
+if (is.na(threads) || threads <= 0) stop_err("threads must be auto or a positive integer: ", threads_requested)
 
 fdr_filter_num <- if (nchar(fdr_filter) > 0) as.numeric(fdr_filter) else NA_real_
 
@@ -182,12 +247,7 @@ run_regression_logical <- toupper(run_regression) %in% c("TRUE", "T", "YES", "1"
 # ------------------------------------------------------------
 # Resolve DA CSV
 # ------------------------------------------------------------
-if (nchar(da_csv) > 0) {
-	if (!file.exists(da_csv)) {
-		stop_err("da_csv not found: ", da_csv)
-	}
-	da_csv <- normalizePath(da_csv, mustWork = TRUE)
-} else {
+{
 	if (!dir.exists(input_dir)) {
 		stop_err("input_dir not found: ", input_dir)
 	}
@@ -215,13 +275,27 @@ if (nchar(da_csv) > 0) {
 					"could not locate diff_accessibility_", norm_filename,
 					".csv under input_dir: ", input_dir,
 					". Expected at: ", primary,
-					". Use norm=TMM|EDASeq|CQN or pass da_csv directly."
+					". Use norm=TMM|EDASeq|CQN."
 			)
 		}
 		
 		da_csv <- cands[1]
 	}
 }
+
+# ------------------------------------------------------------
+# output_dir is cleaned below, so it must not be or contain an input.
+# ------------------------------------------------------------
+check_inputs_outside_output <- function(output_dir, inputs) {
+	out <- normalizePath(output_dir, mustWork = FALSE)
+	for (x in inputs[nzchar(inputs)]) {
+		inp <- normalizePath(x, mustWork = FALSE)
+		if (inp == out || startsWith(inp, paste0(out, "/"))) {
+			stop_err("input ", x, " is inside output_dir ", output_dir, ", which is cleaned on each run")
+		}
+	}
+}
+check_inputs_outside_output(output_dir, c(input_dir, da_csv, genome_fasta, motif_db))
 
 # ------------------------------------------------------------
 # Clean output dir except logs
@@ -260,14 +334,31 @@ log_file <- file.path(
 log_con <- file(log_file, open = "at")
 sink(log_con, append = TRUE, split = TRUE)
 
+err_file <- sub("\\.log$", ".error.log", log_file)
+err_con <- file(err_file, open = "at")
+
+# Package messages and warnings (stderr) are also copied to the .error.log.
+globalCallingHandlers(
+		message = function(m) {
+			cat(conditionMessage(m), file = err_con)
+			flush(err_con)
+		},
+		warning = function(w) {
+			cat("WARNING: ", conditionMessage(w), "\n", sep = "", file = err_con)
+			flush(err_con)
+		}
+)
+
 on.exit({
 			try(sink(), silent = TRUE)
 			try(close(log_con), silent = TRUE)
+			try(close(err_con), silent = TRUE)
 		}, add = TRUE)
 
 cat("############################## ATAC-seq Motif Analysis (NBIS / monaLisa)\n")
 cat("DEBUG_SCRIPT_VERSION:", DEBUG_SCRIPT_VERSION, "\n")
 cat("Log file   :", log_file, "\n")
+cat("Error log  :", err_file, "\n")
 cat("Start time :", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
 
 cat("parameters:\n")
@@ -291,9 +382,13 @@ cat("  kmer_len        =", kmer_len, "\n")
 cat("  min_motif_score =", min_motif_score, "\n")
 cat("  stabsel_cutoff  =", stabsel_cutoff, "\n")
 cat("  seed            =", seed, "\n")
-cat("  threads         =", threads, "\n")
+cat("  threads         =", threads, "(requested", threads_requested, "allocated", allocated_threads, ")\n")
 cat("  run_kmer        =", run_kmer_logical, "\n")
 cat("  run_regression  =", run_regression_logical, "\n\n")
+if (threads_capped) {
+	emit_err(paste0("WARNING: threads=", threads_requested, " requested, allocated cores: ",
+			allocated_threads, "; using ", threads, "\n"))
+}
 
 # ------------------------------------------------------------
 # Output directories
@@ -661,6 +756,38 @@ saveRDS(gr, file.path(rds_dir, "motif_input_GRanges.rds"))
 cat("input GRanges saved:", file.path(rds_dir, "motif_input_GRanges.rds"), "\n\n")
 
 # ------------------------------------------------------------
+# Check that the peaks are enough for the logFC bins
+# ------------------------------------------------------------
+# monaLisa's equalN binning: the peaks beyond -/+min_abs_logfc each give
+# round(count / n_per_bin) bins around a central bin; if no peak lies within
+# +/-min_abs_logfc, all peaks give round(count / n_per_bin) bins. monaLisa
+# ignores min_abs_logfc when all peaks lie on one side of it (or when it is 0).
+n_peaks <- length(gr)
+n_down <- sum(gr$logFC < -min_abs_logfc)
+n_up <- sum(gr$logFC > min_abs_logfc)
+use_min_abs <- min_abs_logfc > 0 &&
+		!(-min_abs_logfc > max(gr$logFC) || min_abs_logfc < min(gr$logFC))
+if (use_min_abs) {
+	n_bins <- round(n_down / n_per_bin) + round(n_up / n_per_bin)
+} else {
+	n_bins <- round(n_peaks / n_per_bin)
+}
+cat("peaks for binning: ", n_peaks, " (logFC < -", min_abs_logfc, ": ", n_down,
+		", logFC > ", min_abs_logfc, ": ", n_up, ")\n", sep = "")
+cat("logFC bins expected (n_per_bin=", n_per_bin, "): ", n_bins, "\n\n", sep = "")
+if (n_bins < 2) {
+	stop_err(paste0(
+			"too few peaks to make logFC bins: ", n_peaks, " peaks remain",
+			if (!is.na(fdr_filter_num)) paste0(" after fdr_filter=", fdr_filter) else "", " (",
+			n_down, " with logFC < -", min_abs_logfc, ", ", n_up, " with logFC > ", min_abs_logfc,
+			"), but n_per_bin=", n_per_bin, " needs about ", 2 * n_per_bin,
+			" peaks to make at least 2 bins. monaLisa compares bins of all peaks ",
+			"ordered by logFC, so leave fdr_filter empty to use every peak of the ",
+			"differential accessibility table, or lower n_per_bin."
+	))
+}
+
+# ------------------------------------------------------------
 # Step 2: QC plots
 # ------------------------------------------------------------
 cat("############################## Step 2: QC plots\n")
@@ -715,7 +842,7 @@ bins <- bin(
 		x = gr$logFC,
 		binmode = "equalN",
 		nElement = n_per_bin,
-		minAbsX = min_abs_logfc
+		minAbsX = if (min_abs_logfc > 0) min_abs_logfc else NULL
 )
 
 cat("bin table:\n")
@@ -1272,7 +1399,7 @@ if (run_regression_logical) {
 						sep = ""
 				)
 				
-				cd <- as.data.frame(
+				col_data <- as.data.frame(
 						colData(se_reg),
 						optional = TRUE,
 						stringsAsFactors = FALSE
@@ -1280,9 +1407,9 @@ if (run_regression_logical) {
 				
 				cat(
 						"colData columns (",
-						ncol(cd),
+						ncol(col_data),
 						"): ",
-						paste(colnames(cd), collapse = ", "),
+						paste(colnames(col_data), collapse = ", "),
 						"\n",
 						sep = ""
 				)
@@ -1294,8 +1421,8 @@ if (run_regression_logical) {
 						stringsAsFactors = FALSE
 				)
 				
-				for (cn in colnames(cd)) {
-					v <- cd[[cn]]
+				for (cn in colnames(col_data)) {
+					v <- col_data[[cn]]
 					
 					if (length(v) == np) {
 						sel_df[[cn]] <- v
