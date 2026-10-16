@@ -17,20 +17,20 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 ```
 | 모듈 | 스크립트 | 실행 이미지 | 실행 명령 |
 |---|---|---|---|
-| bowtie2 | `bowtie2.1.5.sh` | bowtie2.1.0 | `bash bowtie2.1.5.sh key=value ...` |
+| bowtie2 | `bowtie2.1.1.sh` | bowtie2.1.0 | `bash bowtie2.1.1.sh key=value ...` |
 | GATK_MarkDuplicates | `GATK_MarkDuplicates_1.0.sh` (내용 v1.1) | gatk.1.0 (`defs/ATAC-seq/bx_gatk_1.0.def`) | `bash GATK_MarkDuplicates_1.0.sh key=value ...` (Input `input_dir`, Output `output_dir`, Option `ref_genome` 필수; 메모리 24GB 이상) |
-| organellar_filter | `organellar_filter.1.2.sh` | bx_organellar_filter.1.0 | `bash organellar_filter.1.2.sh key=value ...` |
-| ATAC_QC | `ATAC_QC.1.2.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC.1.2.R key=value ...` |
-| ATAC_QC_plot | `ATAC_QC_plot.1.2.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC_plot.1.2.R key=value ...` |
-| MACS3_callpeak | `MACS3_callpeak_ATAC.1.4.sh` | bx_macs3_callpeak_atac.1.0 | `bash MACS3_callpeak_ATAC.1.4.sh key=value ...` |
-| peak_annotation | `peak_annotation.1.2.R` | bx_peak_annotation.1.0 | `Rscript peak_annotation.1.2.R key=value ...` |
-| differential_accessibility | `differential_accessibility.1.4.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.4.R key=value ...` |
-| atac_motif | `atac_motif.1.5.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.5.R key=value ...` |
-| tf_footprinting | `tf_footprinting.1.4.sh` | bx_tf_footprinting.1.0 | `bash tf_footprinting.1.4.sh key=value ...` |
-| functional_enrichment | `functional_enrichment.1.1.R` | bx_functional_enrichment.1.0 | `Rscript functional_enrichment.1.1.R key=value ...` |
-| replicate_consistency | `replicate_consistency.1.1.sh` | bx_replicate_consistency.1.0 | `bash replicate_consistency.1.1.sh key=value ...` |
+| organellar_filter | `organellar_filter.1.1.sh` | bx_organellar_filter.1.0 | `bash organellar_filter.1.1.sh key=value ...` |
+| ATAC_QC | `ATAC_QC.1.1.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC.1.1.R key=value ...` |
+| ATAC_QC_plot | `ATAC_QC_plot.1.1.R` | bx_atac_qc.1.0 | `Rscript ATAC_QC_plot.1.1.R key=value ...` |
+| MACS3_callpeak | `MACS3_callpeak_ATAC.1.1.sh` | bx_macs3_callpeak_atac.1.0 | `bash MACS3_callpeak_ATAC.1.1.sh key=value ...` |
+| peak_annotation | `peak_annotation.1.1.R` | bx_peak_annotation.1.0 | `Rscript peak_annotation.1.1.R key=value ...` |
+| differential_accessibility | `differential_accessibility.1.3.R` | bx_differential_accessibility.1.0 | `Rscript differential_accessibility.1.3.R key=value ...` |
+| atac_motif | `atac_motif.1.2.R` | bx_atac_motif.1.0 | `Rscript atac_motif.1.2.R key=value ...` |
+| tf_footprinting | `tf_footprinting.1.1.sh` | bx_tf_footprinting.1.0 | `bash tf_footprinting.1.1.sh key=value ...` |
+| functional_enrichment | `functional_enrichment.1.0.R` | bx_functional_enrichment.1.0 | `Rscript functional_enrichment.1.0.R key=value ...` |
+| replicate_consistency | `replicate_consistency.1.0.sh` | bx_replicate_consistency.1.0 | `bash replicate_consistency.1.0.sh key=value ...` |
 
-`ATAC_QC.1.2`(또는 1.1)와 `ATAC_QC_plot.1.2`를 함께 쓴다(1.1 이후 QC는 clean BAM을 쓰므로 trinucleosome이 비어 있을 수 있다. `ATAC_QC_plot.1.1`은 이 경우 `length(gal) == 4 is not TRUE`로 멈추고, 1.2는 빈 종류를 read 없음으로 계산한다). ATAC_QC 1.2, MACS3 1.2, differential_accessibility 1.4는 바로 앞 버전에 QC 지표만 더한 것이라 같은 이미지에서 돌고, 기존 결과 파일은 그대로다.
+`ATAC_QC.1.1`과 `ATAC_QC_plot.1.1`을 함께 쓴다. ATAC_QC는 bamQC clean BAM으로 shift·분할하므로 trinucleosome이 비어 있을 수 있으며, ATAC_QC_plot은 빈 종류를 read 없음으로 계산해 그린다. CLOSHA 2.0 대비 각 모듈의 변경은 스크립트 맨 위 주석과 `release/CLOSHA3/ATAC-seq/<배포일>/RELEASE.md`에 있다.
 
 ## 1. organellar_filter
 미토콘드리아·엽록체 등 세포소기관 contig의 read를 BAM에서 제거한다.
@@ -45,7 +45,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 결과: `03_filtered_bam/*.organellar_removed.bam`(+ .bai), idxstats, flagstat(전/후), contig 목록, 요약 TSV.
 
 ## 2. ATAC_QC
-fragment 크기 분포, bamQC, Tn5 shift, 뉴클레오솜 위치별 BAM 분할(ATACseqQC). 1.1부터 bamQC clean BAM으로 shift·분할한다. 1.2는 샘플별 TSS enrichment 점수와 CPM 정규화 coverage bigWig를 더한다.
+fragment 크기 분포, bamQC, Tn5 shift, 뉴클레오솜 위치별 BAM 분할(ATACseqQC). bamQC clean BAM으로 shift·분할하고(CLOSHA 2.0은 입력 BAM), 샘플별 TSS enrichment 점수와 CPM 정규화 coverage bigWig를 만든다.
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -55,10 +55,10 @@ fragment 크기 분포, bamQC, Tn5 shift, 뉴클레오솜 위치별 BAM 분할(A
 | Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. .fai가 없으면 FASTA 옆에 만든다 |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. ATAC_QC_plot, MACS3, differential_accessibility, tf_footprinting의 `input_dir` |
 | Option | `seqlev` | String | 선택 | `auto` | 사용할 염색체(쉼표 구분). auto = BAM과 txs_bed에 공통으로 있는 염색체 전부 |
-| Option | `tss_flank` | Integer | 선택 | `1000` | (1.2) TSS enrichment 점수를 계산할 TSS 앞뒤 범위(bp, 200 이상) |
-| Option | `make_bigwig` | List (`TRUE`, `FALSE`) | 선택 | `TRUE` | (1.2) 샘플별 coverage bigWig(CPM) 생성 |
+| Option | `tss_flank` | Integer | 선택 | `1000` | TSS enrichment 점수를 계산할 TSS 앞뒤 범위(bp, 200 이상) |
+| Option | `make_bigwig` | List (`TRUE`, `FALSE`) | 선택 | `TRUE` | 샘플별 coverage bigWig(CPM) 생성 |
 
-결과: `01_fragment_size`, `02_bam_qc`, `03_shifted_bam`, `04_split_bam`, `05_metadata/atac_qc_manifest.tsv`, `06_rds`. 1.2는 추가로 `05_metadata/atac_qc_metrics.tsv`(샘플별 read 수, clean 비율, TSS enrichment), `07_tss_enrichment`(샘플별 점수 그림·TSV), `08_bigwig/<sample>.shifted.cpm.bw`(IGV 등에서 바로 열림).
+결과: `01_fragment_size`, `02_bam_qc`, `03_shifted_bam`, `04_split_bam`, `05_metadata/atac_qc_manifest.tsv`, `06_rds`, `05_metadata/atac_qc_metrics.tsv`(샘플별 read 수, clean 비율, TSS enrichment), `07_tss_enrichment`(샘플별 점수 그림·TSV), `08_bigwig/<sample>.shifted.cpm.bw`(IGV 등에서 바로 열림).
 
 TSS enrichment 참고: ENCODE 사람(hg38) 기준 5 미만 주의, 5~7 허용, 7 초과 좋음. 다른 종은 주석 품질에 따라 범위가 다르다.
 
@@ -91,7 +91,7 @@ MACS3 callpeak(paired-end, BAMPE)로 peak를 찾는다.
 | Option | `qvalue` | Float | 선택 | `0.05` | q-value 기준 |
 | Option | `broad_cutoff` | Float | 선택 | `0.1` | `peak_type=broad`일 때만 사용(narrow면 무시). `qvalue`보다 크거나 같아야 함 |
 
-결과: `<sample>_peaks.narrowPeak`(broad면 `.broadPeak`) 등 MACS3 출력, `<sample>_macs3.log`/`.stderr.log`. 일부 샘플만 실패하면 경고 후 종료 코드 0. 1.2는 추가로 `frip_summary.tsv`(샘플별 peak 수, 전체 read, peak 안 read, FRiP)를 만든다. FRiP 참고: ENCODE ATAC-seq 기준 0.3 초과 좋음, 0.2 초과 허용.
+결과: `<sample>_peaks.narrowPeak`(broad면 `.broadPeak`) 등 MACS3 출력, `<sample>_macs3.log`/`.stderr.log`. 일부 샘플만 실패하면 경고 후 종료 코드 0. `frip_summary.tsv`(샘플별 peak 수, 전체 read, peak 안 read, FRiP)를 만든다. FRiP 참고: ENCODE ATAC-seq 기준 0.3 초과 좋음, 0.2 초과 허용.
 
 ## 5. peak_annotation
 ChIPseeker로 peak 주석(유전자 위치 분류, TSS 거리)과 그림을 만든다.
@@ -127,14 +127,14 @@ ChIPseeker로 peak 주석(유전자 위치 분류, TSS 거리)과 그림을 만�
 | Option | `run_edaseq` | List (`TRUE`, `FALSE`) | 선택 | `TRUE` | EDASeq GC 보정 정규화 실행 |
 | Option | `run_cqn` | List (`TRUE`, `FALSE`) | 선택 | `TRUE` | CQN GC 보정 정규화 실행 |
 
-결과: `01_sample_sheet`, `02_counts`, `03_results`(`diff_accessibility_<정규화>.csv` 등), `04_plots`, `05_rds`. 1.2는 추가로 샘플 상관 heatmap(`04_plots/sample_correlation_heatmap.pdf`, `03_results/sample_correlation.tsv`)과 PCA(`04_plots/PCA_plot.pdf`, `03_results/PCA_coordinates.tsv`, 3샘플 이상)를 만든다. 반복 실험이 같은 조건끼리 묶이는지, 튀는 샘플이 있는지 확인하는 용도다.
+결과: `01_sample_sheet`, `02_counts`, `03_results`(`diff_accessibility_<정규화>.csv` 등), `04_plots`, `05_rds`, 샘플 상관 heatmap(`04_plots/sample_correlation_heatmap.pdf`, `03_results/sample_correlation.tsv`)과 PCA(`04_plots/PCA_plot.pdf`, `03_results/PCA_coordinates.tsv`, 3샘플 이상)를 만든다. 반복 실험이 같은 조건끼리 묶이는지, 튀는 샘플이 있는지 확인하는 용도다.
 
 ## 7. atac_motif
 차등 접근성 결과로 모티프 농축(monaLisa) 분석.
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 필수 | | differential_accessibility의 `output_dir`. 그 안의 `03_results/diff_accessibility_<norm>.csv`를 읽는다(1.3부터 `da_csv` 인자 없음) |
+| Input | `input_dir` | Directory | 필수 | | differential_accessibility의 `output_dir`. 그 안의 `03_results/diff_accessibility_<norm>.csv`를 읽는다(CLOSHA 2.0의 `da_csv` 인자는 없어짐) |
 | Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. **.fai 인덱스가 미리 있어야 함** |
 | Input | `motif_db` | File (MEME) | 필수 | | 모티프 데이터베이스(MEME 형식) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
@@ -163,14 +163,14 @@ TOBIAS로 조건별 전사인자 footprint와 비교(BINDetect).
 | Input | `sample_data` | File (CSV/TSV) | 필수 | | 샘플 정보. `SampleID`, `Condition` 컬럼, 조건 2개 이상. ATAC_QC의 `sample_data`를 그대로 써도 된다(1.2까지는 이름이 `metadata`) |
 | Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. .fai가 없으면 FASTA 옆에 만든다 |
 | Input | `motif_db` | File | 필수 | | 모티프 데이터베이스 |
-| Input | `macs_dir` | Directory | 필수 | | MACS3의 `output_dir`. 그 안의 peak를 합쳐 공통 peak를 만든다(1.3부터 `peak_file` 인자 없음) |
+| Input | `macs_dir` | Directory | 필수 | | MACS3의 `output_dir`. 그 안의 peak를 합쳐 공통 peak를 만든다(CLOSHA 2.0의 `peak_file` 인자는 없어짐) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
 | Option | `cores` | String | 선택 | `auto` | 코어 수. auto = 할당된 코어 수. **포탈에 등록하지 않음**(Processor Core 선택으로 결정). 할당보다 크면 줄이고 경고 |
 
 결과: `00_metadata`, `01_peak_merge`, `02_merged_bam_by_condition`, `03_tobias_tracks`(bigWig), `04_BINDetect`, `summary/`.
 
 ## 9. functional_enrichment
-GO 농축 분석(clusterProfiler). 종별 데이터는 이미지에 없고, `tools/download_orgdb.R`로 받은 OrgDb 파일을 입력으로 받는다. 1.1부터 입력 폴더는 `input_dir` 하나이며, 안의 파일을 보고 peak_annotation 결과인지 differential_accessibility 결과인지 판단한다. 실행 중 인터넷 접속이 없으므로 KEGG는 쓰지 않는다.
+GO 농축 분석(clusterProfiler). 종별 데이터는 이미지에 없고, `tools/download_orgdb.R`로 받은 OrgDb 파일을 입력으로 받는다. 입력 폴더는 `input_dir` 하나이며, 안의 파일을 보고 peak_annotation 결과인지 differential_accessibility 결과인지 판단한다. 실행 중 인터넷 접속이 없으므로 KEGG는 쓰지 않는다.
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|

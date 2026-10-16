@@ -1,0 +1,11 @@
+# Large or binary outputs are not kept in git
+*.bam
+*.bai
+*.sam
+*.bw
+*.bigwig
+*.rds
+*.fastq
+*.fastq.gz
+*.fq.gz
+*.bed.gz

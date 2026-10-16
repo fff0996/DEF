@@ -24,14 +24,14 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 |---|---|---|
 | 모듈명 | bowtie2 | bowtie2 |
 | 서브 타이틀 | 참조 유전체 정렬 | Read alignment to the reference genome |
-| 버전 | 1.5 | |
+| 버전 | 1.1 | |
 | 카테고리 대분류 | 정렬 | Alignment |
 | 카테고리 아이콘 | 선택 예정(Alignment 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | read 정렬 | Read Alignment |
 | 태그 | ATAC-seq, bowtie2, alignment, SAM, BAM, samtools | |
 | 레퍼런스 URL | https://bowtie-bio.sourceforge.net/bowtie2/ | |
 | 컨테이너 이미지 | bowtie2.1.0 | |
-| 실행 스크립트 파일 | bowtie2.1.5.sh | |
+| 실행 스크립트 파일 | bowtie2.1.1.sh | |
 | Processor Core (제안) | 최대 4코어 (bowtie2, samtools sort가 여러 코어 사용) | Up to 4 cores (bowtie2 and samtools sort are multi-threaded) |
 
 ### 실행 이미지
@@ -75,7 +75,7 @@ Aligns FASTQ reads to the reference genome with bowtie2. R1/R2 pairs are found f
 | Output | Required | Directory | output_dir | /data/bowtie2 | 결과 폴더. GATK_MarkDuplicates의 input_dir | Output folder; input_dir of GATK_MarkDuplicates |
 | Option | Required | File | ref_genome | /ref/genome.fa | bowtie2 인덱스 이름(prefix) 또는 FASTA. 인덱스가 없으면 FASTA 옆에 생성 | bowtie2 index prefix or FASTA; a missing index is built beside the FASTA |
 
-등록 메모: post_process_bam은 포탈에 등록하지 않습니다. 스크립트 기본값이 yes(1.4부터)라 항상 좌표 순 BAM과 .bai를 만듭니다(1.3 이하는 기본값 no라 인자 없이 실행하면 SAM만 남았습니다).
+등록 메모: post_process_bam은 포탈에 등록하지 않습니다. 스크립트 기본값이 yes라 항상 좌표 순 BAM과 .bai를 만듭니다(CLOSHA 2.0의 bowtie2 1.0은 기본값이 no라 인자 없이 실행하면 SAM만 남았습니다).
 
 ### 주요 사항
 | 국문 | 영문 |
@@ -86,7 +86,7 @@ Aligns FASTQ reads to the reference genome with bowtie2. R1/R2 pairs are found f
 | 샘플 이름은 FASTQ 이름에서 R1/R2 표시와 _trimmed, _HQ를 뺀 것입니다. 이후 모듈이 SampleID로 BAM을 찾으므로, 샘플 정보 파일의 SampleID가 이 이름에 들어 있어야 합니다. | The sample name is the FASTQ name without the R1/R2 tag and _trimmed or _HQ. Later modules find BAM files by SampleID, so each SampleID in the sample sheet must appear in this name. |
 | 스레드 수는 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)을 따릅니다. 최대 4코어를 고르면 정렬이 빨라집니다. | The thread count follows the Processor Core selection (single core or up to 4 cores); choosing up to 4 cores speeds up alignment. |
 | 결과 폴더에 SAM과 정렬 전 BAM(.unsorted.bam)도 남아 용량을 차지합니다. | SAM files and unsorted BAM files (.unsorted.bam) also remain in the output folder and take up space. |
-| 1.3부터 샘플마다 read group(@RG; ID, SM, LB = 샘플 이름, PL = ILLUMINA)을 붙입니다. GATK_MarkDuplicates(GATK 4.6)는 read group이 없는 BAM에서 멈추므로, 1.2 이하로 만든 BAM은 1.3으로 다시 정렬해 주세요. | From 1.3 each sample gets a read group (@RG; ID, SM, and LB = the sample name, PL = ILLUMINA). GATK_MarkDuplicates (GATK 4.6) stops on BAM files without read groups, so realign BAM files made with 1.2 or earlier using 1.3. |
+| 샘플마다 read group(@RG; ID, SM, LB = 샘플 이름, PL = ILLUMINA)을 붙입니다. GATK_MarkDuplicates(GATK 4.6)는 read group이 없는 BAM에서 멈추므로, CLOSHA 2.0의 bowtie2 1.0으로 만든 BAM은 이 버전으로 다시 정렬해 주세요. | Each sample gets a read group (@RG; ID, SM, and LB = the sample name, PL = ILLUMINA). GATK_MarkDuplicates (GATK 4.6) stops on BAM files without read groups, so realign BAM files made with bowtie2 1.0 of CLOSHA 2.0 using this version. |
 
 ### 분석 개념 이미지
 그림: `docs/ATAC-seq/modules/figures/module_concepts/bowtie2_concept.png`
@@ -97,7 +97,7 @@ Aligns FASTQ reads to the reference genome with bowtie2. R1/R2 pairs are found f
 
 ### 스크립트 사용 예제
 ```
-bash bowtie2.1.5.sh \
+bash bowtie2.1.1.sh \
   input_dir=/data/fastq \
   output_dir=/data/bowtie2 \
   ref_genome=/ref/genome.fa
@@ -175,7 +175,7 @@ Finds and marks PCR and optical duplicate reads in aligned BAM files. Read pairs
 ### 주요 사항
 | 국문 | 영문 |
 |---|---|
-| 입력 BAM에 read group(@RG)이 있어야 합니다. GATK 4.6은 read group이 없는 BAM에서 NullPointerException으로 멈춥니다. bowtie2 1.3 이상의 결과에는 read group이 들어 있으며, 이전 bowtie2 결과는 다시 정렬해 주세요. | The input BAM files need read groups (@RG). GATK 4.6 stops with a NullPointerException on BAM files without them. bowtie2 1.3 or later writes read groups; realign BAM files from earlier bowtie2 versions. |
+| 입력 BAM에 read group(@RG)이 있어야 합니다. GATK 4.6은 read group이 없는 BAM에서 NullPointerException으로 멈춥니다. bowtie2 1.1 이상(CLOSHA 3.0)의 결과에는 read group이 들어 있으며, CLOSHA 2.0의 bowtie2 1.0 결과는 다시 정렬해 주세요. | The input BAM files need read groups (@RG). GATK 4.6 stops with a NullPointerException on BAM files without them. bowtie2 1.1 or later (CLOSHA 3.0) writes read groups; realign BAM files from bowtie2 1.0 of CLOSHA 2.0. |
 | Java 메모리가 20GB로 고정되어 있습니다. 실행 메모리는 24GB 이상을 골라 주세요. 그보다 작으면 큰 BAM에서 메모리 초과로 중단될 수 있습니다. | The Java heap is fixed at 20 GB. Choose 24 GB of memory or more; with less, a large BAM can be stopped for exceeding memory. |
 | 샘플별 임시 폴더(temp_<sample>_...)를 input_dir 안에 만들고 끝나면 지웁니다. input_dir에 쓰기 권한이 있어야 합니다. | A temporary folder per sample (temp_<sample>_...) is made inside input_dir and removed afterwards, so input_dir must be writable. |
 | GATK의 실행 기록과 오류는 실행 로그가 아니라 output_dir의 <sample>_markduplicates.log에 남습니다. 샘플이 실패하면 이 파일을 확인해 주세요. 한 샘플이라도 실패하면 모듈은 실패(종료 코드 1)로 끝납니다. | GATK's own output and errors go to <sample>_markduplicates.log in output_dir, not to the run log; check it when a sample fails. If any sample fails, the module ends as failed (exit code 1). |
@@ -212,14 +212,14 @@ bash GATK_MarkDuplicates_1.0.sh \
 |---|---|---|
 | 모듈명 | organellar_filter | organellar_filter |
 | 서브 타이틀 | 세포소기관 read 제거 | Organellar read removal |
-| 버전 | 1.2 | |
+| 버전 | 1.1 | |
 | 카테고리 대분류 | 정렬 | Alignment |
 | 카테고리 아이콘 | 선택 예정(Alignment 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 정렬 결과 처리 | Alignment Processing |
 | 태그 | ATAC-seq, mitochondria, chloroplast, samtools, BAM filtering | |
 | 레퍼런스 URL | https://www.htslib.org/ | |
 | 컨테이너 이미지 | bx_organellar_filter.1.0 | |
-| 실행 스크립트 파일 | organellar_filter.1.2.sh | |
+| 실행 스크립트 파일 | organellar_filter.1.1.sh | |
 | Processor Core (제안) | 최대 4코어 (samtools가 여러 코어 사용) | Up to 4 cores (samtools is multi-threaded) |
 
 ### 실행 이미지
@@ -277,7 +277,7 @@ Removes reads aligned to organellar chromosomes such as mitochondria and chlorop
 
 ### 스크립트 사용 예제
 ```
-bash organellar_filter.1.2.sh \
+bash organellar_filter.1.1.sh \
   input_dir=/data/bam \
   output_dir=/data/organellar_filter \
   organellar_pattern='(^chrM$|^MT$|^Mt$|mitochond|mitochondrion|mitochondrial|chloroplast|plastid|^Pt$|^PT$|^chrC$)'
@@ -299,14 +299,14 @@ bash organellar_filter.1.2.sh \
 |---|---|---|
 | 모듈명 | ATAC_QC | ATAC_QC |
 | 서브 타이틀 | ATAC-seq 품질 평가와 Tn5 보정 | ATAC-seq QC and Tn5 shift |
-| 버전 | 1.2 | |
+| 버전 | 1.1 | |
 | 카테고리 대분류 | 품질 관리 | Quality Control |
 | 카테고리 아이콘 | 선택 예정(Quality Control 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 정렬 품질 평가 | Alignment QC |
 | 태그 | ATAC-seq, ATACseqQC, fragment size, TSS enrichment, Tn5 shift, bigWig | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ATACseqQC/ | |
 | 컨테이너 이미지 | bx_atac_qc.1.0 | |
-| 실행 스크립트 파일 | ATAC_QC.1.2.R | |
+| 실행 스크립트 파일 | ATAC_QC.1.1.R | |
 | Processor Core (제안) | 싱글 코어 (ATACseqQC는 1코어로 계산) | Single core (ATACseqQC runs on one core) |
 
 ### 실행 이미지
@@ -396,7 +396,7 @@ trt_2,treated,2
 
 ### 스크립트 사용 예제
 ```
-Rscript ATAC_QC.1.2.R \
+Rscript ATAC_QC.1.1.R \
   input_dir=/data/organellar_filter \
   sample_data=/data/sample_data.csv \
   txs_bed=/ref/genes.bed \
@@ -434,14 +434,14 @@ Rscript ATAC_QC.1.2.R \
 |---|---|---|
 | 모듈명 | ATAC_QC_plot | ATAC_QC_plot |
 | 서브 타이틀 | TSS 주변 신호 시각화 | TSS signal visualization |
-| 버전 | 1.2 | |
+| 버전 | 1.1 | |
 | 카테고리 대분류 | 품질 관리 | Quality Control |
 | 카테고리 아이콘 | 선택 예정(Quality Control 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 정렬 품질 평가 | Alignment QC |
 | 태그 | ATAC-seq, ATACseqQC, TSS, heatmap, nucleosome | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ATACseqQC/ | |
 | 컨테이너 이미지 | bx_atac_qc.1.0 | |
-| 실행 스크립트 파일 | ATAC_QC_plot.1.2.R | |
+| 실행 스크립트 파일 | ATAC_QC_plot.1.1.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 실행 이미지
@@ -505,7 +505,7 @@ Plots heatmaps and average profiles of the signal around TSSs from the fragment-
 
 ### 스크립트 사용 예제
 ```
-Rscript ATAC_QC_plot.1.2.R \
+Rscript ATAC_QC_plot.1.1.R \
   input_dir=/data/atac_qc \
   tss_bed=/ref/tss.bed \
   output_dir=/data/atac_qc_plot \
@@ -538,14 +538,14 @@ Rscript ATAC_QC_plot.1.2.R \
 |---|---|---|
 | 모듈명 | MACS3_callpeak_ATAC | MACS3_callpeak_ATAC |
 | 서브 타이틀 | ATAC-seq peak 검출 | ATAC-seq peak calling |
-| 버전 | 1.4 | |
+| 버전 | 1.1 | |
 | 카테고리 대분류 | 특징 검출 | Feature Detection |
 | 카테고리 아이콘 | 선택 예정(Feature Detection 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | peak 검출 | Peak Calling |
 | 태그 | ATAC-seq, MACS3, peak calling, narrowPeak, FRiP | |
 | 레퍼런스 URL | https://github.com/macs3-project/MACS | |
 | 컨테이너 이미지 | bx_macs3_callpeak_atac.1.0 | |
-| 실행 스크립트 파일 | MACS3_callpeak_ATAC.1.4.sh | |
+| 실행 스크립트 파일 | MACS3_callpeak_ATAC.1.1.sh | |
 | Processor Core (제안) | 싱글 코어 (MACS3는 1코어로 계산) | Single core (MACS3 runs on one core) |
 
 ### 실행 이미지
@@ -610,7 +610,7 @@ Calls open-chromatin peaks from Tn5-corrected BAM files with MACS3 callpeak in p
 
 ### 스크립트 사용 예제
 ```
-bash MACS3_callpeak_ATAC.1.4.sh \
+bash MACS3_callpeak_ATAC.1.1.sh \
   input_dir=/data/atac_qc \
   output_dir=/data/macs3 \
   genome_size=1.2e8 \
@@ -636,14 +636,14 @@ bash MACS3_callpeak_ATAC.1.4.sh \
 |---|---|---|
 | 모듈명 | peak_annotation | peak_annotation |
 | 서브 타이틀 | Peak 유전체 주석 | Peak annotation |
-| 버전 | 1.2 | |
+| 버전 | 1.1 | |
 | 카테고리 대분류 | 주석 | Annotation |
 | 카테고리 아이콘 | 선택 예정(Annotation 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 유전체 영역 주석 | Genomic Feature Annotation |
 | 태그 | ATAC-seq, ChIPseeker, peak annotation, promoter, TSS | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ChIPseeker/ | |
 | 컨테이너 이미지 | bx_peak_annotation.1.0 | |
-| 실행 스크립트 파일 | peak_annotation.1.2.R | |
+| 실행 스크립트 파일 | peak_annotation.1.1.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 실행 이미지
@@ -712,7 +712,7 @@ Classifies peaks into genomic features such as promoter, exon, intron, and inter
 
 ### 스크립트 사용 예제
 ```
-Rscript peak_annotation.1.2.R \
+Rscript peak_annotation.1.1.R \
   input_dir=/data/macs3 \
   genome_gff=/ref/genes.gff3 \
   output_dir=/data/peak_annotation \
@@ -755,14 +755,14 @@ Rscript peak_annotation.1.2.R \
 |---|---|---|
 | 모듈명 | differential_accessibility | differential_accessibility |
 | 서브 타이틀 | 조건 간 차등 접근성 분석 | Differential accessibility |
-| 버전 | 1.4 | |
+| 버전 | 1.3 | |
 | 카테고리 대분류 | 통계 분석 | Statistical Analysis |
 | 카테고리 아이콘 | 선택 예정(Statistical Analysis 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 차등 분석 | Differential Analysis |
 | 태그 | ATAC-seq, edgeR, differential accessibility, GC bias, PCA | |
 | 레퍼런스 URL | https://bioconductor.org/packages/edgeR/ | |
 | 컨테이너 이미지 | bx_differential_accessibility.1.0 | |
-| 실행 스크립트 파일 | differential_accessibility.1.4.R | |
+| 실행 스크립트 파일 | differential_accessibility.1.3.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 실행 이미지
@@ -855,7 +855,7 @@ trt_2,treated
 
 ### 스크립트 사용 예제
 ```
-Rscript differential_accessibility.1.4.R \
+Rscript differential_accessibility.1.3.R \
   sample_data=/data/da_sample_data.csv \
   genome_fasta=/ref/genome.fa \
   input_dir=/data/atac_qc \
@@ -903,14 +903,14 @@ Rscript differential_accessibility.1.4.R \
 |---|---|---|
 | 모듈명 | atac_motif | atac_motif |
 | 서브 타이틀 | 접근성 변화 연관 모티프 분석 | Motif enrichment by accessibility change |
-| 버전 | 1.5 | |
+| 버전 | 1.2 | |
 | 카테고리 대분류 | 유전자 조절 | Gene Regulation |
 | 카테고리 아이콘 | `docs/category_icons/gene_regulation.png` | |
 | 카테고리 중분류 | 모티프 분석 | Motif Analysis |
 | 태그 | ATAC-seq, monaLisa, motif enrichment, JASPAR, k-mer | |
 | 레퍼런스 URL | https://bioconductor.org/packages/monaLisa/ | |
 | 컨테이너 이미지 | bx_atac_motif.1.0 | |
-| 실행 스크립트 파일 | atac_motif.1.5.R | |
+| 실행 스크립트 파일 | atac_motif.1.2.R | |
 | Processor Core (제안) | 최대 4코어 (모티프 계산을 여러 코어로 나눔) | Up to 4 cores (motif scoring is parallel) |
 
 그림: `docs/category_icons/gene_regulation.png` (카테고리 아이콘)
@@ -990,7 +990,7 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 
 ### 스크립트 사용 예제
 ```
-Rscript atac_motif.1.5.R \
+Rscript atac_motif.1.2.R \
   input_dir=/data/da \
   genome_fasta=/ref/genome.fa \
   motif_db=/ref/JASPAR2024_CORE_plants.meme \
@@ -1041,14 +1041,14 @@ Rscript atac_motif.1.5.R \
 |---|---|---|
 | 모듈명 | tf_footprinting | tf_footprinting |
 | 서브 타이틀 | 전사인자 footprint 분석 | Transcription factor footprinting |
-| 버전 | 1.4 | |
+| 버전 | 1.1 | |
 | 카테고리 대분류 | 유전자 조절 | Gene Regulation |
 | 카테고리 아이콘 | `docs/category_icons/gene_regulation.png` | |
 | 카테고리 중분류 | 전사인자 footprint | TF Footprinting |
 | 태그 | ATAC-seq, TOBIAS, footprinting, BINDetect, transcription factor | |
 | 레퍼런스 URL | https://github.com/loosolab/TOBIAS | |
 | 컨테이너 이미지 | bx_tf_footprinting.1.0 | |
-| 실행 스크립트 파일 | tf_footprinting.1.4.sh | |
+| 실행 스크립트 파일 | tf_footprinting.1.1.sh | |
 | Processor Core (제안) | 최대 4코어 (TOBIAS가 여러 코어 사용) | Up to 4 cores (TOBIAS is multi-threaded) |
 
 그림: `docs/category_icons/gene_regulation.png` (카테고리 아이콘)
@@ -1130,7 +1130,7 @@ trt_2,treated,2
 
 ### 스크립트 사용 예제
 ```
-bash tf_footprinting.1.4.sh \
+bash tf_footprinting.1.1.sh \
   input_dir=/data/atac_qc \
   sample_data=/data/sample_data.csv \
   macs_dir=/data/macs3 \
@@ -1161,14 +1161,14 @@ bash tf_footprinting.1.4.sh \
 |---|---|---|
 | 모듈명 | functional_enrichment | functional_enrichment |
 | 서브 타이틀 | GO 기능 농축 분석 | GO enrichment analysis |
-| 버전 | 1.1 | |
+| 버전 | 1.0 | |
 | 카테고리 대분류 | 기능 분석 | Functional Analysis |
 | 카테고리 아이콘 | 선택 예정(Functional Analysis 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 농축 분석 | Enrichment Analysis |
 | 태그 | ATAC-seq, clusterProfiler, GO, enrichment, OrgDb | |
 | 레퍼런스 URL | https://bioconductor.org/packages/clusterProfiler/ | |
 | 컨테이너 이미지 | bx_functional_enrichment.1.0 | |
-| 실행 스크립트 파일 | functional_enrichment.1.1.R | |
+| 실행 스크립트 파일 | functional_enrichment.1.0.R | |
 | Processor Core (제안) | 싱글 코어 | Single core |
 
 ### 실행 이미지
@@ -1250,7 +1250,7 @@ Analyzes with clusterProfiler which biological functions (GO) are enriched among
 
 ### 스크립트 사용 예제
 ```
-Rscript functional_enrichment.1.1.R \
+Rscript functional_enrichment.1.0.R \
   input_dir=/data/da \
   genome_gff=/ref/genes.gff3 \
   orgdb_file=/ref/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite \
@@ -1297,14 +1297,14 @@ Rscript functional_enrichment.1.1.R \
 |---|---|---|
 | 모듈명 | replicate_consistency | replicate_consistency |
 | 서브 타이틀 | 반복 실험 peak 재현성(IDR) | Replicate consistency (IDR) |
-| 버전 | 1.1 | |
+| 버전 | 1.0 | |
 | 카테고리 대분류 | 품질 관리 | Quality Control |
 | 카테고리 아이콘 | 선택 예정(Quality Control 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
 | 카테고리 중분류 | 재현성 평가 | Reproducibility |
 | 태그 | ATAC-seq, IDR, reproducibility, replicate, MACS3 | |
 | 레퍼런스 URL | https://github.com/nboley/idr | |
 | 컨테이너 이미지 | bx_replicate_consistency.1.0 | |
-| 실행 스크립트 파일 | replicate_consistency.1.1.sh | |
+| 실행 스크립트 파일 | replicate_consistency.1.0.sh | |
 | Processor Core (제안) | 싱글 코어 (MACS3, idr은 1코어로 계산) | Single core (MACS3 and idr run on one core) |
 
 ### 실행 이미지
@@ -1384,7 +1384,7 @@ trt_2,treated,2
 
 ### 스크립트 사용 예제
 ```
-bash replicate_consistency.1.1.sh \
+bash replicate_consistency.1.0.sh \
   input_dir=/data/atac_qc \
   sample_data=/data/sample_data.csv \
   genome_size=1.2e8 \
