@@ -288,10 +288,11 @@ bash organellar_filter.1.1.sh \
 
 ### 주요 결과 이미지
 
-**결과 1. 소기관 contig 제거 요약**
-- 결과 파일: 표 캡처 `04_summary/organellar_filter_summary.tsv` (이 모듈은 그림을 만들지 않습니다)
-- 레전드(국문): **샘플별 소기관 contig 제거 요약.** 샘플마다 입력 BAM의 전체 contig 수, 제거한 소기관 contig(미토콘드리아·엽록체) 수, 남긴 contig 수, 필터링된 BAM 경로와 처리 상태를 보여 줍니다. status가 모든 샘플에서 정상이면 다음 단계(ATAC_QC)에 쓸 BAM이 준비된 것입니다.
-- 레전드(영문): **Organellar contig removal per sample.** For each sample the table lists the number of contigs in the input BAM, the organellar (mitochondrial or plastid) contigs removed, the contigs kept, the filtered BAM path and the run status. A normal status for every sample means the BAMs are ready for ATAC_QC.
+**결과 1. 세포소기관 read 제거 요약**
+- 결과 파일: `01_stats/<sample>.before.flagstat.txt`, `.after.flagstat.txt`, `.idxstats.tsv`의 값을 정리한 표 (이 모듈은 그림을 만들지 않습니다)
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/organellar_filter/portal/organellar_filter_result_1.png`
+- 레전드(국문): **샘플별 세포소기관 read 제거 요약.** 샘플마다 제거 전 read 수(Reads before), 엽록체(Pt)와 미토콘드리아(Mt) contig에 정렬된 read 수, 제거 후 read 수(Reads after), 제거된 비율(Removed fraction)을 보여 줍니다. read 수는 flagstat의 primary alignment 수이고, Pt·Mt는 idxstats의 contig별 read 수입니다. 식물 ATAC-seq은 엽록체 DNA가 많아 제거 비율이 10~40%에 이르기도 하며, 샘플 간 비율 차이가 크면 핵 분리 효율이 달랐다는 신호입니다. 예시 데이터(애기장대)에서는 엽록체 read가 10.6~39.4%였고, 미토콘드리아 read는 샘플당 약 2,000개로 적었습니다.
+- 레전드(영문): **Organellar read removal per sample.** For each sample the table gives the reads before filtering (Reads before), the reads aligned to the chloroplast (Pt) and mitochondrial (Mt) contigs, the reads after filtering (Reads after), and the removed fraction. Read counts are primary alignments from flagstat, and Pt and Mt counts are per-contig reads from idxstats. Plant ATAC-seq often carries much chloroplast DNA, so 10-40% may be removed; large differences between samples point to uneven nuclei isolation. In the example data (Arabidopsis) chloroplast reads were 10.6-39.4%, and mitochondrial reads were few (about 2,000 per sample).
 
 ---
 
@@ -882,27 +883,32 @@ Rscript differential_accessibility.1.3.R \
 
 
 ### 주요 결과 이미지
+
 결과 그림 4개를 아래 순서대로 등록합니다. 결과 1이 대표 그림입니다.
 
 **결과 1. PCA**
 - 결과 파일: `04_plots/PCA_plot.pdf`
-- 레전드(국문): **샘플 PCA.** 변동이 큰 peak(최대 5,000개)의 log2 CPM으로 샘플을 2차원에 놓은 그림입니다. 점 하나가 샘플 하나이고 색은 조건이며, 축 이름에 각 주성분이 설명하는 변동(%)이 붙습니다. 같은 조건의 반복 샘플이 모이고 조건끼리 떨어져 있으면 조건 간 차이가 반복 간 차이보다 크다는 뜻입니다. 샘플이 3개 이상일 때 만듭니다.
-- 레전드(영문): **Sample PCA.** Samples placed in two dimensions by the log2 CPM of the most variable peaks (up to 5,000). Each point is a sample coloured by condition, and each axis label gives the variance explained (%). Replicates clustering together and conditions separating indicate that the condition effect exceeds replicate variation. Drawn with three or more samples.
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/differential_accessibility/portal/differential_accessibility_result_1.png`
+- 레전드(국문): **샘플 PCA.** 변동이 큰 peak 5,000개의 log2 CPM으로 샘플을 2차원에 놓은 그림입니다. 점 하나가 샘플 하나이고 색은 조건이며, 축 이름에 각 주성분이 설명하는 변동(%)이 붙습니다. 같은 조건의 반복 샘플이 모이고 조건끼리 떨어져 있으면 조건 간 차이가 반복 간 차이보다 큽니다. 샘플이 3개 이상일 때 만듭니다. 예시 데이터에서는 DEX 4개가 한데 모였지만 Mock 4개는 흩어져(PC1 41.3%, PC2 18.5%) 반복 간 차이가 조건 간 차이보다 컸고, 이 때문에 유의한 차등 peak가 적게 나왔습니다.
+- 레전드(영문): **Sample PCA.** Samples placed in two dimensions by the log2 CPM of the 5,000 most variable peaks. Each point is a sample coloured by condition, and each axis label gives the variance explained (%). Replicates clustering together and conditions separating mean the condition effect exceeds replicate variation. Drawn with three or more samples. In the example data the four DEX samples cluster while the four Mock samples are scattered (PC1 41.3%, PC2 18.5%), so replicate variation exceeds the condition effect and few differential peaks are found.
 
 **결과 2. 샘플 상관 heatmap**
 - 결과 파일: `04_plots/sample_correlation_heatmap.pdf`
-- 레전드(국문): **샘플 간 상관 heatmap.** 모든 샘플 쌍의 Pearson 상관계수(log2 CPM 기준)를 칸마다 숫자와 색(연한 파랑 낮음, 진한 남색 높음)으로 보여 줍니다. 비슷한 샘플끼리 가깝게 놓이도록 계층 군집 순서로 정렬했습니다. 같은 조건의 반복끼리 상관이 가장 높아야 하며, 한 샘플만 다른 샘플과 상관이 낮으면 이상 샘플을 의심합니다.
-- 레전드(영문): **Sample correlation heatmap.** Pearson correlation (log2 CPM) for every pair of samples, shown as numbers and colour (light blue low, dark navy high), with samples ordered by hierarchical clustering so similar ones sit together. Replicates of the same condition should correlate most strongly; a single sample with low correlation to all others suggests an outlier.
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/differential_accessibility/portal/differential_accessibility_result_2.png`
+- 레전드(국문): **샘플 간 상관 heatmap.** 모든 샘플 쌍의 Pearson 상관계수(log2 CPM 기준)를 칸마다 숫자와 색(연한 파랑 낮음, 진한 남색 높음)으로 보여 줍니다. 비슷한 샘플끼리 가깝게 놓이도록 계층 군집 순서로 정렬했고, 색 범위는 데이터의 최솟값~최댓값입니다. 같은 조건의 반복끼리 상관이 가장 높아야 하며, 한 샘플만 다른 샘플과 상관이 낮으면 이상 샘플을 의심합니다. 예시 데이터에서는 상관계수가 0.952~0.991로 모두 높았고, Mock의 SRR24197773이 다른 샘플과 가장 낮았습니다.
+- 레전드(영문): **Sample correlation heatmap.** Pearson correlation (log2 CPM) for every pair of samples, shown as numbers and colour (light blue low, dark navy high), with samples ordered by hierarchical clustering and the colour scale spanning the data's minimum to maximum. Replicates of a condition should correlate most strongly; one sample with low correlation to all others suggests an outlier. In the example data all correlations are high (0.952-0.991), and Mock sample SRR24197773 has the lowest values.
 
 **결과 3. MD plot**
 - 결과 파일: `04_plots/MD_plot.pdf`
-- 레전드(국문): **조건 간 접근성 변화(MD plot).** 점 하나가 peak 하나입니다. 가로축은 평균 접근성(average log CPM), 세로축은 조건 간 변화(log2 fold change)이며 빨간 점선이 0입니다. 유의하게 열린 peak(Up)와 닫힌 peak(Down)가 색으로 구분됩니다. 대부분의 peak가 0 근처에 모이고 유의한 peak가 위아래로 갈라지면 정규화가 잘 된 것입니다. 반복 샘플이 없으면 유의성 없이 fold change만 그립니다.
-- 레전드(영문): **Accessibility changes between conditions (MD plot).** Each point is a peak, with mean accessibility (average log CPM) on the x-axis and the change between conditions (log2 fold change) on the y-axis; the red dashed line marks 0. Significantly gained (Up) and lost (Down) peaks are coloured. Most peaks centred on 0 with significant peaks splitting above and below indicate good normalization. Without replicates only the fold change is drawn, without significance.
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/differential_accessibility/portal/differential_accessibility_result_3.png`
+- 레전드(국문): **조건 간 접근성 변화(MD plot).** 점 하나가 peak 하나입니다. 가로축은 평균 접근성(Average log CPM), 세로축은 기준 조건(control_name) 대비 다른 조건의 변화(log-fold-change)이며 점선이 0입니다. 제목의 `groups<조건>`이 비교한 조건입니다. 유의하게(FDR ≤ 0.05) 더 열린 peak는 빨강(Up), 더 닫힌 peak는 파랑(Down), 나머지는 검정(NotSig)입니다. 대부분의 peak가 0 근처에 모이고 유의한 peak가 위아래로 갈라지면 정규화가 잘 된 것입니다. 반복 샘플이 없으면 유의성 없이 fold change만 그립니다. 예시 데이터는 control_name=DEX로 실행해 Mock에서 더 열린 peak 14개(Up)가 나왔고, 닫힌 peak(Down)는 없었습니다.
+- 레전드(영문): **Accessibility changes between conditions (MD plot).** Each point is a peak, with mean accessibility (average log CPM) on the x-axis and the change in the other condition relative to the reference (control_name) on the y-axis (log fold change); the dashed line is 0. The title `groups<condition>` names the compared condition. Peaks significantly (FDR ≤ 0.05) more accessible are red (Up), less accessible blue (Down), and the rest black (NotSig). Most peaks centred on 0 with significant peaks splitting above and below indicate good normalization. Without replicates only the fold change is drawn. The example data were run with control_name=DEX, giving 14 peaks more accessible in Mock (Up) and none less accessible (Down).
 
 **결과 4. GC 구간별 logFC**
 - 결과 파일: `04_plots/logFC_by_GC_bin_TMM.pdf` (EDASeq·CQN을 실행했으면 `_EDASeq`, `_CQN` 그림과 비교)
-- 레전드(국문): **GC 함량 구간별 log2 fold change.** peak를 GC 함량에 따라 20개 구간으로 나누고(가로축), 구간마다 logFC 분포를 바이올린과 상자 그림으로 보여 줍니다. 점선은 logFC 0입니다. 구간별 분포가 모두 0 근처에 있으면 GC 편향이 없는 것이고, GC가 높거나 낮은 쪽으로 갈수록 분포가 한쪽으로 기울면 GC 편향이 있다는 뜻입니다. 이때 EDASeq이나 CQN으로 보정한 결과를 씁니다.
-- 레전드(영문): **log2 fold change by GC-content bin.** Peaks are split into 20 bins by GC content (x-axis), and the logFC distribution of each bin is shown as a violin and box plot; the dashed line is logFC 0. Bins all centred on 0 mean no GC bias, while distributions drifting with GC content indicate GC bias, in which case the EDASeq or CQN results should be used.
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/differential_accessibility/portal/differential_accessibility_result_4.png`
+- 레전드(국문): **GC 함량 구간별 log2 fold change.** peak를 GC 함량에 따라 20개 구간으로 나누고(가로축), 구간마다 logFC 분포를 바이올린과 상자 그림으로 보여 줍니다. 점선은 logFC 0이고, 세로축은 −1~1로 잘라 보여 줍니다. 구간별 분포가 모두 0 근처에 있으면 GC 편향이 없는 것이고, GC가 높거나 낮은 쪽으로 갈수록 분포가 한쪽으로 기울면 GC 편향이 있다는 뜻입니다. 이때 EDASeq나 CQN으로 보정한 결과를 씁니다. 예시 데이터(TMM)는 GC가 가장 낮은 구간(0.27 미만)만 약간 음수 쪽으로 치우쳤고 나머지는 0 근처였습니다.
+- 레전드(영문): **log2 fold change by GC-content bin.** Peaks are split into 20 bins by GC content (x-axis), and the logFC distribution of each bin is shown as a violin and box plot; the dashed line is logFC 0, and the y-axis is clipped to −1 to 1. Bins all centred on 0 mean no GC bias, while distributions drifting with GC content indicate GC bias, in which case the EDASeq or CQN results should be used. In the example data (TMM) only the lowest-GC bin (below 0.27) leans slightly negative, and the rest are centred on 0.
 
 ---
 
@@ -1412,14 +1418,17 @@ bash replicate_consistency.1.0.sh \
 ```
 
 ### 주요 결과 이미지
+
 결과 그림 2개를 아래 순서대로 등록합니다. 결과 1이 대표 그림입니다.
 
 **결과 1. IDR 그림**
-- 결과 파일: `02_idr/<condition>/<repA>_vs_<repB>.idr.png` (대표 조건 1개)
-- 레전드(국문): **반복 샘플 간 peak 재현성(IDR).** 두 반복 샘플에서 찾은 peak를 짝지어 비교한 그림입니다. 위쪽 패널은 두 반복의 peak 순위와 신호 세기를 서로 대응시킨 산점도로, 검은 점은 IDR 기준을 통과한 재현성 있는 peak, 빨간 점은 통과하지 못한 peak다. 아래쪽 패널은 peak 순위에 따른 IDR 값을 보여 줍니다. 강한 peak일수록 두 반복에서 함께 나타나고, 약한 peak로 갈수록 재현성이 떨어집니다.
-- 레전드(영문): **Peak reproducibility between replicates (IDR).** Peaks from two replicates are matched and compared. The upper panels plot the ranks and signal strengths of matched peaks against each other; black points pass the IDR threshold (reproducible) and red points do not. The lower panels show IDR values along the peak ranks. Strong peaks tend to appear in both replicates, and reproducibility falls off for weaker peaks.
+- 결과 파일: `02_idr/<condition>/<repA>_vs_<repB>.idr.txt.png` (대표 조건의 반복 쌍 1개. 같은 폴더의 `.noalternatesummitpeaks.png`는 같은 그림입니다)
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/replicate_consistency/portal/replicate_consistency_result_1.png`
+- 레전드(국문): **반복 샘플 간 peak 재현성(IDR).** 두 반복 샘플의 peak를 짝지어 비교한 4개 패널입니다. 위 왼쪽(Ranks)은 두 반복에서의 peak 순위(0~1, 1이 가장 강함), 위 오른쪽(Log10 Scores)은 두 반복의 peak 점수(log10)를 서로 대응시킨 산점도이며, 검은 점은 IDR 기준(0.05)을 통과한 재현성 있는 peak, 연한 빨간 점은 통과하지 못한 peak입니다. 아래 두 패널은 각 반복의 peak 순위 구간(가로축)별 −log10 IDR(세로축, 클수록 재현성 높음)입니다. 강한 peak일수록 두 반복에서 함께 나타나 대각선에 모이고, 약한 peak(왼쪽 아래)로 갈수록 흩어집니다. 예시 그림은 DEX 조건의 SRR24197771과 SRR24197791 쌍으로, DEX에서 통과 peak가 가장 많은 쌍(17,504개)입니다.
+- 레전드(영문): **Peak reproducibility between replicates (IDR).** Four panels comparing matched peaks of two replicates. Top left (Ranks) and top right (Log10 Scores) plot the peak ranks (0-1, 1 strongest) and log10 scores of the two replicates against each other; black points pass the IDR threshold (0.05) and light red points do not. The bottom panels show −log10 IDR (y-axis, higher is more reproducible) across peak-rank bins (x-axis) of each replicate. Strong peaks appear in both replicates and lie on the diagonal, and weaker peaks (bottom left) scatter. The example shows DEX samples SRR24197771 and SRR24197791, the DEX pair with the most passing peaks (17,504).
 
 **결과 2. 조건별 IDR 요약**
-- 결과 파일: 표 캡처 `04_summary/idr_summary.tsv`
-- 레전드(국문): **조건별 IDR 요약.** 조건과 반복 쌍마다 각 반복의 peak 수(peaks_a, peaks_b), 두 반복을 합쳐 찾은 peak 수(pooled_peaks), IDR 기준을 통과한 peak 수(idr_passed), 처리 상태(status)를 보여 줍니다. 두 반복의 peak 수가 크게 다르거나, idr_passed가 각 반복의 peak 수보다 크게 적으면 반복 간 재현성이 낮은 것입니다. 반복이 하나뿐인 조건은 `skipped_single_replicate`로 표시됩니다.
-- 레전드(영문): **IDR summary per condition.** For each condition and replicate pair the table gives the peaks in each replicate (peaks_a, peaks_b), the peaks called on the pooled replicates (pooled_peaks), the peaks passing the IDR threshold (idr_passed) and the status. Very different peak counts between the replicates, or idr_passed far below the peaks of each replicate, indicate poor reproducibility. A condition with a single replicate is marked `skipped_single_replicate`.
+- 결과 파일: 표 `04_summary/idr_summary.tsv`
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/replicate_consistency/portal/replicate_consistency_result_2.png`
+- 레전드(국문): **조건별 반복 쌍 IDR 요약.** 조건과 반복 쌍마다 각 반복의 peak 수(Peaks A, Peaks B), 두 반복을 합쳐 찾은 peak 수(Pooled peaks), IDR 기준을 통과한 peak 수(IDR passed), 처리 상태(Status)를 보여 줍니다. 조건마다 통과 peak가 가장 많은 쌍이 대표 peak 세트(`03_reproducible_peaks/<condition>.conservative_peaks.narrowPeak`)가 됩니다. 두 반복의 peak 수가 크게 다르거나 통과 peak가 각 반복 peak 수보다 크게 적으면 반복 간 재현성이 낮은 것입니다. 예시 데이터에서는 반복당 약 2만~2만 2,600개 peak 중 Mock 13,053~14,956개(62~72%), DEX 16,940~17,504개(75~79%)가 통과했습니다.
+- 레전드(영문): **IDR summary per condition and replicate pair.** For each condition and replicate pair the table gives the peaks in each replicate (Peaks A, Peaks B), the peaks called on the pooled replicates (Pooled peaks), the peaks passing the IDR threshold (IDR passed), and the status. For each condition the pair with the most passing peaks gives the representative peak set (`03_reproducible_peaks/<condition>.conservative_peaks.narrowPeak`). Very different peak counts between replicates, or far fewer passing peaks than each replicate's peaks, indicate poor reproducibility. In the example data, of about 20,000-22,600 peaks per replicate, 13,053-14,956 passed in Mock (62-72%) and 16,940-17,504 in DEX (75-79%).

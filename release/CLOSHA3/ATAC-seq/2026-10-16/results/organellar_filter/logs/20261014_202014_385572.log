@@ -1,0 +1,760 @@
+############################## Organellar Filter
+Log file: /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/logs/20261014_202014_385572.log
+Error log file: /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/logs/20261014_202014_385572.error.log
+Start time: 2026-10-14 20:20:14
+
+parameters:
+  input_dir           = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output
+  output_dir          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output
+  threads             = 4 (requested 16, allocated 4)
+  organellar_pattern  = (^chrM$|^MT$|^Mt$|mitochond|mitochondrion|mitochondrial|chloroplast|plastid|^Pt$|^PT$|^chrC$)
+
+searching BAM files in input_dir...
+found BAM files: 8
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197771_bowtie_paired.sorted.bam
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197772_bowtie_paired.sorted.bam
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197773_bowtie_paired.sorted.bam
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197774_bowtie_paired.sorted.bam
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197775_bowtie_paired.sorted.bam
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197776_bowtie_paired.sorted.bam
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197791_bowtie_paired.sorted.bam
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197792_bowtie_paired.sorted.bam
+
+
+############################################################
+Processing sample: SRR24197771_bowtie_paired.sorted
+############################################################
+selected BAM file:
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197771_bowtie_paired.sorted.bam
+
+############################## Check BAM index
+Start time: 2026-10-14 20:20:14
+
+BAM index found.
+
+############################## Step 1: Inspect BAM contig structure
+Start time: 2026-10-14 20:20:14
+
+idxstats output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197771_bowtie_paired.sorted.idxstats.tsv
+
+contig preview:
+1
+2
+3
+4
+5
+Mt
+Pt
+
+total contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted.all_contigs.txt
+
+############################## Step 2: Detect organellar contigs
+Start time: 2026-10-14 20:20:14
+
+detected organellar contigs:
+Mt
+Pt
+
+organellar contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted.organellar_contigs.txt
+
+############################## Step 3: Create keep contig list
+Start time: 2026-10-14 20:20:14
+
+keep contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted.keep_contigs.txt
+
+number of all contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted.all_contigs.txt
+number of organellar contigs:
+2 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted.organellar_contigs.txt
+number of keep contigs:
+5 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted.keep_contigs.txt
+
+############################## Step 4: BAM flagstat before filtering
+Start time: 2026-10-14 20:20:14
+
+flagstat before output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197771_bowtie_paired.sorted.before.flagstat.txt
+
+############################## Step 5: Remove organellar contigs
+Start time: 2026-10-14 20:20:17
+
+Filtering BAM by keeping non-organellar contigs...
+filtered BAM:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197771_bowtie_paired.sorted.organellar_removed.bam
+
+############################## Step 6: Index filtered BAM
+Start time: 2026-10-14 20:20:28
+
+filtered BAM index:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197771_bowtie_paired.sorted.organellar_removed.bam.bai
+
+############################## Step 7: BAM flagstat after filtering
+Start time: 2026-10-14 20:20:30
+
+flagstat after output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197771_bowtie_paired.sorted.after.flagstat.txt
+
+done sample:
+  sample                = SRR24197771_bowtie_paired.sorted
+  input BAM             = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197771_bowtie_paired.sorted.bam
+  idxstats              = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197771_bowtie_paired.sorted.idxstats.tsv
+  all contigs           = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted.all_contigs.txt
+  organellar contigs    = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted.organellar_contigs.txt
+  keep contigs          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted.keep_contigs.txt
+  filtered BAM          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197771_bowtie_paired.sorted.organellar_removed.bam
+  filtered BAI          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197771_bowtie_paired.sorted.organellar_removed.bam.bai
+  flagstat before       = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197771_bowtie_paired.sorted.before.flagstat.txt
+  flagstat after        = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197771_bowtie_paired.sorted.after.flagstat.txt
+
+############################################################
+Processing sample: SRR24197772_bowtie_paired.sorted
+############################################################
+selected BAM file:
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197772_bowtie_paired.sorted.bam
+
+############################## Check BAM index
+Start time: 2026-10-14 20:20:31
+
+BAM index found.
+
+############################## Step 1: Inspect BAM contig structure
+Start time: 2026-10-14 20:20:31
+
+idxstats output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197772_bowtie_paired.sorted.idxstats.tsv
+
+contig preview:
+1
+2
+3
+4
+5
+Mt
+Pt
+
+total contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197772_bowtie_paired.sorted.all_contigs.txt
+
+############################## Step 2: Detect organellar contigs
+Start time: 2026-10-14 20:20:32
+
+detected organellar contigs:
+Mt
+Pt
+
+organellar contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197772_bowtie_paired.sorted.organellar_contigs.txt
+
+############################## Step 3: Create keep contig list
+Start time: 2026-10-14 20:20:32
+
+keep contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197772_bowtie_paired.sorted.keep_contigs.txt
+
+number of all contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197772_bowtie_paired.sorted.all_contigs.txt
+number of organellar contigs:
+2 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197772_bowtie_paired.sorted.organellar_contigs.txt
+number of keep contigs:
+5 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197772_bowtie_paired.sorted.keep_contigs.txt
+
+############################## Step 4: BAM flagstat before filtering
+Start time: 2026-10-14 20:20:32
+
+flagstat before output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197772_bowtie_paired.sorted.before.flagstat.txt
+
+############################## Step 5: Remove organellar contigs
+Start time: 2026-10-14 20:20:35
+
+Filtering BAM by keeping non-organellar contigs...
+filtered BAM:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197772_bowtie_paired.sorted.organellar_removed.bam
+
+############################## Step 6: Index filtered BAM
+Start time: 2026-10-14 20:20:52
+
+filtered BAM index:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197772_bowtie_paired.sorted.organellar_removed.bam.bai
+
+############################## Step 7: BAM flagstat after filtering
+Start time: 2026-10-14 20:20:54
+
+flagstat after output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197772_bowtie_paired.sorted.after.flagstat.txt
+
+done sample:
+  sample                = SRR24197772_bowtie_paired.sorted
+  input BAM             = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197772_bowtie_paired.sorted.bam
+  idxstats              = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197772_bowtie_paired.sorted.idxstats.tsv
+  all contigs           = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197772_bowtie_paired.sorted.all_contigs.txt
+  organellar contigs    = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197772_bowtie_paired.sorted.organellar_contigs.txt
+  keep contigs          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197772_bowtie_paired.sorted.keep_contigs.txt
+  filtered BAM          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197772_bowtie_paired.sorted.organellar_removed.bam
+  filtered BAI          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197772_bowtie_paired.sorted.organellar_removed.bam.bai
+  flagstat before       = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197772_bowtie_paired.sorted.before.flagstat.txt
+  flagstat after        = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197772_bowtie_paired.sorted.after.flagstat.txt
+
+############################################################
+Processing sample: SRR24197773_bowtie_paired.sorted
+############################################################
+selected BAM file:
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197773_bowtie_paired.sorted.bam
+
+############################## Check BAM index
+Start time: 2026-10-14 20:20:57
+
+BAM index found.
+
+############################## Step 1: Inspect BAM contig structure
+Start time: 2026-10-14 20:20:57
+
+idxstats output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197773_bowtie_paired.sorted.idxstats.tsv
+
+contig preview:
+1
+2
+3
+4
+5
+Mt
+Pt
+
+total contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197773_bowtie_paired.sorted.all_contigs.txt
+
+############################## Step 2: Detect organellar contigs
+Start time: 2026-10-14 20:20:57
+
+detected organellar contigs:
+Mt
+Pt
+
+organellar contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197773_bowtie_paired.sorted.organellar_contigs.txt
+
+############################## Step 3: Create keep contig list
+Start time: 2026-10-14 20:20:57
+
+keep contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197773_bowtie_paired.sorted.keep_contigs.txt
+
+number of all contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197773_bowtie_paired.sorted.all_contigs.txt
+number of organellar contigs:
+2 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197773_bowtie_paired.sorted.organellar_contigs.txt
+number of keep contigs:
+5 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197773_bowtie_paired.sorted.keep_contigs.txt
+
+############################## Step 4: BAM flagstat before filtering
+Start time: 2026-10-14 20:20:57
+
+flagstat before output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197773_bowtie_paired.sorted.before.flagstat.txt
+
+############################## Step 5: Remove organellar contigs
+Start time: 2026-10-14 20:20:58
+
+Filtering BAM by keeping non-organellar contigs...
+filtered BAM:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197773_bowtie_paired.sorted.organellar_removed.bam
+
+############################## Step 6: Index filtered BAM
+Start time: 2026-10-14 20:21:01
+
+filtered BAM index:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197773_bowtie_paired.sorted.organellar_removed.bam.bai
+
+############################## Step 7: BAM flagstat after filtering
+Start time: 2026-10-14 20:21:02
+
+flagstat after output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197773_bowtie_paired.sorted.after.flagstat.txt
+
+done sample:
+  sample                = SRR24197773_bowtie_paired.sorted
+  input BAM             = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197773_bowtie_paired.sorted.bam
+  idxstats              = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197773_bowtie_paired.sorted.idxstats.tsv
+  all contigs           = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197773_bowtie_paired.sorted.all_contigs.txt
+  organellar contigs    = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197773_bowtie_paired.sorted.organellar_contigs.txt
+  keep contigs          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197773_bowtie_paired.sorted.keep_contigs.txt
+  filtered BAM          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197773_bowtie_paired.sorted.organellar_removed.bam
+  filtered BAI          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197773_bowtie_paired.sorted.organellar_removed.bam.bai
+  flagstat before       = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197773_bowtie_paired.sorted.before.flagstat.txt
+  flagstat after        = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197773_bowtie_paired.sorted.after.flagstat.txt
+
+############################################################
+Processing sample: SRR24197774_bowtie_paired.sorted
+############################################################
+selected BAM file:
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197774_bowtie_paired.sorted.bam
+
+############################## Check BAM index
+Start time: 2026-10-14 20:21:02
+
+BAM index found.
+
+############################## Step 1: Inspect BAM contig structure
+Start time: 2026-10-14 20:21:02
+
+idxstats output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197774_bowtie_paired.sorted.idxstats.tsv
+
+contig preview:
+1
+2
+3
+4
+5
+Mt
+Pt
+
+total contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197774_bowtie_paired.sorted.all_contigs.txt
+
+############################## Step 2: Detect organellar contigs
+Start time: 2026-10-14 20:21:02
+
+detected organellar contigs:
+Mt
+Pt
+
+organellar contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197774_bowtie_paired.sorted.organellar_contigs.txt
+
+############################## Step 3: Create keep contig list
+Start time: 2026-10-14 20:21:02
+
+keep contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197774_bowtie_paired.sorted.keep_contigs.txt
+
+number of all contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197774_bowtie_paired.sorted.all_contigs.txt
+number of organellar contigs:
+2 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197774_bowtie_paired.sorted.organellar_contigs.txt
+number of keep contigs:
+5 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197774_bowtie_paired.sorted.keep_contigs.txt
+
+############################## Step 4: BAM flagstat before filtering
+Start time: 2026-10-14 20:21:02
+
+flagstat before output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197774_bowtie_paired.sorted.before.flagstat.txt
+
+############################## Step 5: Remove organellar contigs
+Start time: 2026-10-14 20:21:03
+
+Filtering BAM by keeping non-organellar contigs...
+filtered BAM:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197774_bowtie_paired.sorted.organellar_removed.bam
+
+############################## Step 6: Index filtered BAM
+Start time: 2026-10-14 20:21:08
+
+filtered BAM index:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197774_bowtie_paired.sorted.organellar_removed.bam.bai
+
+############################## Step 7: BAM flagstat after filtering
+Start time: 2026-10-14 20:21:09
+
+flagstat after output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197774_bowtie_paired.sorted.after.flagstat.txt
+
+done sample:
+  sample                = SRR24197774_bowtie_paired.sorted
+  input BAM             = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197774_bowtie_paired.sorted.bam
+  idxstats              = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197774_bowtie_paired.sorted.idxstats.tsv
+  all contigs           = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197774_bowtie_paired.sorted.all_contigs.txt
+  organellar contigs    = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197774_bowtie_paired.sorted.organellar_contigs.txt
+  keep contigs          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197774_bowtie_paired.sorted.keep_contigs.txt
+  filtered BAM          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197774_bowtie_paired.sorted.organellar_removed.bam
+  filtered BAI          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197774_bowtie_paired.sorted.organellar_removed.bam.bai
+  flagstat before       = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197774_bowtie_paired.sorted.before.flagstat.txt
+  flagstat after        = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197774_bowtie_paired.sorted.after.flagstat.txt
+
+############################################################
+Processing sample: SRR24197775_bowtie_paired.sorted
+############################################################
+selected BAM file:
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197775_bowtie_paired.sorted.bam
+
+############################## Check BAM index
+Start time: 2026-10-14 20:21:10
+
+BAM index found.
+
+############################## Step 1: Inspect BAM contig structure
+Start time: 2026-10-14 20:21:10
+
+idxstats output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197775_bowtie_paired.sorted.idxstats.tsv
+
+contig preview:
+1
+2
+3
+4
+5
+Mt
+Pt
+
+total contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197775_bowtie_paired.sorted.all_contigs.txt
+
+############################## Step 2: Detect organellar contigs
+Start time: 2026-10-14 20:21:10
+
+detected organellar contigs:
+Mt
+Pt
+
+organellar contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197775_bowtie_paired.sorted.organellar_contigs.txt
+
+############################## Step 3: Create keep contig list
+Start time: 2026-10-14 20:21:10
+
+keep contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197775_bowtie_paired.sorted.keep_contigs.txt
+
+number of all contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197775_bowtie_paired.sorted.all_contigs.txt
+number of organellar contigs:
+2 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197775_bowtie_paired.sorted.organellar_contigs.txt
+number of keep contigs:
+5 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197775_bowtie_paired.sorted.keep_contigs.txt
+
+############################## Step 4: BAM flagstat before filtering
+Start time: 2026-10-14 20:21:10
+
+flagstat before output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197775_bowtie_paired.sorted.before.flagstat.txt
+
+############################## Step 5: Remove organellar contigs
+Start time: 2026-10-14 20:21:12
+
+Filtering BAM by keeping non-organellar contigs...
+filtered BAM:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197775_bowtie_paired.sorted.organellar_removed.bam
+
+############################## Step 6: Index filtered BAM
+Start time: 2026-10-14 20:21:22
+
+filtered BAM index:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197775_bowtie_paired.sorted.organellar_removed.bam.bai
+
+############################## Step 7: BAM flagstat after filtering
+Start time: 2026-10-14 20:21:23
+
+flagstat after output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197775_bowtie_paired.sorted.after.flagstat.txt
+
+done sample:
+  sample                = SRR24197775_bowtie_paired.sorted
+  input BAM             = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197775_bowtie_paired.sorted.bam
+  idxstats              = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197775_bowtie_paired.sorted.idxstats.tsv
+  all contigs           = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197775_bowtie_paired.sorted.all_contigs.txt
+  organellar contigs    = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197775_bowtie_paired.sorted.organellar_contigs.txt
+  keep contigs          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197775_bowtie_paired.sorted.keep_contigs.txt
+  filtered BAM          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197775_bowtie_paired.sorted.organellar_removed.bam
+  filtered BAI          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197775_bowtie_paired.sorted.organellar_removed.bam.bai
+  flagstat before       = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197775_bowtie_paired.sorted.before.flagstat.txt
+  flagstat after        = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197775_bowtie_paired.sorted.after.flagstat.txt
+
+############################################################
+Processing sample: SRR24197776_bowtie_paired.sorted
+############################################################
+selected BAM file:
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197776_bowtie_paired.sorted.bam
+
+############################## Check BAM index
+Start time: 2026-10-14 20:21:25
+
+BAM index found.
+
+############################## Step 1: Inspect BAM contig structure
+Start time: 2026-10-14 20:21:25
+
+idxstats output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197776_bowtie_paired.sorted.idxstats.tsv
+
+contig preview:
+1
+2
+3
+4
+5
+Mt
+Pt
+
+total contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197776_bowtie_paired.sorted.all_contigs.txt
+
+############################## Step 2: Detect organellar contigs
+Start time: 2026-10-14 20:21:25
+
+detected organellar contigs:
+Mt
+Pt
+
+organellar contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197776_bowtie_paired.sorted.organellar_contigs.txt
+
+############################## Step 3: Create keep contig list
+Start time: 2026-10-14 20:21:25
+
+keep contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197776_bowtie_paired.sorted.keep_contigs.txt
+
+number of all contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197776_bowtie_paired.sorted.all_contigs.txt
+number of organellar contigs:
+2 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197776_bowtie_paired.sorted.organellar_contigs.txt
+number of keep contigs:
+5 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197776_bowtie_paired.sorted.keep_contigs.txt
+
+############################## Step 4: BAM flagstat before filtering
+Start time: 2026-10-14 20:21:25
+
+flagstat before output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197776_bowtie_paired.sorted.before.flagstat.txt
+
+############################## Step 5: Remove organellar contigs
+Start time: 2026-10-14 20:21:27
+
+Filtering BAM by keeping non-organellar contigs...
+filtered BAM:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197776_bowtie_paired.sorted.organellar_removed.bam
+
+############################## Step 6: Index filtered BAM
+Start time: 2026-10-14 20:21:32
+
+filtered BAM index:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197776_bowtie_paired.sorted.organellar_removed.bam.bai
+
+############################## Step 7: BAM flagstat after filtering
+Start time: 2026-10-14 20:21:32
+
+flagstat after output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197776_bowtie_paired.sorted.after.flagstat.txt
+
+done sample:
+  sample                = SRR24197776_bowtie_paired.sorted
+  input BAM             = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197776_bowtie_paired.sorted.bam
+  idxstats              = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197776_bowtie_paired.sorted.idxstats.tsv
+  all contigs           = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197776_bowtie_paired.sorted.all_contigs.txt
+  organellar contigs    = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197776_bowtie_paired.sorted.organellar_contigs.txt
+  keep contigs          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197776_bowtie_paired.sorted.keep_contigs.txt
+  filtered BAM          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197776_bowtie_paired.sorted.organellar_removed.bam
+  filtered BAI          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197776_bowtie_paired.sorted.organellar_removed.bam.bai
+  flagstat before       = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197776_bowtie_paired.sorted.before.flagstat.txt
+  flagstat after        = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197776_bowtie_paired.sorted.after.flagstat.txt
+
+############################################################
+Processing sample: SRR24197791_bowtie_paired.sorted
+############################################################
+selected BAM file:
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197791_bowtie_paired.sorted.bam
+
+############################## Check BAM index
+Start time: 2026-10-14 20:21:33
+
+BAM index found.
+
+############################## Step 1: Inspect BAM contig structure
+Start time: 2026-10-14 20:21:33
+
+idxstats output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197791_bowtie_paired.sorted.idxstats.tsv
+
+contig preview:
+1
+2
+3
+4
+5
+Mt
+Pt
+
+total contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197791_bowtie_paired.sorted.all_contigs.txt
+
+############################## Step 2: Detect organellar contigs
+Start time: 2026-10-14 20:21:33
+
+detected organellar contigs:
+Mt
+Pt
+
+organellar contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197791_bowtie_paired.sorted.organellar_contigs.txt
+
+############################## Step 3: Create keep contig list
+Start time: 2026-10-14 20:21:33
+
+keep contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197791_bowtie_paired.sorted.keep_contigs.txt
+
+number of all contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197791_bowtie_paired.sorted.all_contigs.txt
+number of organellar contigs:
+2 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197791_bowtie_paired.sorted.organellar_contigs.txt
+number of keep contigs:
+5 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197791_bowtie_paired.sorted.keep_contigs.txt
+
+############################## Step 4: BAM flagstat before filtering
+Start time: 2026-10-14 20:21:33
+
+flagstat before output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197791_bowtie_paired.sorted.before.flagstat.txt
+
+############################## Step 5: Remove organellar contigs
+Start time: 2026-10-14 20:21:35
+
+Filtering BAM by keeping non-organellar contigs...
+filtered BAM:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197791_bowtie_paired.sorted.organellar_removed.bam
+
+############################## Step 6: Index filtered BAM
+Start time: 2026-10-14 20:21:48
+
+filtered BAM index:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197791_bowtie_paired.sorted.organellar_removed.bam.bai
+
+############################## Step 7: BAM flagstat after filtering
+Start time: 2026-10-14 20:21:50
+
+flagstat after output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197791_bowtie_paired.sorted.after.flagstat.txt
+
+done sample:
+  sample                = SRR24197791_bowtie_paired.sorted
+  input BAM             = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197791_bowtie_paired.sorted.bam
+  idxstats              = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197791_bowtie_paired.sorted.idxstats.tsv
+  all contigs           = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197791_bowtie_paired.sorted.all_contigs.txt
+  organellar contigs    = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197791_bowtie_paired.sorted.organellar_contigs.txt
+  keep contigs          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197791_bowtie_paired.sorted.keep_contigs.txt
+  filtered BAM          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197791_bowtie_paired.sorted.organellar_removed.bam
+  filtered BAI          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197791_bowtie_paired.sorted.organellar_removed.bam.bai
+  flagstat before       = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197791_bowtie_paired.sorted.before.flagstat.txt
+  flagstat after        = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197791_bowtie_paired.sorted.after.flagstat.txt
+
+############################################################
+Processing sample: SRR24197792_bowtie_paired.sorted
+############################################################
+selected BAM file:
+  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197792_bowtie_paired.sorted.bam
+
+############################## Check BAM index
+Start time: 2026-10-14 20:21:52
+
+BAM index found.
+
+############################## Step 1: Inspect BAM contig structure
+Start time: 2026-10-14 20:21:52
+
+idxstats output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197792_bowtie_paired.sorted.idxstats.tsv
+
+contig preview:
+1
+2
+3
+4
+5
+Mt
+Pt
+
+total contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197792_bowtie_paired.sorted.all_contigs.txt
+
+############################## Step 2: Detect organellar contigs
+Start time: 2026-10-14 20:21:52
+
+detected organellar contigs:
+Mt
+Pt
+
+organellar contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197792_bowtie_paired.sorted.organellar_contigs.txt
+
+############################## Step 3: Create keep contig list
+Start time: 2026-10-14 20:21:52
+
+keep contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197792_bowtie_paired.sorted.keep_contigs.txt
+
+number of all contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197792_bowtie_paired.sorted.all_contigs.txt
+number of organellar contigs:
+2 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197792_bowtie_paired.sorted.organellar_contigs.txt
+number of keep contigs:
+5 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197792_bowtie_paired.sorted.keep_contigs.txt
+
+############################## Step 4: BAM flagstat before filtering
+Start time: 2026-10-14 20:21:52
+
+flagstat before output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197792_bowtie_paired.sorted.before.flagstat.txt
+
+############################## Step 5: Remove organellar contigs
+Start time: 2026-10-14 20:21:54
+
+Filtering BAM by keeping non-organellar contigs...
+filtered BAM:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197792_bowtie_paired.sorted.organellar_removed.bam
+
+############################## Step 6: Index filtered BAM
+Start time: 2026-10-14 20:22:08
+
+filtered BAM index:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197792_bowtie_paired.sorted.organellar_removed.bam.bai
+
+############################## Step 7: BAM flagstat after filtering
+Start time: 2026-10-14 20:22:09
+
+flagstat after output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197792_bowtie_paired.sorted.after.flagstat.txt
+
+done sample:
+  sample                = SRR24197792_bowtie_paired.sorted
+  input BAM             = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/bowtie2/output/SRR24197792_bowtie_paired.sorted.bam
+  idxstats              = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197792_bowtie_paired.sorted.idxstats.tsv
+  all contigs           = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197792_bowtie_paired.sorted.all_contigs.txt
+  organellar contigs    = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197792_bowtie_paired.sorted.organellar_contigs.txt
+  keep contigs          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197792_bowtie_paired.sorted.keep_contigs.txt
+  filtered BAM          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197792_bowtie_paired.sorted.organellar_removed.bam
+  filtered BAI          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam/SRR24197792_bowtie_paired.sorted.organellar_removed.bam.bai
+  flagstat before       = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197792_bowtie_paired.sorted.before.flagstat.txt
+  flagstat after        = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197792_bowtie_paired.sorted.after.flagstat.txt
+
+############################################################
+Organellar Filter finished
+############################################################
+total BAM files:
+  8
+success:
+  8
+failed:
+  0
+
+summary:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/04_summary/organellar_filter_summary.tsv
+
+output directories:
+  stats        = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats
+  contigs      = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs
+  filtered BAM = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/03_filtered_bam
+  summary      = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/04_summary
+
+stdout log:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/logs/20261014_202014_385572.log
+stderr log:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/logs/20261014_202014_385572.error.log
+
+End time: 2026-10-14 20:22:11

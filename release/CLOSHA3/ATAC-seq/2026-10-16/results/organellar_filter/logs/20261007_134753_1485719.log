@@ -1,0 +1,85 @@
+############################## Organellar Filter
+Log file: /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/logs/20261007_134753_1485719.log
+Error log file: /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/logs/20261007_134753_1485719.error.log
+Start time: 2026-10-07 13:47:53
+
+parameters:
+  input_dir           = /bio-hub/shared-data/example/ATAC_seq_Analysis_Pipeline/GATK_MarkDuplicates/output
+  output_dir          = /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output
+  threads             = 4
+  organellar_pattern  = (^chrM$|^MT$|^Mt$|mitochond|mitochondrion|mitochondrial|chloroplast|plastid|^Pt$|^PT$|^chrC$)
+
+searching BAM files in input_dir...
+found BAM files: 8
+  /bio-hub/shared-data/example/ATAC_seq_Analysis_Pipeline/GATK_MarkDuplicates/output/SRR24197771_bowtie_paired.sorted_marked.bam
+  /bio-hub/shared-data/example/ATAC_seq_Analysis_Pipeline/GATK_MarkDuplicates/output/SRR24197772_bowtie_paired.sorted_marked.bam
+  /bio-hub/shared-data/example/ATAC_seq_Analysis_Pipeline/GATK_MarkDuplicates/output/SRR24197773_bowtie_paired.sorted_marked.bam
+  /bio-hub/shared-data/example/ATAC_seq_Analysis_Pipeline/GATK_MarkDuplicates/output/SRR24197774_bowtie_paired.sorted_marked.bam
+  /bio-hub/shared-data/example/ATAC_seq_Analysis_Pipeline/GATK_MarkDuplicates/output/SRR24197775_bowtie_paired.sorted_marked.bam
+  /bio-hub/shared-data/example/ATAC_seq_Analysis_Pipeline/GATK_MarkDuplicates/output/SRR24197776_bowtie_paired.sorted_marked.bam
+  /bio-hub/shared-data/example/ATAC_seq_Analysis_Pipeline/GATK_MarkDuplicates/output/SRR24197791_bowtie_paired.sorted_marked.bam
+  /bio-hub/shared-data/example/ATAC_seq_Analysis_Pipeline/GATK_MarkDuplicates/output/SRR24197792_bowtie_paired.sorted_marked.bam
+
+
+############################################################
+Processing sample: SRR24197771_bowtie_paired.sorted_marked
+############################################################
+selected BAM file:
+  /bio-hub/shared-data/example/ATAC_seq_Analysis_Pipeline/GATK_MarkDuplicates/output/SRR24197771_bowtie_paired.sorted_marked.bam
+
+############################## Check BAM index
+Start time: 2026-10-07 13:47:53
+
+BAM index found.
+
+############################## Step 1: Inspect BAM contig structure
+Start time: 2026-10-07 13:47:53
+
+idxstats output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197771_bowtie_paired.sorted_marked.idxstats.tsv
+
+contig preview:
+1
+2
+3
+4
+5
+Mt
+Pt
+
+total contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted_marked.all_contigs.txt
+
+############################## Step 2: Detect organellar contigs
+Start time: 2026-10-07 13:47:53
+
+detected organellar contigs:
+Mt
+Pt
+
+organellar contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted_marked.organellar_contigs.txt
+
+############################## Step 3: Create keep contig list
+Start time: 2026-10-07 13:47:53
+
+keep contig file:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted_marked.keep_contigs.txt
+
+number of all contigs:
+7 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted_marked.all_contigs.txt
+number of organellar contigs:
+2 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted_marked.organellar_contigs.txt
+number of keep contigs:
+5 /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/02_contigs/SRR24197771_bowtie_paired.sorted_marked.keep_contigs.txt
+
+############################## Step 4: BAM flagstat before filtering
+Start time: 2026-10-07 13:47:53
+
+flagstat before output:
+  /bio-workflow/kobic_pipeline/ATAC_seq/organellar_filter/output/01_stats/SRR24197771_bowtie_paired.sorted_marked.before.flagstat.txt
+
+############################## Step 5: Remove organellar contigs
+Start time: 2026-10-07 13:47:57
+
+Filtering BAM by keeping non-organellar contigs...

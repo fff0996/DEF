@@ -1,0 +1,90 @@
+############################## Replicate consistency (IDR)
+Log file: /bio-workflow/kobic_pipeline/ATAC_seq_copy/replicate_consistency/output/logs/20261015_020826_395378.log
+Error log file: /bio-workflow/kobic_pipeline/ATAC_seq_copy/replicate_consistency/output/logs/20261015_020826_395378.error.log
+Start time: 2026-10-15 02:08:26
+
+parameters:
+  input_dir        = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/ATAC_QC/output
+  sample_data      = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/input_dir/metadata/sample_sheet_bzip11.csv
+  output_dir       = /bio-workflow/kobic_pipeline/ATAC_seq_copy/replicate_consistency/output
+  genome_size      = hs
+  alignment_suffix = .shifted.bam
+  pvalue           = 0.01
+  idr_threshold    = 0.05
+  max_peaks        = 300000
+  threads          = 1 (requested auto, allocated 1)
+
+macs3: macs3 3.0.4
+idr:   IDR 2.0.4.2
+/opt/idr-cmd/bin/idr --version
+
+Detected ATAC_QC output directory: using /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/ATAC_QC/output/03_shifted_bam
+
+############################## Step 1: Read sample_data
+samples (SampleID, Condition, Replicate, BAM):
+  SRR24197773	Mock	1	/bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/ATAC_QC/output/03_shifted_bam/SRR24197773/SRR24197773.shifted.bam
+  SRR24197774	Mock	2	/bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/ATAC_QC/output/03_shifted_bam/SRR24197774/SRR24197774.shifted.bam
+  SRR24197775	Mock	3	/bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/ATAC_QC/output/03_shifted_bam/SRR24197775/SRR24197775.shifted.bam
+  SRR24197776	Mock	4	/bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/ATAC_QC/output/03_shifted_bam/SRR24197776/SRR24197776.shifted.bam
+  SRR24197771	DEX	1	/bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/ATAC_QC/output/03_shifted_bam/SRR24197771/SRR24197771.shifted.bam
+  SRR24197772	DEX	2	/bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/ATAC_QC/output/03_shifted_bam/SRR24197772/SRR24197772.shifted.bam
+  SRR24197791	DEX	3	/bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/ATAC_QC/output/03_shifted_bam/SRR24197791/SRR24197791.shifted.bam
+  SRR24197792	DEX	4	/bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/ATAC_QC/output/03_shifted_bam/SRR24197792/SRR24197792.shifted.bam
+
+############################## Condition: Mock
+relaxed peak calling (p < 0.01):
+  SRR24197773: 20891 relaxed peaks
+  SRR24197774: 20306 relaxed peaks
+  SRR24197775: 21011 relaxed peaks
+  SRR24197776: 20791 relaxed peaks
+  Mock_pooled: 22732 relaxed peaks
+
+IDR per replicate pair (passing: global IDR <= 0.05):
+  SRR24197773_vs_SRR24197774: 13316 peaks
+  SRR24197773_vs_SRR24197775: 14049 peaks
+  SRR24197773_vs_SRR24197776: 13053 peaks
+  SRR24197774_vs_SRR24197775: 14956 peaks
+  SRR24197774_vs_SRR24197776: 13833 peaks
+  SRR24197775_vs_SRR24197776: 14912 peaks
+conservative peak set: /bio-workflow/kobic_pipeline/ATAC_seq_copy/replicate_consistency/output/03_reproducible_peaks/Mock.conservative_peaks.narrowPeak (14956 peaks, from SRR24197774_vs_SRR24197775)
+
+############################## Condition: DEX
+relaxed peak calling (p < 0.01):
+  SRR24197771: 22206 relaxed peaks
+  SRR24197772: 22581 relaxed peaks
+  SRR24197791: 22285 relaxed peaks
+  SRR24197792: 22343 relaxed peaks
+  DEX_pooled: 24088 relaxed peaks
+
+IDR per replicate pair (passing: global IDR <= 0.05):
+  SRR24197771_vs_SRR24197772: 17175 peaks
+  SRR24197771_vs_SRR24197791: 17504 peaks
+  SRR24197771_vs_SRR24197792: 17047 peaks
+  SRR24197772_vs_SRR24197791: 16940 peaks
+  SRR24197772_vs_SRR24197792: 17225 peaks
+  SRR24197791_vs_SRR24197792: 16941 peaks
+conservative peak set: /bio-workflow/kobic_pipeline/ATAC_seq_copy/replicate_consistency/output/03_reproducible_peaks/DEX.conservative_peaks.narrowPeak (17504 peaks, from SRR24197771_vs_SRR24197791)
+
+############################## Summary
+  condition	replicate_a	replicate_b	peaks_a	peaks_b	pooled_peaks	idr_passed	status
+  Mock	SRR24197773	SRR24197774	20891	20306	22732	13316	done
+  Mock	SRR24197773	SRR24197775	20891	21011	22732	14049	done
+  Mock	SRR24197773	SRR24197776	20891	20791	22732	13053	done
+  Mock	SRR24197774	SRR24197775	20306	21011	22732	14956	done
+  Mock	SRR24197774	SRR24197776	20306	20791	22732	13833	done
+  Mock	SRR24197775	SRR24197776	21011	20791	22732	14912	done
+  DEX	SRR24197771	SRR24197772	22206	22581	24088	17175	done
+  DEX	SRR24197771	SRR24197791	22206	22285	24088	17504	done
+  DEX	SRR24197771	SRR24197792	22206	22343	24088	17047	done
+  DEX	SRR24197772	SRR24197791	22581	22285	24088	16940	done
+  DEX	SRR24197772	SRR24197792	22581	22343	24088	17225	done
+  DEX	SRR24197791	SRR24197792	22285	22343	24088	16941	done
+
+  conditions with reproducible peaks = 2
+  conditions skipped (1 replicate)   = 0
+  failed pairs or conditions         = 0
+
+############################## Done
+summary    = /bio-workflow/kobic_pipeline/ATAC_seq_copy/replicate_consistency/output/04_summary/idr_summary.tsv
+output_dir = /bio-workflow/kobic_pipeline/ATAC_seq_copy/replicate_consistency/output
+End time: 2026-10-15 02:34:10

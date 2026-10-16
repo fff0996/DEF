@@ -17,6 +17,6 @@
 | atac_motif | `02_binned_enrichment/binned_motif_heatmap.pdf`, `01_qc/bin_density.pdf`, `04_regression/selection_probability.pdf`, `03_kmer/kmer_motif_similarity.pdf` |
 | tf_footprinting | `04_BINDetect/bindetect_figures.pdf` |
 | functional_enrichment | `03_plots/<list>.GO_BP.dotplot.pdf`, `03_plots/<list>.GO_BP.barplot.pdf`, `04_summary/enrichment_summary.tsv` |
-| replicate_consistency | `02_idr/<condition>/<repA>_vs_<repB>.idr.png`, `04_summary/idr_summary.tsv` |
+| replicate_consistency | `02_idr/<condition>/<repA>_vs_<repB>.idr.txt.png`, `04_summary/idr_summary.tsv` |
 
 각 모듈 폴더에 `logs/`(실행 로그 `.log`, `.error.log`)도 같이 올리면 실행 조건(파라미터)이 함께 남습니다.

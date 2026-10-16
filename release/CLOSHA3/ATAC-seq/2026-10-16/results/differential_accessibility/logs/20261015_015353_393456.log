@@ -1,0 +1,324 @@
+############################## Differential Accessibility Analysis (NBIS style)
+Log file   : /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/logs/20261015_015353_393456.log 
+Error log  : /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/logs/20261015_015353_393456.error.log 
+Start time : 2026-10-15 01:53:53 
+
+checking required R packages...
+optional packages available:
+  EDASeq      = TRUE 
+  cqn         = TRUE 
+  wesanderson = TRUE 
+
+All required R packages loaded successfully.
+
+parameters:
+  input_dir    = /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output 
+  peak_dir     = /bio-workflow/kobic_pipeline/ATAC_seq/MACS3_callpeak_ATAC/output 
+  sample_data  = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/input_dir/metadata/sample_sheet_bzip11.csv 
+  genome_fasta = /bio-hub/shared-data/REF/genomes/Arabidopsis_thaliana_TAIR10/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa 
+  output_dir   = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output 
+  fdr          = 0.05 
+  gc_bin_chr   = <auto> 
+  tile_width   = 5000 
+  paired       = TRUE 
+  run_edaseq   = TRUE 
+  run_cqn      = TRUE 
+  control_name = DEX 
+
+############################## Step 1: Read sample sheet
+Start time: 2026-10-15 01:54:02 
+
+sample_data shape:
+  rows x columns: 8 x 3 
+  columns: SampleID, Condition, Replicate 
+
+preview:
+     SampleID Condition Replicate
+1 SRR24197773      Mock         1
+2 SRR24197774      Mock         2
+3 SRR24197775      Mock         3
+4 SRR24197776      Mock         4
+5 SRR24197771       DEX         1
+6 SRR24197772       DEX         2
+
+condition table:
+
+ DEX Mock 
+   4    4 
+
+condition counts:
+
+ DEX Mock 
+   4    4 
+
+############################## Step 2: Resolve BAM and peak files
+Start time: 2026-10-15 01:54:02 
+
+sample sheet mode:
+  BX-basic: bamReads / Peaks columns NOT in sample_data
+  -> BAM and peak files will be matched by SampleID from input_dir / peak_dir
+
+  Detected ATAC_QC output directory. Using shifted BAMs from:
+    /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output/03_shifted_bam 
+
+BAM search:
+  input_dir = /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output 
+  bam_search_dir = /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output/03_shifted_bam 
+  BAM files = 8 
+
+[1] "/bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output/03_shifted_bam/SRR24197771/SRR24197771.shifted.bam"
+[2] "/bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output/03_shifted_bam/SRR24197772/SRR24197772.shifted.bam"
+[3] "/bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output/03_shifted_bam/SRR24197773/SRR24197773.shifted.bam"
+[4] "/bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output/03_shifted_bam/SRR24197774/SRR24197774.shifted.bam"
+[5] "/bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output/03_shifted_bam/SRR24197775/SRR24197775.shifted.bam"
+[6] "/bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output/03_shifted_bam/SRR24197776/SRR24197776.shifted.bam"
+[7] "/bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output/03_shifted_bam/SRR24197791/SRR24197791.shifted.bam"
+[8] "/bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output/03_shifted_bam/SRR24197792/SRR24197792.shifted.bam"
+
+Peak search:
+  peak_dir = /bio-workflow/kobic_pipeline/ATAC_seq/MACS3_callpeak_ATAC/output 
+  peak files = 8 
+
+[1] "/bio-workflow/kobic_pipeline/ATAC_seq/MACS3_callpeak_ATAC/output/SRR24197771_peaks.narrowPeak"
+[2] "/bio-workflow/kobic_pipeline/ATAC_seq/MACS3_callpeak_ATAC/output/SRR24197772_peaks.narrowPeak"
+[3] "/bio-workflow/kobic_pipeline/ATAC_seq/MACS3_callpeak_ATAC/output/SRR24197773_peaks.narrowPeak"
+[4] "/bio-workflow/kobic_pipeline/ATAC_seq/MACS3_callpeak_ATAC/output/SRR24197774_peaks.narrowPeak"
+[5] "/bio-workflow/kobic_pipeline/ATAC_seq/MACS3_callpeak_ATAC/output/SRR24197775_peaks.narrowPeak"
+[6] "/bio-workflow/kobic_pipeline/ATAC_seq/MACS3_callpeak_ATAC/output/SRR24197776_peaks.narrowPeak"
+[7] "/bio-workflow/kobic_pipeline/ATAC_seq/MACS3_callpeak_ATAC/output/SRR24197791_peaks.narrowPeak"
+[8] "/bio-workflow/kobic_pipeline/ATAC_seq/MACS3_callpeak_ATAC/output/SRR24197792_peaks.narrowPeak"
+
+BAM index exist: 8 / 8 
+
+prepared sample sheet:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/01_sample_sheet/prepared_sample_sheet.csv 
+
+############################## Step 3: Read genome FASTA
+Start time: 2026-10-15 01:54:02 
+
+genome sequence count: 7 
+genome sequence name preview (first 20):
+[1] "1"  "2"  "3"  "4"  "5"  "Mt" "Pt"
+
+genome sequence length preview (first 10):
+       1        2        3        4        5       Mt       Pt 
+30427671 19698289 23459830 18585056 26975502   366924   154478 
+
+############################## Step 4: Build consensus peak set
+Start time: 2026-10-15 01:54:03 
+
+reading per-sample peak files:
+   SRR24197773 : 18079 peaks
+   SRR24197774 : 19413 peaks
+   SRR24197775 : 20473 peaks
+   SRR24197776 : 19577 peaks
+   SRR24197771 : 21838 peaks
+   SRR24197772 : 22184 peaks
+   SRR24197791 : 21937 peaks
+   SRR24197792 : 21948 peaks
+
+union of all sample peaks (before chromosome filtering): 27554 
+peaks on assembled chromosomes: 27554 (dropped 0 peaks on unknown chromosomes)
+final consensus peak count: 27554 
+
+consensus peak BED:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/02_counts/consensus_peaks.bed 
+
+############################## Step 5: Compute GC content per peak
+Start time: 2026-10-15 01:54:05 
+
+GC content computed for 27554 / 27554 peaks
+GC content summary:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.1370  0.3039  0.3349  0.3393  0.3721  0.6543 
+
+peak GC table:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/02_counts/peak_gc_content.tsv 
+
+############################## Step 6: Count reads in consensus peaks
+Start time: 2026-10-15 01:54:05 
+
+counting reads per sample (bamsignals, paired.end = filter ):
+   SRR24197773 : total = 1617281 | elapsed = 2.1s 
+   SRR24197774 : total = 2531267 | elapsed = 3.4s 
+   SRR24197775 : total = 5525294 | elapsed = 6.7s 
+   SRR24197776 : total = 2500830 | elapsed = 3.4s 
+   SRR24197771 : total = 6277951 | elapsed = 7.5s 
+   SRR24197772 : total = 9157828 | elapsed = 11.1s 
+   SRR24197791 : total = 7061772 | elapsed = 8.4s 
+   SRR24197792 : total = 7195603 | elapsed = 8.7s 
+
+count matrix shape: 27554 x 8 
+library sizes (sum of counts per sample):
+SRR24197773 SRR24197774 SRR24197775 SRR24197776 SRR24197771 SRR24197772 
+    1617281     2531267     5525294     2500830     6277951     9157828 
+SRR24197791 SRR24197792 
+    7061772     7195603 
+
+count matrix table:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/02_counts/peak_count_matrix.tsv 
+
+############################## Step 7: GC bias in genomic bins
+Start time: 2026-10-15 01:54:57 
+
+auto-selected gc_bin_chr (longest chromosome): 1 
+tiles on 1 : 6086 bins of width 5000 bp
+GC bias in bins plot:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/04_plots/GC_bias_in_genomic_bins.pdf 
+
+############################## Step 8: GC bias in peaks
+Start time: 2026-10-15 01:55:11 
+
+GC bias in peaks plot:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/04_plots/GC_bias_in_peaks.pdf 
+
+############################## Step 9: edgeR DGEList + filterByExpr + TMM
+Start time: 2026-10-15 01:55:13 
+
+baseline set by control_name.
+contrast setup:
+  reference (baseline) = DEX 
+  contrast  (treated)  = Mock 
+  -> logFC = log2(Mock / DEX)
+  -> positive logFC = more accessible in Mock
+  -> negative logFC = more accessible in DEX
+
+design matrix:
+            (Intercept) groupsMock
+SRR24197773           1          1
+SRR24197774           1          1
+SRR24197775           1          1
+SRR24197776           1          1
+SRR24197771           1          0
+SRR24197772           1          0
+SRR24197791           1          0
+SRR24197792           1          0
+attr(,"assign")
+[1] 0 1
+attr(,"contrasts")
+attr(,"contrasts")$groups
+[1] "contr.treatment"
+
+
+filterByExpr result:
+   Mode   FALSE    TRUE 
+logical    5279   22275 
+
+after filtering: 22275 peaks retained
+
+norm factors (TMM):
+            group lib.size norm.factors
+SRR24197773  Mock  1613824    0.9932903
+SRR24197774  Mock  2525825    0.9903193
+SRR24197775  Mock  5511546    0.9735772
+SRR24197776  Mock  2492302    1.0083464
+SRR24197771   DEX  6263070    1.0174466
+SRR24197772   DEX  9130241    1.0014770
+SRR24197791   DEX  7046179    1.0085786
+SRR24197792   DEX  7175079    1.0076416
+
+DGEList RDS:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/05_rds/edger_dgelist_tmm.rds 
+
+############################## Step 10: MDS plot
+Start time: 2026-10-15 01:55:13 
+
+MDS plot:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/04_plots/MDS_plot.pdf 
+
+############################## Step 10b: Sample correlation and PCA
+Start time: 2026-10-15 01:55:13 
+
+correlation heatmap:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/04_plots/sample_correlation_heatmap.pdf 
+correlation matrix:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/sample_correlation.tsv 
+
+PCA variance explained (%): PC1=41.3 PC2=18.5 PC3=13.9 PC4=9.4 PC5=7.8 
+PCA peaks used (top variable): 5000 
+PCA plot:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/04_plots/PCA_plot.pdf 
+PCA coordinates:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/PCA_coordinates.tsv 
+
+############################## Step 11: TMM accessibility analysis
+Start time: 2026-10-15 01:55:13 
+
+analysis mode: statistical edgeR QL analysis
+
+DA result preview (TMM):
+                logFC    logCPM        F       PValue         FDR       peakID
+peak_0007776 1.479433  3.930679 51.94913 2.203681e-07 0.004908700 peak_0007776
+peak_0007743 1.309051  3.927609 45.93945 4.769185e-07 0.005311680 peak_0007743
+peak_0007768 1.515830  4.111379 49.07658 1.084525e-06 0.008052601 peak_0007768
+peak_0014887 0.385900 10.243158 39.79680 1.488016e-06 0.008286391 peak_0014887
+peak_0007762 1.222412  4.048811 38.39916 2.348458e-06 0.010462379 peak_0007762
+peak_0007745 1.311627  3.384257 35.00009 3.926159e-06 0.014575865 peak_0007745
+
+number of significant peaks (FDR <= 0.05): 14
+
+############################## Step 12: MD plot
+Start time: 2026-10-15 01:55:16 
+
+null device 
+          1 
+MD plot:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/04_plots/MD_plot.pdf 
+
+############################## Step 13: log2FC vs GC bin (TMM)
+Start time: 2026-10-15 01:55:16 
+
+log2FC vs GC bin plot (TMM):
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/04_plots/logFC_by_GC_bin_TMM.pdf 
+
+############################## Step 14: Export TMM result tables
+Start time: 2026-10-15 01:55:17 
+
+TMM result tables:
+  all         = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/diff_accessibility_TMM.csv ( 22275 rows )
+  significant = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/diff_accessibility_TMM_significant.csv ( 14 rows )
+
+downstream TSV:
+   /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/diff_accessibility_TMM_for_downstream.tsv 
+
+BED outputs:
+  significant = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/diff_accessibility_significant.bed 
+  up          = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/up_accessible_peaks.bed 
+  down        = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/down_accessible_peaks.bed 
+
+############################## Step 15: EDASeq full-quantile GC normalisation
+Start time: 2026-10-15 01:55:17 
+
+EDASeq input peaks (with non-NA GC): 22275 / 22275 
+EDASeq outputs:
+  all results = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/diff_accessibility_EDASeq.csv 
+  GC bin plot = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/04_plots/logFC_by_GC_bin_EDASeq.pdf 
+  QLF RDS     = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/05_rds/edger_qlf_test_edaseq.rds 
+
+############################## Step 16: CQN normalisation
+Start time: 2026-10-15 01:55:22 
+
+CQN input peaks (with non-NA GC and width): 22275 / 22275 
+RQ fit ........
+SQN .
+CQN outputs:
+  all results = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/diff_accessibility_CQN.csv 
+  GC bin plot = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/04_plots/logFC_by_GC_bin_CQN.pdf 
+  QLF RDS     = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/05_rds/edger_qlf_test_cqn.rds 
+
+
+############################## Done
+  input_dir              = /bio-workflow/kobic_pipeline/ATAC_seq/ATAC_QC/output 
+  peak_dir               = /bio-workflow/kobic_pipeline/ATAC_seq/MACS3_callpeak_ATAC/output 
+  sample_data            = /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/input_dir/metadata/sample_sheet_bzip11.csv 
+  genome_fasta           = /bio-hub/shared-data/REF/genomes/Arabidopsis_thaliana_TAIR10/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa 
+  consensus peaks        = 27554 
+  peaks after filtering  = 22275 
+  analysis mode          = statistical 
+  TMM all results        = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/diff_accessibility_TMM.csv 
+  downstream TSV         = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/diff_accessibility_TMM_for_downstream.tsv 
+  TMM significant        =/bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/diff_accessibility_TMM_significant.csv (14 rows)
+  significant BED        = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/diff_accessibility_significant.bed 
+  up / down BED          = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/up_accessible_peaks.bed / /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/03_results/down_accessible_peaks.bed 
+  plot directory         = /bio-workflow/kobic_pipeline/ATAC_seq/differential_accessibility/output/04_plots 
+End time: 2026-10-15 01:55:28 
