@@ -1,0 +1,9 @@
+gene_list	genes	genes_annotated	terms_tested	significant_terms	ont	annotation	keytype	status
+SRR24197771	18543	16239	2131	437	BP	Arabidopsis_thaliana.AH121945.OrgDb.sqlite	TAIR	done
+SRR24197772	18468	16087	2131	396	BP	Arabidopsis_thaliana.AH121945.OrgDb.sqlite	TAIR	done
+SRR24197773	16604	14559	2131	541	BP	Arabidopsis_thaliana.AH121945.OrgDb.sqlite	TAIR	done
+SRR24197774	17031	14960	2131	548	BP	Arabidopsis_thaliana.AH121945.OrgDb.sqlite	TAIR	done
+SRR24197775	17691	15482	2131	482	BP	Arabidopsis_thaliana.AH121945.OrgDb.sqlite	TAIR	done
+SRR24197776	17106	14969	2131	484	BP	Arabidopsis_thaliana.AH121945.OrgDb.sqlite	TAIR	done
+SRR24197791	18546	16231	2131	460	BP	Arabidopsis_thaliana.AH121945.OrgDb.sqlite	TAIR	done
+SRR24197792	18446	16135	2131	422	BP	Arabidopsis_thaliana.AH121945.OrgDb.sqlite	TAIR	done

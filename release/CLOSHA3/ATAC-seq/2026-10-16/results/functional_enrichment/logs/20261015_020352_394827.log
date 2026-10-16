@@ -1,0 +1,103 @@
+############################## Functional Enrichment (GO) 
+Log file       :  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/logs/20261015_020352_394827.log 
+Error log file :  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/logs/20261015_020352_394827.error.log 
+Start time     :  2026-10-15 02:03:52 
+ 
+parameters: 
+  input_dir           =  /bio-hub/shared-data/example3/ATAC_seq_Analysis_Pipeline/rawdata/peak_annotation/output (peak_annotation output) 
+  output_dir          =  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output 
+  orgdb_file          =  /bio-hub/shared-data/REF/databases/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite 
+  gene_keytype        =  auto 
+  ont                 =  BP 
+  max_distance_to_tss =  3000 
+  universe            =  auto 
+  pvalue_cutoff       =  0.05 
+  qvalue_cutoff       =  0.2 
+  p_adjust_method     =  BH 
+  min_gs_size         =  10 
+  max_gs_size         =  500 
+  min_mapped_fraction =  0.5 
+  show_category       =  20 
+ 
+clusterProfiler  4.18.4  / GO.db  3.22.0 
+ 
+############################## Step 1: Read gene lists 
+   SRR24197771 :  18543  genes 
+   SRR24197772 :  18468  genes 
+   SRR24197773 :  16604  genes 
+   SRR24197774 :  17031  genes 
+   SRR24197775 :  17691  genes 
+   SRR24197776 :  17106  genes 
+   SRR24197791 :  18546  genes 
+   SRR24197792 :  18446  genes 
+ 
+universe:  32833 genes 
+ 
+############################## Step 2: Annotation source 
+OrgDb:  /bio-hub/shared-data/REF/databases/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite 
+keytypes:  ARACYC, ARACYCENZYME, ENTREZID, ENZYME, EVIDENCE, EVIDENCEALL, GENENAME, GO, GOALL, ONTOLOGY, ONTOLOGYALL, PATH, PMID, REFSEQ, SYMBOL, TAIR 
+  match TAIR      / asis      : 26925 of 32833 
+  match TAIR      / no_prefix : 26925 of 32833 
+  match TAIR      / no_suffix : 26925 of 32833 
+  match ENTREZID  / asis      : 0 of 32833 
+  match ENTREZID  / no_prefix : 0 of 32833 
+  match ENTREZID  / no_suffix : 0 of 32833 
+  match SYMBOL    / asis      : 1 of 32833 
+  match SYMBOL    / no_prefix : 1 of 32833 
+  match SYMBOL    / no_suffix : 1 of 32833 
+  match REFSEQ    / asis      : 0 of 32833 
+  match REFSEQ    / no_prefix : 0 of 32833 
+  match REFSEQ    / no_suffix : 0 of 32833 
+ 
+using keytype  TAIR  with IDs  asis  ( 82 % of IDs found) 
+ 
+############################## Processing gene list:  SRR24197771 
+  genes:  18543  / terms tested:  2131  / significant:  437 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197771.GO_BP.dotplot.pdf 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197771.GO_BP.barplot.pdf 
+ 
+############################## Processing gene list:  SRR24197772 
+  genes:  18468  / terms tested:  2131  / significant:  396 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197772.GO_BP.dotplot.pdf 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197772.GO_BP.barplot.pdf 
+ 
+############################## Processing gene list:  SRR24197773 
+  genes:  16604  / terms tested:  2131  / significant:  541 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197773.GO_BP.dotplot.pdf 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197773.GO_BP.barplot.pdf 
+ 
+############################## Processing gene list:  SRR24197774 
+  genes:  17031  / terms tested:  2131  / significant:  548 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197774.GO_BP.dotplot.pdf 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197774.GO_BP.barplot.pdf 
+ 
+############################## Processing gene list:  SRR24197775 
+  genes:  17691  / terms tested:  2131  / significant:  482 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197775.GO_BP.dotplot.pdf 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197775.GO_BP.barplot.pdf 
+ 
+############################## Processing gene list:  SRR24197776 
+  genes:  17106  / terms tested:  2131  / significant:  484 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197776.GO_BP.dotplot.pdf 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197776.GO_BP.barplot.pdf 
+ 
+############################## Processing gene list:  SRR24197791 
+  genes:  18546  / terms tested:  2131  / significant:  460 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197791.GO_BP.dotplot.pdf 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197791.GO_BP.barplot.pdf 
+ 
+############################## Processing gene list:  SRR24197792 
+  genes:  18446  / terms tested:  2131  / significant:  422 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197792.GO_BP.dotplot.pdf 
+  plot:  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/03_plots/SRR24197792.GO_BP.barplot.pdf 
+ 
+############################## Summary 
+  gene lists         :  8 
+  analysed           :  8 
+  failed             :  0 
+  with significant GO:  8 
+ 
+############################## Done 
+summary    =  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output/04_summary/enrichment_summary.tsv 
+output_dir =  /bio-workflow/kobic_pipeline/ATAC_seq_copy/functional_enrichment/output 
+End time   =  2026-10-15 02:05:53 

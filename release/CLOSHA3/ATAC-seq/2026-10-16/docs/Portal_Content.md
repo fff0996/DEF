@@ -1336,22 +1336,25 @@ Rscript functional_enrichment.1.0.R \
 ```
 
 ### 주요 결과 이미지
-결과 그림 3개를 아래 순서대로 등록합니다. 결과 1이 대표 그림입니다.
+결과 그림 3개를 아래 순서대로 등록합니다. 결과 1이 대표 그림입니다. 목록마다 나오는 그림(결과 1, 2)은 대표 목록 하나를 씁니다(예시: peak_annotation 결과를 입력으로 한 SRR24197771).
 
 **결과 1. GO 농축 dot plot**
-- 결과 파일: `03_plots/<list>.GO_BP.dotplot.pdf` (대표 목록 1개; DA 입력이면 `<da_norm>.up`)
-- 레전드(국문): **유전자 목록의 GO 생물학적 과정 농축(dot plot).** 행은 유의하게 농축된 GO term입니다. 가로축은 목록 유전자 중 그 term에 속한 비율(GeneRatio), 점의 크기는 해당 유전자 수(Count), 색은 보정된 p-value(p.adjust; 빨강일수록 유의)다. peak 근처 유전자들이 어떤 생물학적 과정에 모여 있는지를 보여 줍니다.
-- 레전드(영문): **GO biological process enrichment of a gene list (dot plot).** Rows are significantly enriched GO terms. The x-axis is the fraction of list genes in each term (GeneRatio), point size is the gene count (Count), and colour is the adjusted p-value (p.adjust; redder is more significant). The plot shows which biological processes the genes near the peaks converge on.
+- 결과 파일: `03_plots/<list>.GO_BP.dotplot.pdf` (대표 목록 1개. <list>는 유전자 목록 이름으로, 유전자 목록 파일 입력이면 파일 이름의 샘플 이름, 차등 접근성 결과 입력이면 `<da_norm>.up`, `<da_norm>.down`)
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/functional_enrichment/portal/functional_enrichment_result_1.png`
+- 레전드(국문): **유전자 목록의 GO 생물학적 과정 농축(dot plot).** 행은 유의하게 농축된 GO term이며 위쪽일수록 GeneRatio가 큽니다(기본 최대 20개). 가로축은 목록 유전자 중 그 term에 속한 비율(GeneRatio), 점의 크기는 해당 유전자 수(Count), 색은 보정된 p-value(p.adjust; 빨강일수록 유의, 파랑일수록 덜 유의)입니다. peak 근처 유전자들이 어떤 생물학적 과정에 모여 있는지를 보여 줍니다. 예시 데이터(SRR24197771, 유전자 18,543개)에서는 스트레스 반응 조절(regulation of response to stress), 세균·곰팡이 방어 반응, 저산소 반응(response to hypoxia), 신호 전달 조절 같은 term이 가장 유의했습니다. 목록이 유전체 유전자의 절반 이상으로 크기 때문에 GeneRatio는 0.02~0.03으로 작게 나옵니다.
+- 레전드(영문): **GO biological process enrichment of a gene list (dot plot).** Rows are significantly enriched GO terms, with larger GeneRatio towards the top (up to 20 by default). The x-axis is the fraction of list genes in each term (GeneRatio), point size is the gene count (Count), and colour is the adjusted p-value (p.adjust; redder is more significant, bluer less). The plot shows which biological processes the genes near the peaks converge on. In the example data (SRR24197771, 18,543 genes) the most significant terms were regulation of response to stress, defense responses to bacteria and fungi, response to hypoxia, and regulation of signalling. Because the list holds over half of the genome's genes, GeneRatio is small (0.02-0.03).
 
 **결과 2. GO 농축 bar plot**
 - 결과 파일: `03_plots/<list>.GO_BP.barplot.pdf` (결과 1과 같은 목록)
-- 레전드(국문): **유전자 목록의 GO 생물학적 과정 농축(bar plot).** 결과 1과 같은 GO term을 막대로 보여 줍니다. 막대 길이는 그 term에 속한 목록 유전자 수(Count), 색은 보정된 p-value(p.adjust)다. 유전자 수가 많은 term과 유의성이 높은 term을 한눈에 비교할 수 있습니다.
-- 레전드(영문): **GO biological process enrichment of a gene list (bar plot).** The same GO terms as result 1 shown as bars, with bar length the number of list genes in the term (Count) and colour the adjusted p-value (p.adjust). It compares terms with many genes and terms with strong significance at a glance.
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/functional_enrichment/portal/functional_enrichment_result_2.png`
+- 레전드(국문): **유전자 목록의 GO 생물학적 과정 농축(bar plot).** 결과 1과 같은 GO term을 막대로 보여 줍니다. 막대 길이는 그 term에 속한 목록 유전자 수(Count), 색은 보정된 p-value(p.adjust; 빨강일수록 유의)이며, 위쪽일수록 유의합니다. 유전자 수가 많은 term과 유의성이 높은 term을 한눈에 비교할 수 있습니다. 예시 데이터에서는 스트레스 반응 조절 term이 약 370개 유전자로 가장 길었습니다.
+- 레전드(영문): **GO biological process enrichment of a gene list (bar plot).** The same GO terms as result 1 shown as bars, with bar length the number of list genes in the term (Count) and colour the adjusted p-value (p.adjust; redder is more significant), more significant terms towards the top. It compares terms with many genes and terms with strong significance at a glance. In the example data the regulation of response to stress term was the longest bar, with about 370 genes.
 
 **결과 3. 목록별 농축 요약**
-- 결과 파일: 표 캡처 `04_summary/enrichment_summary.tsv`
-- 레전드(국문): **유전자 목록별 농축 요약.** 목록마다 유전자 수(genes), 주석에서 찾은 유전자 수(genes_annotated), 검정한 GO term 수(terms_tested), 유의한 term 수(significant_terms), GO 영역(ont), 사용한 주석 파일(annotation)과 ID 형식(keytype), 처리 상태(status)를 보여 줍니다. genes_annotated가 genes보다 크게 적으면 유전자 ID 형식이 주석과 맞지 않는 것입니다.
-- 레전드(영문): **Enrichment summary per gene list.** For each list the table gives the number of genes (genes), genes found in the annotation (genes_annotated), GO terms tested (terms_tested) and significant (significant_terms), the GO ontology (ont), the annotation file (annotation), the ID type (keytype) and the status. genes_annotated far below genes means that the gene ID format does not match the annotation.
+- 결과 파일: 표 `04_summary/enrichment_summary.tsv`
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/functional_enrichment/portal/functional_enrichment_result_3.png`
+- 레전드(국문): **유전자 목록별 GO 농축 요약.** 목록마다 유전자 수(Genes), 주석(OrgDb)에서 찾은 유전자 수(Annotated), 검정한 GO term 수(Terms tested), 유의한 term 수(Significant terms), GO 영역(Ontology), 유전자 ID 형식(ID type), 처리 상태(Status)를 보여 줍니다. Annotated가 Genes보다 크게 적으면 유전자 ID 형식이 주석과 맞지 않는 것입니다. Status가 no_testable_terms나 empty이면 그 목록은 유전자가 너무 적어 검정하지 못한 것입니다. 예시 데이터에서는 8개 목록 모두 유전자의 약 87%가 주석에서 찾아졌고(TAIR ID), 2,131개 term을 검정해 396~548개가 유의했습니다.
+- 레전드(영문): **Enrichment summary per gene list.** For each list the table gives the number of genes (Genes), genes found in the annotation (Annotated), GO terms tested (Terms tested) and significant (Significant terms), the GO ontology (Ontology), the gene ID type (ID type), and the status. Annotated far below Genes means that the gene ID format does not match the annotation. A status of no_testable_terms or empty means the list had too few genes to test. In the example data about 87% of the genes in all eight lists were found in the annotation (TAIR IDs), and of 2,131 terms tested 396-548 were significant.
 
 ---
 
