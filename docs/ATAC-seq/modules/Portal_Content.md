@@ -9,7 +9,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 선택(Optional) 입력은 빈 값이 "사용 안 함"입니다. 경로를 넣어 두면 그 경로를 실제로 찾으므로 Value를 비워 둡니다.
 - 스크립트 사용 예제는 모든 옵션을 기본값으로 적었습니다(기본값이 없는 옵션은 제외). 예시 값은 애기장대(TAIR10, 유전체 약 1.2e8 bp) 기준입니다.
 - 형식(Type)은 포탈 목록에 맞춰 고릅니다. 원고에는 Directory, File, String, Integer, Float, List로 적었습니다.
-- 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다릅니다. 기반 이미지(From)는 DEF의 `rockylinux/rockylinux:9.8` (digest `sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f`)이며 bowtie2와 GATK_MarkDuplicates를 뺀 모든 모듈이 같습니다. 이 두 모듈은 WGS 파이프라인과 같이 쓰는 이미지라 `rockylinux/rockylinux:9`(digest 고정 없음)와 Miniforge3 26.5.3-0을 씁니다.
+- 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`입니다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다릅니다. 기반 이미지(From)는 Rocky Linux 9.8(`rockylinux/rockylinux:9.8.20260525.0`)이며 bowtie2와 GATK_MarkDuplicates를 뺀 모든 모듈이 같습니다. 이 두 모듈은 WGS 파이프라인과 같이 쓰는 이미지라 Rocky Linux 9(`rockylinux/rockylinux:9`)와 Miniforge3 26.5.3-0을 씁니다.
 - 버전은 각 실행 스크립트 파일 이름에 적힌 버전을 씁니다(예: organellar_filter.1.1.sh → 1.1).
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지웁니다.
 - 카테고리는 기능(분석 단계) 기준의 대분류·중분류로 정했습니다(`docs/CLOSHA_Portal_Guide_v1.md` 5.2). 아이콘은 대분류마다 하나입니다.
@@ -41,7 +41,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_bowtie2_1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux:9` (Rocky Linux 9, digest 고정 없음) |
+| DEF From | Rocky Linux 9 (`rockylinux/rockylinux:9`) |
 | conda 설치 도구 / installer | Miniforge3 26.5.3-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -139,7 +139,7 @@ bash bowtie2.1.1.sh \
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_gatk_1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux:9` (Rocky Linux 9, digest 고정 없음) |
+| DEF From | Rocky Linux 9 (`rockylinux/rockylinux:9`) |
 | conda 설치 도구 / installer | Miniforge3 26.5.3-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -231,7 +231,7 @@ bash GATK_MarkDuplicates_1.0.sh \
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_organellar_filter.1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
 | conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -319,7 +319,7 @@ bash organellar_filter.1.1.sh \
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_atac_qc.1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
 | conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -455,7 +455,7 @@ Rscript ATAC_QC.1.1.R \
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_atac_qc.1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
 | conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -562,7 +562,7 @@ Rscript ATAC_QC_plot.1.1.R \
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_macs3_callpeak_atac.1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
 | conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -661,7 +661,7 @@ bash MACS3_callpeak_ATAC.1.1.sh \
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_peak_annotation.1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
 | conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -781,7 +781,7 @@ Rscript peak_annotation.1.1.R \
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_differential_accessibility.1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
 | conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -932,7 +932,7 @@ Rscript differential_accessibility.1.3.R \
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_atac_motif.1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
 | conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -1071,7 +1071,7 @@ Rscript atac_motif.1.2.R \
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_tf_footprinting.1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
 | conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -1190,7 +1190,7 @@ bash tf_footprinting.1.1.sh \
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_functional_enrichment.1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
 | conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -1329,7 +1329,7 @@ Rscript functional_enrichment.1.0.R \
 |---|---|
 | DEF 파일 | `defs/ATAC-seq/bx_replicate_consistency.1.0.def` |
 | DEF Bootstrap | `docker` |
-| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8, `9.8.20260525.0`) |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
 | conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
 
 | 분석도구 | 버전 | 홈페이지 |

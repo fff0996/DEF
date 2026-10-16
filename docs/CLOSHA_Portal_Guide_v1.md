@@ -142,7 +142,7 @@ KOBIC 포탈의 파이프라인 페이지와 모듈 등록 화면에 넣을 원�
   | 원고 항목 | DEF에서 가져오는 곳 |
   |---|---|
   | 이미지 이름, 버전 | 파일 이름 `<이미지>.<버전>.def`, `%labels`의 `Component`, `Version` |
-  | DEF Bootstrap, DEF From | 파일 첫 줄의 `Bootstrap:`, `From:` (From은 digest까지 그대로, 머리 주석의 태그를 괄호로 덧붙임) |
+  | DEF Bootstrap, DEF From | 파일 첫 줄의 `Bootstrap:`, `From:`. 원고(포탈)에는 From을 운영체제 이름과 버전으로 쓰고 이미지 태그를 괄호로 덧붙인다(예: Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`)). digest(sha256)는 쓰지 않으며, DEF 파일과 Container_Manual에만 둔다 |
   | conda 설치 도구 | `%labels`의 `CondaInstaller` |
   | 설치 도구와 버전 | `%post`의 `conda create`·`conda install` 목록에서 버전을 지정한 패키지 |
   | 이미지 설명 | `%labels`의 `Description`을 국문·영문으로 풀어 씀 |
