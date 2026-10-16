@@ -413,8 +413,6 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | SAMtools | 1.23.1 |
 | HTSlib | 1.23.1 |
 
----
-
 **포탈 등록 (컨테이너) / Portal registration**
 
 | 분석도구 | 버전 | 홈페이지 |
@@ -426,6 +424,8 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 - **태그(키워드):** 재현성분석, 반복실험, IDR, 피크검출
 - **내용(국문):** 반복 실험 사이에 peak가 얼마나 재현되는지 IDR로 평가하는 실행 환경입니다. MACS3로 반복 실험마다 느슨한 기준의 peak를 찾고, IDR로 두 반복에서 함께 나타나는 재현성 있는 peak 세트를 고릅니다.
 - **내용(영문):** Runtime environment for assessing with IDR how reproducible peaks are between replicates. MACS3 calls relaxed peaks for each replicate, and IDR selects the reproducible peak set shared by two replicates.
+
+---
 
 ## 4. 실행 방법 / How modules run
 
