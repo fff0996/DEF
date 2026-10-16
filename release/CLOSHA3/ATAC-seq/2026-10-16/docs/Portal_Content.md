@@ -727,7 +727,7 @@ Rscript peak_annotation.1.1.R \
   input_dir=/data/macs3 \
   genome_gff=/ref/genes.gff3 \
   output_dir=/data/peak_annotation \
-  genome_label=TAIR10 \
+  genome_label=custom_genome \
   peak_suffix=.narrowPeak \
   tss_upstream=3000 \
   tss_downstream=3000 \
@@ -1039,7 +1039,7 @@ Bins peaks by accessibility change (logFC) with monaLisa and finds transcription
 Rscript atac_motif.1.2.R \
   input_dir=/data/da \
   genome_fasta=/ref/genome.fa \
-  motif_db=/ref/JASPAR2024_CORE_plants.meme \
+  motif_db=/ref/motifs.meme \
   output_dir=/data/atac_motif \
   norm=TMM \
   n_per_bin=400 \
@@ -1190,9 +1190,9 @@ trt_2,treated,2
 bash tf_footprinting.1.1.sh \
   input_dir=/data/atac_qc \
   sample_data=/data/sample_data.csv \
-  macs_dir=/data/macs3 \
   genome_fasta=/ref/genome.fa \
-  motif_db=/ref/JASPAR2024_CORE_plants.meme \
+  motif_db=/ref/motifs.meme \
+  macs_dir=/data/macs3 \
   output_dir=/data/tf_footprinting
 ```
 
@@ -1311,7 +1311,7 @@ Analyzes with clusterProfiler which biological functions (GO) are enriched among
 ### 스크립트 사용 예제
 ```
 Rscript functional_enrichment.1.0.R \
-  input_dir=/data/da \
+  input_dir=/data/peak_annotation \
   genome_gff=/ref/genes.gff3 \
   orgdb_file=/ref/OrgDb/Arabidopsis_thaliana.AH121945.OrgDb.sqlite \
   output_dir=/data/functional_enrichment \
