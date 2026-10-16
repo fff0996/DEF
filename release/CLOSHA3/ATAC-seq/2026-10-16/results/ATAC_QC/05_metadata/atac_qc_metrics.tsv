@@ -1,0 +1,9 @@
+SampleID	Condition	Replicate	InputMappedReads	CleanMappedReads	CleanFraction	ShiftedReads	TSSEnrichment	SplitStatus
+SRR24197773	Mock	1	5160106	4226244	0.819	4226244	14.407	empty_split:trinucleosome
+SRR24197774	Mock	2	7985647	6618500	0.8288	6618500	13.655	empty_split:trinucleosome
+SRR24197775	Mock	3	17718960	14564340	0.822	14564340	7.516	empty_split:trinucleosome
+SRR24197776	Mock	4	8355154	6917006	0.8279	6917006	8.013	empty_split:trinucleosome
+SRR24197771	DEX	1	19946759	16599186	0.8322	16599186	8.742	empty_split:trinucleosome
+SRR24197772	DEX	2	30170981	25062046	0.8307	25062046	4.853	empty_split:trinucleosome
+SRR24197791	DEX	3	22696671	18760170	0.8266	18760170	7.329	empty_split:trinucleosome
+SRR24197792	DEX	4	23334066	19326750	0.8283	19326750	6.608	empty_split:trinucleosome
