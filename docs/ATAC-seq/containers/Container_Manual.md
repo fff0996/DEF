@@ -109,6 +109,7 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 |---|---|---|
 | GATK | 4.6.2.0 | https://gatk.broadinstitute.org/ |
 | SAMtools | 1.24 | https://www.htslib.org/ |
+| HTSlib | 1.24 | https://www.htslib.org/ |
 | OpenJDK | 17 | https://openjdk.org/ |
 
 - **태그(키워드):** 중복제거, 중복표시, BAM처리, GATK
@@ -137,6 +138,7 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | 분석도구 | 버전 | 홈페이지 |
 |---|---|---|
 | SAMtools | 1.23.1 | https://www.htslib.org/ |
+| HTSlib | 1.23.1 | https://www.htslib.org/ |
 
 - **태그(키워드):** 세포소기관제거, 미토콘드리아, 엽록체, BAM필터링
 - **내용(국문):** 정렬된 BAM에서 미토콘드리아·엽록체 등 세포소기관 염색체의 read를 제거하는 실행 환경입니다. SAMtools로 세포소기관 contig를 찾아 핵 염색체 read만 남기고, 제거 전후 read 수를 요약합니다.
@@ -173,6 +175,10 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | ATACseqQC | 1.34.0 | https://bioconductor.org/packages/ATACseqQC/ |
 | ChIPpeakAnno | 3.44.0 | https://bioconductor.org/packages/ChIPpeakAnno/ |
 | Rsamtools | 2.26.0 | https://bioconductor.org/packages/Rsamtools/ |
+| GenomicAlignments | 1.46.0 | https://bioconductor.org/packages/GenomicAlignments/ |
+| GenomicRanges | 1.62.1 | https://bioconductor.org/packages/GenomicRanges/ |
+| GenomeInfoDb | 1.46.2 | https://bioconductor.org/packages/GenomeInfoDb/ |
+| IRanges | 2.44.0 | https://bioconductor.org/packages/IRanges/ |
 
 - **태그(키워드):** ATAC-seq품질평가, Tn5보정, 뉴클레오솜, TSS
 - **내용(국문):** ATAC-seq 데이터의 품질을 평가하는 R 실행 환경입니다. ATACseqQC로 fragment 크기 분포와 TSS enrichment를 계산하고, Tn5 삽입 위치를 보정한 뒤 fragment를 뉴클레오솜 위치별로 나눕니다. TSS 주변 신호 heatmap도 같은 환경에서 그립니다.
@@ -202,7 +208,9 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | 분석도구 | 버전 | 홈페이지 |
 |---|---|---|
 | MACS3 | 3.0.4 | https://github.com/macs3-project/MACS |
+| Python | 3.13 | https://www.python.org/ |
 | SAMtools | 1.23.1 | https://www.htslib.org/ |
+| HTSlib | 1.23.1 | https://www.htslib.org/ |
 
 - **태그(키워드):** 피크검출, 열린염색질, MACS3, FRiP
 - **내용(국문):** ATAC-seq에서 열린 염색질 영역(peak)을 찾는 실행 환경입니다. MACS3로 paired-end fragment 전체를 이용해 narrow 또는 broad peak를 검출하고, SAMtools로 샘플별 FRiP(peak 안 read 비율)을 계산합니다.
@@ -241,6 +249,12 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | ChIPseeker | 1.46.1 | https://bioconductor.org/packages/ChIPseeker/ |
 | GenomicFeatures | 1.62.0 | https://bioconductor.org/packages/GenomicFeatures/ |
 | txdbmaker | 1.6.2 | https://bioconductor.org/packages/txdbmaker/ |
+| rtracklayer | 1.70.1 | https://bioconductor.org/packages/rtracklayer/ |
+| optparse | 1.8.2 | https://cran.r-project.org/package=optparse |
+| ggplot2 | 4.0.3 | https://ggplot2.tidyverse.org/ |
+| readr | 2.2.0 | https://readr.tidyverse.org/ |
+| dplyr | 1.2.1 | https://dplyr.tidyverse.org/ |
+| ggupset | 0.4.1 | https://cran.r-project.org/package=ggupset |
 
 - **태그(키워드):** 피크주석, 유전체영역, 프로모터, 유전자주석
 - **내용(국문):** peak가 유전체의 어느 영역(promoter, intron, intergenic 등)에 있는지와 가장 가까운 유전자를 붙이는 R 실행 환경입니다. ChIPseeker로 GFF/GTF 유전자 주석을 이용해 peak를 주석하고, 영역 분포와 TSS 주변 분포 그림을 만듭니다.
@@ -277,9 +291,14 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 |---|---|---|
 | R | 4.5.3 | https://www.r-project.org/ |
 | edgeR | 4.8.2 | https://bioconductor.org/packages/edgeR/ |
+| limma | 3.66.0 | https://bioconductor.org/packages/limma/ |
 | EDASeq | 2.44.0 | https://bioconductor.org/packages/EDASeq/ |
 | cqn | 1.56.0 | https://bioconductor.org/packages/cqn/ |
 | bamsignals | 1.42.0 | https://bioconductor.org/packages/bamsignals/ |
+| ggplot2 | 4.0.3 | https://ggplot2.tidyverse.org/ |
+| Hmisc | 5.3-0 | https://cran.r-project.org/package=Hmisc |
+| hexbin | 1.28.6 | https://cran.r-project.org/package=hexbin |
+| wesanderson | 0.3.7 | https://cran.r-project.org/package=wesanderson |
 
 - **태그(키워드):** 차등접근성, 조건비교, 통계검정, GC보정
 - **내용(국문):** 두 조건 사이에 접근성이 달라진 peak를 찾는 R 실행 환경입니다. 샘플별 peak를 합친 공통 peak에서 read 수를 세고, edgeR로 통계 검정을 합니다. GC 함량 편향은 EDASeq와 cqn으로 보정할 수 있으며, PCA와 샘플 상관 그림으로 반복 실험을 확인합니다.
@@ -319,6 +338,11 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | TFBSTools | 1.48.0 | https://bioconductor.org/packages/TFBSTools/ |
 | universalmotif | 1.28.0 | https://bioconductor.org/packages/universalmotif/ |
 | ComplexHeatmap | 2.26.1 | https://bioconductor.org/packages/ComplexHeatmap/ |
+| circlize | 0.4.18 | https://cran.r-project.org/package=circlize |
+| stabs | 0.7-1 | https://cran.r-project.org/package=stabs |
+| glmnet | 5.0 | https://cran.r-project.org/package=glmnet |
+| KernSmooth | 2.23-27 | https://cran.r-project.org/package=KernSmooth |
+| ggplot2 | 4.0.3 | https://ggplot2.tidyverse.org/ |
 
 - **태그(키워드):** 모티프분석, 전사인자, 서열모티프, 유전자조절
 - **내용(국문):** 접근성이 변한 peak에서 많이 나타나는 전사인자 결합 모티프를 찾는 R 실행 환경입니다. monaLisa로 peak를 접근성 변화 크기에 따라 구간으로 나누고, 구간마다 모티프와 k-mer 농축을 계산합니다. 회귀 분석으로 핵심 전사인자 후보를 고르며, peak가 많으면 메모리를 넉넉히 사용합니다.
@@ -351,7 +375,9 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 |---|---|---|
 | TOBIAS | 0.17.5 | https://github.com/loosolab/TOBIAS |
 | MOODS | 1.9.4.2 | https://github.com/jhkorhonen/MOODS |
+| Python | 3.13 | https://www.python.org/ |
 | SAMtools | 1.24 | https://www.htslib.org/ |
+| HTSlib | 1.24 | https://www.htslib.org/ |
 | bedtools | 2.31.1 | https://bedtools.readthedocs.io/ |
 
 - **태그(키워드):** 전사인자결합, 풋프린팅, 유전자조절, TOBIAS
@@ -388,6 +414,7 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | enrichplot | 1.30.5 | https://bioconductor.org/packages/enrichplot/ |
 | AnnotationDbi | 1.72.0 | https://bioconductor.org/packages/AnnotationDbi/ |
 | GO.db | 3.22.0 | https://bioconductor.org/packages/GO.db/ |
+| ggplot2 | 4.0.3 | https://ggplot2.tidyverse.org/ |
 
 - **태그(키워드):** 기능분석, GO농축분석, 유전자기능, 유전자온톨로지
 - **내용(국문):** peak 근처 유전자들이 어떤 생물학적 기능에 모여 있는지 GO 농축 분석을 하는 R 실행 환경입니다. clusterProfiler로 검정하고, 종별 유전자 주석은 OrgDb 파일로 받아 인터넷 연결 없이 수행합니다.
@@ -419,7 +446,9 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 |---|---|---|
 | IDR | 2.0.4.2 | https://github.com/kundajelab/idr |
 | MACS3 | 3.0.4 | https://github.com/macs3-project/MACS |
+| Python | 3.13 | https://www.python.org/ |
 | SAMtools | 1.23.1 | https://www.htslib.org/ |
+| HTSlib | 1.23.1 | https://www.htslib.org/ |
 
 - **태그(키워드):** 재현성분석, 반복실험, IDR, 피크검출
 - **내용(국문):** 반복 실험 사이에 peak가 얼마나 재현되는지 IDR로 평가하는 실행 환경입니다. MACS3로 반복 실험마다 느슨한 기준의 peak를 찾고, IDR로 두 반복에서 함께 나타나는 재현성 있는 peak 세트를 고릅니다.
