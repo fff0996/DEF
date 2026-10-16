@@ -104,7 +104,7 @@ if (!exists("output_dir", inherits = FALSE)) {
 
 if (!exists("input_dir", inherits = FALSE)) input_dir <- ""
 if (exists("da_csv", inherits = FALSE) && nchar(da_csv) > 0) {
-	stop_err("da_csv is not accepted from version 1.3; give the differential_accessibility output_dir as input_dir")
+	stop_err("da_csv is not accepted from version 1.4; give the differential_accessibility output_dir as input_dir")
 }
 da_csv <- ""
 

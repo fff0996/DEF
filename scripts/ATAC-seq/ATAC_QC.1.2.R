@@ -21,7 +21,7 @@
 #   an input path.
 
 # Usage:
-# Rscript ATAC_QC.R \
+# Rscript ATAC_QC.1.2.R \
 #   input_dir="..." \
 #   sample_data="..." \
 #   txs_bed="..." \

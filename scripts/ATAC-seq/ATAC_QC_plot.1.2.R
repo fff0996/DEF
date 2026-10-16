@@ -23,7 +23,7 @@
 #   an input path.
 
 # Usage:
-# Rscript ATAC_QC_plot.R \
+# Rscript ATAC_QC_plot.1.2.R \
 #   input_dir="..." \
 #   tss_bed="..." \
 #   output_dir="..." \

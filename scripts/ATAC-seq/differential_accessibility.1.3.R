@@ -13,7 +13,7 @@
 # ============================================================================
 #
 # Usage:
-# Rscript differential_accessibility.r \
+# Rscript differential_accessibility.1.3.R \
 #   sample_data="..." \
 #   genome_fasta="..." \
 #   output_dir="..." \
