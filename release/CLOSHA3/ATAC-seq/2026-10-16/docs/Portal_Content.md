@@ -632,9 +632,10 @@ bash MACS3_callpeak_ATAC.1.1.sh \
 ### 주요 결과 이미지
 
 **결과 1. 샘플별 peak 수와 FRiP**
-- 결과 파일: 표 캡처 `frip_summary.tsv` (이 모듈은 그림을 만들지 않습니다)
-- 레전드(국문): **샘플별 peak 수와 FRiP.** 샘플마다 MACS3로 찾은 peak 수(peaks), 전체 read 수(total_reads), peak 안에 들어간 read 수(reads_in_peaks), 그 비율(FRiP)을 보여 줍니다. FRiP는 신호 대 잡음의 지표로, ENCODE ATAC-seq 기준에서는 0.3 이상이 바람직하고 0.2 이상이면 허용합니다.
-- 레전드(영문): **Peak count and FRiP per sample.** For each sample the table lists the number of MACS3 peaks (peaks), total reads (total_reads), reads falling in peaks (reads_in_peaks) and their fraction (FRiP). FRiP is a signal-to-noise measure; the ENCODE ATAC-seq standard prefers 0.3 or higher and accepts 0.2 or higher.
+- 결과 파일: 표 `frip_summary.tsv` (이 모듈은 그림을 만들지 않습니다)
+그림: `release/CLOSHA3/ATAC-seq/2026-10-16/results/MACS3_callpeak_ATAC/portal/MACS3_callpeak_ATAC_result_1.png`
+- 레전드(국문): **샘플별 peak 수와 FRiP.** 샘플마다 MACS3로 찾은 peak 수(Peaks), 전체 read 수(Total reads), peak 안에 들어간 read 수(Reads in peaks), 그 비율(FRiP)을 보여 줍니다. FRiP는 신호 대 잡음의 지표로, ENCODE ATAC-seq 기준에서는 0.3 이상이 바람직하고 0.2 이상이면 허용합니다. 표에서 FRiP 옆 점의 색은 이 기준(초록 ≥ 0.3, 주황 0.2~0.3, 빨강 < 0.2)을 나타냅니다. 예시 데이터(애기장대 8개 샘플)에서는 샘플마다 약 1만 8천~2만 2천 개 peak가 검출되었고, FRiP가 0.65~0.74로 모두 기준을 넘었습니다.
+- 레전드(영문): **Peak count and FRiP per sample.** For each sample the table lists the number of MACS3 peaks (Peaks), total reads (Total reads), reads falling in peaks (Reads in peaks), and their fraction (FRiP). FRiP is a signal-to-noise measure; the ENCODE ATAC-seq standard prefers 0.3 or higher and accepts 0.2 or higher. The dot beside each FRiP value shows this standard (green ≥ 0.3, orange 0.2-0.3, red < 0.2). In the example data (eight Arabidopsis samples) about 18,000-22,000 peaks were called per sample, and FRiP was 0.65-0.74, all above the standard.
 
 ---
 
