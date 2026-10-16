@@ -152,7 +152,7 @@ for (const raw of lines) {
     }));
   } else if (NOTE_PREFIXES.some((p) => line.startsWith(p))) {
     children.push(note(line));
-    const img = line.match(/`(docs\/[^`]+\.png)`/);
+    const img = line.match(/`((?:docs|release)\/[^`]+\.png)`/);
     if (img) { const p = image(img[1]); if (p) children.push(p); }
   } else if (/^\d+\. /.test(line)) {
     if (!inNumbered) { listInstance += 1; inNumbered = true; }
