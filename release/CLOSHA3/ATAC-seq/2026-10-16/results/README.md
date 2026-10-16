@@ -15,7 +15,7 @@
 | peak_annotation | `plots/annotation_summary_percent_barplot.pdf`, `plots/<sample>.annotation_upset.pdf`, `plots/<sample>.distance_to_tss.pdf`, `plots/<sample>.tss_profile.pdf` |
 | differential_accessibility | `04_plots/PCA_plot.pdf`, `04_plots/sample_correlation_heatmap.pdf`, `04_plots/MD_plot.pdf`, `04_plots/logFC_by_GC_bin_*.pdf` |
 | atac_motif | `02_binned_enrichment/binned_motif_heatmap.pdf`, `01_qc/bin_density.pdf`, `04_regression/selection_probability.pdf`, `03_kmer/kmer_motif_similarity.pdf` |
-| tf_footprinting | `04_BINDetect/bindetect_figures.pdf` |
+| tf_footprinting | `04_BINDetect/bindetect_figures.pdf` (4쪽 맨 위 volcano plot, 3쪽 정규화 후 점수 분포) |
 | functional_enrichment | `03_plots/<list>.GO_BP.dotplot.pdf`, `03_plots/<list>.GO_BP.barplot.pdf`, `04_summary/enrichment_summary.tsv` |
 | replicate_consistency | `02_idr/<condition>/<repA>_vs_<repB>.idr.txt.png`, `04_summary/idr_summary.tsv` |
 
