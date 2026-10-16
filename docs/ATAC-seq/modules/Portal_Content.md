@@ -866,8 +866,8 @@ Counts reads in consensus peaks of two conditions and finds regions with increas
 ### 샘플시트
 - 제목(국문): 샘플 정보 파일(sample_data)
 - 제목(영문): Sample sheet (sample_data)
-- 본문(국문): SampleID와 Condition 두 열을 적습니다. BAM과 peak 파일은 input_dir과 peak_dir에서 SampleID로 찾습니다. Condition은 정확히 두 종류여야 합니다. 파일 경로를 CSV에 직접 적는 방식(bamReads, Peaks 열)은 포탈에서 쓸 수 없습니다.
-- 본문(영문): List the SampleID and Condition columns. BAM and peak files are found by SampleID in input_dir and peak_dir. Condition must have exactly two values. File paths in the CSV (bamReads, Peaks columns) cannot be used on the portal.
+- 본문(국문): SampleID와 Condition 두 열을 적습니다. BAM과 peak 파일은 input_dir과 peak_dir에서 SampleID로 찾습니다. Condition은 정확히 두 종류여야 합니다. 반복 실험 수는 Condition마다 샘플이 몇 개인지로 판단하므로 Replicate 열은 필요 없으며, 있어도 무시합니다(다른 모듈과 같은 sample_data를 그대로 써도 됩니다). 조건마다 샘플이 2개 이상이면 통계 검정을 하고, 그보다 적으면 검정 없이 변화량만 계산합니다. 파일 경로를 CSV에 직접 적는 방식(bamReads, Peaks 열)은 포탈에서 쓸 수 없습니다.
+- 본문(영문): List the SampleID and Condition columns. BAM and peak files are found by SampleID in input_dir and peak_dir. Condition must have exactly two values. The number of replicates is taken from the number of samples per Condition, so a Replicate column is not needed and is ignored if present (the sample_data of the other modules can be used as is). With two or more samples per condition, statistical testing is done; with fewer, only fold changes are computed. File paths in the CSV (bamReads, Peaks columns) cannot be used on the portal.
 - 예시 제목: da_sample_data.csv
 - 예시 본문:
 ```
