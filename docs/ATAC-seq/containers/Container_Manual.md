@@ -73,6 +73,17 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | bowtie2 | 2.5.4 |
 | SAMtools | 1.24 |
 
+**포탈 등록 (컨테이너) / Portal registration**
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| bowtie2 | 2.5.4 | https://github.com/BenLangmead/bowtie2 |
+| SAMtools | 1.24 | https://www.htslib.org/ |
+
+- **태그(키워드):** 리드정렬, 참조유전체, 시퀀스정렬, BAM
+- **내용(국문):** 시퀀싱 리드를 참조 유전체에 정렬하는 실행 환경입니다. bowtie2로 paired-end·single-end 리드를 정렬하고, SAMtools로 결과를 좌표 순으로 정렬한 BAM과 인덱스로 만듭니다. 사람 유전체 기준으로 인덱스를 올리는 데 약 4GB의 메모리를 사용합니다.
+- **내용(영문):** Runtime environment for aligning sequencing reads to a reference genome. bowtie2 aligns paired-end and single-end reads, and SAMtools turns the alignments into coordinate-sorted BAM files with an index. Loading a human genome index uses about 4 GB of memory.
+
 ### 3.2 gatk 1.0
 
 | 항목 / Item | 값 / Value |
@@ -92,6 +103,18 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | HTSlib | 1.24 |
 | OpenJDK | 17 |
 
+**포탈 등록 (컨테이너) / Portal registration**
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| GATK | 4.6.2.0 | https://gatk.broadinstitute.org/ |
+| SAMtools | 1.24 | https://www.htslib.org/ |
+| OpenJDK | 17 | https://openjdk.org/ |
+
+- **태그(키워드):** 중복제거, 중복표시, BAM처리, GATK
+- **내용(국문):** GATK(Picard)로 정렬된 BAM에서 PCR·광학 중복 read를 찾아 표시하는 실행 환경입니다. 중복 read는 지우지 않고 표시만 하며, 샘플별 중복 통계를 남깁니다. Java로 동작하므로 처리할 BAM 크기에 맞춰 충분한 메모리가 필요합니다.
+- **내용(영문):** Runtime environment for finding and marking PCR and optical duplicate reads in aligned BAM files with GATK (Picard). Duplicate reads are marked rather than removed, and duplicate metrics are written per sample. It runs on Java, so it needs memory matched to the BAM size.
+
 ### 3.3 bx_organellar_filter 1.0
 
 | 항목 / Item | 값 / Value |
@@ -108,6 +131,16 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 |---|---|
 | SAMtools | 1.23.1 |
 | HTSlib | 1.23.1 |
+
+**포탈 등록 (컨테이너) / Portal registration**
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| SAMtools | 1.23.1 | https://www.htslib.org/ |
+
+- **태그(키워드):** 세포소기관제거, 미토콘드리아, 엽록체, BAM필터링
+- **내용(국문):** 정렬된 BAM에서 미토콘드리아·엽록체 등 세포소기관 염색체의 read를 제거하는 실행 환경입니다. SAMtools로 세포소기관 contig를 찾아 핵 염색체 read만 남기고, 제거 전후 read 수를 요약합니다.
+- **내용(영문):** Runtime environment for removing reads on organellar chromosomes, such as mitochondria and chloroplasts, from aligned BAM files. SAMtools finds the organellar contigs, keeps only nuclear reads, and summarises the read counts before and after filtering.
 
 ### 3.4 bx_atac_qc 1.0
 
@@ -132,6 +165,19 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | GenomeInfoDb | 1.46.2 |
 | IRanges | 2.44.0 |
 
+**포탈 등록 (컨테이너) / Portal registration**
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.5.3 | https://www.r-project.org/ |
+| ATACseqQC | 1.34.0 | https://bioconductor.org/packages/ATACseqQC/ |
+| ChIPpeakAnno | 3.44.0 | https://bioconductor.org/packages/ChIPpeakAnno/ |
+| Rsamtools | 2.26.0 | https://bioconductor.org/packages/Rsamtools/ |
+
+- **태그(키워드):** ATAC-seq품질평가, Tn5보정, 뉴클레오솜, TSS
+- **내용(국문):** ATAC-seq 데이터의 품질을 평가하는 R 실행 환경입니다. ATACseqQC로 fragment 크기 분포와 TSS enrichment를 계산하고, Tn5 삽입 위치를 보정한 뒤 fragment를 뉴클레오솜 위치별로 나눕니다. TSS 주변 신호 heatmap도 같은 환경에서 그립니다.
+- **내용(영문):** R runtime environment for assessing ATAC-seq data quality. ATACseqQC computes the fragment size distribution and TSS enrichment, corrects Tn5 insertion positions, and splits fragments by nucleosome position. The TSS signal heatmaps are drawn in the same environment.
+
 ### 3.5 bx_macs3_callpeak_atac 1.0
 
 | 항목 / Item | 값 / Value |
@@ -150,6 +196,17 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | Python | 3.13 |
 | SAMtools | 1.23.1 |
 | HTSlib | 1.23.1 |
+
+**포탈 등록 (컨테이너) / Portal registration**
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| MACS3 | 3.0.4 | https://github.com/macs3-project/MACS |
+| SAMtools | 1.23.1 | https://www.htslib.org/ |
+
+- **태그(키워드):** 피크검출, 열린염색질, MACS3, FRiP
+- **내용(국문):** ATAC-seq에서 열린 염색질 영역(peak)을 찾는 실행 환경입니다. MACS3로 paired-end fragment 전체를 이용해 narrow 또는 broad peak를 검출하고, SAMtools로 샘플별 FRiP(peak 안 read 비율)을 계산합니다.
+- **내용(영문):** Runtime environment for finding open chromatin regions (peaks) in ATAC-seq data. MACS3 calls narrow or broad peaks from whole paired-end fragments, and SAMtools computes the fraction of reads in peaks (FRiP) per sample.
 
 ### 3.6 bx_peak_annotation 1.0
 
@@ -176,6 +233,19 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | dplyr | 1.2.1 |
 | ggupset | 0.4.1 |
 
+**포탈 등록 (컨테이너) / Portal registration**
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.5.3 | https://www.r-project.org/ |
+| ChIPseeker | 1.46.1 | https://bioconductor.org/packages/ChIPseeker/ |
+| GenomicFeatures | 1.62.0 | https://bioconductor.org/packages/GenomicFeatures/ |
+| txdbmaker | 1.6.2 | https://bioconductor.org/packages/txdbmaker/ |
+
+- **태그(키워드):** 피크주석, 유전체영역, 프로모터, 유전자주석
+- **내용(국문):** peak가 유전체의 어느 영역(promoter, intron, intergenic 등)에 있는지와 가장 가까운 유전자를 붙이는 R 실행 환경입니다. ChIPseeker로 GFF/GTF 유전자 주석을 이용해 peak를 주석하고, 영역 분포와 TSS 주변 분포 그림을 만듭니다.
+- **내용(영문):** R runtime environment for annotating where peaks lie in the genome (promoter, intron, intergenic, and so on) and which gene is nearest. ChIPseeker annotates peaks with a GFF/GTF gene annotation and draws the genomic distribution and the distribution around TSSs.
+
 ### 3.7 bx_differential_accessibility 1.0
 
 | 항목 / Item | 값 / Value |
@@ -200,6 +270,20 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | Hmisc | 5.3-0 |
 | hexbin | 1.28.6 |
 | wesanderson | 0.3.7 |
+
+**포탈 등록 (컨테이너) / Portal registration**
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.5.3 | https://www.r-project.org/ |
+| edgeR | 4.8.2 | https://bioconductor.org/packages/edgeR/ |
+| EDASeq | 2.44.0 | https://bioconductor.org/packages/EDASeq/ |
+| cqn | 1.56.0 | https://bioconductor.org/packages/cqn/ |
+| bamsignals | 1.42.0 | https://bioconductor.org/packages/bamsignals/ |
+
+- **태그(키워드):** 차등접근성, 조건비교, 통계검정, GC보정
+- **내용(국문):** 두 조건 사이에 접근성이 달라진 peak를 찾는 R 실행 환경입니다. 샘플별 peak를 합친 공통 peak에서 read 수를 세고, edgeR로 통계 검정을 합니다. GC 함량 편향은 EDASeq와 cqn으로 보정할 수 있으며, PCA와 샘플 상관 그림으로 반복 실험을 확인합니다.
+- **내용(영문):** R runtime environment for finding peaks whose accessibility differs between two conditions. Reads are counted in a consensus peak set merged from all samples and tested with edgeR. GC-content bias can be corrected with EDASeq and cqn, and replicates are checked with PCA and sample correlation plots.
 
 ### 3.8 bx_atac_motif 1.0
 
@@ -226,6 +310,20 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | KernSmooth | 2.23-27 |
 | ggplot2 | 4.0.3 |
 
+**포탈 등록 (컨테이너) / Portal registration**
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.5.3 | https://www.r-project.org/ |
+| monaLisa | 1.16.0 | https://bioconductor.org/packages/monaLisa/ |
+| TFBSTools | 1.48.0 | https://bioconductor.org/packages/TFBSTools/ |
+| universalmotif | 1.28.0 | https://bioconductor.org/packages/universalmotif/ |
+| ComplexHeatmap | 2.26.1 | https://bioconductor.org/packages/ComplexHeatmap/ |
+
+- **태그(키워드):** 모티프분석, 전사인자, 서열모티프, 유전자조절
+- **내용(국문):** 접근성이 변한 peak에서 많이 나타나는 전사인자 결합 모티프를 찾는 R 실행 환경입니다. monaLisa로 peak를 접근성 변화 크기에 따라 구간으로 나누고, 구간마다 모티프와 k-mer 농축을 계산합니다. 회귀 분석으로 핵심 전사인자 후보를 고르며, peak가 많으면 메모리를 넉넉히 사용합니다.
+- **내용(영문):** R runtime environment for finding transcription factor binding motifs that are over-represented in peaks with changed accessibility. monaLisa groups peaks into bins by the size of the change and computes motif and k-mer enrichment per bin. A regression step selects core transcription factor candidates; many peaks need ample memory.
+
 ### 3.9 bx_tf_footprinting 1.0
 
 | 항목 / Item | 값 / Value |
@@ -246,6 +344,19 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | SAMtools | 1.24 |
 | HTSlib | 1.24 |
 | bedtools | 2.31.1 |
+
+**포탈 등록 (컨테이너) / Portal registration**
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| TOBIAS | 0.17.5 | https://github.com/loosolab/TOBIAS |
+| MOODS | 1.9.4.2 | https://github.com/jhkorhonen/MOODS |
+| SAMtools | 1.24 | https://www.htslib.org/ |
+| bedtools | 2.31.1 | https://bedtools.readthedocs.io/ |
+
+- **태그(키워드):** 전사인자결합, 풋프린팅, 유전자조절, TOBIAS
+- **내용(국문):** ATAC-seq 신호에서 전사인자가 실제로 결합한 흔적(footprint)을 찾는 실행 환경입니다. TOBIAS로 Tn5 절단 편향을 보정하고 footprint 점수를 계산한 뒤, 두 조건 사이에 결합이 달라진 전사인자를 찾습니다.
+- **내용(영문):** Runtime environment for finding the traces of actual transcription factor binding (footprints) in ATAC-seq signal. TOBIAS corrects the Tn5 cutting bias, scores footprints, and finds transcription factors whose binding differs between two conditions.
 
 ### 3.10 bx_functional_enrichment 1.0
 
@@ -268,6 +379,20 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | GO.db | 3.22.0 |
 | ggplot2 | 4.0.3 |
 
+**포탈 등록 (컨테이너) / Portal registration**
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.5.3 | https://www.r-project.org/ |
+| clusterProfiler | 4.18.4 | https://bioconductor.org/packages/clusterProfiler/ |
+| enrichplot | 1.30.5 | https://bioconductor.org/packages/enrichplot/ |
+| AnnotationDbi | 1.72.0 | https://bioconductor.org/packages/AnnotationDbi/ |
+| GO.db | 3.22.0 | https://bioconductor.org/packages/GO.db/ |
+
+- **태그(키워드):** 기능분석, GO농축분석, 유전자기능, 유전자온톨로지
+- **내용(국문):** peak 근처 유전자들이 어떤 생물학적 기능에 모여 있는지 GO 농축 분석을 하는 R 실행 환경입니다. clusterProfiler로 검정하고, 종별 유전자 주석은 OrgDb 파일로 받아 인터넷 연결 없이 수행합니다.
+- **내용(영문):** R runtime environment for GO enrichment analysis of which biological functions the genes near peaks share. clusterProfiler runs the tests, and the species gene annotation is read from an OrgDb file, so the analysis runs without internet access.
+
 ### 3.11 bx_replicate_consistency 1.0
 
 | 항목 / Item | 값 / Value |
@@ -289,6 +414,18 @@ bowtie2, gatk: Bootstrap `docker`, From `rockylinux/rockylinux:9` (digest 고정
 | HTSlib | 1.23.1 |
 
 ---
+
+**포탈 등록 (컨테이너) / Portal registration**
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| IDR | 2.0.4.2 | https://github.com/kundajelab/idr |
+| MACS3 | 3.0.4 | https://github.com/macs3-project/MACS |
+| SAMtools | 1.23.1 | https://www.htslib.org/ |
+
+- **태그(키워드):** 재현성분석, 반복실험, IDR, 피크검출
+- **내용(국문):** 반복 실험 사이에 peak가 얼마나 재현되는지 IDR로 평가하는 실행 환경입니다. MACS3로 반복 실험마다 느슨한 기준의 peak를 찾고, IDR로 두 반복에서 함께 나타나는 재현성 있는 peak 세트를 고릅니다.
+- **내용(영문):** Runtime environment for assessing with IDR how reproducible peaks are between replicates. MACS3 calls relaxed peaks for each replicate, and IDR selects the reproducible peak set shared by two replicates.
 
 ## 4. 실행 방법 / How modules run
 
