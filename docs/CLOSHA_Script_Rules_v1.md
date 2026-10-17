@@ -2,6 +2,8 @@ CLOSHA 분석 스크립트 작성 규칙 1.0
 
 작성일: 2026-10-07
 
+개정 (2026-10-17): 작업 번호와 배포 번호(1.2절), 데이터 결과로 끝나는 경우의 종료 코드(9절), BAM read group(8절), 메모리 규칙(11절)을 추가했다.
+
 이 문서는 CLOSHA 파이프라인 노드에서 실행되는 분석 스크립트(Bash, R, Python)의 작성 규칙이다. 기준은 CLOSHA 2.0 운영에서 쓰던 `scripts/ATAC-seq/`의 원본 스크립트(organellar_filter, ATAC_QC, ATAC_QC_plot, MACS3_callpeak_ATAC, peak_annotation, tf_footprinting은 1.0, differential_accessibility는 1.2, atac_motif는 1.1)의 공통 형식이다. 실행 이미지(DEF) 규칙은 docs/CLOSHA_DEF_Generator_Agent_v1.md를 따른다.
 
 참고 예: Bash는 `organellar_filter.1.0.sh`, R은 `ATAC_QC.1.0.R`, `differential_accessibility.1.2.R`.
@@ -28,6 +30,29 @@ CLOSHA 분석 스크립트 작성 규칙 1.0
 - 부버전: 같은 실행 이미지에서 돌아가는 변경. 주버전: 입력·출력 형식이 호환되지 않거나 실행 이미지(DEF)를 바꿔야 하는 변경.
 - 오타, 주석, 로그 문구만 고친 경우는 같은 버전에서 고칠 수 있다.
 - 새 패키지나 도구가 필요하면 DEF도 새 버전으로 만든다. 같은 이미지로 충분하면 DEF는 두고 DEF 주석의 대상 스크립트 목록만 갱신한다.
+- 다른 팀에서 받은 스크립트(예: `GATK_MarkDuplicates_1.0.sh`)는 고치지 않는 것을 먼저 생각한다. 받은 스크립트가 요구하는 조건은 앞 단계의 우리 스크립트에서 맞춘다(예: GATK 4.6이 요구하는 @RG를 bowtie2에서 붙임).
+
+### 1.2 배포 번호와 배포 폴더
+`scripts/`의 번호(작업 번호)는 개발 중 바뀔 때마다 올라가므로, 사용자에게 나가는 번호(배포 번호)와 따로 관리한다.
+- **작업 번호**: `scripts/{파이프라인}/`의 파일 번호. 1.1절대로 고칠 때마다 올리고 다시 쓰지 않는다. 배포되지 않은 중간 번호도 그대로 둔다.
+- **배포 번호**: 이전 플랫폼(CLOSHA 2.0) 운영 번호 + 1. 한 번 배포할 때 모듈마다 하나만 올린다. 이번 플랫폼에서 새로 만든 모듈은 1.0이다.
+  - 예(2026-10-16 배포): differential_accessibility 작업 1.4 → 배포 1.3(2.0은 1.2), atac_motif 작업 1.5 → 배포 1.2(2.0은 1.1), bowtie2 작업 1.5 → 배포 1.1, functional_enrichment 작업 1.2 → 배포 1.0(새 모듈).
+- **배포 폴더**: `release/{플랫폼}/{파이프라인}/{배포일 YYYY-MM-DD}/`. 예: `release/CLOSHA3/ATAC-seq/2026-10-16/`. 안에 두는 것:
+  - 배포 스크립트(배포 번호 이름)
+  - `RELEASE.md`(배포 ↔ 작업 파일 ↔ 커밋 대응표, 바뀐 점)
+  - `release.tsv`(module, release_file, closha2_file, work_file, image)
+  - `build_release.py`(작업 파일로 배포 파일을 만드는 스크립트)
+  - 포탈 원고 사본(`docs/`), 결과 원본과 결과 PNG(`results/`, `portal_images/`)
+- **배포 파일 머리 주석**: 작업 번호별 변경 내역을 지우고 블록 **하나**로 바꾼다. 작업 번호는 배포 파일에 나오지 않는다(대응은 `RELEASE.md`에만).
+  ```
+  # Version 1.3 (changes from differential_accessibility.1.2, CLOSHA 2.0):
+  #   QC: a sample correlation heatmap ... (주제별로 묶어 씀)
+  ```
+  새 모듈은 `# Version 1.0 (first release in CLOSHA 3.0):` 아래에 모듈이 하는 일을 쓴다.
+- 배포 파일은 작업 파일과 **머리 주석과 자기 파일 이름만** 다르다. `build_release.py`로 만들고 `python3 tools/check_release.py <배포 폴더>`로 확인한다. 로그·오류 문구에 버전 번호를 넣지 않는다(넣으면 두 파일이 달라진다).
+- **배포 폴더는 사용자가 CLOSHA에서 테스트를 마치고 배포한다고 한 뒤에 만든다.** 테스트 중에는 `scripts/`에서만 고친다.
+- 배포한 폴더는 고치지 않는다. 배포 뒤에 고친 것은 `scripts/`에 새 작업 번호로 만들고, 다음 배포 때 새 날짜 폴더와 다음 배포 번호로 낸다.
+- 다른 팀 스크립트(GATK_MarkDuplicates)는 우리 배포에 넣지 않는다.
 
 ## 2. 실행 환경
 - 실행 형태: `apptainer exec <sif> bash <스크립트> key=value ...`, `apptainer exec <sif> Rscript <스크립트> key=value ...`. 스크립트는 이미지에 넣지 않고 실행할 때 연결된다.
@@ -214,6 +239,9 @@ msg      <- function(...) { cat(..., "\n") }
 - 입력 파일은 `SampleID`로 찾는다(이름이 `SampleID`로 시작하는 파일 우선, 없으면 포함하는 파일). 여러 개가 맞으면 멈추고 후보를 보여 준다.
 - 염색체 이름(seqlevels)이 입력 사이에서 맞는지 확인하고, 맞지 않으면 양쪽 미리보기를 보여 주고 멈춘다.
 - 인덱스(.bai, .fai)가 없으면 만들 수 있다. 이 경우 입력 옆에 파일이 생기므로 머리 주석에 적는다.
+- 입력은 인자로 받는 폴더(필수)에서 찾는다. 샘플 시트 안에 파일 경로를 적게 하지 않는다. 같은 입력을 두 인자(폴더와 파일)로 받지 않는다.
+- 정렬 결과 BAM에는 read group(@RG: ID, SM, LB, PL)을 붙인다. GATK 4.6 MarkDuplicates는 @RG가 없으면 NullPointerException으로 멈춘다(4.5 이하는 "Unknown Library"로 처리).
+- 결과를 실제로 쓰는 데 꼭 필요한 후처리(예: SAM → 정렬 BAM + 인덱스)는 기본값을 켜 둔다. 포탈에 인자를 등록하지 않으면 기본값으로만 실행된다.
 
 ## 9. 종료 코드
 - 성공: 0. 오류: 1.
@@ -221,6 +249,8 @@ msg      <- function(...) { cat(..., "\n") }
   - 모두 실패: `Error: all ... failed.` 후 종료 코드 1
   - 일부 실패: `Warning: some ... failed. Check summary TSV ...` 후 종료 코드 0, 실패 샘플은 요약 TSV에 기록
   - 일부를 건너뜀: 샘플별 사유를 로그(`WARNING: sample skipped: <SampleID> / <사유>`)와 요약 TSV에 남김
+- **오류와 데이터 결과를 구분한다.** 실행은 정상인데 데이터 때문에 결과가 비는 경우(차등 영역이 적어 유전자 목록이 비거나, 검정할 GO term이 없음 등)는 오류가 아니다. 경고(이유와 확인할 점 포함)를 stderr에 남기고, 요약 TSV에 상태(예: `empty`, `no_testable_terms`)를 적고, 종료 코드 0으로 끝낸다. 종료 코드 1은 입력·인자·도구 실패에만 쓴다.
+- 분석에 필요한 최소 조건을 먼저 확인하고, 모자라면 도구 안에서 알 수 없는 오류로 죽지 않게 이유를 적고 멈춘다. 예: atac_motif는 필터 후 남은 피크 수가 logFC 구간을 만들기에 모자라면 남은 피크 수, 걸린 필터(`fdr_filter`, 염색체), 바꿔 볼 인자를 오류 문구에 쓴다.
 - 외부 명령은 종료 코드를 확인한다(`if ! samtools index ...; then error_msg ...`). Bash는 `set -u`, `set -o pipefail`을 쓴다.
 
 ## 10. 호스트 보호와 금지 명령
@@ -258,6 +288,12 @@ msg      <- function(...) { cat(..., "\n") }
   - 로그의 `parameters:`에 요청값과 실제값을 함께 남긴다. 예: `threads = 4 (requested auto, allocated 4)`
 - 실행 환경이 코어를 지정하지 않고 사용량만 제한하는 방식(Docker `--cpus`, Kubernetes `limits.cpu`)으로 바뀌면 위 방법은 서버 전체 코어 수를 돌려줄 수 있다. 그때는 cgroup `cpu.max` 값도 읽도록 규칙을 갱신한다.
 - 메모리는 할당량을 넘지 않게 샘플 단위로 처리하고, 큰 데이터를 한꺼번에 메모리에 올리지 않는다(예: `readBamFile(..., bigFile = TRUE)`).
+  - 유전체 전체 행렬은 나눠서 만든다. 예: peak_annotation의 TSS tag matrix는 피크와 겹치는 promoter만 묶음 단위로 계산한다(1.0은 8GB를 넘어 멈췄고, 고친 뒤 2.8GB, 결과 같음).
+  - 점이 많은 heatmap은 래스터로 그린다. 벡터 PDF는 메모리를 많이 쓰고 비어서 저장될 수 있다.
+  - 병렬 작업자는 메모리를 작업자 수만큼 늘린다(atac_motif k-mer 단계: 4코어에서 20.5GB). 코어 수를 늘릴 때는 메모리도 함께 늘린다.
+  - 샘플마다 만든 큰 객체는 다음 샘플 전에 지운다(`rm()`, `gc()`).
+- OOM(메모리 부족)으로 멈추면 먼저 로그에서 어느 단계인지 확인한다. 데이터 크기에 비례하는 정상 사용이면 포탈 메모리를 올리고, 한꺼번에 올리는 코드 때문이면 스크립트를 고친다.
+- 포탈 원고에는 모듈마다 권장 Processor Core와 메모리를 적는다. 사람 유전체처럼 큰 유전체도 고려한다(예: bowtie2, atac_motif는 최대 64GB).
 
 
 ## 12. 등록 전 확인 목록
@@ -272,6 +308,7 @@ msg      <- function(...) { cat(..., "\n") }
 - [ ] 스레드 수를 고정하지 않고 할당된 코어 수(`threads=auto`)를 쓰며, 실제값을 로그에 남긴다.
 - [ ] 필요한 명령·패키지를 시작할 때 확인한다.
 - [ ] 도구를 이름으로 부르고, 실행 중 설치·다운로드가 없다.
-- [ ] 샘플별 상태가 요약 TSV에 남고, 종료 코드 규칙(9절)을 따른다.
+- [ ] 샘플별 상태가 요약 TSV에 남고, 종료 코드 규칙(9절)을 따른다. 데이터 때문에 결과가 비는 경우는 경고와 종료 코드 0이다.
 - [ ] 사이트 명령 차단 목록에 걸리는 줄이 없다(주석 포함).
-- [ ] 실행 이미지에서 실제 입력 또는 예제 입력으로 한 번 이상 실행해 보았다.
+- [ ] 실행 이미지에서 실제 입력 또는 예제 입력으로 한 번 이상 실행해 보았고, 사용한 메모리를 확인했다.
+- [ ] 배포할 때는 배포 폴더를 만들고 `tools/check_release.py`가 통과한다(1.2절).
