@@ -1,4 +1,4 @@
-CLOSHA 체세포 CNV 파이프라인 설계안 0.2
+CLOSHA 체세포 CNV 파이프라인 설계안 0.3
 
 작성일: 2026-10-21
 상태: 설계 단계. 스크립트, DEF, 원고는 아직 없다.
@@ -127,6 +127,39 @@ CLOSHA에는 두 파이프라인("종양-정상 쌍", "종양만")으로 등록�
 
 ## 7. 검증 데이터
 SEQC2 체세포 기준 세포주 HCC1395(종양)와 HCC1395BL(정상)을 쓴다. 공개된 WGS, WES 데이터와 CNV 정답 세트가 있어 결과를 정답과 비교할 수 있다. Codespace는 디스크가 작으므로 일부 염색체만 잘라서 쓴다. 원격 BAM에서 구간만 받을 수 있는지는 확인이 필요하다.
+
+### 7.1 첫 검증 결과 (2026-10-21, Codespace 2코어 7GB)
+- **자료:** SEQC2 WES `WES_IL_T_1`(종양), `WES_IL_N_1`(정상). BWA-MEM과 중복 제거가 끝났고, 참조는 GRCh38.d1.vd1이다.
+  - 염색체는 chr6, chr13, chr17, chr18, chr21만 쓴다. BAM은 종양 1.75GB, 정상 1.95GB이다.
+  - 타깃은 SureSelect V6+UTR(hg38)이고, SNP 위치는 dbSNP b151 common이다.
+  - 받는 법: `tools/cnv/fetch_seqc2_subset.py <폴더>`(약 15분). Codespace의 `/tmp`는 재시작하면 지워진다.
+- **비교 기준:** FTP의 `analysis/CNVs/SEQC_CNV_raw_data.zip`에 같은 데이터의 SEQC2 공식 결과(도구 6종)가 있다. 비교에는 `WES/facets/WES_IL_1_fit_cncf.txt`와 `WES/cnvkit/WES_IL_1.call.cns`를 썼다. R write.table 형식이라 데이터 줄에는 행 이름 열이 하나 더 있다.
+- **도구 버전:** CNVkit 0.9.14(R 4.5.3 이상 필요), FACETS 0.6.2와 snp-pileup 0.6.2(bioconda는 R 4.4까지). R 요구가 서로 달라 한 환경에 설치되지 않으므로 이미지를 나눈다(8절).
+
+| 단계 | 시간 | 최대 메모리 |
+|---|---|---|
+| cnvkit.py access | 8초 | 0.18GB |
+| cnvkit.py batch(기준, 커버리지, fix, segment, call, 그림) | 474초 | 0.36GB |
+| snp-pileup(-g -q15 -Q20 -P100 -r25,0) | 144초 | 작음 |
+| FACETS fit(cval 150, ndepth 35, snp.nbhd 250, hg38) | 22초 | 0.76GB |
+
+결과:
+- **FACETS:**
+  - 순도 0.966, 배수성 3.08(5개 염색체 기준), emflags 없음. 공식 결과의 순도(cf.em)는 0.937이고, 논문의 배수성은 2.85이다.
+  - 공식 FACETS와 비교한 일치율(길이 가중): LOH 98.2%, 총 복제수 70.6%.
+  - 총 복제수의 차이는 대부분 비율이 같고 배수 단위만 다르다(예: SMAD4가 공식 6/3, 우리 4/2). 배수성을 5개 염색체만으로 추정했기 때문으로 본다.
+  - 동형 결실 3곳(chr6 94.1~96.5Mb, chr6 101.7~105.7Mb, chr13 52.7~60.5Mb)과 TP53 LOH(3/0)가 공식 결과와 같았다.
+- **CNVkit 기본 판정**(배수성 보정 없음): 공식 CNVkit과 13.5%, 우리 FACETS와 10.8%만 일치했다. 기본 판정은 중앙값을 2배체로 가정하기 때문이다.
+- **CNVkit 보정 판정:**
+  - FACETS가 2/1로 판정한 구간의 CNVkit log2 길이 가중 중앙값은 -0.275였다.
+  - 이 값으로 `cnvkit.py call --center-at -0.2747 -m clonal --purity 0.966`을 실행했다.
+  - 일치율이 공식 CNVkit과 63.3%, 우리 FACETS와 79.2%로 올라갔다.
+  - TP53 3, ERBB2 2, chr21 2, chr13과 chr6 동형 결실 0이 공식 FACETS와 같았다.
+  - 결론: **cnvkit_call은 FACETS 순도와 2/1 구간 기준점으로 재중심화해야 한다.** 이 방식을 기본으로 한다.
+- **그림:** CNVkit 기본 scatter는 y축이 -5~1.5로 잘려 chr6 고배수 증폭이 화면 밖으로 나간다. 축 범위를 데이터에 맞추는 자체 그림이 필요하다(5.5절). FACETS 기본 그림(plotSample)은 4단 구성이 잘 나온다.
+- **남은 확인:**
+  - 전체 염색체로 돌렸을 때 배수성(2.85에 가까운지)
+  - 공식 CNVkit과의 남은 차이. 공식 결과는 같은 구간에서 더 높은 복제수(예: 7)를 낸다. 배수성 기준이 다른 것으로 추정한다.
 
 ## 8. 실행 이미지
 - `bx_cnvkit`: CNVkit, samtools, R(DNAcopy)
