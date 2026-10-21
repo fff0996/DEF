@@ -1,4 +1,4 @@
-CLOSHA 체세포 CNV 파이프라인 설계안 0.1
+CLOSHA 체세포 CNV 파이프라인 설계안 0.2
 
 작성일: 2026-10-21
 상태: 설계 단계. 스크립트, DEF, 원고는 아직 없다.
@@ -77,6 +77,44 @@ CLOSHA에는 두 파이프라인("종양-정상 쌍", "종양만")으로 등록�
   - 불안정성 지표 표: 변이 유전체 비율(FGA), LOH 비율, 전체 유전체 배가(WGD) 추정
   - CNVkit과 FACETS 구간 일치율(쌍 데이터)
   - 합친 SEG 파일(IGV용), GISTIC2 입력 형식 SEG
+
+## 5.5 시각화 (필수 요구사항)
+시각화는 이 파이프라인의 핵심 결과물이다. 암 CNV 논문에서 실제로 쓰는 그림을 모두 만든다.
+
+**공통 형식**
+- 그림마다 PDF(벡터, 논문용)와 PNG(200 dpi, 포탈·발표용)를 만든다.
+- 실행마다 HTML 리포트 하나(`cnv_report.html`)에 모든 그림과 요약표를 모은다. 샘플을 고르는 목차를 둔다.
+- 색 규칙을 모든 그림에서 같게 한다: 증폭·gain은 빨강 계열, 결실·loss는 파랑 계열, LOH는 별도 색, 중립은 회색. 색약 사용자도 구분할 수 있는 팔레트를 쓴다.
+- 염색체 순서와 이름(1~22, X, Y), 축 이름, 글꼴을 통일한다. 관심 유전자는 모든 그림에서 같은 방식으로 표시한다.
+
+**샘플별 그림** (`<SampleID>.<그림>.pdf/png`)
+| 그림 | 내용 | 모듈 |
+|---|---|---|
+| genome_profile | 유전체 전체 bin log2 ratio(점)와 구간(선), gain·loss 색 구분, 관심 유전자 표시 | cnvkit_call |
+| allele_specific | 총 복제수와 작은 쪽 복제수를 유전체 위에 표시, LOH 구간 음영, 순도·배수성 표기(ASCAT, PURPLE 스타일) | cnv_facets |
+| facets_cncf | FACETS 기본 4단 그림(log ratio, 대립유전자 불균형, 정수 복제수, 세포 분율) | cnv_facets |
+| baf | 종양 B-allele 빈도의 유전체 분포 | cnv_facets |
+| chromosome_diagram | 염색체 모식도 위 gain·loss 구간 | cnvkit_call |
+| chromosomes | 염색체마다 확대한 그림(여러 쪽 PDF), 유전자 이름 표시 | cnvkit_call |
+| focal_genes | 관심 유전자 주변 확대 그림(예: ERBB2, MYC, EGFR, CDKN2A) | cnvkit_call |
+| cn_state_hist | 구간 log2 또는 복제수 분포(순도·배수성 적합 확인용) | cnvkit_call |
+| qc | bin 커버리지, GC 편향, 노이즈 지표 | cnvkit_call |
+
+**코호트 그림** (`cnv_summary`)
+| 그림 | 내용 |
+|---|---|
+| cohort_heatmap | 샘플 × 유전체 위치 복제수 heatmap, 비슷한 샘플끼리 묶음 |
+| frequency | 유전체 위치별 gain·loss 샘플 비율(위는 gain, 아래는 loss) |
+| arm_heatmap | 염색체 팔(arm) 단위 gain·loss heatmap과 aneuploidy 점수 |
+| gene_oncoprint | 관심 유전자 × 샘플 행렬(AMP, GAIN, LOSS, DEEPDEL, LOH) |
+| purity_ploidy | 샘플별 순도 대 배수성 산점도, WGD 표시 |
+| instability | 샘플별 FGA, LOH 비율, 변이 구간 수 막대그래프(정렬) |
+| concordance | CNVkit과 FACETS의 구간별 복제수 비교, 샘플별 일치율 |
+| sample_similarity | 샘플 간 복제수 프로파일 상관 heatmap |
+
+**필요한 자료**
+- 염색체 팔 경계(cytoband): UCSC cytoBand(GRCh38, hg19)를 이미지에 넣는 것을 검토한다.
+- 관심 유전자 목록: 사용자가 제공한다. COSMIC Cancer Gene Census는 라이선스가 필요하므로 이미지에 넣지 않는다. 목록이 없으면 코호트에서 자주 변한 유전자를 자동으로 고른다.
 
 ## 6. 참조 자료
 | 자료 | 준비 | 비고 |
