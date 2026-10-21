@@ -1,7 +1,16 @@
-CLOSHA 체세포 CNV 파이프라인 설계안 0.3
+CLOSHA 체세포 CNV 파이프라인 설계안 0.4
 
 작성일: 2026-10-21
-상태: 설계 단계. 스크립트, DEF, 원고는 아직 없다.
+상태: 스크립트 4개와 DEF 2개 작성(2026-10-21), Codespace 도구 환경에서 전체 실행 확인. DEF 빌드와 원고는 아직이다.
+
+| 파일 | 내용 |
+|---|---|
+| `scripts/CNV/cnvkit_reference.1.0.py` | 5.2 |
+| `scripts/CNV/cnv_facets.1.0.R` | 5.1 |
+| `scripts/CNV/cnvkit_call.1.0.py` | 5.3, 샘플별 그림 |
+| `scripts/CNV/cnv_summary.1.0.py` | 5.4, 코호트 그림, HTML 리포트 |
+| `defs/CNV/bx_cnvkit.1.0.def` | cnvkit_reference, cnvkit_call, cnv_summary |
+| `defs/CNV/bx_facets.1.0.def` | cnv_facets |
 
 ## 1. 목표
 암 연구자가 종양 시료의 복제수 변이(CNV)를 분석하고, 결과를 바로 논문 그림과 표, 후속 분석(IGV, GISTIC2)에 쓸 수 있게 한다.
@@ -161,10 +170,24 @@ SEQC2 체세포 기준 세포주 HCC1395(종양)와 HCC1395BL(정상)을 쓴다.
   - 전체 염색체로 돌렸을 때 배수성(2.85에 가까운지)
   - 공식 CNVkit과의 남은 차이. 공식 결과는 같은 구간에서 더 높은 복제수(예: 7)를 낸다. 배수성 기준이 다른 것으로 추정한다.
 
+### 7.2 스크립트 전체 실행 (2026-10-21, 7.1과 같은 자료와 도구 버전)
+- 순서: cnvkit_reference와 cnv_facets 동시 실행 → cnvkit_call(facets_dir, genes) → cnv_summary(cytoband hg38). 4개 모두 exit 0.
+- 시간과 최대 메모리: reference 290초 0.36GB, facets 196초 0.77GB, call 147초 0.25GB, summary 5초 0.18GB.
+- FACETS 순도 0.966, 배수성 3.08, WGD yes, LOH 비율 0.55. CNVkit 재중심화 기준점 -0.282. CNVkit과 FACETS 복제수 일치 83.5%.
+- 관심 유전자: TP53 CN 3, LOH(3/0); ERBB2, BRCA1, NF1 CN 2, LOH; RB1, SMAD4 CN 4(기준과 같음); chr6과 chr13 동형 결실 0. 7.1의 공식 FACETS 결과와 같다.
+- 판정 기준: 배수성 2.7 이상이면 기준 복제수가 4다. 그래서 CN 3은 LOSS로 판정된다(배수성 대비 상대 판정). 그림에는 기준선(baseline CN 4)을 함께 그린다.
+- 그림 점검 뒤 고친 것:
+  - 유전자 이름이 겹치지 않게 층을 나눴다.
+  - 축 아래로 내려가는 동형 결실 구간을 아래쪽 끝에 그린다.
+  - 복제수 보조축은 8까지 표시한다.
+  - 관심 유전자 패널은 패널마다 y축 범위를 잡는다.
+  - QC 커버리지는 타깃과 반타깃을 나눠 그린다.
+- 관심 유전자 중 자료에 없는 MYC는 경고로 알렸다(데이터 결과, 종료 코드 0).
+
 ## 8. 실행 이미지
-- `bx_cnvkit`: CNVkit, samtools, R(DNAcopy)
-- `bx_facets`: R facets, snp-pileup
-- `bx_cnv_summary`: Python, R 그림 패키지
+- `bx_cnvkit`: CNVkit 0.9.14, Python 3.12, R 4.5.3(DNAcopy), samtools 1.22.1, pandas, NumPy, SciPy, matplotlib, UCSC cytoBand(hg38, hg19). cnvkit_reference, cnvkit_call, cnv_summary가 함께 쓴다.
+- `bx_facets`: R 4.4.3, facets 0.6.2, snp-pileup 0.6.2. cnv_facets가 쓴다.
+- 처음 계획한 `bx_cnv_summary`는 두지 않는다. 그림에 필요한 Python 패키지가 bx_cnvkit에 이미 있다.
 
 모두 Rocky 9와 Miniforge(conda-forge, bioconda) 기반이며 `docs/CLOSHA_DEF_Generator_Agent_v1.md`를 따른다. 버전은 DEF를 쓸 때 bioconda에서 확인해 고정한다.
 
