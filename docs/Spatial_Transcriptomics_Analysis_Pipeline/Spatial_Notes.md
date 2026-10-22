@@ -26,21 +26,23 @@ Spatial transcriptomics pipeline: 작업 기록
 자료: 10x 공개 마우스 뇌 Visium 4장(Sagittal Anterior/Posterior, Section 1/2). Section 1과 2를 조건(section1, section2)으로 두었다. 조건마다 2장이다.
 
 Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종료한다. 그래서 테스트용으로만 입력을 줄였다. 스크립트는 바꾸지 않았다.
-- prep과 cluster: 슬라이스마다 따로 실행하고, 유전자를 검출 비율이 높은 6000개로 줄였다(원본 32,285개).
+- prep과 cluster: 슬라이스마다 따로 실행하고, 모든 슬라이스에서 같은 유전자 6,000개(전체 슬라이스에서 검출 spot이 많은 순)만 남겼다(원본 32,285개).
 - merge와 조건 비교: 군집 결과에서 슬라이스마다 spot 600개를 뽑았다.
+- 다시 돌리는 법: `bash tools/spatial/run_spatial_test.sh <작업 폴더>`. 약 30분, 3GB.
+- 주의: 처음에는 슬라이스마다 따로 유전자를 골랐다. 그러자 어떤 유전자는 일부 슬라이스에서 0이 되어, log2FC ±5~8의 가짜 차이가 생겼다(예: Gabra6가 sec2 소뇌에만 보임). 이 결과는 버렸다.
 
 | 단계 | 시간 | 최대 메모리 | 비고 |
 |---|---|---|---|
-| prep (슬라이스 1장, 6000 유전자) | 51~56초 | 2.2~2.5GB | 1.2만 유전자 2.7~2.9GB. 원본 전체 유전자면 3~4GB로 추정 |
-| cluster (슬라이스 1장) | 71~78초 | 1.7~1.9GB | presto 사용 |
-| merge 1.1 (4장 × 600 spot, harmony) | 74초 | 2.9GB | 4장 × 1,200 spot은 Codespace 한계로 PrepSCTFindMarkers에서 종료 |
-| condition_de (4장 × 600 spot) | 64초 | 2.0GB | |
+| prep (슬라이스 1장, 6000 유전자) | 52~77초 | 2.1~2.5GB | 1.2만 유전자 2.7~2.9GB. 원본 전체 유전자면 3~4GB로 추정 |
+| cluster (슬라이스 1장) | 72~102초 | 1.7~2.0GB | presto 사용 |
+| merge 1.1 (4장 × 600 spot, harmony) | 67초 | 2.5GB | 4장 × 1,200 spot은 Codespace 한계로 PrepSCTFindMarkers에서 종료 |
+| condition_de (4장 × 600 spot) | 61초 | 2.0GB | |
 
-조건 비교 결과(section2 vs section1, 군집 17개):
-- pseudobulk DESeq2: 조건마다 2장씩 충분한 군집 6개. 이 중 3개에서 유의 유전자(padj < 0.05, |log2FC| ≥ 0.5)가 나왔다. 같은 조직의 다른 절편이라 차이가 거의 없는 것이 예상과 맞다.
-- spot 단위 Wilcoxon(탐색용): spot을 600개로 줄여 한쪽 조건에 slice가 1장뿐인 군집 8개. spot 단위라 유의 유전자가 많이 나온다(위양성 경향). 경고로 알린다.
-- 검정 불가: 3개 군집(spot 부족). 상태로 기록하고 종료 코드 0.
-- 그림(조성, volcano, log2FC heatmap, 유의 유전자 수, 조직 위 유전자 분포)은 만들어졌지만, Codespace 재시작으로 지워져 아직 직접 보지 못했다.
+조건 비교 결과(section2 vs section1, 같은 조직의 다른 절편이므로 차이가 없어야 정상, 군집 16개):
+- pseudobulk DESeq2 7개 군집: 유의 유전자 0개. 반복(슬라이스)을 쓰면 가짜 차이가 나오지 않는다.
+- spot 단위 Wilcoxon 7개 군집(탐색용, 한쪽 조건에 슬라이스가 1장뿐): 유의 유전자가 조금 나오며, 대부분 미토콘드리아(mt-Co1, mt-Nd5)와 리보솜(Rps28, Rps29) 유전자다. 절편 간 기술적 차이로 보이며, 이 방식에 경고를 붙인 이유와 맞는다.
+- 검정 불가 2개 군집(spot 부족): 상태로 기록하고 종료 코드 0.
+- 그림(조성, volcano, log2FC heatmap, 유의 유전자 수, 조직 위 유전자 분포)을 직접 확인했다.
 
 ## 4. 받은 스크립트에서 찾은 문제
 - **spatial_merge 1.0, integration=harmony에서 항상 실패:** `RunHarmony(..., reduction = "pca", assay.use = ...)`가 harmony 1.0 이상에서 "argument 3 matches multiple formal arguments"로 멈춘다. harmony 1.0부터 `reduction`이 `reduction.use`와 `reduction.save`로 나뉘었기 때문이다. 1.1에서 `reduction.use = "pca"`로 고치고 `assay.use`는 뺐다.
@@ -63,7 +65,6 @@ Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종�
 | spatial_condition_de | 16GB | 4 |
 
 ## 6. 남은 일
-1. 테스트를 다시 돌려 그림 확인(조건 비교)
 2. Visium HD 지원(prep, cluster, svf, rctd, merge 1.1: bin_size, sketch)
 3. bx_spatial, bx_cnvkit, bx_facets 검증 빌드
 4. 원고
