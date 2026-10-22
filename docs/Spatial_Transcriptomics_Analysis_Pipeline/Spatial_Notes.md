@@ -12,7 +12,9 @@ Spatial transcriptomics pipeline: 작업 기록
 | spatial_rctd | `spatial_rctd.1.0.R` | 받은 스크립트 |
 | spatial_merge | `spatial_merge.1.1.R` | harmony 인자 수정(아래 4절) |
 | check_reference | `check_reference.1.0.R` | 받은 스크립트 |
-| spatial_condition_de | `spatial_condition_de.1.0.R` | 새 모듈: 조건 간 비교 |
+| spatial_condition_de | `spatial_condition_de.1.0.R`, `1.1.R` | 새 모듈: 조건 간 비교. 1.1은 Visium HD 입력도 받음 |
+| spatial_hd_prep | `spatial_hd_prep.1.0.R` | 새 모듈: Visium HD 불러오기, QC, 정규화, sketch |
+| spatial_hd_cluster | `spatial_hd_cluster.1.0.R` | 새 모듈: Visium HD 슬라이드 통합 군집, 모든 bin에 군집 배정 |
 
 실행 이미지: `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.0.def`(빌드 전).
 
@@ -64,7 +66,60 @@ Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종�
 | spatial_merge | 슬라이스 4장 32GB, 8장 이상 64GB | 4 |
 | spatial_condition_de | 16GB | 4 |
 
-## 6. 남은 일
-2. Visium HD 지원(prep, cluster, svf, rctd, merge 1.1: bin_size, sketch)
-3. bx_spatial, bx_cnvkit, bx_facets 검증 빌드
-4. 원고
+## 6. Visium HD (2026-10-22)
+기존 Visium 스크립트 5개는 그대로 두고 HD 전용 모듈을 추가했다(사용자 결정).
+
+흐름: spatial_hd_prep → spatial_hd_cluster → spatial_condition_de 1.1
+
+- **spatial_hd_prep:**
+  - `Load10X_Spatial(bin.size = 8 또는 16)`로 불러온 뒤 bin을 거르고, LogNormalize, 가변 유전자, `SketchData`(LeverageScore, 기본 5만 bin) 순으로 처리한다.
+  - SCTransform은 수십만 bin에 맞지 않아 쓰지 않는다.
+  - 2µm bin은 지원하지 않는다.
+- **spatial_hd_cluster:**
+  - 모든 슬라이드의 sketch bin을 합쳐 PCA, harmony(슬라이드가 2장 이상일 때), 군집, UMAP, 마커(presto)를 계산한다.
+  - 각 슬라이드의 모든 bin을 같은 PCA에 투영한다. 같은 평균·표준편차·loading을 쓰고, ScaleData처럼 10에서 자른다.
+  - 같은 슬라이드의 sketch bin 중 가장 가까운 10개(Annoy)로 다수결을 해서 군집을 붙인다.
+  - 그래서 군집 번호가 슬라이드 사이에서 같은 뜻이다.
+  - `hd_slides.tsv`에 슬라이드별 객체 목록을 남긴다.
+- **spatial_condition_de 1.1:**
+  - `hd_slides.tsv`가 있으면 슬라이드 객체를 하나씩 읽어 pseudobulk를 합친다. 모든 bin을 한꺼번에 메모리에 올리지 않는다.
+  - spot 단위 검정은 슬라이드·군집마다 최대 3,000 bin(`spot_level_max`)만 쓴다.
+  - 기존 Visium 입력의 결과는 1.0과 같다(de_summary 비교로 확인).
+- **실행 이미지:**
+  - bx_spatial에 r-arrow 21.0.0을 추가했다. HD bin 위치가 `tissue_positions.parquet`라서 필요하다.
+  - `%test`에 arrow, RcppAnnoy 동작 확인을 추가했다.
+
+찾은 문제와 수정:
+- Seurat 5.3.0에서 `FindVariableFeatures` 결과는 counts 층에 저장된다. 그래서 `SketchData`가 data 층에서 가변 유전자를 찾지 못한다. 이때 전체 유전자를 쓰다가 5,000개를 넘으면 "too slow"로 멈춘다.
+  - 실제 HD 데이터(약 1만 9천 유전자)에서 항상 일어난다.
+  - `features = VariableFeatures(obj)`를 넘겨 해결했다.
+- 10x HD 압축 파일에서 8·16µm 폴더의 조직 이미지는 2µm 이미지의 하드링크다. 일부만 풀면 이미지가 빠진다(테스트 스크립트에서 처리).
+- 조직 그림의 점 크기: `pt.size.factor` 2~3에서는 bin 사이가 비어 줄무늬가 생긴다. 기본값을 4로 하고 `pt_size` 인자로 바꿀 수 있게 했다.
+
+테스트(10x Visium HD Mouse Brain FFPE, 16µm):
+- 테스트용 데이터: Codespace 메모리 때문에 좌우 반으로 나눠 슬라이드 2장(각 약 4만 9천 bin)으로 쓰고, 유전자는 6,000개로 줄였다.
+- 다시 돌리는 법: `bash tools/spatial/run_spatial_hd_test.sh <작업 폴더> <환경 폴더>`
+
+| 단계 | 시간 | 최대 메모리 | 결과 |
+|---|---|---|---|
+| hd_prep (2장, sketch 1만) | 163초 | 2.9GB | 정상 |
+| hd_cluster | 291초 | 3.5GB | 군집 22개. 점수 0.5 미만 bin은 1.5~2.5%. 피질 층, 선조체, 해마가 군집으로 나뉨 |
+| condition_de 1.1 (1 대 1, spot 단위) | 94초 | 3.4GB | 해마 표지 Prox1이 해마가 있는 오른쪽에만 나옴(해부학과 일치) |
+
+- 처음 실행에서는 hd_cluster와 condition_de가 Codespace 한계(약 4GB)에 걸렸다.
+  - hd_cluster: 저장한 통합 객체를 메모리에서 비우고, 투영을 5천 bin 단위로 해서 해결했다.
+  - condition_de: 그림 전에 검정용 count를 비우고, 이미 정규화된 HD 객체는 다시 정규화하지 않게 해서 해결했다.
+- `pt_size` 기본값을 4로 바꾼 뒤의 전체 재실행은 Codespace 재시작으로 끝까지 확인하지 못했다. 바뀐 것은 그림의 점 크기뿐이다.
+
+권장 자원(추정, CLOSHA에서 실측 필요):
+
+| 모듈 | 16µm | 8µm | Core |
+|---|---|---|---|
+| spatial_hd_prep | 슬라이드당 16GB | 슬라이드당 32~64GB | 4 |
+| spatial_hd_cluster | 32GB | 64~128GB | 4 |
+| spatial_condition_de 1.1 | 16~32GB | 32~64GB | 4 |
+
+## 7. 남은 일
+1. Visium HD: pt_size 4로 전체 재실행 확인, 8µm 데이터로 자원 확인, HD용 RCTD와 공간 가변 유전자(2단계)
+2. bx_spatial, bx_cnvkit, bx_facets 검증 빌드
+3. 원고

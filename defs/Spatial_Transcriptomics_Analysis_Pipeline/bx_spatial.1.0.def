@@ -13,6 +13,10 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #     - spatial_merge.1.0.R
 #     - check_reference.1.0.R
 #     - spatial_condition_de.1.0.R
+#     - spatial_merge.1.1.R
+#     - spatial_condition_de.1.1.R
+#     - spatial_hd_prep.1.0.R
+#     - spatial_hd_cluster.1.0.R
 #
 #   [MANDATORY BUILD RULES]
 #   1) Base OS must be Rocky Linux 9. Rocky 8 is not allowed: it causes
@@ -44,7 +48,9 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   from a single-cell reference (spatial_labelTransfer, check_reference), RCTD
 #   cell-type decomposition (spatial_rctd), multi-slice merge with optional
 #   Harmony (spatial_merge), and pseudobulk comparison of conditions
-#   (spatial_condition_de).
+#   (spatial_condition_de), and Visium HD binned data: loading, normalisation and
+#   sketching (spatial_hd_prep) and joint sketch clustering with labels for every
+#   bin (spatial_hd_cluster).
 #   The analysis scripts are supplied through CLOSHA's external bind paths,
 #   rather than embedded in the image. This DEF provides their runtime.
 #
@@ -57,7 +63,8 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 # [REQUIRED RUNTIME DEPENDENCIES]
 #   R 4.3.3 (conda-forge r-base) with conda-forge r-seurat 5.3.0,
 #   r-seuratobject 5.2.0, r-harmony 1.2.3, r-hdf5r 1.3.12, r-ggplot2 3.5.2,
-#   r-patchwork 1.3.2, r-matrix 1.6-5 and bioconda r-presto 1.0.0,
+#   r-patchwork 1.3.2, r-matrix 1.6-5, r-arrow 21.0.0 (Visium HD
+#   tissue_positions.parquet) and bioconda r-presto 1.0.0,
 #   r-spacexr 2.2.1, bioconductor-deseq2 1.42.0, bioconductor-glmgampoi 1.14.0.
 #   Azimuth is not installed; spatial_labelTransfer handles Azimuth-style
 #   references without it.
@@ -294,7 +301,8 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
         r-hdf5r=1.3.12 \
         r-ggplot2=3.5.2 \
         r-patchwork=1.3.2 \
-        r-matrix=1.6_5
+        r-matrix=1.6_5 \
+        r-arrow=21.0.0
 
     # Record the exact package set with SHA256 values, then check that every
     # package came from conda-forge or bioconda.
@@ -411,10 +419,10 @@ PYCLEAN
     # Packages and functions used by the spatial scripts; plots to no file.
     Rscript --no-init-file -e '
         pkgs <- c("Seurat", "SeuratObject", "ggplot2", "patchwork", "Matrix", "harmony", "spacexr",
-                  "DESeq2", "presto", "glmGamPoi", "hdf5r")
+                  "DESeq2", "presto", "glmGamPoi", "hdf5r", "arrow", "RcppAnnoy")
         for (p in pkgs) suppressPackageStartupMessages(library(p, character.only = TRUE))
         want <- c(Seurat = "5.3.0", SeuratObject = "5.2.0", spacexr = "2.2.1", DESeq2 = "1.42.0",
-                  presto = "1.0.0", harmony = "1.2.3")
+                  presto = "1.0.0", harmony = "1.2.3", arrow = "21.0.0")
         for (p in names(want)) {
             if (as.character(packageVersion(p)) != want[[p]]) stop("unexpected ", p, " version: ", packageVersion(p))
         }
@@ -423,7 +431,8 @@ PYCLEAN
                   "Seurat::FindMarkers", "Seurat::FindSpatiallyVariableFeatures", "Seurat::FindTransferAnchors",
                   "Seurat::TransferData", "Seurat::PrepSCTFindMarkers", "Seurat::SpatialFeaturePlot",
                   "Seurat::SpatialDimPlot", "Seurat::DotPlot", "Seurat::SketchData", "Seurat::ProjectData",
-                  "SeuratObject::LayerData", "SeuratObject::JoinLayers", "harmony::RunHarmony",
+                  "SeuratObject::LayerData", "SeuratObject::JoinLayers", "SeuratObject::Layers",
+                  "harmony::RunHarmony", "arrow::read_parquet", "Seurat::RenameCells",
                   "spacexr::SpatialRNA", "spacexr::Reference", "spacexr::create.RCTD", "spacexr::run.RCTD",
                   "DESeq2::DESeqDataSetFromMatrix", "DESeq2::DESeq", "DESeq2::results",
                   "Matrix::sparse.model.matrix", "ggplot2::ggsave", "patchwork::wrap_plots")
@@ -431,6 +440,10 @@ PYCLEAN
             x <- strsplit(u, "::", fixed = TRUE)[[1]]
             invisible(getExportedValue(x[1], x[2]))
         }
+        a <- new(RcppAnnoy::AnnoyEuclidean, 2L)
+        a$addItem(0, c(0, 0))
+        a$build(1)
+        invisible(a$getNNsByVector(c(0, 0), 1))
         if (!isTRUE(capabilities("cairo")) && !isTRUE(capabilities("png"))) stop("no PNG graphics device")
         pdf(NULL)
         plot(1)
@@ -456,7 +469,8 @@ PYCLEAN
 %help
     CLOSHA spatial transcriptomics environment (10x Visium): R 4.3.3 with Seurat
     5.3.0, SeuratObject 5.2.0, presto (fast marker tests), glmGamPoi (SCTransform),
-    harmony, spacexr (RCTD), DESeq2 (pseudobulk), hdf5r, ggplot2 and patchwork.
+    harmony, spacexr (RCTD), DESeq2 (pseudobulk), hdf5r, arrow (Visium HD
+    positions), ggplot2 and patchwork.
     Azimuth is not installed.
     Base OS: Rocky Linux 9. Tools are installed in /opt/bio from conda-forge and
     bioconda with Miniforge; no Anaconda Inc. repository or Miniconda is used.
