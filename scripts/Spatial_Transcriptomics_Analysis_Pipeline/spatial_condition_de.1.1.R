@@ -10,13 +10,13 @@
 # in a merged multi-slice Visium object.
 #
 # Usage:
-#   Rscript spatial_condition_de.1.0.R input_dir="..." sample_data="..." output_dir="..."
+#   Rscript spatial_condition_de.1.1.R input_dir="..." sample_data="..." output_dir="..."
 #       [group_by="seurat_clusters"] [reference=""] [min_spots="20"] [min_slices="2"]
 #       [padj_cutoff="0.05"] [lfc_cutoff="0.5"] [top_genes="20"] [spatial_genes="6"]
 #       [spot_level="auto"] [spot_level_max="3000"] [seed="1234"]
 #
 # Example:
-#   apptainer exec <spatial image> Rscript spatial_condition_de.1.0.R \
+#   apptainer exec <spatial image> Rscript spatial_condition_de.1.1.R \
 #       input_dir="/out/spatial_merge" sample_data="/data/slices.csv" \
 #       output_dir="/out/spatial_condition_de" reference="control"
 #

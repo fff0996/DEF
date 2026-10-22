@@ -1,0 +1,509 @@
+Bootstrap: docker
+From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f
+
+# =============================================================================
+# bx_spatial.1.1
+#
+#   Target scripts:
+#     - spatial_prep.1.0.R
+#     - spatial_cluster.1.0.R
+#     - spatial_svf.1.0.R
+#     - spatial_labelTransfer.1.0.R
+#     - spatial_rctd.1.0.R
+#     - spatial_merge.1.0.R
+#     - check_reference.1.0.R
+#     - spatial_condition_de.1.0.R
+#     - spatial_merge.1.1.R
+#     - spatial_condition_de.1.1.R
+#     - spatial_hd_prep.1.0.R
+#     - spatial_hd_cluster.1.0.R
+#
+#   [MANDATORY BUILD RULES]
+#   1) Base OS must be Rocky Linux 9. Rocky 8 is not allowed: it causes
+#      environment conflicts on the customer's servers.
+#   2) Anaconda Inc. repositories are strictly prohibited. Specifically:
+#        - repo.anaconda.com and the defaults / main / r / anaconda channels
+#          are never used.
+#        - The Anaconda Distribution and the Miniconda installer are never
+#          used, because the Miniconda installer is served from
+#          repo.anaconda.com and ships defaults-channel packages.
+#      conda is therefore provided by Miniforge, which is published by the
+#      conda-forge project on GitHub and defaults to the conda-forge channel.
+#      Only conda-forge and bioconda (community channels, free-licence, merely
+#      hosted on conda.anaconda.org) plus Rocky 9 BaseOS / AppStream are used.
+#      Every conda command below passes --override-channels so that no channel
+#      outside this list can ever be consulted.
+#
+#   [TOOL LOCATION]
+#   This image installs its tools into the shared prefix /opt/bio (a conda
+#   environment), so a tool that appears in more than one image resolves to
+#   /opt/bio/bin/<tool>. /opt/bio/bin is first on PATH in %environment. The
+#   supplied script calls its tools by name through PATH and needs no
+#   change. Do not bind any host path over /opt/bio at runtime.
+#
+# [PURPOSE]
+#   10x Visium spatial transcriptomics analysis for the CLOSHA spatial pipeline:
+#   per-slice loading, QC and SCTransform (spatial_prep), clustering and markers
+#   (spatial_cluster), spatially variable features (spatial_svf), label transfer
+#   from a single-cell reference (spatial_labelTransfer, check_reference), RCTD
+#   cell-type decomposition (spatial_rctd), multi-slice merge with optional
+#   Harmony (spatial_merge), and pseudobulk comparison of conditions
+#   (spatial_condition_de), and Visium HD binned data: loading, normalisation and
+#   sketching (spatial_hd_prep) and joint sketch clustering with labels for every
+#   bin (spatial_hd_cluster).
+#   The analysis scripts are supplied through CLOSHA's external bind paths,
+#   rather than embedded in the image. This DEF provides their runtime.
+#
+# [INPUT AND OUTPUT STRUCTURE]
+#   Inputs: Space Ranger slice folders (filtered_feature_bc_matrix.h5 and
+#   spatial/), Seurat objects written by the previous module, single-cell
+#   references (.rds), and slice sheets; outputs are per-module folders as
+#   described in each script header.
+#
+# [REQUIRED RUNTIME DEPENDENCIES]
+#   R 4.3.3 (conda-forge r-base) with conda-forge r-seurat 5.3.0,
+#   r-seuratobject 5.2.0, r-harmony 1.2.3, r-hdf5r 1.3.12, r-ggplot2 3.5.2,
+#   r-patchwork 1.3.2, r-matrix 1.6-5, r-arrow 21.0.0 (Visium HD
+#   tissue_positions.parquet), r-ape 5.8-1 (Moran's I for
+#   FindSpatiallyVariableFeatures) and bioconda r-presto 1.0.0,
+#   r-spacexr 2.2.1, bioconductor-deseq2 1.42.0, bioconductor-glmgampoi 1.14.0.
+#   Azimuth is not installed; spatial_labelTransfer handles Azimuth-style
+#   references without it.
+#   Runtime analysis needs no network access.
+#
+# [BASE IMAGE AND INSTALLATION RULES FOR THIS DEF]
+#   Base image: the official Rocky Linux 9.8 image
+#   rockylinux/rockylinux:9.8.20260525.0, pinned by its index digest in From.
+#   conda: Miniforge3-26.7.2-0 (conda-forge project GitHub release),
+#   SHA256-checked, used only during the build.
+#   Packages: conda-forge and bioconda only, with --override-channels and
+#   strict channel priority. Top-level packages are pinned to exact versions;
+#   the full resolved set with SHA256 values is recorded in
+#   /opt/bio/share/bx-spatial/conda-explicit.txt and checked so that every URL
+#   is under conda.anaconda.org/conda-forge or /bioconda.
+#   Building requires internet access to github.com and conda.anaconda.org.
+#
+# [HPC BUILD REQUIREMENTS]
+#   Use a designated build environment and an unprivileged build account.
+#   Do not run the build as the host root user or through sudo.
+#   Do not bind production data or shared system directories into the build
+#   container.
+#   Host-side %pre and %setup sections are not used.
+#   Package installation and cleanup run inside %post.
+#   Build workspace: the fixed container-private path /__closha_build/work.
+#   /__closha_build and the workspace are created with plain mkdir (no -p),
+#   so the build stops if either already exists, including as a symlink or
+#   a bind mount point. The Miniforge installer and its base installation,
+#   the conda package cache (CONDA_PKGS_DIRS), the conda configuration file
+#   (CONDARC), temporary files (TMPDIR), and HOME for the install steps are
+#   all placed below it, so conda itself does not remain in the image; only
+#   the /opt/bio environment does.
+#   Only the Rocky 9 BaseOS which package is installed with DNF
+#   (R's utils package needs /usr/bin/which), with the DNF cache
+#   (cachedir) in the workspace and keepcache disabled.
+#   Cleanup removes only that exact workspace, after separate checks of the
+#   path constant, symlinks, canonical path, and root-filesystem device, and
+#   then removes the empty /__closha_build with rmdir. Any failed check stops
+#   the build without deleting anything.
+#   No wildcard cleanup of default paths is used.
+#   These checks reduce accidents but do not prove host isolation. The build
+#   system must keep host binds off /__closha_build, its parents, and children.
+#   No broad cleanup of /tmp, /var/tmp, /root, or user home directories is used.
+#   %test performs checks without creating or deleting data files.
+#   The Apptainer output SIF, image cache, and build temporary files are host
+#   artifacts; place them in an approved build workspace, separate from services.
+#   This DEF does not clean the host's Apptainer cache or build workspace.
+#   The build system must enforce account, workspace, and mount restrictions;
+#   comments in this DEF cannot enforce the host's bind configuration.
+#
+# [RUNTIME ENVIRONMENT ISOLATION]
+#   Apptainer binds the user's home directory by default. %environment puts
+#   /opt/bio/bin first on a PATH without home entries, points R_LIBS_USER at
+#   the image library, sets R_PROFILE_USER and R_ENVIRON_USER to /dev/null,
+#   and unsets R_LIBS, so that a host ~/R library, ~/.Rprofile, or
+#   ~/.Renviron is not loaded into this runtime.
+#
+# [CHANGES FROM THE PREVIOUS SIF]
+#   No previous SIF or DEF; this is a new image (2026-10-21).
+#   This is a new image; nothing existing is modified or overwritten.
+#
+# [VALIDATION STATUS AND REPRODUCIBILITY]
+#   Checked: script dependencies (library/requireNamespace/::), a solve of the
+#   package set from conda-forge and bioconda only (R 4.3.3; R 4.4.3 and 4.5.3
+#   do not resolve with spacexr, and Azimuth does not resolve at all), the
+#   Miniforge installer SHA256, and DEF %post and %test shell syntax (sh -n).
+#   The tmpfs, mount check, workspace and cleanup blocks are copied unchanged
+#   from bx_functional_enrichment.1.0.def (ATAC-seq, policy 1.7 sections 6 and
+#   6.1), including the python3 fallback for the fakeroot "Is a directory"
+#   cleanup failure.
+#   Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
+#   Exploratory run with the same package versions on four 10x mouse brain
+#   Visium sections (Codespace, 2026-10-21); see the pipeline notes.
+#   1.0 was built in Codespace (2026-10-22, root, %test passed, no host change)
+#   and ran the Visium, Visium HD and condition scripts, but spatial_svf
+#   stopped: Seurat RunMoransI needs Rfast2 or ape. 1.1 adds ape (Rfast2 has
+#   no R 4.3 build on conda-forge). %test checks R and package versions, the
+#   functions used by the scripts, a small Moran's I run, the graphics
+#   devices, and the recorded package channels.
+#   Unresolved: the Miniforge and conda package recipe is not yet a
+#   registered approved recipe.
+#
+# [CHANGELOG]
+#   2026-10-21 / 1.0: Created for the spatial transcriptomics pipeline scripts
+#   1.0, following policy 1.7.
+#   2026-10-22 / 1.1: Added r-ape 5.8-1 so that spatial_svf (Moran's I) runs;
+#   %test runs Seurat::RunMoransI on a small grid. Nothing else changed.
+# =============================================================================
+
+%labels
+    Maintainer       KOBIC Bio-Express
+    Pipeline         Spatial_Transcriptomics_Analysis_Pipeline
+    Component        bx_spatial
+    Version          1.1
+    BaseOS           RockyLinux9
+    CondaInstaller   Miniforge3-26.7.2-0
+    AnacondaRepoFree true
+    SeuratVersion    5.3.0
+    RVersion         4.3.3
+    Description      "Seurat 10x Visium spatial transcriptomics environment for the CLOSHA spatial pipeline"
+
+%environment
+    export PATH=/opt/bio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    # Keep host-side user R libraries and profiles out of this runtime.
+    unset R_LIBS
+    export R_LIBS_USER=/opt/bio/lib/R/library
+    export R_PROFILE_USER=/dev/null
+    export R_ENVIRON_USER=/dev/null
+
+%post
+    set -eu
+    # Fixed container PATH; ignore any inherited PATH that may point into a
+    # host-bound home directory.
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LC_ALL=C.UTF-8
+
+    # Apptainer builds keep the admin "mount tmp = yes" setting, so %post sees
+    # the host /tmp and /var/tmp. Cover both with private tmpfs mounts in this
+    # container's mount namespace before any other command runs; the host
+    # directories are then unreachable. If mounting fails, the build stops.
+    mount -t tmpfs -o mode=1777,nosuid,nodev closha-tmp /tmp
+    mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
+    [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
+    [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+    # With "mount dev = yes" the build may see the host's /dev and its shared
+    # /dev/shm. Cover /dev/shm with a private tmpfs as well, then confirm from
+    # the mount table that the newest /dev/shm mount is this one.
+    if [ -d /dev/shm ]; then
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-shm /dev/shm
+        awk '$5 == "/dev/shm" { s = $0 } END { exit !(s ~ / - tmpfs closha-shm /) }' /proc/self/mountinfo ||
+            { echo "/dev/shm is not private" >&2; exit 1; }
+    fi
+    # Record the mount table in the build log for review.
+    cat /proc/self/mountinfo
+
+    # Stop before any install step if the build container has a mount other
+    # than those Apptainer creates for builds: the rootfs, /tmp and /var/tmp
+    # (now covered above), private /etc/hosts and /etc/resolv.conf copies, and
+    # kernel pseudo-filesystems under /dev, /proc, and /sys, plus, in builds
+    # that run %post under the fakeroot command (no /etc/subuid entry), the
+    # read-only fakeroot helpers Apptainer places under /.singularity.d/libs
+    # (fakeroot, faked, libfakeroot.so, and getopt, which the fakeroot wrapper
+    # script calls; getopt was seen in the 2026-10-14 production build log).
+    # This rejects host paths added through APPTAINER_BINDPATH or
+    # APPTAINER_MOUNT, which the build passes into %post from the caller's
+    # environment.
+    awk '
+        { split($0, sep, " - "); split(sep[2], f, " "); mp = $5; opt = $6; fs = f[1]; src = $4 }
+        mp == "/" || mp == "/tmp" || mp == "/var/tmp" { next }
+        (mp == "/etc/hosts" || mp == "/etc/resolv.conf") &&
+            src ~ /\/bundle-temp-[0-9]+\/(hosts|resolv\.conf)$/ { next }
+        (mp == "/dev" || mp ~ /^\/dev\//) && fs ~ /^(devtmpfs|tmpfs|devpts|mqueue|hugetlbfs)$/ { next }
+        (mp == "/proc" || mp ~ /^\/proc\//) && fs ~ /^(proc|binfmt_misc|autofs)$/ { next }
+        (mp == "/sys" || mp ~ /^\/sys\//) &&
+            fs ~ /^(sysfs|cgroup|cgroup2|securityfs|selinuxfs|debugfs|tracefs|bpf|fusectl|configfs|pstore|efivarfs)$/ { next }
+        mp == "/.singularity.d/libs" && fs == "tmpfs" && opt ~ /^ro(,|$)/ { next }
+        mp ~ /^\/\.singularity\.d\/libs\/(fakeroot|faked|libfakeroot\.so|getopt)$/ && opt ~ /^ro(,|$)/ { next }
+        { print "Unexpected mount in build container: " mp " (" fs ")" > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /proc/self/mountinfo || { echo "Build stopped: remove extra bind settings and rebuild" >&2; exit 1; }
+
+    fail() { echo "Build check failed: $*" >&2; exit 1; }
+
+    # Fixed container-private workspace from the approved profile.
+    # Plain mkdir (no -p) fails if a path already exists, including a symlink
+    # or a bind mount point, so the build stops instead of reusing it.
+    BUILD_ROOT=/__closha_build
+    WORK=/__closha_build/work
+    mkdir -m 0700 -- "$BUILD_ROOT"
+    mkdir -m 0700 -- "$WORK"
+    mkdir -p -- "$WORK/src" "$WORK/tmp" "$WORK/home" "$WORK/conda-pkgs" "$WORK/dnf-cache"
+
+    # The admin config may bind the host home, and /tmp may be host-backed.
+    # Redirect HOME, TMPDIR, and XDG directories into the workspace before any
+    # other command runs, so no tool reads or writes host user files or /tmp.
+    export HOME="$WORK/home"
+    export TMPDIR="$WORK/tmp"
+    export XDG_CACHE_HOME="$WORK/home/.cache"
+    export XDG_CONFIG_HOME="$WORK/home/.config"
+    export XDG_DATA_HOME="$WORK/home/.local/share"
+
+    # The pinned conda packages below are for linux-64 only.
+    [ "$(uname -m)" = x86_64 ] || fail "unsupported architecture"
+    grep -q '^Rocky Linux release 9\.' /etc/rocky-release || fail "base OS is not Rocky Linux 9"
+
+    # R's utils package runs /usr/bin/which when it loads, and the Rocky 9 base
+    # image has no which. Install only that package from Rocky 9 BaseOS, with
+    # the DNF cache in the workspace.
+    dnf --assumeyes --setopt=cachedir="$WORK/dnf-cache" --setopt=keepcache=0 \
+        --setopt=install_weak_deps=False install which
+    [ -x /usr/bin/which ] || fail "which was not installed"
+
+    # Miniforge from the conda-forge project's GitHub release (never Miniconda
+    # or the Anaconda Distribution). SHA256 matches the published .sha256 file.
+    # It is installed into the workspace and removed with it after use.
+    curl --fail --location --retry 3 \
+        --connect-timeout 30 --max-time 600 \
+        --output "$WORK/src/Miniforge3-26.7.2-0-Linux-x86_64.sh" \
+        https://github.com/conda-forge/miniforge/releases/download/26.7.2-0/Miniforge3-26.7.2-0-Linux-x86_64.sh
+    printf '%s  %s\n' \
+        281b0ac7d550802efc81af633225a5e6116d29ae72f3ab4eae7168c3931a4c05 \
+        "$WORK/src/Miniforge3-26.7.2-0-Linux-x86_64.sh" | sha256sum --check -
+    bash "$WORK/src/Miniforge3-26.7.2-0-Linux-x86_64.sh" -b -p "$WORK/miniforge"
+
+    # conda configuration, package cache, and environments list stay in the
+    # workspace. Only conda-forge and bioconda are configured, defaults is
+    # empty, and every command still passes --override-channels.
+    export CONDARC="$WORK/condarc"
+    export CONDA_PKGS_DIRS="$WORK/conda-pkgs"
+    printf '%s\n' \
+        'channels:' \
+        '  - conda-forge' \
+        '  - bioconda' \
+        'default_channels: []' \
+        'channel_priority: strict' \
+        'auto_update_conda: false' \
+        'notify_outdated_conda: false' \
+        'report_errors: false' \
+        > "$CONDARC"
+    CONDA="$WORK/miniforge/bin/conda"
+
+    # Create the /opt/bio environment from exact package versions.
+    # R 4.3.3: the bioconda builds of spacexr (RCTD) are for R 4.3 only and
+    # presto for R <= 4.4. Azimuth is not installed (its bioconda dependencies
+    # do not resolve); spatial_labelTransfer handles Azimuth-style references
+    # without it.
+    "$CONDA" create --yes --prefix /opt/bio \
+        --override-channels --channel conda-forge --channel bioconda \
+        --strict-channel-priority \
+        r-base=4.3.3 \
+        r-seurat=5.3.0 \
+        r-seuratobject=5.2.0 \
+        r-presto=1.0.0 \
+        r-spacexr=2.2.1 \
+        bioconductor-deseq2=1.42.0 \
+        r-harmony=1.2.3 \
+        bioconductor-glmgampoi=1.14.0 \
+        r-hdf5r=1.3.12 \
+        r-ggplot2=3.5.2 \
+        r-patchwork=1.3.2 \
+        r-matrix=1.6_5 \
+        r-arrow=21.0.0 \
+        r-ape=5.8_1
+
+    # Record the exact package set with SHA256 values, then check that every
+    # package came from conda-forge or bioconda.
+    mkdir -p /opt/bio/share/bx-spatial
+    "$CONDA" list --prefix /opt/bio --explicit --sha256 > /opt/bio/share/bx-spatial/conda-explicit.txt
+    awk '
+        /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /opt/bio/share/bx-spatial/conda-explicit.txt || fail "package from a disallowed channel"
+    "$CONDA" list --prefix /opt/bio > /opt/bio/share/bx-spatial/conda-packages.txt
+    cp /etc/rocky-release /opt/bio/share/bx-spatial/base-os-release.txt
+    rpm -qa --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' | sort > /opt/bio/share/bx-spatial/rocky-packages.tsv
+    /opt/bio/bin/R --version | head -n 1 > /opt/bio/share/bx-spatial/r-version.txt
+    grep -F 'R version 4.3.3' /opt/bio/share/bx-spatial/r-version.txt
+
+    # Remove only the exact workspace created above; stop on any doubt.
+    # Each check is a separate command so that set -e cannot skip a failure.
+    [ "$WORK" = /__closha_build/work ] || fail "unexpected workspace path"
+    [ ! -L "$BUILD_ROOT" ] || fail "parent is a symlink"
+    [ ! -L "$WORK" ] || fail "workspace is a symlink"
+    [ -d "$WORK" ] || fail "workspace is missing"
+    [ "$(realpath -e -- "$WORK")" = "$WORK" ] || fail "canonical path changed"
+    [ "$(stat -c %d -- "$WORK")" = "$(stat -c %d -- /)" ] || fail "workspace is on another filesystem"
+    # Under the fakeroot command (production builds by an account without
+    # /etc/subuid entries), a stale fakeroot record can report a directory as
+    # a regular file. A production build showed this for miniforge/pkgs: rm
+    # and Python's shutil.rmtree both called unlink on it and stopped with
+    # "Is a directory". If rm fails, the rest is removed with the base
+    # image's Python, which decides by the kernel's answer instead of stat:
+    # it unlinks each entry and only on EISDIR opens it as a directory
+    # (O_NOFOLLOW, same filesystem as the workspace), empties it, and removes
+    # it with rmdir. Symbolic links are removed, never followed.
+    if ! rm -rf --one-file-system -- "$WORK"; then
+        echo "rm could not remove all of $WORK; retrying with python3" >&2
+        /usr/bin/env python3 - "$WORK" <<'PYCLEAN' || fail "python3 could not remove the workspace"
+import os, sys
+# Remove the workspace without trusting file types from stat: under the
+# fakeroot command a stale record can report a directory as a file. Each
+# entry is unlinked; only when the kernel answers EISDIR is it opened as a
+# directory (no symlink following, same device as the workspace), emptied,
+# and removed with rmdir.
+root = sys.argv[1]
+dir_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+root_fd = os.open(root, dir_flags)
+root_dev = os.fstat(root_fd).st_dev
+removed = [0, 0]
+
+def empty(dir_fd, where):
+    for name in os.listdir(dir_fd):
+        try:
+            os.unlink(name, dir_fd=dir_fd)
+            removed[0] += 1
+            continue
+        except FileNotFoundError:
+            continue
+        except IsADirectoryError:
+            pass
+        fd = os.open(name, dir_flags, dir_fd=dir_fd)
+        try:
+            if os.fstat(fd).st_dev != root_dev:
+                sys.exit("not removing a different filesystem: %s/%s" % (where, name))
+            empty(fd, where + "/" + name)
+        finally:
+            os.close(fd)
+        os.rmdir(name, dir_fd=dir_fd)
+        removed[1] += 1
+
+try:
+    empty(root_fd, root)
+finally:
+    os.close(root_fd)
+os.rmdir(root)
+print("python3 removed %d files and %d directories" % tuple(removed), file=sys.stderr)
+PYCLEAN
+    fi
+    [ ! -e "$WORK" ] || fail "workspace could not be removed"
+    rmdir -- "$BUILD_ROOT"
+
+%runscript
+    exec /opt/bio/bin/Rscript "$@"
+
+%test
+    set -eu
+    export PATH=/opt/bio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LC_ALL=C.UTF-8
+
+    # The build runs %test separately from %post, again with the host /tmp and
+    # /var/tmp bound (mount tmp = yes), and R and Python create temporary
+    # files there. When running as root (a root or fakeroot build), cover both,
+    # and /dev/shm when present, with private tmpfs mounts first; if mounting
+    # fails, the build stops.
+    # Unprivileged runtime checks cannot mount and skip this step.
+    if [ "$(id -u)" = 0 ]; then
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-tmp /tmp
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
+        [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
+        [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+        if [ -d /dev/shm ]; then
+            mount -t tmpfs -o mode=1777,nosuid,nodev closha-shm /dev/shm
+            awk '$5 == "/dev/shm" { s = $0 } END { exit !(s ~ / - tmpfs closha-shm /) }' /proc/self/mountinfo ||
+                { echo "/dev/shm is not private" >&2; exit 1; }
+        fi
+    fi
+
+    for cmd in R Rscript nproc; do
+        command -v "$cmd" >/dev/null || { echo "missing command: $cmd" >&2; exit 1; }
+    done
+    for cmd in R Rscript; do
+        [ "$(command -v "$cmd")" = "/opt/bio/bin/$cmd" ]
+    done
+    [ -x /usr/bin/which ]
+    R --version | head -n 1 | grep -F 'R version 4.3.3'
+
+    # Packages and functions used by the spatial scripts; plots to no file.
+    Rscript --no-init-file -e '
+        pkgs <- c("Seurat", "SeuratObject", "ggplot2", "patchwork", "Matrix", "harmony", "spacexr",
+                  "DESeq2", "presto", "glmGamPoi", "hdf5r", "arrow", "RcppAnnoy", "ape")
+        for (p in pkgs) suppressPackageStartupMessages(library(p, character.only = TRUE))
+        want <- c(Seurat = "5.3.0", SeuratObject = "5.2.0", spacexr = "2.2.1", DESeq2 = "1.42.0",
+                  presto = "1.0.0", harmony = "1.2.3", arrow = "21.0.0", ape = "5.8.1")
+        for (p in names(want)) {
+            if (as.character(packageVersion(p)) != want[[p]]) stop("unexpected ", p, " version: ", packageVersion(p))
+        }
+        used <- c("Seurat::Load10X_Spatial", "Seurat::SCTransform", "Seurat::NormalizeData", "Seurat::RunPCA",
+                  "Seurat::FindNeighbors", "Seurat::FindClusters", "Seurat::RunUMAP", "Seurat::FindAllMarkers",
+                  "Seurat::FindMarkers", "Seurat::FindSpatiallyVariableFeatures", "Seurat::FindTransferAnchors",
+                  "Seurat::TransferData", "Seurat::PrepSCTFindMarkers", "Seurat::SpatialFeaturePlot",
+                  "Seurat::SpatialDimPlot", "Seurat::DotPlot", "Seurat::SketchData", "Seurat::ProjectData",
+                  "SeuratObject::LayerData", "SeuratObject::JoinLayers", "SeuratObject::Layers",
+                  "harmony::RunHarmony", "arrow::read_parquet", "Seurat::RenameCells",
+                  "spacexr::SpatialRNA", "spacexr::Reference", "spacexr::create.RCTD", "spacexr::run.RCTD",
+                  "DESeq2::DESeqDataSetFromMatrix", "DESeq2::DESeq", "DESeq2::results",
+                  "Matrix::sparse.model.matrix", "ggplot2::ggsave", "patchwork::wrap_plots")
+        for (u in used) {
+            x <- strsplit(u, "::", fixed = TRUE)[[1]]
+            invisible(getExportedValue(x[1], x[2]))
+        }
+        # Morans I as spatial_svf computes it (needs ape): a gene with a left-right
+        # gradient on a 6 x 6 grid must get a clearly positive value.
+        g <- expand.grid(x = 1:6, y = 1:6)
+        mi <- Seurat::RunMoransI(data = rbind(gradient = g$x, noise = rep(c(1, 2), 18)),
+                                 pos = as.matrix(g), verbose = FALSE)
+        if (!(mi["gradient", "observed"] > 0.5)) stop("Morans I check failed")
+        a <- new(RcppAnnoy::AnnoyEuclidean, 2L)
+        a$addItem(0, c(0, 0))
+        a$build(1)
+        invisible(a$getNNsByVector(c(0, 0), 1))
+        if (!isTRUE(capabilities("cairo")) && !isTRUE(capabilities("png"))) stop("no PNG graphics device")
+        pdf(NULL)
+        plot(1)
+        invisible(dev.off())
+        cat("Seurat", as.character(packageVersion("Seurat")), "spacexr", as.character(packageVersion("spacexr")), "\n")
+    '
+
+    # Every recorded package URL must come from conda-forge or bioconda.
+    awk '
+        /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/(conda-forge|bioconda)\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /opt/bio/share/bx-spatial/conda-explicit.txt
+    [ "$(grep -c -E '^https://' /opt/bio/share/bx-spatial/conda-explicit.txt)" -gt 0 ]
+
+    # The build workspace must not remain in the image.
+    if [ -e /__closha_build ]; then
+        echo 'Build workspace /__closha_build remains in the image' >&2
+        exit 1
+    fi
+
+    echo 'Seurat 5.3.0 / R 4.3.3: bx_spatial runtime dependency checks passed.'
+
+%help
+    CLOSHA spatial transcriptomics environment (10x Visium): R 4.3.3 with Seurat
+    5.3.0, SeuratObject 5.2.0, presto (fast marker tests), glmGamPoi (SCTransform),
+    harmony, spacexr (RCTD), DESeq2 (pseudobulk), hdf5r, arrow (Visium HD
+    positions), ggplot2 and patchwork.
+    Azimuth is not installed.
+    Base OS: Rocky Linux 9. Tools are installed in /opt/bio from conda-forge and
+    bioconda with Miniforge; no Anaconda Inc. repository or Miniconda is used.
+
+    The CLOSHA build system builds this DEF with its fixed Slurm job (policy
+    section 6.2), on an internet-connected x86_64 node, without extra binds:
+        apptainer build bx_spatial.1.1.sif bx_spatial.1.1.def
+    It must pass both as root and with fakeroot.
+
+    Store the SIF, Apptainer cache, and build temporary files in an approved host
+    build workspace. APPTAINER_CACHEDIR and APPTAINER_TMPDIR select the cache and
+    temporary directories. Container cleanup must never target host-backed binds.
+    Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
+
+    Check the image:
+        apptainer test --cleanenv bx_spatial.1.1.sif
+
+    The scripts are supplied externally through approved runtime binds, e.g.:
+        apptainer exec bx_spatial.1.1.sif Rscript spatial_prep.1.0.R key=value ...
+    Space Ranger outputs, references and slice sheets are inputs; the image holds
+    no data. Writable runtime binds can expose host data to the analysis scripts.
+    Runtime analysis requires no network access.

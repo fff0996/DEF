@@ -1,12 +1,15 @@
 #!/bin/bash
 # Codespace test of the spatial pipeline scripts with the bx_spatial package set.
 #
-# Usage: bash tools/spatial/run_spatial_test.sh <work_dir>
+# Usage: bash tools/spatial/run_spatial_test.sh <work_dir> [env_dir]
 #   work_dir: scratch folder (for example under /tmp; about 3 GB)
+#   env_dir:  optional folder whose bin/ has Rscript (an existing conda environment, or
+#             wrappers that run Rscript inside the built SIF). Empty: a conda
+#             environment is made in <work_dir>/env.
 #
 # Builds a conda environment with the bx_spatial 1.0 packages, downloads four
 # 10x mouse brain Visium sections (Sagittal Anterior/Posterior, Section 1/2),
-# and runs prep -> cluster -> merge 1.1 -> condition_de with section 1 and 2
+# and runs prep -> cluster -> svf (one slice) -> merge 1.1 -> condition_de 1.1 with section 1 and 2
 # as the two conditions. Codespace stops processes when free memory drops
 # below about 1 GB, so the inputs are reduced for this test only: the same
 # 6000 genes in every section (most often detected over all sections; a
@@ -15,6 +18,7 @@
 # Timing and peak memory are printed per step ([measure] lines).
 set -u
 W=${1:?work_dir is required}
+E=${2:-}
 REPO=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 M=$REPO/scripts/Spatial_Transcriptomics_Analysis_Pipeline
 MINIFORGE=/workspaces/.closha_build_test/Miniforge3-26.7.2-0-Linux-x86_64.sh
@@ -61,12 +65,16 @@ o <- subset(o, cells = sample(colnames(o), min(600, ncol(o)))); saveRDS(o, a[2])
 RS
 printf 'SliceID,Condition\nsec1_anterior,section1\nsec1_posterior,section1\nsec2_anterior,section2\nsec2_posterior,section2\n' > slices.csv
 
-[ -x mf/bin/conda ] || bash "$MINIFORGE" -b -p "$W/mf" > mf.log 2>&1 || { echo "Miniforge install failed" >&2; exit 1; }
-[ -x env/bin/Rscript ] || mf/bin/conda create -y -p "$W/env" --override-channels -c conda-forge -c bioconda \
-    --strict-channel-priority r-base=4.3.3 r-seurat=5.3.0 r-seuratobject=5.2.0 r-presto=1.0.0 r-spacexr=2.2.1 \
-    bioconductor-deseq2=1.42.0 r-harmony=1.2.3 bioconductor-glmgampoi=1.14.0 r-hdf5r=1.3.12 r-ggplot2=3.5.2 \
-    r-patchwork=1.3.2 r-matrix=1.6_5 > env.log 2>&1 || { echo "conda environment failed; see $W/env.log" >&2; exit 1; }
-export PATH=$W/env/bin:/usr/local/bin:/usr/bin:/bin
+if [ -n "$E" ]; then
+    export PATH=$E/bin:/usr/local/bin:/usr/bin:/bin
+else
+    [ -x mf/bin/conda ] || bash "$MINIFORGE" -b -p "$W/mf" > mf.log 2>&1 || { echo "Miniforge install failed" >&2; exit 1; }
+    [ -x env/bin/Rscript ] || mf/bin/conda create -y -p "$W/env" --override-channels -c conda-forge -c bioconda \
+        --strict-channel-priority r-base=4.3.3 r-seurat=5.3.0 r-seuratobject=5.2.0 r-presto=1.0.0 r-spacexr=2.2.1 \
+        bioconductor-deseq2=1.42.0 r-harmony=1.2.3 bioconductor-glmgampoi=1.14.0 r-hdf5r=1.3.12 r-ggplot2=3.5.2 \
+        r-patchwork=1.3.2 r-matrix=1.6_5 > env.log 2>&1 || { echo "conda environment failed; see $W/env.log" >&2; exit 1; }
+    export PATH=$W/env/bin:/usr/local/bin:/usr/bin:/bin
+fi
 
 URL=https://cf.10xgenomics.com/samples/spatial-exp/1.1.0
 for s in V1_Mouse_Brain_Sagittal_Anterior V1_Mouse_Brain_Sagittal_Anterior_Section_2 \
@@ -105,9 +113,14 @@ for sl in sec1_anterior sec1_posterior sec2_anterior sec2_posterior; do
     mkdir -p "out/cluster_small/$sl"
     Rscript sub_rds.R "out/cluster/$sl/${sl}_clustered.rds" "out/cluster_small/$sl/${sl}_clustered.rds"
 done
+# Spatially variable features on one slice (default arguments); a failure does not stop the test.
+mkdir -p out/svf_in
+cp -r out/cluster/sec1_anterior out/svf_in/
+python3 measure.py svf Rscript "$M/spatial_svf.1.0.R" input_dir="$W/out/svf_in" output_dir="$W/out/svf" \
+    > out/svf.stdout 2> out/svf.stderr || echo "svf failed (see out/svf.stderr)" >&2
 python3 measure.py merge Rscript "$M/spatial_merge.1.1.R" input_dir="$W/out/cluster_small" output_dir="$W/out/merge" \
     integration=harmony > out/merge.stdout 2> out/merge.stderr || { echo "merge failed" >&2; exit 1; }
-python3 measure.py de Rscript "$M/spatial_condition_de.1.0.R" input_dir="$W/out/merge" sample_data="$W/slices.csv" \
+python3 measure.py de Rscript "$M/spatial_condition_de.1.1.R" input_dir="$W/out/merge" sample_data="$W/slices.csv" \
     output_dir="$W/out/de" reference=section1 > out/de.stdout 2> out/de.stderr
 echo "condition_de exit=$?"
 grep -h measure out/*.stderr
