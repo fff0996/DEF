@@ -8,7 +8,7 @@ CLOSHA에 RTpred 모듈을 등록할 때 쓰는 Input / Output / Option 정리�
 
 등록 메모:
 - RTpred는 CLOSHA 3.0에서 처음 배포하므로 배포 번호는 모두 1.0이다(작업 파일 retip_predict.1.1.py → 배포 retip_predict.1.0.py).
-- `retip_predict.1.2.py`(다른 모드 행을 건너뛰는 버전)는 서울대 의도와 달라 쓰지 않는다. 삭제 여부는 미정이다.
+- `retip_predict.1.2.py`(다른 모드 행을 건너뛰는 버전)는 서울대 의도와 달라 쓰지 않아 지웠다(2026-10-22).
 - `cpus`는 포탈에 등록하지 않는다(Processor Core 선택으로 결정, 스크립트가 `auto`로 할당 코어를 읽음).
 
 ## 0. 파이프라인 흐름

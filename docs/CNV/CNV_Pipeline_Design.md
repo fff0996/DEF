@@ -1,7 +1,7 @@
 CLOSHA 체세포 CNV 파이프라인 설계안 0.4
 
 작성일: 2026-10-21
-상태: 스크립트 4개와 DEF 2개 작성(2026-10-21), Codespace 도구 환경에서 전체 실행 확인. DEF 빌드와 원고는 아직이다.
+상태: 스크립트 4개와 DEF 2개 작성(2026-10-21), Codespace 도구 환경에서 전체 실행 확인. DEF 2개 Codespace 검증 빌드 성공(2026-10-22, bx_cnvkit 6분 680MB, bx_facets 5분 678MB, 호스트 변화 없음). 원고는 `docs/CNV/modules/`, `pipeline/`, `containers/`에 있다. 테스트 다시 돌리기: `bash tools/cnv/run_cnv_test.sh <작업 폴더> <bx_cnvkit.sif> <bx_facets.sif>`.
 
 | 파일 | 내용 |
 |---|---|
@@ -183,6 +183,13 @@ SEQC2 체세포 기준 세포주 HCC1395(종양)와 HCC1395BL(정상)을 쓴다.
   - 관심 유전자 패널은 패널마다 y축 범위를 잡는다.
   - QC 커버리지는 타깃과 반타깃을 나눠 그린다.
 - 관심 유전자 중 자료에 없는 MYC는 경고로 알렸다(데이터 결과, 종료 코드 0).
+
+### 7.3 SIF 실행 확인 (2026-10-22)
+- 빌드한 bx_cnvkit 1.0, bx_facets 1.0 SIF 안에서 7.2와 같은 자료로 4개 모듈을 다시 실행했다(`tools/cnv/run_cnv_test.sh`). 모두 exit 0이고 결과가 7.2와 같다: 순도 0.966, 배수성 3.08, LOH 비율 0.55, WGD yes, CNVkit-FACETS 일치 83.5%.
+- 시간과 최대 메모리: reference 243초 0.36GB, facets 108초 0.77GB, call 163초 0.24GB, summary 7초 0.18GB.
+- 그림을 모두 확인하고 원고의 결과 이미지로 넣었다(`docs/CNV/modules/figures/results/`).
+- 다음 cnvkit_call 버전에서 고칠 것: 염색체 모식도(chromosome_diagram) 범례의 NEUTRAL이 진한 회색(#7F7F7F)인데, 그림의 중립 구간은 바탕색 연한 회색(#EEEEEE)이다. 판정 값에는 영향이 없다.
+- 팔 단위 판정에서 21p가 판정되는 것은 GRCh38 chr21 짧은 팔(5~13Mb)에 서열과 WES 타깃(bin 155개)이 있기 때문이며 오류가 아니다.
 
 ## 8. 실행 이미지
 - `bx_cnvkit`: CNVkit 0.9.14, Python 3.12, R 4.5.3(DNAcopy), samtools 1.22.1, pandas, NumPy, SciPy, matplotlib, UCSC cytoBand(hg38, hg19). cnvkit_reference, cnvkit_call, cnv_summary가 함께 쓴다.

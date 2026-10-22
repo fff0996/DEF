@@ -16,7 +16,7 @@ Spatial transcriptomics pipeline: 작업 기록
 | spatial_hd_prep | `spatial_hd_prep.1.0.R` | 새 모듈: Visium HD 불러오기, QC, 정규화, sketch |
 | spatial_hd_cluster | `spatial_hd_cluster.1.0.R` | 새 모듈: Visium HD 슬라이드 통합 군집, 모든 bin에 군집 배정 |
 
-실행 이미지: `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.0.def`(빌드 전).
+실행 이미지: `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.0.def`(2026-10-22 Codespace 검증 빌드 성공, 8분, 1.29GB, 호스트 변화 없음), `bx_spatial.1.1.def`(r-ape 5.8-1 추가, svf용).
 
 ## 2. 실행 이미지 패키지 결정
 - 대상 버전: R 4.3.3, Seurat 5.3.0, SeuratObject 5.2.0, presto 1.0.0, spacexr 2.2.1, DESeq2 1.42.0, harmony 1.2.3, glmGamPoi 1.14.0, hdf5r 1.3.12, ggplot2 3.5.2, patchwork 1.3.2, Matrix 1.6-5. 모두 conda-forge 또는 bioconda에서 받는다.
@@ -119,7 +119,37 @@ Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종�
 | spatial_hd_cluster | 32GB | 64~128GB | 4 |
 | spatial_condition_de 1.1 | 16~32GB | 32~64GB | 4 |
 
-## 7. 남은 일
-1. Visium HD: pt_size 4로 전체 재실행 확인, 8µm 데이터로 자원 확인, HD용 RCTD와 공간 가변 유전자(2단계)
-2. bx_spatial, bx_cnvkit, bx_facets 검증 빌드
-3. 원고
+## 6.1 SIF 실행 확인 (2026-10-22, bx_spatial 1.0)
+빌드한 bx_spatial 1.0 SIF 안에서 테스트를 다시 돌렸다(`tools/spatial/run_spatial_test.sh <작업 폴더> <env 폴더>`, env 폴더의 `bin/Rscript`는 `apptainer exec` 래퍼).
+
+| 단계 | 시간 | 최대 메모리 | 결과 |
+|---|---|---|---|
+| Visium prep (슬라이스 4장, 각각) | 51~64초 | 2.1~2.5GB | 정상 |
+| Visium cluster (각각) | 71~79초 | 1.7~2.0GB | 정상 |
+| Visium svf (1장) | 9초 | 0.9GB | **실패**: Seurat RunMoransI는 Rfast2나 ape가 필요한데 이미지에 없음 → bx_spatial 1.1에서 r-ape 추가 |
+| Visium svf (1장, bx_spatial 1.1) | 447초 | 1.8GB | 정상. 상위: Calb2, Gng4, Ttr, Pcbp3, Fabp7, Gpsm1(후각망울 층, 맥락얼기). ape는 spot 수의 제곱에 비례해 느림 |
+| Visium merge 1.1 | 73초 | 2.5GB | 정상 |
+| Visium condition_de 1.1 | 71초 | 2.1GB | 정상, 결과는 1.0과 같음 |
+| HD prep (4분면 4장) | 197초 | 2.2GB | 정상 |
+| HD cluster | 271초 | 2.6GB | 정상, 군집 18개. 해마 CA(13)·치아이랑(17)이 띠로 나뉘고 Prox1이 치아이랑에만 나옴 |
+| HD condition_de 1.1 | 82초 | 2.9GB | 검정·요약표·그림 5종까지 정상. 조직 위 유전자 그림 단계에서 Codespace 한계로 종료(슬라이드 객체를 읽는 단계). 같은 그림은 conda 2분할 테스트에서 그려짐을 확인 |
+
+- HD 테스트는 좌우 반쪽 2장 대신 4분면 4장(각 2만 2천~2만 7천 bin, sketch 5,000)으로 바꿨다. 조건마다 슬라이드가 2장이라 HD pseudobulk DESeq2 경로까지 확인된다(군집 12개 검정).
+- HD 테스트용 자료를 나누는 split_hd.R은 h5를 500만 개씩 나눠 읽고, 정렬 없이 압축 열 행렬을 바로 만든다. Read10X_h5로 전체를 읽으면 Codespace 한계를 넘는다.
+- Visium 테스트 러너가 condition_de 1.0을 돌리고 있어 1.1로 바꿨다. 조직 위 유전자 그림의 공통 색 범위는 1.1에만 있다.
+
+그림 점검에서 찾은 것(다음 버전에서 고칠 것):
+- bx_spatial 1.1 검증 빌드: 8분, 1.29GB, %test(Moran's I 포함) 통과, 호스트 변화 없음.
+- 받은 스크립트(spatial_cluster, spatial_merge)의 marker dot plot과 condition_de의 log2FC heatmap이 투명 배경 PNG로 저장된다. 원고용 그림은 흰 배경을 깔았다. ggsave에 `bg = "white"`를 주면 된다.
+- spatial_hd_prep QC 그림의 두 violin 제목이 붙어 겹친다.
+
+## 7. 원고 (2026-10-22)
+- `modules/Registration.md`, `modules/Portal_Content.md`, `pipeline/Portal_Content.md`, `containers/Container_Manual.md`를 썼다.
+- 범위: Visium(prep, cluster, svf, merge, condition_de)과 Visium HD(hd_prep, hd_cluster, condition_de). labelTransfer, rctd, check_reference는 참조 자료로 실행 확인 뒤 넣는다.
+- 노선도 2장(`pipeline/figures/pipeline_visium*.png`, 생성 `make_pipeline_map.py`, 그리기 함수는 `docs/tools/metro_map.py`), 파이프라인 개념도(`pipeline/figures/concept.png`, `make_concept.py`).
+- 테스트는 이제 빌드한 SIF 안에서 돌린다: `tools/spatial/run_spatial_test.sh <작업 폴더> <env 폴더>`의 env 폴더에 `bin/Rscript`(apptainer exec 래퍼)를 두면 conda 환경을 만들지 않는다.
+
+## 8. 남은 일
+1. Visium HD: 8µm 자원 확인(사용자가 CLOSHA에서), HD용 RCTD와 공간 가변 유전자(2단계)
+2. labelTransfer, rctd, check_reference 실행 확인과 원고
+3. 모듈 개념도, 결과 이미지 레전드, 받은 스크립트의 CLOSHA 2.0 배포 여부 확인(배포 번호)
