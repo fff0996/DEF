@@ -1,0 +1,28 @@
+	Failed to import torch or check CUDA availability!Please ensure you have the correct version of PyTorch installed by running `pip install -U torch`
+	Failed to import torch or check CUDA availability!Please ensure you have the correct version of PyTorch installed by running `pip install -U torch`
+	Failed to import torch or check CUDA availability!Please ensure you have the correct version of PyTorch installed by running `pip install -U torch`
+	Failed to import torch or check CUDA availability!Please ensure you have the correct version of PyTorch installed by running `pip install -U torch`
+test_all_invalid_prediction (test_pipeline.OfflineIntegration.test_all_invalid_prediction) ... ok
+test_compare_all_candidates_same_rows_offline (test_pipeline.OfflineIntegration.test_compare_all_candidates_same_rows_offline) ... ok
+test_compare_best_scope (test_pipeline.OfflineIntegration.test_compare_best_scope) ... ok
+test_default_offline_best_and_invalid_rows (test_pipeline.OfflineIntegration.test_default_offline_best_and_invalid_rows) ... ok
+test_group_split_and_saved_best (test_pipeline.OfflineIntegration.test_group_split_and_saved_best) ... ok
+test_input_metadata_and_xlsx (test_pipeline.OfflineIntegration.test_input_metadata_and_xlsx) ... ok
+test_invalid_evaluation_rows_preserved (test_pipeline.OfflineIntegration.test_invalid_evaluation_rows_preserved) ... ok
+test_invalid_model_and_ambiguous_columns (test_pipeline.OfflineIntegration.test_invalid_model_and_ambiguous_columns) ... ok
+test_leakage_rejected (test_pipeline.OfflineIntegration.test_leakage_rejected) ... ok
+test_mode_conflict_rejected (test_pipeline.OfflineIntegration.test_mode_conflict_rejected) ... ok
+test_multiple_user_models (test_pipeline.OfflineIntegration.test_multiple_user_models) ... 	Failed to import torch or check CUDA availability!Please ensure you have the correct version of PyTorch installed by running `pip install -U torch`
+	Failed to import torch or check CUDA availability!Please ensure you have the correct version of PyTorch installed by running `pip install -U torch`
+	Failed to import torch or check CUDA availability!Please ensure you have the correct version of PyTorch installed by running `pip install -U torch`
+ok
+test_no_download_code_in_active_modules (test_pipeline.OfflineIntegration.test_no_download_code_in_active_modules) ... ok
+test_no_overwrite (test_pipeline.OfflineIntegration.test_no_overwrite) ... ok
+test_rt_validation (test_pipeline.OfflineIntegration.test_rt_validation) ... ok
+test_too_small_training_rejected (test_pipeline.OfflineIntegration.test_too_small_training_rejected) ... ok
+test_unit_mismatch_rejected (test_pipeline.OfflineIntegration.test_unit_mismatch_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 26.994s
+
+OK

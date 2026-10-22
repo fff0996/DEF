@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="795.6pt" height="263.88pt" viewBox="0 0 795.6 263.88" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-09-22T20:26:13.202823</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.9, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 263.88 
+L 795.6 263.88 
+L 795.6 0 
+L 0 0 
+z
+" style="fill: #f5f8fc"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 23.94 202.3488 
+L 249.93 202.3488 
+Q 253.836 202.3488 253.836 198.468 
+L 253.836 73.728 
+Q 253.836 69.8472 249.93 69.8472 
+L 23.94 69.8472 
+Q 20.034 69.8472 20.034 73.728 
+L 20.034 198.468 
+Q 20.034 202.3488 23.94 202.3488 
+z
+" clip-path="url(#p368c9e9e24)" style="fill: #ffffff; stroke: #197c91; stroke-width: 1.7; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 283.41 202.3488 
+L 509.4 202.3488 
+Q 513.306 202.3488 513.306 198.468 
+L 513.306 73.728 
+Q 513.306 69.8472 509.4 69.8472 
+L 283.41 69.8472 
+Q 279.504 69.8472 279.504 73.728 
+L 279.504 198.468 
+Q 279.504 202.3488 283.41 202.3488 
+z
+" clip-path="url(#p368c9e9e24)" style="fill: #ffffff; stroke: #197c91; stroke-width: 1.7; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 542.88 202.3488 
+L 768.87 202.3488 
+Q 772.776 202.3488 772.776 198.468 
+L 772.776 73.728 
+Q 772.776 69.8472 768.87 69.8472 
+L 542.88 69.8472 
+Q 538.974 69.8472 538.974 73.728 
+L 538.974 198.468 
+Q 538.974 202.3488 542.88 202.3488 
+z
+" clip-path="url(#p368c9e9e24)" style="fill: #ffffff; stroke: #197c91; stroke-width: 1.7; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 22px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #16324f" x="21.15" y="34.92" transform="rotate(-0 21.15 34.92)">01 | Default best-model prediction</text>
+   </g>
+   <g id="text_2">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #197c91" x="33.426" y="93.132" transform="rotate(-0 33.426 93.132)">Compound input</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(33.426 122.906438)">CSV / XLSX</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(33.426 137.523547)">SMILES + RP / HILIC</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(33.426 152.140656)">Measured RT optional</text>
+   </g>
+   <g id="patch_5">
+    <path d="M 256.39434 140.256 
+Q 265.274061 140.256 271.917713 140.256 
+" style="fill: none; stroke: #197c91; stroke-width: 2; stroke-linecap: round"/>
+    <path d="M 267.917713 138.256 
+L 271.917713 140.256 
+L 267.917713 142.256 
+" style="fill: none; stroke: #197c91; stroke-width: 2; stroke-linecap: round"/>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #197c91" x="292.896" y="93.132" transform="rotate(-0 292.896 93.132)">Local best ensemble</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(292.896 122.906438)">RDKit features</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(292.896 137.523547)">WeightedEnsemble_L3</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(292.896 152.418781)">Explicit saved-best selection</text>
+   </g>
+   <g id="patch_6">
+    <path d="M 515.86434 140.256 
+Q 524.744061 140.256 531.387713 140.256 
+" style="fill: none; stroke: #197c91; stroke-width: 2; stroke-linecap: round"/>
+    <path d="M 527.387713 138.256 
+L 531.387713 140.256 
+L 527.387713 142.256 
+" style="fill: none; stroke: #197c91; stroke-width: 2; stroke-linecap: round"/>
+   </g>
+   <g id="text_6">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #197c91" x="552.366" y="93.132" transform="rotate(-0 552.366 93.132)">Predicted RT</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(552.366 122.906438)">One result per input row</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(552.366 137.523547)">Invalid structures retained</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(552.366 152.140656)">CSV + QC + distribution</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #4c6174" x="23.94" y="234.504" transform="rotate(-0 23.94 234.504)">Original explanatory diagram | No publication figures reproduced | CPU inference/training; no runtime download</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p368c9e9e24">
+   <rect x="7.2" y="7.2" width="781.2" height="249.48"/>
+  </clipPath>
+ </defs>
+</svg>

@@ -1,0 +1,126 @@
+{
+  "modules": {
+    "predict": [
+      "--help",
+      "--input",
+      "--output",
+      "--model",
+      "--sheet"
+    ],
+    "train": [
+      "--help",
+      "--input",
+      "--output",
+      "--model",
+      "--sheet",
+      "--rt-unit",
+      "--time-limit",
+      "--cpus",
+      "--algorithms",
+      "--test-size",
+      "--validation-size",
+      "--seed",
+      "--max-missing-fraction",
+      "--correlation-threshold",
+      "--method-label"
+    ],
+    "compare": [
+      "--help",
+      "--input",
+      "--output",
+      "--model",
+      "--sheet",
+      "--rt-unit",
+      "--user-model",
+      "--scope",
+      "--title"
+    ]
+  },
+  "images": {
+    "docs/images/module1_concept.png": 102841,
+    "docs/images/module1_concept.svg": 5556,
+    "docs/images/module1_result.png": 44977,
+    "docs/images/module1_result.svg": 40177,
+    "docs/images/module2_concept.png": 110928,
+    "docs/images/module2_concept.svg": 5634,
+    "docs/images/module2_result.png": 65175,
+    "docs/images/module2_result.svg": 48523,
+    "docs/images/module3_concept.png": 109034,
+    "docs/images/module3_concept.svg": 5610,
+    "docs/images/module3_result.png": 108190,
+    "docs/images/module3_result.svg": 62460
+  },
+  "examples": {
+    "examples/compounds.csv": {
+      "rows": 8,
+      "columns": [
+        "compound_id",
+        "Name",
+        "SMILES",
+        "model_type",
+        "experimental_rt"
+      ]
+    },
+    "examples/synthetic_training_RP.csv": {
+      "rows": 72,
+      "columns": [
+        "compound_id",
+        "SMILES",
+        "model_type",
+        "RT",
+        "data_origin"
+      ]
+    },
+    "examples/synthetic_training_HILIC.csv": {
+      "rows": 72,
+      "columns": [
+        "compound_id",
+        "SMILES",
+        "model_type",
+        "RT",
+        "data_origin"
+      ]
+    },
+    "examples/02_train_RP/reserved_test.csv": {
+      "rows": 15,
+      "columns": [
+        "compound_id",
+        "smiles",
+        "model_type",
+        "experimental_rt",
+        "data_origin"
+      ]
+    },
+    "examples/02_train_HILIC/reserved_test.csv": {
+      "rows": 15,
+      "columns": [
+        "compound_id",
+        "smiles",
+        "model_type",
+        "experimental_rt",
+        "data_origin"
+      ]
+    },
+    "comparison_RP": {
+      "candidate_count": 4,
+      "evaluation_rows_per_candidate": 15
+    },
+    "comparison_HILIC": {
+      "candidate_count": 7,
+      "evaluation_rows_per_candidate": 15
+    }
+  },
+  "documentation_links": [],
+  "missing_parameter_docs": [],
+  "definition_files": [
+    "containers/predict.def",
+    "containers/train.def",
+    "containers/compare.def"
+  ],
+  "prior_test_log": "16 tests passed; not rerun in this documentation audit",
+  "audit_date": "2026-09-22",
+  "apptainer_build": "not performed; def files present",
+  "software_version_scope": "pinned principal dependencies only; full installed OS/transitive versions pending build",
+  "local_document_links_checked": 93,
+  "final_summary": "FINAL_SUMMARY_KO.md"
+}

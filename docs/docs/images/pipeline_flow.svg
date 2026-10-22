@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="795.6pt" height="402.48pt" viewBox="0 0 795.6 402.48" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-09-22T20:26:13.132006</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.9, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 402.48 
+L 795.6 402.48 
+L 795.6 -0 
+L 0 -0 
+z
+" style="fill: #f5f8fc"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 23.94 163.5408 
+L 224.82 163.5408 
+Q 228.726 163.5408 228.726 159.66 
+L 228.726 70.956 
+Q 228.726 67.0752 224.82 67.0752 
+L 23.94 67.0752 
+Q 20.034 67.0752 20.034 70.956 
+L 20.034 159.66 
+Q 20.034 163.5408 23.94 163.5408 
+z
+" clip-path="url(#p112b993958)" style="fill: #ffffff; stroke: #197c91; stroke-width: 1.7; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 288.99 163.5408 
+L 506.61 163.5408 
+Q 510.516 163.5408 510.516 159.66 
+L 510.516 70.956 
+Q 510.516 67.0752 506.61 67.0752 
+L 288.99 67.0752 
+Q 285.084 67.0752 285.084 70.956 
+L 285.084 159.66 
+Q 285.084 163.5408 288.99 163.5408 
+z
+" clip-path="url(#p112b993958)" style="fill: #ffffff; stroke: #197c91; stroke-width: 1.7; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 23.94 332.6328 
+L 224.82 332.6328 
+Q 228.726 332.6328 228.726 328.752 
+L 228.726 217.872 
+Q 228.726 213.9912 224.82 213.9912 
+L 23.94 213.9912 
+Q 20.034 213.9912 20.034 217.872 
+L 20.034 328.752 
+Q 20.034 332.6328 23.94 332.6328 
+z
+" clip-path="url(#p112b993958)" style="fill: #ffffff; stroke: #197c91; stroke-width: 1.7; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 288.99 332.6328 
+L 506.61 332.6328 
+Q 510.516 332.6328 510.516 328.752 
+L 510.516 217.872 
+Q 510.516 213.9912 506.61 213.9912 
+L 288.99 213.9912 
+Q 285.084 213.9912 285.084 217.872 
+L 285.084 328.752 
+Q 285.084 332.6328 288.99 332.6328 
+z
+" clip-path="url(#p112b993958)" style="fill: #ffffff; stroke: #197c91; stroke-width: 1.7; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 565.2 332.6328 
+L 771.66 332.6328 
+Q 775.566 332.6328 775.566 328.752 
+L 775.566 217.872 
+Q 775.566 213.9912 771.66 213.9912 
+L 565.2 213.9912 
+Q 561.294 213.9912 561.294 217.872 
+L 561.294 328.752 
+Q 561.294 332.6328 565.2 332.6328 
+z
+" clip-path="url(#p112b993958)" style="fill: #ffffff; stroke: #197c91; stroke-width: 1.7; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 23px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #16324f" x="18.36" y="26.604" transform="rotate(-0 18.36 26.604)">RTpred | Three independent applications</text>
+   </g>
+   <g id="text_2">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #197c91" x="33.426" y="90.36" transform="rotate(-0 33.426 90.36)">Bundled default models</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(33.426 120.134437)">Local RP / HILIC best ensemble</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(33.426 134.751547)">No GitHub access at runtime</text>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #197c91" x="298.476" y="90.36" transform="rotate(-0 298.476 90.36)">01  Default prediction</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(298.476 120.134437)">Compound SMILES -&gt; predicted RT</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(298.476 134.751547)">Standalone prediction service</text>
+   </g>
+   <g id="text_6">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #197c91" x="33.426" y="237.276" transform="rotate(-0 33.426 237.276)">02  User model training</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(33.426 267.050437)">SMILES + measured RT</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(33.426 281.667547)">Local pyRetip / AutoGluon workflow</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(33.426 296.284656)">Train / validation / reserved test</text>
+   </g>
+   <g id="text_8">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #197c91" x="298.476" y="237.276" transform="rotate(-0 298.476 237.276)">User model bundles</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(298.476 267.050437)">Saved models + selected best</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(298.476 281.667547)">Descriptor / runtime manifest</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(298.476 296.284656)">Reserved evaluation compounds</text>
+   </g>
+   <g id="text_10">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #197c91" x="574.686" y="237.276" transform="rotate(-0 574.686 237.276)">03  Model comparison</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(574.686 267.050437)">Default best + user candidates</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(574.686 281.667547)">Same evaluation compounds</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(574.686 296.284656)">RMSE / MAE / R-squared</text>
+   </g>
+   <g id="patch_7">
+    <path d="M 230.72525 115.308 
+Q 256.069175 115.308 279.177031 115.308 
+" style="fill: none; stroke: #197c91; stroke-width: 2; stroke-linecap: round"/>
+    <path d="M 275.177031 113.308 
+L 279.177031 115.308 
+L 275.177031 117.308 
+" style="fill: none; stroke: #197c91; stroke-width: 2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 230.72525 276.084 
+Q 256.069175 276.084 279.177031 276.084 
+" style="fill: none; stroke: #197c91; stroke-width: 2; stroke-linecap: round"/>
+    <path d="M 275.177031 274.084 
+L 279.177031 276.084 
+L 275.177031 278.084 
+" style="fill: none; stroke: #197c91; stroke-width: 2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 514.190374 276.084 
+Q 535.905591 276.084 555.38474 276.084 
+" style="fill: none; stroke: #197c91; stroke-width: 2; stroke-linecap: round"/>
+    <path d="M 551.38474 274.084 
+L 555.38474 276.084 
+L 551.38474 278.084 
+" style="fill: none; stroke: #197c91; stroke-width: 2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 126.380862 165.204 
+L 652.06 165.204 
+Q 660.06 165.204 660.06 173.204 
+L 660.06 208.538052 
+" style="fill: none; stroke: #d78437; stroke-width: 1.6; stroke-linecap: round"/>
+    <path d="M 662.06 204.538052 
+L 660.06 208.538052 
+L 658.06 204.538052 
+" style="fill: none; stroke: #d78437; stroke-width: 1.6; stroke-linecap: round"/>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #b26620" x="531.72" y="184.608" transform="rotate(-0 531.72 184.608)">default best</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #4c6174" x="23.94" y="367.56" transform="rotate(-0 23.94 367.56)">Module 1 does not depend on user training. Module 3 consumes models and measured evaluation data, not module 1 output.</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p112b993958">
+   <rect x="7.2" y="7.2" width="781.2" height="388.08"/>
+  </clipPath>
+ </defs>
+</svg>
