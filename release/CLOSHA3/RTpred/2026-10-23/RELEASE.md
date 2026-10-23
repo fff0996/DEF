@@ -12,7 +12,7 @@ CLOSHA 3.0 신규 파이프라인이므로 세 모듈 모두 1.0입니다. 각 �
 | rtpred_train | `rtpred_train.1.0.py` | (3.0 신규) | `scripts/RTpred/rtpred_train.1.1.py` | bx_rtpred_train 1.0 (`defs/RTpred/bx_rtpred_train.1.0.def`) |
 | rtpred_compare | `rtpred_compare.1.0.py` | (3.0 신규) | `scripts/RTpred/rtpred_compare.1.1.py` | bx_rtpred_compare 1.0 (`defs/RTpred/bx_rtpred_compare.1.0.def`) |
 
-- 작업 파일 기준 커밋: `165704a`
+- 작업 파일 기준 커밋: `4483f07`
 - 실행 이미지는 세 개 모두 `defs/RTpred/`에서 빌드합니다(`%files`가 `mdcc`를 상대 경로로 넣음). 이미지 안의 mdcc 코드와 기본 모델은 서울대가 준 그대로입니다.
 - 파이프라인 두 개: 기본 모델 예측(rtpred_predict만), 사용자 모델(rtpred_train → rtpred_predict, rtpred_train → rtpred_compare)
 
