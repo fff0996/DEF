@@ -128,7 +128,7 @@ python rtpred_predict.1.0.py \
 ```
 
 ### 주요 결과 이미지
-서울대 예제(`compounds.csv`, 8행, RP·HILIC 혼합, 기본 모델) 결과입니다.
+예제 데이터(`compounds.csv`, 8행, RP·HILIC 혼합, 기본 모델) 결과입니다.
 
 **결과 1. 예측 처리 현황과 예측 RT 분포**
 - 결과 파일: `result/prediction.png` (같은 그림 `prediction.svg`, 표 `predictions.csv`)
@@ -269,7 +269,7 @@ python rtpred_train.1.0.py \
 ```
 
 ### 주요 결과 이미지
-서울대 예제(`synthetic_training_RP.csv`, 72개 화합물, RP)의 결과입니다. RT는 기능 확인용 합성값입니다.
+예제 데이터(`synthetic_training_RP.csv`, 72개 화합물, RP)의 결과입니다. RT는 기능 확인용 합성값입니다.
 
 **결과 1. 구조 그룹 분할과 validation 성능**
 - 결과 파일: `result/<MODE>/training.png` (같은 그림 `training.svg`, 표 `split_assignments.csv`, `validation_leaderboard.csv`)
@@ -399,7 +399,7 @@ python rtpred_compare.1.0.py \
 ```
 
 ### 주요 결과 이미지
-서울대 예제(RP 합성 RT 학습 결과의 reserved_test, scope=all) 결과입니다.
+예제 데이터(RP 합성 RT 학습 결과의 reserved_test, scope=all) 결과입니다.
 
 **결과 1. 후보별 오차와 측정-예측 비교**
 - 결과 파일: `result/<MODE>/comparison.png` (같은 그림 `comparison.svg`, 표 `comparison.csv`, `predictions_long.csv`), 모드 통합 표 `result/comparison.csv`
