@@ -3,23 +3,23 @@
 #   One run trains every chromatography mode in the table, as the developers
 #   intended (2026-10-23): the rows are split by model_type and a model is
 #   trained per mode (result/RP/, result/HILIC/). A table of only RP rows gives
-#   only an RP model. 1.0 stopped when the table mixed modes. model=RP or
-#   HILIC trains only that mode's rows; a table without a model_type column
-#   needs model=RP or HILIC. A mode that fails (for example too few rows) is
-#   reported; the run fails only when no mode was trained.
+#   only an RP model. 1.0 stopped when the table mixed modes. The mode comes
+#   only from the table: the model_type column (RP or HILIC per row) is
+#   required and the model option is removed, so the mode cannot disagree
+#   with the data. A mode that fails (for example too few rows) is reported;
+#   the run fails only when no mode was trained.
 #   rt_unit defaults to min (the developers' RT unit) instead of "model unit".
 #   mdcc and the image are unchanged: mdcc train runs once per mode.
 #
 """RTpred module 2: train a user retention time model (pyRetip / AutoGluon).
 
 Usage:
-    python retip_train.1.1.py input_file="..." output_dir="..." [model="auto"] [options]
+    python retip_train.1.1.py input_file="..." output_dir="..." [options]
 
 Example:
     apptainer exec bx_retip_train.1.0.sif python retip_train.1.1.py \
         input_file="/path/to/library.csv" \
         output_dir="/path/to/output" \
-        model="auto" \
         time_limit="1200" \
         cpus="auto"
 
@@ -28,16 +28,10 @@ Arguments (key=value, --key=value, or --key value):
                                        SMILES and measured RT
                                        (experimental_rt / rt / retention_time),
                                        and a model_type column (RP or HILIC per
-                                       row) unless model is RP or HILIC
+                                       row; modes may be mixed). One model is
+                                       trained per mode in the column.
     output_dir            (required) - Output directory. Results go to
                                        output_dir/result, logs to output_dir/logs.
-    model                 (optional) - auto, RP, or HILIC. auto (or empty) trains
-                                       one model per mode in the model_type
-                                       column (RP only -> an RP model; RP and
-                                       HILIC -> both). RP or HILIC trains only
-                                       those rows, or, without a model_type
-                                       column, treats every row as that mode.
-                                       default: auto
     sheet                 (optional) - XLSX sheet name; first (or empty) reads
                                        the first sheet. Ignored for CSV.
                                        default: first
@@ -89,7 +83,7 @@ import threading
 MODULE = "train"
 IMAGE = "bx_retip_train.1.0.sif"
 REQUIRED = ["input_file", "output_dir"]
-OPTIONAL = {"model": "auto", "sheet": "first", "rt_unit": "min", "time_limit": "1200",
+OPTIONAL = {"sheet": "first", "rt_unit": "min", "time_limit": "1200",
             "cpus": "auto", "algorithms": "GBM,CAT,RF,XT,KNN", "test_size": "0.2",
             "validation_size": "0.2", "seed": "42", "max_missing_fraction": "0.2",
             "correlation_threshold": "0.995", "method_label": "user method"}
@@ -160,16 +154,14 @@ def read_rows(path, sheet):
     return rows
 
 
-def split_by_mode(rows, model):
-    """Return {mode: data rows} and the count of rows left out by model=RP/HILIC."""
+def split_by_mode(rows):
+    """Return {mode: data rows} from the table's model_type column."""
     header = [str(name).strip().lower() for name in rows[0]]
     columns = [i for i, name in enumerate(header) if name in MODE_COLUMNS]
     if len(columns) > 1:
         fail("input_file has more than one mode column (model_type/column/chrom_system/mode)")
     if not columns:
-        if model not in ("RP", "HILIC"):
-            fail("input_file has no model_type column; add one (RP or HILIC per row) or set model=RP or HILIC")
-        return {model: rows[1:]}, 0
+        fail("input_file has no model_type column; add one with RP or HILIC on every row")
     col = columns[0]
     groups = {}
     for row in rows[1:]:
@@ -177,13 +169,8 @@ def split_by_mode(rows, model):
         groups.setdefault(mode, []).append(row)
     bad = sorted(set(groups) - {"RP", "HILIC"})
     if bad:
-        fail(f"model_type values must be RP or HILIC; found {bad}")
-    if model in ("RP", "HILIC"):
-        left_out = sum(len(v) for k, v in groups.items() if k != model)
-        if model not in groups:
-            fail(f"model={model}, but input_file has no {model} rows (modes: {sorted(groups)})")
-        return {model: groups[model]}, left_out
-    return groups, 0
+        fail(f"model_type must be RP or HILIC on every row; found {bad}")
+    return groups
 
 
 def write_rows(path, header, rows):
@@ -305,11 +292,8 @@ def main():
         fail(f"input_file not found: {input_file}")
     if input_file.suffix.lower() not in TABLE_SUFFIXES:
         fail(f"input_file must be a *.csv or *.xlsx table: {input_file}")
-    model = params["model"].upper() if params["model"] not in ("", "auto") else "auto"
-    if model not in ("auto", "RP", "HILIC"):
-        fail(f"model must be auto, RP, or HILIC: {params['model']}")
     rows = read_rows(input_file, params["sheet"])
-    groups, left_out = split_by_mode(rows, model)
+    groups = split_by_mode(rows)
     rt_unit = params["rt_unit"] or "min"
     result_dir = output_dir / "result"
     check_inputs_outside(result_dir, input_file)
@@ -325,15 +309,13 @@ def main():
     log(logs, f"  input_file = {input_file}")
     log(logs, f"  output_dir = {output_dir}")
     log(logs, f"  {'cpus':<21} = {cpus} (requested {params['cpus']}, allocated {allocated_cpus()})")
-    log(logs, f"  {'model':<21} = {model} -> modes to train: "
+    log(logs, f"  {'modes to train':<21} = "
               + ", ".join(f"{m} ({len(groups[m])} rows)" for m in ("RP", "HILIC") if m in groups))
     log(logs, f"  {'rt_unit':<21} = {rt_unit}")
     for key in ["sheet", "time_limit", "algorithms", "test_size",
                 "validation_size", "seed", "max_missing_fraction", "correlation_threshold",
                 "method_label"]:
         log(logs, f"  {key:<21} = {params.get(key) or '<default>'}")
-    if left_out:
-        log_err(logs, f"WARNING: model={model}: {left_out} row(s) of the other mode are not used")
     log(logs)
 
     clear_previous_result(logs, output_dir, result_dir)

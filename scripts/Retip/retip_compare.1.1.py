@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-# Version 1.1 (changes from retip_compare.1.1.py):
+# Version 1.1 (changes from retip_compare.1.0.py):
 #   Every trained mode is compared in one run, as the developers intended
 #   (2026-10-23): for each mode in the retip_train output (retip_train 1.1:
 #   result/RP/, result/HILIC/; 1.0: result/model) the default model of that
 #   mode and the user model are compared on that mode's evaluation rows, in
 #   result/<MODE>/. result/comparison.csv joins the per-mode tables with a
 #   Mode column, and result/compare_summary.tsv lists each mode's status.
-#   model is now optional: auto (default) compares every trained mode; RP or
-#   HILIC compares only that mode. eval_file may mix modes (model_type
-#   column); rows of a mode that was not trained are not used (warning).
+#   The model option is removed: every trained mode is compared, and the
+#   mode of the user models comes from their manifests. A separate eval_file
+#   needs a model_type column (RP or HILIC per row; modes may be mixed);
+#   rows of a mode that was not trained are not used (warning).
 #   A mode that fails or has no evaluation rows is reported; the run fails
 #   only when no mode was compared. mdcc and the image are unchanged.
 #
@@ -16,7 +17,7 @@
 on the same measured compounds.
 
 Usage:
-    python retip_compare.1.1.py input_dir="..." output_dir="..." [model="auto"] [eval_file="..."] [options]
+    python retip_compare.1.1.py input_dir="..." output_dir="..." [eval_file="..."] [options]
 
 Examples:
     After retip_train (its reserved_test.csv is the evaluation set):
@@ -35,11 +36,9 @@ Arguments (key=value, --key=value, or --key value):
                             output_dir/result or result/model also work)
     output_dir (required) - Output directory. Results go to output_dir/result
                             and logs to output_dir/logs.
-    model      (optional) - auto (or empty) compares every trained mode; RP or
-                            HILIC compares only that mode. default: auto
     eval_file  (optional) - Evaluation table (*.csv or *.xlsx with SMILES and
-                            measured RT; a model_type column when it holds
-                            more than one mode), or reserved_test (or empty)
+                            measured RT and a model_type column, RP or HILIC
+                            per row), or reserved_test (or empty)
                             for the reserved_test.csv of each trained mode
                             written by retip_train. default: reserved_test
     cpus       (optional) - Threads for numeric libraries: auto uses the cores
@@ -81,7 +80,7 @@ import threading
 MODULE = "compare"
 IMAGE = "bx_retip_compare.1.0.sif"
 REQUIRED = ["input_dir", "output_dir"]
-OPTIONAL = {"model": "auto", "eval_file": "reserved_test", "sheet": "first", "cpus": "auto", "rt_unit": "auto",
+OPTIONAL = {"eval_file": "reserved_test", "sheet": "first", "cpus": "auto", "rt_unit": "auto",
             "scope": "all", "title": "Default and user model comparison"}
 TABLE_SUFFIXES = {".csv", ".xlsx"}
 
@@ -246,16 +245,14 @@ def read_rows(path, sheet):
     return rows
 
 
-def split_by_mode(rows, model):
-    """Return {mode: data rows} and the count of rows left out by model=RP/HILIC."""
+def split_by_mode(rows):
+    """Return {mode: data rows} from the table's model_type column."""
     header = [str(name).strip().lower() for name in rows[0]]
     columns = [i for i, name in enumerate(header) if name in MODE_COLUMNS]
     if len(columns) > 1:
         fail("eval_file has more than one mode column (model_type/column/chrom_system/mode)")
     if not columns:
-        if model not in ("RP", "HILIC"):
-            fail("eval_file has no model_type column; add one (RP or HILIC per row) or set model=RP or HILIC")
-        return {model: rows[1:]}, 0
+        fail("eval_file has no model_type column; add one with RP or HILIC on every row")
     col = columns[0]
     groups = {}
     for row in rows[1:]:
@@ -263,13 +260,8 @@ def split_by_mode(rows, model):
         groups.setdefault(mode, []).append(row)
     bad = sorted(set(groups) - {"RP", "HILIC"})
     if bad:
-        fail(f"model_type values must be RP or HILIC; found {bad}")
-    if model in ("RP", "HILIC"):
-        left_out = sum(len(v) for k, v in groups.items() if k != model)
-        if model not in groups:
-            fail(f"model={model}, but eval_file has no {model} rows (modes: {sorted(groups)})")
-        return {model: groups[model]}, left_out
-    return groups, 0
+        fail(f"model_type must be RP or HILIC on every row; found {bad}")
+    return groups
 
 
 def write_rows(path, header, rows):
@@ -306,19 +298,12 @@ def main():
     input_dir = Path(params["input_dir"])
     output_dir = Path(params["output_dir"])
     cpus = resolve_cpus(params["cpus"])
-    model = params["model"].upper() if params["model"] not in ("", "auto") else "auto"
 
-    if model not in ("auto", "RP", "HILIC"):
-        fail(f"model must be auto, RP, or HILIC: {params['model']}")
     if params["scope"] not in ("all", "best"):
         fail(f"scope must be all or best: {params['scope']}")
     if not input_dir.is_dir():
         fail(f"input_dir not found: {input_dir}")
     trained = locate_train_outputs(input_dir)
-    if model != "auto":
-        if model not in trained:
-            fail(f"model={model}, but input_dir has no {model} model (trained: {', '.join(sorted(trained))})")
-        trained = {model: trained[model]}
     result_dir = output_dir / "result"
 
     # Evaluation rows per mode: each mode's reserved_test.csv, or eval_file split by model_type.
@@ -336,12 +321,7 @@ def main():
         if eval_file.suffix.lower() not in TABLE_SUFFIXES:
             fail(f"eval_file must be a *.csv or *.xlsx table: {eval_file}")
         rows = read_rows(eval_file, params["sheet"])
-        only = model if model != "auto" else (next(iter(trained)) if len(trained) == 1 else "auto")
-        header = [str(n).strip().lower() for n in rows[0]]
-        if only == "auto" and not any(n in MODE_COLUMNS for n in header):
-            fail("eval_file has no model_type column and both RP and HILIC were trained; "
-                 "add a model_type column or set model=RP or HILIC")
-        groups, _ = split_by_mode(rows, "auto" if any(n in MODE_COLUMNS for n in header) else only)
+        groups = split_by_mode(rows)
         ignored = {m: len(v) for m, v in groups.items() if m not in trained}
         eval_rows = (rows[0], {m: v for m, v in groups.items() if m in trained})
     check_inputs_outside(result_dir, input_dir, *[d for pair in trained.values() for d in pair],
@@ -360,7 +340,6 @@ def main():
         log(logs, f"  user model {mode:<5} = {model_dir}")
     log(logs, f"  eval_file  = {params['eval_file'] or 'reserved_test'}")
     log(logs, f"  output_dir = {output_dir}")
-    log(logs, f"  model      = {model}")
     log(logs, f"  cpus       = {cpus} (requested {params['cpus']}, allocated {allocated_cpus()})")
     for key in ["rt_unit", "sheet", "scope", "title"]:
         log(logs, f"  {key:<10} = {params.get(key) or '<default>'}")

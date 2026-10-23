@@ -107,7 +107,7 @@ The errors (RMSE, MAE) and explained variance (R²) of the default and user mode
 
 ### 국문
 1. **입력은 화합물 표(CSV 또는 XLSX)입니다.** 한 행이 화합물 하나이며 `SMILES` 열이 필요합니다. LC-MS raw 파일이나 샘플 그룹 정보는 필요하지 않습니다. CSV는 UTF-8, 첫 행이 헤더이고 소수점은 `.`입니다. 예전 `.xls`는 지원하지 않습니다.
-2. **분리 모드는 RP와 HILIC입니다.** 표의 `model_type` 열(행마다)로 정하며, 열이 없으면 `model` 옵션으로 한 모드를 지정합니다. 한 표에 두 모드를 섞을 수 있습니다. 학습은 모드마다 따로 모델을 만들고, 사용자 모델로 예측하면 행마다 그 모드의 모델을 씁니다. 학습하지 않은 모드의 행은 예측하지 않고 결과에 `no_trained_model`로 표시합니다.
+2. **분리 모드는 RP와 HILIC이며, 입력 표의 `model_type` 열(행마다 RP 또는 HILIC)로 정합니다.** 세 모듈 모두 이 열이 필요하고, 한 표에 두 모드를 섞을 수 있습니다. 학습은 모드마다 따로 모델을 만들고, 사용자 모델로 예측하면 행마다 그 모드의 모델을 씁니다. 학습하지 않은 모드의 행은 예측하지 않고 결과에 `no_trained_model`로 표시합니다.
 3. **사용자 모델은 같은 LC 조건과 RT 단위로 측정한 자료로 학습해 주세요.** 컬럼, 이동상, gradient가 섞이면 어느 조건에도 맞지 않는 모델이 됩니다. 모드마다 정제 후 25행·서로 다른 구조 15개 이상이 필요합니다.
 4. **성능 비교에는 학습에 쓰지 않은 화합물을 써 주세요.** 학습 결과의 `reserved_test.csv`가 가장 안전합니다. 사용자 모델의 학습·validation 구조와 겹치면 데이터 누수로 멈춥니다.
 5. **기본 모델의 RT 단위는 분(min)입니다.** 학습 조건(컬럼, 이동상, gradient)은 제공 자료에서 확인되지 않았으므로, 실측 RT와 비교할 때와 기본·사용자 모델을 비교할 때는 조건 차이를 감안해 주세요. 비교는 같은 모드끼리만 합니다.
@@ -116,7 +116,7 @@ The errors (RMSE, MAE) and explained variance (R²) of the default and user mode
 
 ### English
 1. **The input is a compound table (CSV or XLSX).** One row is one compound and a `SMILES` column is required; LC-MS raw files and sample group information are not needed. CSV files are UTF-8 with a header row and `.` as the decimal mark; legacy `.xls` is not supported.
-2. **The separation modes are RP and HILIC.** Set them per row with the `model_type` column, or for the whole table with the `model` option when the column is missing; one table may mix both modes. Training builds a model per mode, and prediction with user models uses the model of each row's mode. Rows of a mode that was not trained are not predicted and are marked `no_trained_model` in the results.
+2. **The separation modes are RP and HILIC, set per row in the `model_type` column of the input table.** All three modules need this column, and one table may mix both modes. Training builds a model per mode, and prediction with user models uses the model of each row's mode. Rows of a mode that was not trained are not predicted and are marked `no_trained_model` in the results.
 3. **Train a user model with data measured under one LC condition and RT unit.** Mixed columns, mobile phases or gradients give a model that fits none of them. Each mode needs at least 25 rows and 15 distinct structures after cleaning.
 4. **Compare models on compounds not used for training.** The `reserved_test.csv` of the training output is the safest choice; overlap with the user model's training or validation structures stops the run as leakage.
 5. **The default models give RT in minutes.** Their training conditions (column, mobile phase, gradient) are not stated in the provided material, so keep condition differences in mind when comparing with measured RTs and between the default and user models. Models are compared only within a mode.

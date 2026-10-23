@@ -8,7 +8,7 @@ CLOSHA에 RTpred 모듈을 등록할 때 쓰는 Input / Output / Option 정리�
 
 등록 메모:
 - RTpred는 CLOSHA 3.0에서 처음 배포하므로 배포 번호는 모두 1.0이다(작업 파일 retip_predict.1.2.py, retip_train.1.1.py, retip_compare.1.1.py → 배포 각 1.0).
-- 분리 모드(서울대 확인, 2026-10-23): 학습은 한 표의 RP·HILIC를 모드별로 나눠 각각 학습한다. 사용자 모델로 예측하면 행마다 그 모드의 학습 모델을 쓰고, 학습하지 않은 모드의 행은 예측하지 않고 `parse_status=no_trained_model`로 표시한다. 비교는 학습한 모드마다 그 모드의 기본 모델과 한다. mdcc와 이미지는 그대로이고 래퍼만 바뀌었다(mdcc를 모드마다 한 번씩 부름).
+- 분리 모드(서울대 확인, 2026-10-23): 모드는 입력 표의 model_type 열로만 정하며 세 모듈 모두 이 열이 필수다(`model` 인자는 없앰, 열과 인자가 어긋날 여지를 없애려고). 학습은 한 표의 RP·HILIC를 모드별로 나눠 각각 학습한다. 사용자 모델로 예측하면 행마다 그 모드의 학습 모델을 쓰고, 학습하지 않은 모드의 행은 예측하지 않고 `parse_status=no_trained_model`로 표시한다. 비교는 학습한 모드마다 그 모드의 기본 모델과 한다. mdcc와 이미지는 그대로이고 래퍼만 바뀌었다(mdcc를 모드마다 한 번씩 부름).
 - 2026-10-22에 지운 이전 `retip_predict.1.2.py`(학습 모델 한 개에서 다른 모드 행 건너뛰기)와 지금의 1.2는 다른 파일이다. 지금 1.2는 모드별 모델을 읽는다.
 - `cpus`는 포탈에 등록하지 않는다(Processor Core 선택으로 결정, 스크립트가 `auto`로 할당 코어를 읽음).
 
@@ -32,7 +32,7 @@ CLOSHA에 RTpred 모듈을 등록할 때 쓰는 Input / Output / Option 정리�
 | 열 | predict | train | compare | 규칙 |
 |---|---|---|---|---|
 | `SMILES`(`smiles`, `structure`) | 필수 | 필수 | 필수 | 분자 구조 문자열 |
-| `model_type`(`Column`, `mode`, `chrom_system`) | 조건부 | 조건부 | 조건부 | 행마다 `RP` 또는 `HILIC`, 한 표에 섞여도 됨. 열이 없으면 `model` 인자로 한 모드를 지정 |
+| `model_type`(`Column`, `mode`, `chrom_system`) | 필수 | 필수 | 필수(eval_file) | 행마다 `RP` 또는 `HILIC`, 한 표에 섞여도 됨. 모드를 정하는 유일한 정보(모드 인자 없음) |
 | `RT`(`experimental_rt`, `retention_time`) | 선택 | 필수 | 필수 | 0 이상 숫자 |
 | `compound_id`, `Name`, `InChIKey` | 선택 | 선택 | 선택 | 추적용 |
 
@@ -41,10 +41,9 @@ CLOSHA에 RTpred 모듈을 등록할 때 쓰는 Input / Output / Option 정리�
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
-| Input | `input_file` | File (CSV/XLSX) | 필수 | | 화합물 표. SMILES 열 필수, RT 열이 있으면 ΔRT 계산. 모드가 섞여도 됨 |
+| Input | `input_file` | File (CSV/XLSX) | 필수 | | 화합물 표. SMILES와 model_type 열 필수(모드가 섞여도 됨), RT 열이 있으면 ΔRT 계산 |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더(`result/`, `logs/`) |
 | Input | `model_dir` | Directory | 선택 | `default` | `default` 또는 빈 값 = 이미지 안 기본 모델. 그 밖에는 retip_train의 output_dir(`result/RP/model`, `result/HILIC/model`; train 1.0의 `result/model`도 읽음). 행마다 그 모드의 학습 모델로 예측하고, 학습하지 않은 모드의 행은 `no_trained_model`로 표시 |
-| Option | `model` | List (`auto`, `RP`, `HILIC`) | 선택 | `auto` | auto = 표의 model_type 열(행마다). 열이 없으면 기본 모델은 RP/HILIC 지정 필요, 학습 모델은 한 모드만 학습했을 때 그 모드. RP/HILIC = 모든 행을 그 모드로 봄 |
 | Option | `sheet` | String | 선택 | `first` | XLSX 시트 이름. first 또는 빈 값 = 첫 시트. CSV는 무시 |
 | Option | `cpus` | String | 선택 | `auto` | **포탈에 등록하지 않음** |
 
@@ -55,9 +54,8 @@ CLOSHA에 RTpred 모듈을 등록할 때 쓰는 Input / Output / Option 정리�
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
-| Input | `input_file` | File (CSV/XLSX) | 필수 | | 학습 표. SMILES와 측정 RT 필수. model_type 열의 모드마다 따로 학습(섞여도 됨). 모드마다 정제 후 25행·고유 구조 15개 이상 |
+| Input | `input_file` | File (CSV/XLSX) | 필수 | | 학습 표. SMILES, 측정 RT, model_type 열 필수. model_type의 모드마다 따로 학습(섞여도 됨). 모드마다 정제 후 25행·고유 구조 15개 이상 |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더(`result/`, `logs/`). 폴더 전체가 retip_predict의 `model_dir`, retip_compare의 `input_dir` |
-| Option | `model` | List (`auto`, `RP`, `HILIC`) | 선택 | `auto` | auto = model_type 열에 있는 모드 전부. RP/HILIC = 그 모드 행만. 열이 없는 표는 RP/HILIC 지정 필요 |
 | Option | `sheet` | String | 선택 | `first` | XLSX 시트 이름 |
 | Option | `rt_unit` | String | 선택 | `min` | 측정 RT의 단위 이름(값은 바꾸지 않음). 빈 값 = min |
 | Option | `time_limit` | Integer | 선택 | `1200` | 모드마다 AutoGluon 학습 시간 예산(초) |
@@ -79,8 +77,7 @@ CLOSHA에 RTpred 모듈을 등록할 때 쓰는 Input / Output / Option 정리�
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | retip_train의 output_dir(모드마다 `model/`과 `reserved_test.csv`; train 1.0 출력도 읽음) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더(`result/`, `logs/`) |
-| Option | `model` | List (`auto`, `RP`, `HILIC`) | 선택 | `auto` | auto = 학습된 모드 전부. RP/HILIC = 그 모드만 |
-| Input | `eval_file` | File (CSV/XLSX) | 선택 | `reserved_test` | 평가 표(SMILES와 측정 RT, 두 모드면 model_type 열 필요). reserved_test 또는 빈 값 = 모드마다 retip_train의 reserved_test.csv. 학습하지 않은 모드의 행은 쓰지 않음 |
+| Input | `eval_file` | File (CSV/XLSX) | 선택 | `reserved_test` | 평가 표(SMILES, 측정 RT, model_type 열 필수). reserved_test 또는 빈 값 = 모드마다 retip_train의 reserved_test.csv. 학습하지 않은 모드의 행은 쓰지 않음 |
 | Option | `sheet` | String | 선택 | `first` | XLSX 시트 이름 |
 | Option | `rt_unit` | String | 선택 | `auto` | RT 단위 이름. auto = 모드마다 사용자 모델의 단위. 학습 때와 같아야 함 |
 | Option | `scope` | List (`all`, `best`) | 선택 | `all` | all = 사용자 모델의 모든 후보, best = 저장된 best만 |

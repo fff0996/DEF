@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Version 1.2 (changes from retip_predict.1.2.py):
+# Version 1.2 (changes from retip_predict.1.1.py):
 #   Trained models of several modes: model_dir may hold the per-mode models of
 #   retip_train 1.1 (result/RP/, result/HILIC/) or the single model of
 #   retip_train 1.0. Each row is predicted with the trained model of its
@@ -9,7 +9,9 @@
 #   parse_status=no_trained_model and a warning message, and stderr gives
 #   their number. The run stops only when no row has a trained mode.
 #   predictions.csv gains rt_unit (the unit the model was trained in).
-#   The bundled default models (model_dir empty) are used exactly as in 1.1.
+#   The mode comes only from the table: the model_type column (RP or HILIC
+#   per row) is required and the model option is removed, for the default
+#   models too (1.1 also accepted model=RP/HILIC for a table without it).
 #
 # Version 1.1 (changes from retip_predict.1.0.py):
 #   Model choice: the new optional model_dir takes a retip_train output
@@ -25,14 +27,13 @@
 or a model trained by retip_train.
 
 Usage:
-    python retip_predict.1.2.py input_file="..." output_dir="..." [model_dir="default"] [model="auto"] [sheet="..."]
+    python retip_predict.1.2.py input_file="..." output_dir="..." [model_dir="default"] [sheet="..."]
 
 Examples:
     Bundled default models:
         apptainer exec bx_retip_predict.1.0.sif python retip_predict.1.2.py \
             input_file="/path/to/compounds.csv" \
-            output_dir="/path/to/output" \
-            model="RP"
+            output_dir="/path/to/output"
 
     Model trained by retip_train:
         apptainer exec bx_retip_predict.1.0.sif python retip_predict.1.2.py \
@@ -42,8 +43,9 @@ Examples:
 
 Arguments (key=value, --key=value, or --key value):
     input_file (required) - Compound table (*.csv or *.xlsx) with a SMILES
-                            column (smiles or structure); experimental_rt is
-                            optional.
+                            column (smiles or structure) and a model_type
+                            column (RP or HILIC per row; modes may be mixed);
+                            experimental_rt is optional.
     output_dir (required) - Output directory. Results go to output_dir/result
                             and logs to output_dir/logs.
     model_dir  (optional) - default (or empty) uses the bundled default models.
@@ -52,15 +54,6 @@ Arguments (key=value, --key=value, or --key value):
                             the trained model of its mode, and rows of a mode
                             without a trained model are not predicted
                             (parse_status=no_trained_model). default: default
-    model      (optional) - RP, HILIC, or auto. With the default models, auto
-                            (or empty) uses the table's model_type column (RP
-                            or HILIC per row), so one table may mix both
-                            modes. With trained models, auto also uses the
-                            model_type column; a table without it is taken
-                            as the trained mode when only one was trained.
-                            RP or HILIC treats every row as that mode (rows
-                            with a model_type column must match it).
-                            default: auto
     cpus       (optional) - Threads for numeric libraries: auto uses the cores
                             allocated to the job (Slurm/cgroup); a number is
                             capped by them. default: auto
@@ -94,7 +87,7 @@ import threading
 MODULE = "predict"
 IMAGE = "bx_retip_predict.1.0.sif"
 REQUIRED = ["input_file", "output_dir"]
-OPTIONAL = {"model_dir": "default", "model": "auto", "sheet": "first", "cpus": "auto"}
+OPTIONAL = {"model_dir": "default", "sheet": "first", "cpus": "auto"}
 TABLE_SUFFIXES = {".csv", ".xlsx"}
 
 
@@ -250,7 +243,7 @@ def run_python(logs, args, cpus, label):
 # report, manifest) with the trained model directory instead. It runs as a
 # separate Python process like the mdcc command, so its stdout and stderr are
 # logged the same way.
-# argv: input table, result directory, model directory, mode, sheet ("" = first)
+# argv: input table, result directory, model directories by mode (JSON), sheet ("" = first)
 USER_PREDICT = r'''
 import json
 import sys
@@ -261,21 +254,10 @@ import matplotlib.pyplot as plt
 from mdcc.core import check_runtime, output_dir, load_table, infer, write_json, digest
 from mdcc.cli import save_plot, report_html
 
-def run(table, result, roots, forced, sheet):
+def run(table, result, roots, sheet):
     env = check_runtime()
     roots = json.loads(roots)
-    if forced:
-        frame = load_table(table, forced, sheet or None)
-    else:
-        try:
-            frame = load_table(table, None, sheet or None)
-        except ValueError as exc:
-            if "Supply model_type" not in str(exc):
-                raise
-            if len(roots) != 1:
-                raise ValueError("the input table has no model_type column and both RP and HILIC were "
-                                 "trained; add a model_type column or set model=RP or HILIC.")
-            frame = load_table(table, next(iter(roots)), sheet or None)
+    frame = load_table(table, None, sheet or None)
     frame["predicted_rt"] = np.nan
     frame["parse_status"] = "no_trained_model"
     frame["warning_message"] = ""
@@ -335,10 +317,28 @@ def run(table, result, roots, forced, sheet):
         "input_sha256": digest(table), "rows": len(frame), "network_required": False})
 
 try:
-    run(*sys.argv[1:6])
+    run(*sys.argv[1:5])
 except (ValueError, KeyError, FileNotFoundError, RuntimeError) as exc:
     raise SystemExit(f"ERROR: {exc}") from exc
 '''
+
+
+# Column names mdcc reads as the chromatography mode (mdcc.core.load_table).
+MODE_COLUMNS = {"model_type", "column", "chrom_system", "mode"}
+
+
+def has_mode_column(path, sheet):
+    """Whether the table's header has a mode column; mdcc checks the values."""
+    if path.suffix.lower() == ".csv":
+        import csv
+        with path.open(encoding="utf-8-sig", newline="") as handle:
+            header = next(csv.reader(handle), [])
+    else:
+        import pandas
+        top = pandas.read_excel(path, sheet_name=0 if sheet in ("", "first") else sheet,
+                                header=None, nrows=1, dtype=str)
+        header = top.iloc[0].tolist() if len(top) else []
+    return any(str(name).strip().lower() in MODE_COLUMNS for name in header)
 
 
 def locate_train_models(path):
@@ -366,12 +366,8 @@ def main():
     params = parse_args(sys.argv[1:])
     input_file = Path(params["input_file"])
     output_dir = Path(params["output_dir"])
-    # auto (or empty) leaves --model out, so mdcc uses each row's model_type.
     cpus = resolve_cpus(params["cpus"])
-    model = "" if params["model"] in ("", "auto") else params["model"]
 
-    if model and model not in ("RP", "HILIC"):
-        fail(f"model must be RP, HILIC, or auto: {model}")
     if not input_file.is_file():
         fail(f"input_file not found: {input_file}")
     models = {}
@@ -380,10 +376,10 @@ def main():
         if not given.is_dir():
             fail(f"model_dir not found: {given}")
         models = locate_train_models(given)
-        if model and model not in models:
-            fail(f"model={model}, but model_dir has no {model} model (trained: {', '.join(sorted(models))})")
     if input_file.suffix.lower() not in TABLE_SUFFIXES:
         fail(f"input_file must be a *.csv or *.xlsx table: {input_file}")
+    if not has_mode_column(input_file, params["sheet"]):
+        fail("input_file has no model_type column; add one with RP or HILIC on every row")
     result_dir = output_dir / "result"
     check_inputs_outside(result_dir, input_file, *models.values())
     if importlib.util.find_spec("mdcc") is None:
@@ -404,7 +400,6 @@ def main():
             log(logs, f"    trained {mode:<5} = {path}")
     else:
         log(logs, "  model_dir  = default (bundled models)")
-    log(logs, f"  model      = {model or 'auto (input model_type column)'}")
     log(logs, f"  sheet      = {params['sheet'] or 'first'}")
     log(logs)
 
@@ -413,12 +408,10 @@ def main():
     clear_previous_result(logs, output_dir, result_dir)
     if models:
         roots = json.dumps({mode: str(path) for mode, path in models.items()})
-        command = ["-c", USER_PREDICT, str(input_file), str(result_dir), roots, model, sheet]
+        command = ["-c", USER_PREDICT, str(input_file), str(result_dir), roots, sheet]
         code = run_python(logs, command, cpus, "predict (user model)")
     else:
         args = [MODULE, "--input", str(input_file), "--output", str(result_dir)]
-        if model:
-            args += ["--model", model]
         if sheet:
             args += ["--sheet", sheet]
         code = run_mdcc(logs, args, cpus)
