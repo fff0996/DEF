@@ -12,7 +12,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 분리 모드: 서울대 의도(2026-10-23 확인)에 따라 학습은 한 표의 RP·HILIC를 모드별로 나눠 각각 학습하고, 예측은 행마다 그 모드의 모델을 씁니다. 모드는 입력 표의 model_type 열(행마다 RP 또는 HILIC)로만 정하며, 세 모듈 모두 이 열이 필수입니다(모드를 고르는 인자는 없습니다). 사용자 모델로 예측할 때 학습하지 않은 모드의 행은 예측하지 않고 표시만 합니다. 이미지와 mdcc 코드는 그대로이며 래퍼 스크립트만 바뀌었습니다.
 - 모든 모듈은 결과를 `output_dir/result/`에, 로그를 `output_dir/logs/`에 남기며, 다시 실행하면 `result/`만 지우고 새로 만듭니다.
 - 카테고리: 세 모듈 모두 Annotation / Metabolite_Annotation(신규)입니다. 머무름 시간 예측은 LC-MS 피크에 붙일 화합물 후보를 거르는 대사체 annotation 단계의 도구이며(Retip 논문 제목 "for Compound Annotation"), 대사체 분야에서 가장 흔한 표현을 썼습니다. 다른 대사체 동정·annotation 도구도 담을 수 있는 일반 이름입니다. 서울대가 제안한 화학정보학, 머신러닝은 태그에 넣었습니다.
-- 분석 개념 이미지와 주요 결과 이미지는 서울대가 만든 그림(`docs/RTpred/images/`)입니다. 결과 그림은 서울대 예제 실행 결과이며, 학습·비교 예제의 RT는 기능 확인용 합성값입니다.
+- 분석 개념 이미지는 지금 동작(모드별 학습·예측·비교)에 맞춰 직접 그린 그림(`docs/RTpred/modules/figures/module_concepts/`, 생성 스크립트 포함)이고, 주요 결과 이미지는 서울대가 만든 그림(`docs/RTpred/images/`)입니다. 서울대 개념도(`docs/RTpred/images/module*_concept.png`)는 받은 자료로 그대로 둡니다. 결과 그림은 서울대 예제 실행 결과이며, 학습·비교 예제의 RT는 기능 확인용 합성값입니다.
 - 등록 메모: 결과 그림은 우리 래퍼(`key=value`)로 CLOSHA에서 실측 데이터를 돌린 뒤 바꿀 수 있습니다. 그림 형식은 mdcc가 그리므로 같습니다.
 
 ---
@@ -112,11 +112,11 @@ C002,NCC(=O)O,HILIC
 | 학습 모델은 같은 버전의 이미지(bx_rtpred_train 1.0)로 학습한 것만 쓸 수 있습니다. 패키지 버전이 다르면 RTpred가 멈춥니다. | Only models trained with the matching image (bx_rtpred_train 1.0) can be used; RTpred stops on different package versions. |
 
 ### 분석 개념 이미지
-그림: `docs/RTpred/images/module1_concept.png`
+그림: `docs/RTpred/modules/figures/module_concepts/rtpred_predict_concept.png`
 
-- 레전드(국문): **그림. 기본 모델로 머무름 시간 예측.** (Compound input) CSV 또는 XLSX 화합물 표에서 SMILES와 RP·HILIC 모드를 읽으며, 측정 RT는 있어도 되고 없어도 됩니다. (Local best ensemble) 구조를 RDKit descriptor로 바꾸고 이미지에 저장된 best 앙상블(WeightedEnsemble_L3)로 예측합니다. (Predicted RT) 입력 한 행마다 결과 한 행을 내며, 읽지 못한 구조도 결과에 남기고 예측표·QC·분포 그림을 만듭니다.
-- 레전드(영문): **Figure. Retention time prediction with the default models.** (Compound input) SMILES and the RP or HILIC mode are read from a CSV or XLSX table; a measured RT is optional. (Local best ensemble) Structures become RDKit descriptors and the best ensemble saved in the image (WeightedEnsemble_L3) predicts. (Predicted RT) Each input row gives one result row; unreadable structures are kept, and a prediction table, QC and distribution plots are written.
-- 출처: 서울대 식품대사체학 연구실 제공 모식도(외부 논문 그림 사용 안 함)
+- 레전드(국문): **그림. 행마다 맞는 모델로 머무름 시간 예측.** (A) 예측할 화합물 목록은 한 행에 화합물 하나와 그 분리 모드(model_type: RP 또는 HILIC)를 적으며, 두 모드를 섞을 수 있습니다. 측정 RT가 있으면 ΔRT(측정 - 예측)도 계산합니다. (B) model_dir을 비우면 이미지에 들어 있는 사전 학습 RP·HILIC 모델로, rtpred_train 결과 폴더를 주면 그 사용자 모델로 예측하며, 행마다 자기 모드의 모델을 씁니다. 사용자 모델에서 학습하지 않은 모드(점선)의 행은 예측하지 않습니다. (C) 결과 표에는 행마다 예측 RT와 상태가 적히며, 학습하지 않은 모드의 행은 no_trained_model로 남습니다. 예측 RT는 같은 m/z 후보 가운데 측정 RT 근처(초록 범위)에 있는 것을 고르는 데 씁니다. 값과 구조는 모식적인 값입니다.
+- 레전드(영문): **Figure. Retention time prediction with the model of each row.** (A) The compound list gives one compound per row with its separation mode (model_type: RP or HILIC); modes may be mixed, and a measured RT adds ΔRT (measured - predicted). (B) With model_dir empty, the pre-trained RP and HILIC models in the image predict; with a rtpred_train output folder, its user models predict. Each row uses the model of its own mode, and rows of a mode the user did not train (dashed) are not predicted. (C) The result table gives the predicted RT and status of every row; rows of an untrained mode are kept as no_trained_model. The predicted RT helps keep, among candidates of one m/z, those near the measured RT (green range). Values and structures are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함). 구성 참고: Retip(Bonini 외, Anal Chem 2020)의 RT 예측 흐름, METLIN SMRT(Domingo-Almenara 외, Nat Commun 2019)의 예측 RT로 후보 거르기
 
 ### 스크립트 사용 예제
 ```
@@ -245,11 +245,11 @@ S003,O=C(O)c1ccccc1,5.40,HILIC
 | rt_unit은 이름만 기록하고 값을 바꾸지 않습니다. 기본값 min은 기본 모델의 단위와 같습니다. 이후 비교에서 같은 이름을 써야 합니다. | rt_unit is only recorded and values are not converted; the default min matches the default models. Use the same label in the later comparison. |
 
 ### 분석 개념 이미지
-그림: `docs/RTpred/images/module2_concept.png`
+그림: `docs/RTpred/modules/figures/module_concepts/rtpred_train_concept.png`
 
-- 레전드(국문): **그림. 사용자 머무름 시간 모델 학습.** (Measured library) SMILES와 측정 RT 표를 정규화한 구조 단위로 묶고, 학습 전에 예약 test 화합물을 먼저 떼어 둡니다. (Train and select) descriptor 필터는 train에서만 정하고, pyRetip 방식의 학습 인터페이스로 후보 모델을 학습한 뒤 validation RMSE로 best를 고릅니다. (Reusable models) AutoGluon 모델과 manifest, 학습 구조 해시, 학습에 쓰지 않은 예약 test CSV를 저장합니다.
-- 레전드(영문): **Figure. Training a user retention time model.** (Measured library) The table of SMILES and measured RT is grouped by canonical structure, and reserved test compounds are set aside before training. (Train and select) Descriptor filters are fitted on train only, candidate models are trained through the pyRetip-style interface, and the best is chosen by validation RMSE. (Reusable models) AutoGluon models with a manifest, training structure hashes and the unused reserved test CSV are saved.
-- 출처: 서울대 식품대사체학 연구실 제공 모식도(외부 논문 그림 사용 안 함)
+- 레전드(국문): **그림. 분리 모드마다 사용자 머무름 시간 모델 학습.** (A) 측정 RT 표를 model_type에 따라 RP 행과 HILIC 행으로 나눕니다. 모드마다 정제 후 25행, 서로 다른 구조 15개 이상이 필요하며, 한 모드의 자료는 같은 컬럼, 이동상, gradient로 측정한 것이어야 합니다. (B) 모드마다 같은 구조가 두 분할에 들어가지 않도록 구조 단위로 train, validation, 예약 test로 나누고, AutoGluon 후보 모델을 학습해 validation RMSE가 가장 낮은 모델을 best로 고릅니다. (C) 모드마다 result/RP/, result/HILIC/에 모델, 예약 test, leaderboard가 저장되고, train_summary.tsv에 모드별 상태가 남습니다. 이 결과 폴더는 rtpred_predict와 rtpred_compare의 입력입니다. 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. Training a user retention time model per separation mode.** (A) The measured RT table is split by model_type into RP and HILIC rows. Each mode needs at least 25 rows and 15 distinct structures after cleaning, measured with one column, mobile phase and gradient. (B) For each mode the rows are split by structure into train, validation and a reserved test so that no structure falls in two splits, AutoGluon candidate models are trained, and the one with the lowest validation RMSE is kept as best. (C) Each mode is saved in result/RP/ or result/HILIC/ with its models, reserved test and leaderboard, and train_summary.tsv lists the status per mode; the output folder is the input of rtpred_predict and rtpred_compare. Values are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함). 구성 참고: Retip(Bonini 외, Anal Chem 2020)의 RT 예측 흐름, METLIN SMRT(Domingo-Almenara 외, Nat Commun 2019)의 예측 RT로 후보 거르기
 
 ### 스크립트 사용 예제
 ```
@@ -380,11 +380,11 @@ E002,OCC(O)CO,3.10,HILIC
 | 잘못된 구조는 지표에서 빠지지만 predictions_long.csv에는 남습니다. 측정 RT의 분산이 0이면 R²는 빈 값입니다. 유효한 평가 구조가 2개 미만이면 멈춥니다. | Invalid structures are excluded from the metrics but kept in predictions_long.csv; R² is empty when the measured RTs have no variance; fewer than two valid evaluation structures stop the run. |
 
 ### 분석 개념 이미지
-그림: `docs/RTpred/images/module3_concept.png`
+그림: `docs/RTpred/modules/figures/module_concepts/rtpred_compare_concept.png`
 
-- 레전드(국문): **그림. 기본 모델과 사용자 모델의 성능 비교.** (Common evaluation set) SMILES와 측정 RT 평가 표에서 사용자 학습 자료와의 중복을 확인하고, 모든 모델을 같은 유효 행으로 평가합니다. (Models to compare) 이미지의 기본 best 모델과 사용자 모델(모든 후보 또는 best)을 비교합니다. (Performance comparison) RMSE, MAE, R²와 순위표, 측정-예측 그림을 만들며, 기본 모델은 바뀌지 않습니다.
-- 레전드(영문): **Figure. Comparing the default and user models.** (Common evaluation set) The evaluation table of SMILES and measured RT is checked for overlap with the user training data, and every model is evaluated on the same valid rows. (Models to compare) The default best model of the image is compared with the user model (all candidates or the best). (Performance comparison) RMSE, MAE, R², a rank table and a measured-versus-predicted plot are produced; the default model stays unchanged.
-- 출처: 서울대 식품대사체학 연구실 제공 모식도(외부 논문 그림 사용 안 함)
+- 레전드(국문): **그림. 같은 모드의 사전 학습 모델과 사용자 모델 비교.** (A) 평가 행은 모드마다 학습 때 떼어 둔 reserved_test.csv가 기본이며, model_type 열이 있는 별도 평가 표를 줄 수도 있습니다. 학습이나 validation에 쓴 구조가 들어 있으면 멈춥니다. (B) 모드마다 같은 평가 행으로 사전 학습 모델과 사용자 모델을 비교하며, RP와 HILIC는 서로 비교하지 않습니다. (C) 후보마다 RMSE, MAE, R²와 순위, 측정-예측 RT 그림을 만들고, 모드 열이 붙은 comparison.csv로 모읍니다. 사전 학습 모델은 바뀌지 않습니다. 막대 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. Comparing the pre-trained and user models of the same mode.** (A) The evaluation rows are, by default, the reserved_test.csv held out per mode in training; a separate evaluation table with a model_type column can be given. Structures used for training or validation stop the run. (B) For each mode the pre-trained and user models are compared on the same evaluation rows; RP and HILIC are never compared with each other. (C) RMSE, MAE, R², a rank and a measured-versus-predicted RT plot are produced per candidate and joined in comparison.csv with a mode column; the pre-trained models stay unchanged. Bar values are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함). 구성 참고: Retip(Bonini 외, Anal Chem 2020)의 RT 예측 흐름, METLIN SMRT(Domingo-Almenara 외, Nat Commun 2019)의 예측 RT로 후보 거르기
 
 ### 스크립트 사용 예제
 ```
