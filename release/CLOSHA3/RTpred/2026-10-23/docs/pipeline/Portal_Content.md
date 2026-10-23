@@ -14,8 +14,8 @@ KOBIC 포탈의 RTpred 파이프라인 상세 페이지에 들어갈 국문/영�
 | 구성 모듈 | rtpred_predict | rtpred_train, rtpred_predict, rtpred_compare |
 | Version | 1.0 (CLOSHA 3.0 첫 배포) | 1.0 (CLOSHA 3.0 첫 배포) |
 | Reference | https://doi.org/10.1021/acs.analchem.9b05765 | https://doi.org/10.1021/acs.analchem.9b05765 |
-| Keyword(태그) | retention time prediction, metabolomics, compound annotation, LC-MS, cheminformatics | retention time prediction, metabolomics, model training, model comparison, LC-MS, machine learning |
-| 대분류 / 중분류 | 등록 메모: 포탈 파이프라인 목록에서 가장 가까운 것을 고릅니다(후보: Metabolomics / 대사체 동정). 서울대 제안: 대사체 분석 / 화학정보학 / 머신러닝 | 같음 |
+| Keyword(태그) | retention time prediction, metabolomics, untargeted metabolomics, metabolite annotation, LC-MS, reversed phase, HILIC, machine learning, cheminformatics | 같음 + model training, model comparison |
+| 대분류 / 중분류 | Metabolomics / Cheminformatics (서울대 제안 "대사체 분석 / 화학정보학 / 머신러닝"을 옮김. 머신러닝은 Keyword로) | 같음 |
 | 대표 이미지 | rtpred_predict 결과 그림(`docs/RTpred/images/module1_result.png`) | rtpred_compare 결과 그림(`docs/RTpred/images/module3_result.png`) |
 
 등록 메모:
@@ -27,10 +27,10 @@ KOBIC 포탈의 RTpred 파이프라인 상세 페이지에 들어갈 국문/영�
 ## 1. 파이프라인 소개 / Introduction
 
 ### 국문 (기본 모델 예측)
-RTpred 기본 모델 예측 파이프라인은 화합물 구조(SMILES)만으로 액체크로마토그래피의 머무름 시간(RT)을 예측하는 분석 도구입니다. 화합물 표를 입력하면 RDKit으로 구조 특성(descriptor)을 계산하고, 서울대 식품대사체학 연구실이 학습해 제공한 RP(역상)·HILIC 기본 모델로 화합물마다 RT를 예측합니다. 비표적 대사체 분석에서 같은 질량을 가진 후보 화합물 가운데 측정 RT와 예측 RT가 맞는 것을 고르는 데 쓸 수 있습니다.
+RTpred 기본 모델 예측 파이프라인은 화합물 구조(SMILES)만으로 액체크로마토그래피의 머무름 시간(RT)을 예측하는 분석 도구입니다. 화합물 표를 입력하면 RDKit으로 구조 특성(descriptor)을 계산하고, 이미지에 들어 있는 사전 학습 RP(역상)·HILIC 기본 모델로 화합물마다 RT를 예측합니다. 비표적 대사체 분석에서 같은 질량을 가진 후보 화합물 가운데 측정 RT와 예측 RT가 맞는 것을 고르는 데 쓸 수 있습니다.
 
 ### English (default prediction)
-The RTpred default prediction pipeline predicts liquid chromatography retention time (RT) from compound structures (SMILES) alone. From a compound table it computes RDKit structure descriptors and predicts the RT of each compound with the RP (reversed phase) and HILIC default models trained and provided by the SNU food metabolomics laboratory. In untargeted metabolomics it helps to choose, among candidates of the same mass, those whose predicted RT matches the measured RT.
+The RTpred default prediction pipeline predicts liquid chromatography retention time (RT) from compound structures (SMILES) alone. From a compound table it computes RDKit structure descriptors and predicts the RT of each compound with the pre-trained RP (reversed phase) and HILIC default models bundled in the image. In untargeted metabolomics it helps to choose, among candidates of the same mass, those whose predicted RT matches the measured RT.
 
 ### 국문 (사용자 모델)
 RTpred 사용자 모델 파이프라인은 사용자가 자기 LC 조건에서 측정한 RT 표로 RT 예측 모델을 직접 학습하고, 그 모델로 예측하며, 기본 모델과 성능을 비교하는 분석 도구입니다. 학습 표를 구조 단위로 train, validation, 예약 test로 나눠 AutoGluon 후보 모델을 학습하고 validation 오차로 best 모델을 고릅니다. 학습한 모델로 새 화합물의 RT를 예측하고, 학습에 쓰지 않은 예약 test 화합물에서 기본 모델과 사용자 모델의 RMSE, MAE, R²를 비교합니다.

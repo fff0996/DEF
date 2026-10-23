@@ -11,7 +11,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - RTpred는 CLOSHA 3.0에서 처음 배포하므로 모든 모듈의 버전은 1.0입니다.
 - 분리 모드: 서울대 의도(2026-10-23 확인)에 따라 학습은 한 표의 RP·HILIC를 모드별로 나눠 각각 학습하고, 예측은 행마다 그 모드의 모델을 씁니다. 모드는 입력 표의 model_type 열(행마다 RP 또는 HILIC)로만 정하며, 세 모듈 모두 이 열이 필수입니다(모드를 고르는 인자는 없습니다). 사용자 모델로 예측할 때 학습하지 않은 모드의 행은 예측하지 않고 표시만 합니다. 이미지와 mdcc 코드는 그대로이며 래퍼 스크립트만 바뀌었습니다.
 - 모든 모듈은 결과를 `output_dir/result/`에, 로그를 `output_dir/logs/`에 남기며, 다시 실행하면 `result/`만 지우고 새로 만듭니다.
-- 카테고리: CLOSHA 프로그램 목록에 맞는 중분류가 없어 Omics / Metabolite_Identification(신규)을 제안합니다. 머무름 시간 예측은 비표적 대사체 분석에서 후보 화합물을 거르는 데 쓰이며, 다른 대사체 동정 도구도 담을 수 있는 일반 이름입니다.
+- 카테고리: 세 모듈 모두 Annotation / Metabolite_Annotation(신규)입니다. 머무름 시간 예측은 LC-MS 피크에 붙일 화합물 후보를 거르는 대사체 annotation 단계의 도구이며(Retip 논문 제목 "for Compound Annotation"), 대사체 분야에서 가장 흔한 표현을 썼습니다. 다른 대사체 동정·annotation 도구도 담을 수 있는 일반 이름입니다. 서울대가 제안한 화학정보학, 머신러닝은 태그에 넣었습니다.
 - 분석 개념 이미지와 주요 결과 이미지는 서울대가 만든 그림(`docs/RTpred/images/`)입니다. 결과 그림은 서울대 예제 실행 결과이며, 학습·비교 예제의 RT는 기능 확인용 합성값입니다.
 - 등록 메모: 결과 그림은 우리 래퍼(`key=value`)로 CLOSHA에서 실측 데이터를 돌린 뒤 바꿀 수 있습니다. 그림 형식은 mdcc가 그리므로 같습니다.
 
@@ -25,9 +25,9 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 | 모듈명 | rtpred_predict | rtpred_predict |
 | 서브 타이틀 | 머무름 시간 예측 | Retention time prediction |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Omics | Omics |
-| 카테고리 중분류 | Metabolite_Identification (신규) | Metabolite_Identification (new) |
-| 태그 | retention time, RT prediction, RP, HILIC, SMILES, RDKit, AutoGluon, metabolomics | |
+| 카테고리 대분류 | Annotation | Annotation |
+| 카테고리 중분류 | Metabolite_Annotation (신규) | Metabolite_Annotation (new) |
+| 태그 | retention time, RT prediction, metabolomics, metabolite annotation, RP, HILIC, SMILES, RDKit, AutoGluon, machine learning, cheminformatics | |
 | 레퍼런스 URL | https://doi.org/10.1021/acs.analchem.9b05765 | |
 | 컨테이너 이미지 | bx_rtpred_predict.1.0 | |
 | 실행 스크립트 파일 | rtpred_predict.1.0.py | |
@@ -88,13 +88,13 @@ Predicts liquid chromatography retention time (RT) from compound structures (SMI
 | Option | Optional | String | sheet | first | XLSX 시트 이름. first 또는 빈 값 = 첫 시트. CSV에는 적용 안 함 | XLSX sheet name; first or empty = the first sheet. Ignored for CSV |
 
 ### 샘플시트
-| 열 | 필수 | 설명 | 예시 |
-|---|---|---|---|
-| SMILES | 필수 | 분자 구조 문자열(`smiles`, `structure`도 가능) | O=C(O)c1ccccc1 |
-| model_type | 필수 | RP 또는 HILIC(행마다, 섞어도 됨). 이 열로 행마다 쓸 모델을 정함 | RP |
-| RT | 선택 | 측정 RT(`experimental_rt`, `retention_time`도 가능). 있으면 ΔRT 계산 | 5.4 |
-| compound_id, Name, InChIKey | 선택 | 추적용 정보. 그대로 결과에 남음 | C001 |
+| 칸 | 국문 | 영문 |
+|---|---|---|
+| 샘플시트 제목 | 예측할 화합물 목록 | Compound list for prediction |
+| 샘플시트 본문 | 한 행에 화합물 하나를 적은 CSV 또는 XLSX 표입니다. 첫 행은 열 이름입니다. SMILES(필수): 분자 구조 문자열(smiles, structure도 가능). model_type(필수): 행마다 RP 또는 HILIC이며, 한 표에 섞어도 됩니다. 이 값으로 행마다 쓸 모델을 정합니다. RT(선택): 측정 머무름 시간(분, experimental_rt, retention_time도 가능)이며, 있으면 측정과 예측의 차이(ΔRT)를 계산합니다. compound_id, Name, InChIKey(선택): 추적용 정보로 결과에 그대로 남습니다. | A CSV or XLSX table with one compound per row and column names in the first row. SMILES (required): structure string (smiles or structure also accepted). model_type (required): RP or HILIC per row; both may be mixed in one table, and the value selects the model for each row. RT (optional): measured retention time in minutes (experimental_rt or retention_time also accepted); when given, the difference between measured and predicted RT (ΔRT) is computed. compound_id, Name, InChIKey (optional): identifiers kept unchanged in the results. |
+| 샘플시트 예시 제목 | compounds.csv | |
 
+샘플시트 예시 본문:
 ```
 compound_id,SMILES,model_type
 C001,O=C(O)c1ccccc1,RP
@@ -104,11 +104,12 @@ C002,NCC(=O)O,HILIC
 ### 주요 사항
 | 국문 | 영문 |
 |---|---|
-| 기본 모델은 서울대가 학습해 제공한 RP·HILIC 모델이며 RT 단위는 분(min)입니다. 기본 모델의 학습 LC 조건(컬럼, 이동상, gradient)은 제공 자료에서 확인되지 않아, 실측 RT와 비교할 때는 같은 조건인지 주의해 주세요. | The default RP and HILIC models were trained and provided by SNU, with RT in minutes. Their LC conditions (column, mobile phase, gradient) are not stated in the provided material, so take care when comparing with your measured RT. |
+| 예측 모델은 model_dir로 정합니다. 비워 두면(default) 이미지에 들어 있는 사전 학습 RP·HILIC 모델로 예측하고, rtpred_train 결과 폴더를 주면 그 사용자 모델로 예측합니다. | The prediction model is chosen with model_dir: empty (default) uses the pre-trained RP and HILIC models in the image, and a rtpred_train output folder uses that user model. |
+| 사전 학습 모델의 RT 단위는 분(min)입니다. 학습 LC 조건(컬럼, 이동상, gradient)은 공개되지 않았으므로, 실측 RT와 비교할 때는 조건 차이를 감안해 주세요. 내 LC 조건에 맞는 예측이 필요하면 rtpred_train으로 사용자 모델을 만들어 주세요. | The pre-trained models give RT in minutes. Their LC conditions (column, mobile phase, gradient) are not published, so allow for condition differences when comparing with measured RT; for predictions matching your LC conditions, build a user model with rtpred_train. |
 | 학습 모델로 예측하면 행마다 그 모드의 학습 모델을 씁니다. 학습하지 않은 모드의 행(예: RP만 학습했을 때 HILIC 행)은 결과 표에 남되 predicted_rt가 비고 parse_status=no_trained_model로 표시되며, 로그에 그 행 수가 경고로 남습니다. 그 행까지 예측하려면 그 모드도 학습하거나 기본 모델(model_dir 비움)로 따로 실행해 주세요. 표의 어떤 행도 학습한 모드가 아니면 멈춥니다. | With trained models each row uses the trained model of its mode. Rows of a mode that was not trained (for example HILIC rows when only RP was trained) stay in the table with an empty predicted_rt and parse_status=no_trained_model, and the log warns with their number. To predict them, train that mode too or run separately with the default models (empty model_dir). The run stops when no row has a trained mode. |
 | 잘못되었거나 빈 SMILES 행은 지우지 않고 parse_status=invalid_smiles와 사유를 남기며 예측값은 비웁니다. 오류가 아니라 입력 데이터의 결과입니다. | Invalid or empty SMILES rows are kept with parse_status=invalid_smiles and the reason, with an empty prediction; this reflects the input, not an error. |
 | 모델이 낸 RT를 보정하거나 단위를 바꾸지 않습니다. 학습 모델로 예측하면 rt_unit 열에 학습 때의 단위가 적힙니다. | The RT returned by the model is neither corrected nor converted; with trained models the rt_unit column gives the unit used in training. |
-| 학습 모델은 같은 버전의 이미지(bx_rtpred_train 1.0)로 학습한 것만 쓸 수 있습니다. 패키지 버전이 다르면 서울대 코드가 멈춥니다. | Only models trained with the matching image (bx_rtpred_train 1.0) can be used; the SNU code stops on different package versions. |
+| 학습 모델은 같은 버전의 이미지(bx_rtpred_train 1.0)로 학습한 것만 쓸 수 있습니다. 패키지 버전이 다르면 RTpred가 멈춥니다. | Only models trained with the matching image (bx_rtpred_train 1.0) can be used; RTpred stops on different package versions. |
 
 ### 분석 개념 이미지
 그림: `docs/RTpred/images/module1_concept.png`
@@ -147,9 +148,9 @@ python rtpred_predict.1.0.py \
 | 모듈명 | rtpred_train | rtpred_train |
 | 서브 타이틀 | 사용자 머무름 시간 모델 학습 | User retention time model training |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Omics | Omics |
-| 카테고리 중분류 | Metabolite_Identification (신규) | Metabolite_Identification (new) |
-| 태그 | retention time, model training, AutoGluon, pyRetip, RDKit, RP, HILIC, machine learning | |
+| 카테고리 대분류 | Annotation | Annotation |
+| 카테고리 중분류 | Metabolite_Annotation (신규) | Metabolite_Annotation (new) |
+| 태그 | retention time, model training, metabolomics, metabolite annotation, AutoGluon, pyRetip, RDKit, RP, HILIC, machine learning, cheminformatics | |
 | 레퍼런스 URL | https://doi.org/10.1021/acs.analchem.9b05765 | |
 | 컨테이너 이미지 | bx_rtpred_train.1.0 | |
 | 실행 스크립트 파일 | rtpred_train.1.0.py | |
@@ -219,13 +220,13 @@ Trains an RT prediction model from a table of retention times measured under the
 | Option | Optional | String | method_label | user method | 사용자 LC 분석법 이름(컬럼, 이동상 등). 모델 manifest에 기록 | Name of the user LC method (column, mobile phase and so on), recorded in the model manifest |
 
 ### 샘플시트
-| 열 | 필수 | 설명 | 예시 |
-|---|---|---|---|
-| SMILES | 필수 | 분자 구조 문자열 | CCO |
-| RT | 필수 | 측정 RT(`experimental_rt`, `retention_time`도 가능). 0 이상 숫자, 모든 행에 필요 | 2.10 |
-| model_type | 필수 | RP 또는 HILIC(행마다, 섞어도 됨). 모드마다 모델을 따로 학습 | RP |
-| compound_id, Name | 선택 | 추적용 정보 | S001 |
+| 칸 | 국문 | 영문 |
+|---|---|---|
+| 샘플시트 제목 | 학습용 측정 RT 표 | Measured RT table for training |
+| 샘플시트 본문 | 한 행에 화합물 하나와 측정 머무름 시간을 적은 CSV 또는 XLSX 표입니다. 첫 행은 열 이름입니다. SMILES(필수): 분자 구조 문자열. RT(필수): 측정 머무름 시간(experimental_rt, retention_time도 가능). 모든 행에 0 이상 숫자가 있어야 하며 단위는 rt_unit(기본 분)과 같아야 합니다. model_type(필수): 행마다 RP 또는 HILIC이며, 한 표에 섞으면 모드마다 따로 학습합니다. 모드마다 정제 후 25행, 서로 다른 구조 15개 이상이 필요합니다. compound_id, Name(선택): 추적용 정보입니다. 한 모드의 자료는 같은 컬럼, 이동상, gradient로 측정한 것이어야 합니다. | A CSV or XLSX table with one compound and its measured retention time per row, column names in the first row. SMILES (required): structure string. RT (required): measured retention time (experimental_rt or retention_time also accepted), a number of 0 or more on every row, in the unit of rt_unit (minutes by default). model_type (required): RP or HILIC per row; when both are present, each mode is trained separately. Each mode needs at least 25 rows and 15 distinct structures after cleaning. compound_id, Name (optional): identifiers. The data of one mode must come from one column, mobile phase and gradient. |
+| 샘플시트 예시 제목 | rt_library.csv | |
 
+샘플시트 예시 본문:
 ```
 compound_id,SMILES,RT,model_type
 S001,CCO,2.10,RP
@@ -288,9 +289,9 @@ python rtpred_train.1.0.py \
 | 모듈명 | rtpred_compare | rtpred_compare |
 | 서브 타이틀 | 기본·사용자 머무름 시간 모델 성능 비교 | Default and user RT model comparison |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Omics | Omics |
-| 카테고리 중분류 | Metabolite_Identification (신규) | Metabolite_Identification (new) |
-| 태그 | retention time, model comparison, RMSE, MAE, R-squared, AutoGluon, RP, HILIC | |
+| 카테고리 대분류 | Annotation | Annotation |
+| 카테고리 중분류 | Metabolite_Annotation (신규) | Metabolite_Annotation (new) |
+| 태그 | retention time, model comparison, metabolomics, metabolite annotation, RMSE, MAE, R-squared, AutoGluon, RP, HILIC, machine learning, cheminformatics | |
 | 레퍼런스 URL | https://doi.org/10.1021/acs.analchem.9b05765 | |
 | 컨테이너 이미지 | bx_rtpred_compare.1.0 | |
 | 실행 스크립트 파일 | rtpred_compare.1.0.py | |
@@ -356,13 +357,18 @@ Compares the RT prediction errors of the default model and a user model on the s
 | Option | Optional | String | title | Default and user model comparison | 보고서와 그림 제목. 모드별 결과에는 뒤에 (RP), (HILIC)가 붙음 | Title of the report and figure; per-mode results add (RP) or (HILIC) |
 
 ### 샘플시트
-평가 표(eval_file)를 따로 줄 때의 형식입니다.
+| 칸 | 국문 | 영문 |
+|---|---|---|
+| 샘플시트 제목 | 평가용 측정 RT 표(선택) | Measured RT table for evaluation (optional) |
+| 샘플시트 본문 | eval_file을 줄 때의 형식입니다. 비워 두면 학습 때 떼어 둔 reserved_test.csv를 쓰므로 따로 만들 필요가 없습니다. 한 행에 화합물 하나와 측정 머무름 시간을 적은 CSV 또는 XLSX 표이며, 첫 행은 열 이름입니다. SMILES(필수): 분자 구조 문자열. RT(필수): 측정 머무름 시간(학습 때와 같은 단위). model_type(필수): 행마다 RP 또는 HILIC이며, 같은 모드의 기본 모델과 사용자 모델을 비교하는 데 씁니다. 학습이나 validation에 쓴 구조가 들어 있으면 멈춥니다. | Format of eval_file. When it is empty, the reserved_test.csv held out in training is used, so no table is needed. A CSV or XLSX table with one compound and its measured retention time per row, column names in the first row. SMILES (required): structure string. RT (required): measured retention time (same unit as in training). model_type (required): RP or HILIC per row, used to compare the default and user models of the same mode. The run stops if it holds structures used for training or validation. |
+| 샘플시트 예시 제목 | evaluation.csv | |
 
-| 열 | 필수 | 설명 | 예시 |
-|---|---|---|---|
-| SMILES | 필수 | 분자 구조 문자열 | CCO |
-| RT | 필수 | 측정 RT. 0 이상 숫자 | 2.10 |
-| model_type | 필수 | RP 또는 HILIC(행마다). 같은 모드의 모델끼리 비교하는 데 씀 | RP |
+샘플시트 예시 본문:
+```
+compound_id,SMILES,RT,model_type
+E001,CC(=O)O,1.90,RP
+E002,OCC(O)CO,3.10,HILIC
+```
 
 ### 주요 사항
 | 국문 | 영문 |
