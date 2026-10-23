@@ -21,7 +21,7 @@ CNV 파이프라인은 CLOSHA 3.0에서 처음 배포하므로 모든 모듈의 
 |---|---|---|---|
 | cnvkit_reference | `cnvkit_reference.1.0.py` | bx_cnvkit.1.0 | `python cnvkit_reference.1.0.py key=value ...` |
 | cnv_facets | `cnv_facets.1.0.R` | bx_facets.1.0 | `Rscript cnv_facets.1.0.R key=value ...` |
-| cnvkit_call | `cnvkit_call.1.0.py` | bx_cnvkit.1.0 | `python cnvkit_call.1.0.py key=value ...` |
+| cnvkit_call | `cnvkit_call.1.1.py` (배포 1.0) | bx_cnvkit.1.0 | `python cnvkit_call.1.1.py key=value ...` |
 | cnv_summary | `cnv_summary.1.0.py` | bx_cnvkit.1.0 | `python cnv_summary.1.0.py key=value ...` |
 
 공통 입력:

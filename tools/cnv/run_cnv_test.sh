@@ -52,7 +52,7 @@ python3 measure.py cnvkit_reference "${X[@]}" "$CK" python "$M/cnvkit_reference.
 python3 measure.py cnv_facets "${X[@]}" "$FC" Rscript "$M/cnv_facets.1.0.R" \
     input_dir="$D/bam" sample_data="$D/samples.csv" snp_vcf="$D/ref/dbsnp151_common.sub5.vcf.gz" \
     output_dir="$O/facets" > "$O/facets.stdout" 2> "$O/facets.stderr" || { echo "cnv_facets failed" >&2; exit 1; }
-python3 measure.py cnvkit_call "${X[@]}" "$CK" python "$M/cnvkit_call.1.0.py" \
+python3 measure.py cnvkit_call "${X[@]}" "$CK" python "$M/cnvkit_call.1.1.py" \
     input_dir="$D/bam" sample_data="$D/samples.csv" reference_dir="$O/ref" facets_dir="$O/facets" \
     genes="$D/genes.txt" output_dir="$O/call" > "$O/call.stdout" 2> "$O/call.stderr" || { echo "cnvkit_call failed" >&2; exit 1; }
 python3 measure.py cnv_summary "${X[@]}" "$CK" python "$M/cnv_summary.1.0.py" \

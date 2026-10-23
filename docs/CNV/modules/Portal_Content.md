@@ -12,7 +12,6 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - CNV 파이프라인은 CLOSHA 3.0에서 처음 배포하므로 모든 모듈의 버전은 1.0입니다.
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지웁니다.
 - 카테고리: CLOSHA 프로그램 목록에 복제수 변이 분석에 맞는 중분류가 없어 Omics / Variant_Calling(신규)을 제안합니다. 이름은 CNV만이 아니라 SNV·indel 검출 모듈도 담을 수 있게 일반 이름으로 지었습니다. cnv_summary는 그림과 표를 만드는 모듈이라 기존 Statistics_and_Visualization / Genomic_Visualization에 둡니다.
-- 등록 메모: 모듈 개념도는 아직 만들지 않았습니다. `docs/CLOSHA_Figure_Guide_v1.md`에 따라 만든 뒤 각 모듈의 "분석 개념 이미지" 절에 넣습니다.
 
 ---
 
@@ -111,7 +110,11 @@ TUMOR02,NORMAL02,male
 | annotation을 비우면 bin에 유전자 이름이 붙지 않아, 이후 유전자별 표(genes.tsv)와 관심 유전자 그림이 비게 됩니다. | Without annotation, bins carry no gene names, so the later gene tables (genes.tsv) and gene-of-interest plots stay empty. |
 
 ### 분석 개념 이미지
-등록 메모: 개념도 작성 예정입니다.
+그림: `docs/CNV/modules/figures/module_concepts/cnvkit_reference_concept.png`
+
+- 레전드(국문): **그림. 정상 시료로 복제수 기준 만들기.** (A) 캡처 타깃(진한 파랑, targets_bed)을 target bin으로, 그 사이 영역을 antitarget bin(회색)으로 나눕니다. hybrid는 둘 다, wgs는 유전체 전체, amplicon은 타깃만 씁니다. annotation이 있으면 bin에 유전자 이름을 붙입니다. (B) 정상 시료마다 bin별 read 깊이를 구해 모아, bin마다 기대 깊이와 GC, 퍼짐을 담은 reference.cnn을 만듭니다. 정상 시료가 없으면 균일한 flat 기준을 만듭니다. (C) 정상 시료마다 기준 대비 bin log2 비의 퍼짐(MAD)을 normal_qc.tsv에 적습니다. 다른 정상보다 노이즈가 크게 높은 시료(빨강)는 기준에서 빼는 것이 좋습니다. 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. Building a copy-number reference from normal samples.** (A) Capture targets (dark blue, targets_bed) become target bins and the regions between them antitarget bins (gray); hybrid uses both, wgs the whole genome, amplicon the targets only. With annotation, bins carry gene names. (B) The read depth per bin of each normal is pooled into reference.cnn with the expected depth, GC content and spread per bin; without normals a uniform flat reference is built. (C) normal_qc.tsv gives the spread (MAD) of each normal's bin log2 ratios against the reference; a normal much noisier than the others (red) is best left out. Values are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
@@ -227,7 +230,11 @@ Estimates tumor purity (the fraction of tumor cells), ploidy (the mean copy numb
 | 염색체 일부만 분석하면 배수성이 그 염색체들에 치우쳐 추정되어, 같은 비율이 배수 단위로 다른 정수 복제수로 나올 수 있습니다(예: 6/3 대신 4/2). 전체 유전체로 실행해 주세요. | Analysing only some chromosomes biases the ploidy to them, so the same ratios can come out as integer copy numbers off by a multiple (for example 4/2 instead of 6/3). Run on the whole genome. |
 
 ### 분석 개념 이미지
-등록 메모: 개념도 작성 예정입니다.
+그림: `docs/CNV/modules/figures/module_concepts/cnv_facets_concept.png`
+
+- 레전드(국문): **그림. FACETS로 순도, 배수성, 대립유전자별 복제수 추정.** (A) snp-pileup이 일반 SNP 위치마다 정상과 종양의 기준(회색)·변이(노랑) 대립유전자 read를 셉니다. 정상에서 반반인 이형접합 SNP가 종양에서 한쪽으로 치우치면 대립유전자 불균형입니다. (B) FACETS가 깊이 비(log-ratio)와 대립유전자 불균형(log-odds-ratio, 0에서 위아래로 벌어질수록 불균형)을 함께 분절하고(빨간 선), EM 적합으로 순도·배수성과 구간별 총(tcn)·작은 쪽(lcn) 복제수를 구합니다. (C) facets_summary.tsv에 샘플별 상태, 순도, 배수성, WGD를, facets_segments.tsv에 구간별 tcn·lcn을 적습니다. lcn이 0이면 LOH(분홍)이고, 순도가 낮거나 적합이 실패하면 오류가 아니라 상태(빨강)로 남습니다. 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. Purity, ploidy and allele-specific copy number with FACETS.** (A) snp-pileup counts reference (gray) and alternate (yellow) reads of the normal and tumor at common SNP sites; a heterozygous SNP balanced in the normal but skewed in the tumor shows allelic imbalance. (B) FACETS segments the depth ratio (log-ratio) and allelic imbalance (log-odds-ratio; the farther from 0 above and below, the stronger) jointly (red lines) and an EM fit gives purity, ploidy and the total (tcn) and minor (lcn) copy number per segment. (C) facets_summary.tsv records status, purity, ploidy and WGD per sample, and facets_segments.tsv tcn and lcn per segment; lcn 0 is LOH (pink), and low purity or a failed fit is kept as a status (red), not an error. Values are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
@@ -301,6 +308,8 @@ Rscript cnv_facets.1.0.R \
 | 실행 스크립트 파일 | cnvkit_call.1.0.py | |
 | Processor Core (제안) | 4코어, 메모리 8GB(WGS는 16GB) | 4 cores, 8 GB of memory (16 GB for WGS) |
 
+등록 메모: 작업 파일 `scripts/CNV/cnvkit_call.1.1.py`(염색체 모식도 범례 수정)를 배포 번호 1.0으로 올립니다.
+
 ### 실행 이미지
 이미지: bx_cnvkit 1.0
 
@@ -372,7 +381,11 @@ Compares tumor BAM coverage with the normal reference to get copy ratios (log2),
 | 일부 샘플이 실패해도 나머지를 계속 처리하며, 실패한 샘플은 cnvkit_summary.tsv에 상태로 남습니다. 모든 샘플이 실패할 때만 종료 코드 1입니다. | Failed samples do not stop the others and are listed with their status in cnvkit_summary.tsv; the exit code is 1 only when every sample fails. |
 
 ### 분석 개념 이미지
-등록 메모: 개념도 작성 예정입니다.
+그림: `docs/CNV/modules/figures/module_concepts/cnvkit_call_concept.png`
+
+- 레전드(국문): **그림. CNVkit 판정과 FACETS 보정.** (A) 종양 커버리지를 기준과 GC로 보정해 bin별 복제수 비(Copy ratio (log2, centred), 회색 점)를 구하고, 같은 수준의 구간(선)으로 나눈 뒤 판정 색(GAIN 주황, LOSS 하늘색, DEEPDEL 파랑)으로 표시합니다. (B) FACETS가 2/1로 본 구간의 log2 중앙값을 0으로 맞추고, FACETS 순도로 기대 정수 복제수(빨간 점선 1, 2, 3, 4)를 계산해 구간 값을 정수 복제수로 바꿉니다. 막대(구간 길이 분포)가 점선에 모이면 잘 맞은 것입니다(cn_state_hist 그림). 배수성이 2.7 이상이면 기준 복제수는 4입니다. (C) 유전자마다 복제수(CN), 판정, LOH를 genes.tsv에 적습니다. 판정은 기준 복제수 대비이며 색은 결과 그림과 같습니다. 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. CNVkit calls corrected with FACETS.** (A) Tumor coverage corrected with the reference and GC gives bin copy ratios (Copy ratio (log2, centred), gray points), split into segments (lines) shown in the call colours (GAIN orange, LOSS light blue, DEEPDEL blue). (B) The log2 median of the regions FACETS calls 2/1 is set to 0, and the FACETS purity gives the expected integer copy numbers (red dashed lines 1, 2, 3, 4) that turn segment values into integers; bars (segment length distribution) gathered on the lines mean a good fit (cn_state_hist plot). With a ploidy of 2.7 or more the baseline copy number is 4. (C) genes.tsv lists the copy number (CN), call and LOH per gene; calls are relative to the baseline and coloured as in the result plots. Values are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
@@ -518,7 +531,11 @@ Collects the per-sample copy-number calls into cohort tables, cohort figures and
 | GISTIC2 입력(gistic_segments.txt)은 재중심화한 log2 값입니다. GISTIC2는 이 모듈에서 실행하지 않습니다. | The GISTIC2 input (gistic_segments.txt) holds recentred log2 values; GISTIC2 itself is not run by this module. |
 
 ### 분석 개념 이미지
-등록 메모: 개념도 작성 예정입니다.
+그림: `docs/CNV/modules/figures/module_concepts/cnv_summary_concept.png`
+
+- 레전드(국문): **그림. 코호트 요약.** (A) 관심 유전자 × 샘플 판정 행렬(oncoprint)로, 칸 색은 판정(AMP 진빨강, GAIN 주황, LOSS 하늘색, DEEPDEL 파랑, 회색 중립), 분홍 점은 FACETS LOH입니다. (B) 유전체 위치별로 gain(위, 주황)·loss(아래, 하늘색)인 샘플 비율(Samples (%))입니다. 코호트 heatmap, 팔 단위 heatmap, 샘플 유사도(샘플 2개 이상)도 만듭니다. (C) 샘플별 변이 유전체 비율(FGA)을 정렬한 막대와, 모든 그림·표를 모은 cnv_report.html, IGV·GISTIC2용 SEG입니다. 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. Cohort summary.** (A) Gene-of-interest × sample call matrix (oncoprint): cell colours are calls (AMP dark red, GAIN orange, LOSS light blue, DEEPDEL blue, gray neutral) and pink dots FACETS LOH. (B) Fraction of samples with gain (above, orange) or loss (below, light blue) along the genome (Samples (%)); a cohort heatmap, an arm-level heatmap and sample similarity (two or more samples) are drawn too. (C) Sorted bars of the fraction of the genome altered (FGA) per sample, cnv_report.html with all figures and tables, and SEG files for IGV and GISTIC2. Values are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
