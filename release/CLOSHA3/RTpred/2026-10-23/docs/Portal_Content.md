@@ -58,10 +58,8 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 | CatBoost | 1.2.10 | https://catboost.ai/ |
 | Matplotlib | 3.10.9 | https://matplotlib.org/ |
 | openpyxl | 3.1.5 | https://openpyxl.readthedocs.io/ |
-| RTpred (서울대학교 식품대사체학 연구실 개발, 코드명 mdcc) | Revision 2 | 공개 저장소 없음(이미지에 포함). 방법 출처(Retip): https://doi.org/10.1021/acs.analchem.9b05765 |
-
-- **내장 모델:** 이 이미지에는 서울대학교 식품대사체학 연구실이 사전 학습한 RP·HILIC 기본 모델(best: WeightedEnsemble_L3, RT 단위 분)이 `/opt/mdcc/models`에 들어 있으며, 기본 모델 예측과 비교에 쓰입니다.
-- **Bundled models:** this image holds the RP and HILIC default models pre-trained by the SNU food metabolomics lab (best: WeightedEnsemble_L3, RT in minutes) in `/opt/mdcc/models`, used for default prediction and comparison.
+| RTpred | 1.0 | - |
+| RTpred 사전 학습 모델 (RP, HILIC) | 1.0 | - |
 
 - **태그(키워드):** 머무름시간예측, 대사체동정, RDKit, AutoGluon
 - **내용(국문):** 화합물 구조(SMILES)로 액체크로마토그래피 머무름 시간(RT)을 예측하는 실행 환경입니다. RDKit으로 구조 descriptor를 계산하고 AutoGluon 모델로 예측·학습합니다. 사전 학습된 RP·HILIC 기본 모델(best: WeightedEnsemble_L3)이 이미지 안 `/opt/mdcc/models`에 들어 있습니다. 실행 중 인터넷과 GPU를 쓰지 않습니다.
@@ -182,10 +180,7 @@ python rtpred_predict.1.0.py \
 | CatBoost | 1.2.10 | https://catboost.ai/ |
 | Matplotlib | 3.10.9 | https://matplotlib.org/ |
 | openpyxl | 3.1.5 | https://openpyxl.readthedocs.io/ |
-| RTpred (서울대학교 식품대사체학 연구실 개발, 코드명 mdcc) | Revision 2 | 공개 저장소 없음(이미지에 포함). 방법 출처(Retip): https://doi.org/10.1021/acs.analchem.9b05765 |
-
-- **내장 모델:** 이 이미지에는 사전 학습 모델이 들어 있지 않습니다(학습 전용).
-- **Bundled models:** this image holds no pre-trained models (training only).
+| RTpred | 1.0 | - |
 
 - **태그(키워드):** 머무름시간예측, 대사체동정, RDKit, AutoGluon
 - **내용(국문):** 화합물 구조(SMILES)로 액체크로마토그래피 머무름 시간(RT)을 예측하는 실행 환경입니다. RDKit으로 구조 descriptor를 계산하고 AutoGluon 모델로 예측·학습합니다. 기본 모델은 넣지 않았습니다(학습 전용). 실행 중 인터넷과 GPU를 쓰지 않습니다.
@@ -326,10 +321,8 @@ python rtpred_train.1.0.py \
 | CatBoost | 1.2.10 | https://catboost.ai/ |
 | Matplotlib | 3.10.9 | https://matplotlib.org/ |
 | openpyxl | 3.1.5 | https://openpyxl.readthedocs.io/ |
-| RTpred (서울대학교 식품대사체학 연구실 개발, 코드명 mdcc) | Revision 2 | 공개 저장소 없음(이미지에 포함). 방법 출처(Retip): https://doi.org/10.1021/acs.analchem.9b05765 |
-
-- **내장 모델:** 이 이미지에는 서울대학교 식품대사체학 연구실이 사전 학습한 RP·HILIC 기본 모델(best: WeightedEnsemble_L3, RT 단위 분)이 `/opt/mdcc/models`에 들어 있으며, 기본 모델 예측과 비교에 쓰입니다.
-- **Bundled models:** this image holds the RP and HILIC default models pre-trained by the SNU food metabolomics lab (best: WeightedEnsemble_L3, RT in minutes) in `/opt/mdcc/models`, used for default prediction and comparison.
+| RTpred | 1.0 | - |
+| RTpred 사전 학습 모델 (RP, HILIC) | 1.0 | - |
 
 - **태그(키워드):** 머무름시간예측, 대사체동정, RDKit, AutoGluon
 - **내용(국문):** 화합물 구조(SMILES)로 액체크로마토그래피 머무름 시간(RT)을 예측하는 실행 환경입니다. RDKit으로 구조 descriptor를 계산하고 AutoGluon 모델로 예측·학습합니다. 사전 학습된 RP·HILIC 기본 모델(best: WeightedEnsemble_L3)이 이미지 안 `/opt/mdcc/models`에 들어 있습니다. 실행 중 인터넷과 GPU를 쓰지 않습니다.
