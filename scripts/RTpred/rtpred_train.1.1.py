@@ -59,8 +59,8 @@ Outputs (output_dir/result):
     training.png/.svg, report.html, manifest.json
     train_summary.tsv: Mode, Rows, Status, Best_model, Output
     inputs/train_<MODE>.csv: the rows given to each mode
-    The whole output_dir is the model_dir of rtpred_predict (1.2) and the
-    input_dir of rtpred_compare (1.1).
+    The whole output_dir is the model_dir of rtpred_predict and the
+    input_dir of rtpred_compare.
 
 Logs (output_dir/logs): <time>_<pid>.log copies stdout (progress) and
 <time>_<pid>.err copies stderr (errors and warnings).

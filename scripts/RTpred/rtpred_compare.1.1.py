@@ -274,8 +274,8 @@ def write_rows(path, header, rows):
 
 def locate_train_outputs(path):
     """Trained models by mode, with the folder holding each mode's
-    reserved_test.csv: rtpred_train 1.1 (result/RP, result/HILIC) or 1.0
-    (result/model)."""
+    reserved_test.csv: one folder per mode (result/RP, result/HILIC) or the
+    single-model layout of an earlier rtpred_train (result/model)."""
     found = {}
     candidates = [(b / m / "model") for b in (path / "result", path) for m in ("RP", "HILIC")]
     candidates += [path / "result" / "model", path / "model", path]

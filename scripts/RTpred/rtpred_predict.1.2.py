@@ -342,8 +342,9 @@ def has_mode_column(path, sheet):
 
 
 def locate_train_models(path):
-    """Trained models by mode: rtpred_train 1.1 output (result/RP/model,
-    result/HILIC/model) or the single model of rtpred_train 1.0 (result/model)."""
+    """Trained models by mode: one folder per mode (result/RP/model,
+    result/HILIC/model) or the single model of an earlier rtpred_train
+    (result/model)."""
     found = {}
     bases = [path / "result", path]
     candidates = [b / m / "model" for b in bases for m in ("RP", "HILIC")]

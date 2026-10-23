@@ -1,0 +1,4 @@
+module	release_file	closha2_file	work_file	image
+rtpred_predict	rtpred_predict.1.0.py	(new in 3.0)	scripts/RTpred/rtpred_predict.1.2.py	bx_rtpred_predict 1.0
+rtpred_train	rtpred_train.1.0.py	(new in 3.0)	scripts/RTpred/rtpred_train.1.1.py	bx_rtpred_train 1.0
+rtpred_compare	rtpred_compare.1.0.py	(new in 3.0)	scripts/RTpred/rtpred_compare.1.1.py	bx_rtpred_compare 1.0

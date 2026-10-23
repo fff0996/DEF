@@ -1,0 +1,5 @@
+# Trained models and large outputs are not kept in git
+model/
+autogluon/
+*.pkl
+*.zip
