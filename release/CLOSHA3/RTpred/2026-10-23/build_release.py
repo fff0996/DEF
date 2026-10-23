@@ -61,14 +61,17 @@ HEADERS = {
 # Portal images: (source under docs/RTpred, target under portal_images)
 IMAGES = [
     ("modules/figures/module_concepts/rtpred_predict_concept.png", "rtpred_predict/rtpred_predict_concept.png"),
+    ("modules/figures/module_concepts/rtpred_predict_ranking_concept.png", "rtpred_predict/rtpred_predict_concept_2.png"),
     ("images/module1_result.png", "rtpred_predict/rtpred_predict_result_1.png"),
     ("modules/figures/module_concepts/rtpred_train_concept.png", "rtpred_train/rtpred_train_concept.png"),
+    ("modules/figures/module_concepts/rtpred_train_representation_concept.png", "rtpred_train/rtpred_train_concept_2.png"),
     ("images/module2_result.png", "rtpred_train/rtpred_train_result_1.png"),
     ("modules/figures/module_concepts/rtpred_compare_concept.png", "rtpred_compare/rtpred_compare_concept.png"),
     ("images/module3_result.png", "rtpred_compare/rtpred_compare_result_1.png"),
     ("pipeline/figures/pipeline_default.png", "pipeline/pipeline_default.png"),
     ("pipeline/figures/pipeline_user_model.png", "pipeline/pipeline_user_model.png"),
     ("pipeline/figures/concept.png", "pipeline/concept.png"),
+    ("modules/figures/module_concepts/rtpred_annotation_use_concept.png", "pipeline/concept_2.png"),
 ]
 # Docs copied as they are: (source under docs/RTpred, target under docs)
 DOC_FILES = [

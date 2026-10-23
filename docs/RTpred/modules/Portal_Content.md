@@ -118,6 +118,12 @@ C002,NCC(=O)O,HILIC
 - 레전드(영문): **Figure. Retention time prediction with the model of each row.** (A) The compound list gives one compound per row with its separation mode (model_type: RP or HILIC); modes may be mixed, and a measured RT adds ΔRT (measured - predicted). (B) With model_dir empty, the pre-trained RP and HILIC models in the image predict; with a rtpred_train output folder, its user models predict. Each row uses the model of its own mode, and rows of a mode the user did not train (dashed) are not predicted. (C) The result table gives the predicted RT and status of every row; rows of an untrained mode are kept as no_trained_model. The predicted RT helps keep, among candidates of one m/z, those near the measured RT (green range). Values and structures are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함). 구성 참고: Retip(Bonini 외, Anal Chem 2020)의 RT 예측 흐름, METLIN SMRT(Domingo-Almenara 외, Nat Commun 2019)의 예측 RT로 후보 거르기
 
+그림: `docs/RTpred/modules/figures/module_concepts/rtpred_predict_ranking_concept.png`
+
+- 레전드(국문): **그림 2. 예측 머무름 시간 오차로 후보 순위 매기기.** (A) 구조를 아는 화합물들의 예측 RT(가로)와 측정 RT(세로)이며, 점선은 예측과 측정이 같은 선입니다. (B) annotation할 MS 피크(M+H, m/z 168.0423) 하나를 확대한 것으로, 점선에서 떨어진 거리가 예측 RT 오차입니다. (C) 같은 m/z를 가진 후보들을 예측 RT 오차가 작은 순서로 세우면 정답(1, vanillic acid)이 맨 위에 옵니다. 값은 모식적인 값입니다. Domingo-Almenara 외, Nat Commun 2019, Fig. 4를 수정(CC BY 4.0).
+- 레전드(영문): **Figure 2. Ranking candidates by predicted retention time error.** (A) Predicted (x) and measured (y) RTs of compounds with known structures; the dashed line is predicted = measured. (B) One MS peak to annotate (M+H, m/z 168.0423), enlarged; its distance from the dashed line is the predicted RT error. (C) Candidates with the same m/z, ordered by predicted RT error, put the correct one (1, vanillic acid) first. Values are schematic. Adapted from Domingo-Almenara et al., Nat Commun 2019, Fig. 4 (CC BY 4.0).
+- 출처: Domingo-Almenara X, Guijas C, Billings E, Montenegro-Burke JR, Uritboonthai W, Aisporna AE, Chen E, Benton HP, Siuzdak G. The METLIN small molecule dataset for machine learning-based retention time prediction. *Nat Commun* 10, 5811 (2019). https://doi.org/10.1038/s41467-019-13680-7, Fig. 4를 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
 ### 스크립트 사용 예제
 ```
 python rtpred_predict.1.0.py \
@@ -250,6 +256,12 @@ S003,O=C(O)c1ccccc1,5.40,HILIC
 - 레전드(국문): **그림. 분리 모드마다 사용자 머무름 시간 모델 학습.** (A) 측정 RT 표를 model_type에 따라 RP 행과 HILIC 행으로 나눕니다. 모드마다 정제 후 25행, 서로 다른 구조 15개 이상이 필요하며, 한 모드의 자료는 같은 컬럼, 이동상, gradient로 측정한 것이어야 합니다. (B) 모드마다 같은 구조가 두 분할에 들어가지 않도록 구조 단위로 train, validation, 예약 test로 나누고, AutoGluon 후보 모델을 학습해 validation RMSE가 가장 낮은 모델을 best로 고릅니다. (C) 모드마다 result/RP/, result/HILIC/에 모델, 예약 test, leaderboard가 저장되고, train_summary.tsv에 모드별 상태가 남습니다. 이 결과 폴더는 rtpred_predict와 rtpred_compare의 입력입니다. 값은 모식적인 값입니다.
 - 레전드(영문): **Figure. Training a user retention time model per separation mode.** (A) The measured RT table is split by model_type into RP and HILIC rows. Each mode needs at least 25 rows and 15 distinct structures after cleaning, measured with one column, mobile phase and gradient. (B) For each mode the rows are split by structure into train, validation and a reserved test so that no structure falls in two splits, AutoGluon candidate models are trained, and the one with the lowest validation RMSE is kept as best. (C) Each mode is saved in result/RP/ or result/HILIC/ with its models, reserved test and leaderboard, and train_summary.tsv lists the status per mode; the output folder is the input of rtpred_predict and rtpred_compare. Values are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함). 구성 참고: Retip(Bonini 외, Anal Chem 2020)의 RT 예측 흐름, METLIN SMRT(Domingo-Almenara 외, Nat Commun 2019)의 예측 RT로 후보 거르기
+
+그림: `docs/RTpred/modules/figures/module_concepts/rtpred_train_representation_concept.png`
+
+- 레전드(국문): **그림 2. 머무름 시간 예측에 쓰는 분자 표현.** SMILES 같은 구조 문자열은 분자 descriptor(물리화학적 값과 그래프 연산 값), 분자 fingerprint(MACCS keys, ECFP 등), 분자 그래프(그래프 신경망용) 가운데 하나로 바뀌어 모델의 입력이 됩니다. RTpred는 Retip처럼 SMILES를 RDKit descriptor(217개)로 바꾸고, 그 값으로 AutoGluon 모델을 학습합니다(파란 경로). Liu 외, J Cheminform 2024, Fig. 4를 수정(CC BY 4.0). 원 그림의 모델 연표는 뺐습니다.
+- 레전드(영문): **Figure 2. Molecular representations for retention time prediction.** A structure string such as SMILES is turned into molecular descriptors (physicochemical values and graph operators), molecular fingerprints (MACCS keys, ECFP and so on) or molecular graphs (for graph neural networks) as model input. Like Retip, RTpred converts SMILES to RDKit descriptors (217) and trains AutoGluon models on them (blue path). Adapted from Liu et al., J Cheminform 2024, Fig. 4 (CC BY 4.0); the model timeline of the original is left out.
+- 출처: Liu Y, Yoshizawa AC, Ling Y, Okuda S. Insights into predicting small molecule retention times in liquid chromatography using deep learning. *J Cheminform* 16, 113 (2024). https://doi.org/10.1186/s13321-024-00905-1, Fig. 4를 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ### 스크립트 사용 예제
 ```

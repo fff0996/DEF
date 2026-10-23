@@ -101,6 +101,21 @@ The errors (RMSE, MAE) and explained variance (R²) of the default and user mode
 ### 출처 / Reference
 직접 작성한 모식도(외부 그림 사용 안 함)
 
+그림: `docs/RTpred/modules/figures/module_concepts/rtpred_annotation_use_concept.png` (그림 2)
+
+### 국문 (그림 2 설명)
+**그림 2. 예측 머무름 시간을 대사체 annotation에 쓰는 흐름.** (1) LC-MS에서 피크 하나의 m/z와 측정 RT를 얻습니다. (2) 같은 m/z를 가진 후보 구조를 데이터베이스에서 찾습니다. (3) RTpred가 후보마다 RT를 예측합니다. 모델은 미리 측정 RT 자료로 학습해 둔 것으로, 사전 학습 RP·HILIC 모델 또는 rtpred_train으로 만든 사용자 모델입니다. (4) 측정 RT와 예측 RT의 차이(ΔRT)로 후보 순위를 매깁니다. (5) ΔRT가 작은 후보를 m/z, MS/MS 증거와 함께 annotation에 씁니다. 값은 모식적인 값입니다. Sillé 외, Front Public Health 2025, Fig. 1을 수정(CC BY 4.0). 원 그림의 RT 보정(calibration, projection) 단계는 RTpred에 없어 뺐습니다.
+
+### English (figure 2 legend)
+**Figure 2. Using predicted retention times in metabolite annotation.** (1) LC-MS gives the m/z and measured RT of a peak. (2) Candidate structures with the same m/z are taken from a database. (3) RTpred predicts the RT of each candidate with a model trained beforehand on measured RTs: the pre-trained RP or HILIC model, or a user model built with rtpred_train. (4) Candidates are ranked by the difference between measured and predicted RT (ΔRT). (5) Candidates with a small ΔRT are annotated together with m/z and MS/MS evidence. Values are schematic. Adapted from Sillé et al., Front Public Health 2025, Fig. 1 (CC BY 4.0); the RT calibration (projection) step of the original is left out because RTpred has none.
+
+### 대체 텍스트 (그림 2)
+- 국문: LC-MS 피크, 같은 m/z 후보, RTpred 예측, ΔRT 순위, annotation으로 이어지는 다섯 단계 흐름도.
+- English: Five-step flow: LC-MS peak, candidates with the same m/z, RTpred prediction, ranking by ΔRT, annotation.
+
+### 출처 (그림 2)
+Sillé FCM, Prasse C, Luechtefeld T, Hartung T. AI redefines mass spectrometry chemicals identification: retention time prediction in metabolomics and for a Human Exposome Project. *Front Public Health* 13, 1687056 (2025). https://doi.org/10.3389/fpubh.2025.1687056, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
 ---
 
 ## 5. 주요 사항 (파이프라인) / Key notes (pipeline)

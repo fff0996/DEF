@@ -17,7 +17,7 @@ from pathlib import Path
 OUT = Path(__file__).resolve().parent
 sys.path.insert(0, str(OUT.parents[3] / "ATAC-seq" / "modules" / "figures" / "module_concepts"))
 from make_module_concepts import (MAIN, SUB, POINT, GRAY, PALE, t, panel, line, rect, arrow,  # noqa: E402
-                                  axes, svg, table)
+                                  axes, svg, table, poly)
 
 RP, HILIC = "#4E79A7", "#E8862A"
 OK, NONE = "#2E9E6B", "#8A9099"
@@ -163,6 +163,128 @@ def rtpred_compare():
 
 
 FIGS = {"rtpred_predict": rtpred_predict, "rtpred_train": rtpred_train, "rtpred_compare": rtpred_compare}
+
+
+# ---------------------------------------------------------------- figures adapted from CC BY papers
+def stepbox(x, y, w, h, title, lines, color=POINT, fill="#FFFFFF"):
+    out = f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="{fill}" stroke="{color}" stroke-width="2.5"/>'
+    out += t(x + w / 2, y + 26, title, 16, 800, color)
+    for i, s in enumerate(lines):
+        out += t(x + w / 2, y + 58 + i * 24, s, 13, 500, SUB)
+    return out
+
+
+def rtpred_annotation_use():
+    """Pipeline concept 2, adapted from Sille et al. 2025 Fig. 1 (CC BY 4.0): the RT calibration
+    and projection steps are left out (RTpred has none) and the model is RTpred's."""
+    g = [t(800, 34, "Predicted RT in metabolite annotation", 22, 800, MAIN)]
+    y, h = 250, 170
+    # 1 LC-MS peak
+    g.append(stepbox(30, y, 250, h, "1  LC-MS peak", ["m/z 168.0423", "measured RT 9.0 min"]))
+    g.append(poly_peak(80, y + 100, 150, 55))
+    # 2 candidates
+    g.append(stepbox(330, y, 260, h, "2  Candidates", ["structures with the", "same m/z (database)", "candidate a, b, c"]))
+    # 3 RTpred
+    g.append(stepbox(640, y, 300, h, "3  RTpred prediction", ["RT of each candidate", "pre-trained RP / HILIC model", "or user model (rtpred_train)"],
+                     POINT, "#EAF0FA"))
+    g.append(stepbox(690, 70, 200, 110, "Measured RT library", ["trains the model", "(beforehand)"], GRAY))
+    g.append(arrow(790, 180, 790, y - 4, GRAY, 3))
+    # 4 rank
+    g.append(stepbox(990, y, 290, h + 60, "4  Rank by ΔRT", []))
+    g.append(table(1005, y + 50, ["cand.", "pred. RT", "ΔRT"], [("a", "8.8", "0.2"), ("c", "10.5", "1.5"), ("b", "6.7", "2.3")],
+                   [70, 100, 90], {0: OK}))
+    # 5 annotation
+    g.append(stepbox(1330, y, 250, h, "5  Annotation", ["candidate a kept", "with m/z and MS/MS", "evidence"], OK))
+    for x1, x2 in ((280, 330), (590, 640), (940, 990), (1280, 1330)):
+        g.append(arrow(x1 + 2, y + h / 2, x2 - 4, y + h / 2, SUB, 3))
+    g.append(note(30, 560, "ΔRT = |measured RT - predicted RT|; a small ΔRT supports the candidate, a large one argues against it."))
+    g.append(note(30, 590, "Schematic values. Adapted from Sillé et al., Front Public Health 13, 1687056 (2025), Fig. 1 (CC BY 4.0)."))
+    return svg("".join(g))
+
+
+def poly_peak(x, y, w, h):
+    pts = []
+    import math as _m
+    for i in range(41):
+        xx = x + w * i / 40
+        yy = y + h - h * 0.9 * _m.exp(-((i - 20) / 5.5) ** 2)
+        pts.append((xx, yy))
+    d = " ".join(f"{a:.1f},{b:.1f}" for a, b in pts)
+    return (f'<polyline points="{d}" fill="none" stroke="{POINT}" stroke-width="3"/>'
+            + line(x, y + h, x + w, y + h, SUB, 2))
+
+
+def rtpred_predict_ranking():
+    """rtpred_predict concept 2, adapted from Domingo-Almenara et al. 2019 Fig. 4 (CC BY 4.0)."""
+    import random as _r
+    _r.seed(7)
+    g = [panel(40, "A", "Predicted vs measured RT")]
+    ax, ay, aw, ah = 110, 90, 380, 300
+    g.append(axes(ax, ay, aw, ah, "Predicted RT (min)", "Measured RT (min)"))
+    pts = []
+    for _ in range(70):
+        u = _r.random()
+        px, py = ax + 20 + u * (aw - 40), ay + ah - 20 - u * (ah - 40) + _r.gauss(0, 22)
+        pts.append((px, max(ay + 5, min(ay + ah - 5, py))))
+    for px, py in pts:
+        g.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="5" fill="{SUB}" opacity="0.8"/>')
+    g.append(line(ax + 15, ay + ah - 15, ax + aw - 15, ay + 15, RED_, 3, "10,7"))
+    hx, hy = ax + 0.45 * aw, ay + ah - 0.45 * ah
+    g.append(f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="26" fill="{GRAY}" opacity="0.35"/>')
+    g.append(note(110, 450, "Each point: a compound with known structure"))
+    g.append(note(110, 476, "Dashed line: predicted = measured"))
+
+    g.append(panel(560, "B", "One annotated peak"))
+    cx, cy, r = 760, 240, 120
+    g.append(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{GRAY}" opacity="0.35"/>')
+    g.append(line(cx - 100, cy + 100, cx + 100, cy - 100, RED_, 3, "10,7"))
+    g.append(f'<circle cx="{cx - 20}" cy="{cy - 40}" r="16" fill="{RED_}"/>')
+    g.append(line(cx - 20, cy - 40, cx + 40, cy - 40, SUB, 2, "4,4") + line(cx - 20, cy - 40, cx - 20, cy + 20, SUB, 2, "4,4"))
+    g.append(t(cx, cy + 160, "MS peak (M+H), m/z 168.0423", 15, 700, MAIN))
+    g.append(note(600, 450, "Distance from the line = predicted RT error"))
+
+    g.append(panel(1060, "C", "Candidates ranked by RT error"))
+    cands = [("1", "Vanillic acid", "0.2", OK), ("2", "2,6-Dimethoxybenzoquinone", "1.4", RED_),
+             ("3", "2,5-Dimethoxybenzoquinone", "2.1", RED_), ("4", "candidate 4", "3.0", RED_),
+             ("5", "candidate 5", "4.2", RED_), ("6", "candidate 6", "5.6", RED_)]
+    g.append(t(1080, 100, "Candidates with m/z 168.0423", 15, 700, SUB, "start"))
+    g.append(t(1500, 100, "RT error", 14, 700, SUB, "end"))
+    for i, (num, name, err, col) in enumerate(cands):
+        y = 145 + i * 52
+        rr = 22 - i * 2.2
+        g.append(f'<circle cx="1105" cy="{y}" r="{rr + 6:.1f}" fill="#F6E3A1"/>')
+        g.append(f'<circle cx="1105" cy="{y}" r="13" fill="{col}"/>' + t(1105, y, num, 13, 800, "#FFFFFF"))
+        g.append(t(1145, y, name, 15, 700 if i == 0 else 500, OK if i == 0 else MAIN, "start"))
+        g.append(t(1500, y, err + " min", 14, 600, OK if i == 0 else SUB, "end"))
+    g.append(t(1545, 145, "✓", 22, 800, OK))
+    g.append(note(1060, 500, "Smaller predicted RT error → higher rank; 1 is correct"))
+    g.append(note(40, 600, "Schematic values. Adapted from Domingo-Almenara et al., Nat Commun 10, 5811 (2019), Fig. 4 (CC BY 4.0)."))
+    return svg("".join(g))
+
+
+def rtpred_train_representation():
+    """rtpred_train concept 2, adapted from Liu et al. 2024 Fig. 4 (CC BY 4.0): the representations;
+    the model timeline is left out."""
+    g = [t(800, 34, "Molecular representations for RT prediction", 22, 800, MAIN)]
+    g.append(stepbox(620, 90, 360, 140, "String of symbols", ["SMILES, canonical SMILES, InChI", "(input of RTpred: SMILES)"], SUB, "#F5F6F8"))
+    boxes = [(80, "Molecular descriptors", ["physicochemical values", "and graph operators", "RTpred: 217 RDKit descriptors"], POINT, "#EAF0FA"),
+             (620, "Molecular fingerprints", ["MACCS keys", "ECFP, PFP"], GRAY, "#FFFFFF"),
+             (1160, "Molecular graphs", ["computer-generated graphs", "for graph neural networks"], GRAY, "#FFFFFF")]
+    for x, title, lines, col, fill in boxes:
+        g.append(stepbox(x, 320, 360, 170, title, lines, col, fill))
+    g.append(arrow(700, 230, 300, 316, POINT, 3.5))
+    g.append(arrow(800, 230, 800, 316, GRAY, 3))
+    g.append(arrow(900, 230, 1300, 316, GRAY, 3))
+    g.append(t(470, 262, "convert (RDKit)", 14, 700, POINT))
+    g.append(t(1150, 262, "convert", 14, 600, SUB))
+    g.append(note(80, 530, "RTpred (like Retip) converts SMILES to descriptors and trains AutoGluon models on them."))
+    g.append(note(80, 600, "Adapted from Liu et al., J Cheminform 16, 113 (2024), Fig. 4 (CC BY 4.0); the model timeline is left out."))
+    return svg("".join(g))
+
+
+RED_ = "#D6604D"
+FIGS.update({"rtpred_predict_ranking": rtpred_predict_ranking, "rtpred_train_representation": rtpred_train_representation,
+             "rtpred_annotation_use": rtpred_annotation_use})
 
 if __name__ == "__main__":
     for name, fn in FIGS.items():
