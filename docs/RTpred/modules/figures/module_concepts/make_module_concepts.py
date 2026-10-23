@@ -126,39 +126,31 @@ def rtpred_train():
 
 # ---------------------------------------------------------------- rtpred_compare
 def rtpred_compare():
-    g = [panel(40, "A", "Evaluation rows per mode")]
-    g.append(chip(60, 100, 200, "RP reserved test", RP))
-    g.append(chip(280, 100, 200, "HILIC reserved test", HILIC))
-    g.append(note(60, 180, "Default: reserved_test.csv of each mode"))
-    g.append(note(60, 206, "(held out in training, never used to select)"))
-    g.append(note(60, 246, "Or eval_file: SMILES, measured RT, model_type"))
-    g.append(note(60, 286, "Structures used in training or validation"))
-    g.append(note(60, 312, "stop the run (leakage check)"))
-
-    g.append(panel(560, "B", "Same mode, two models"))
+    g = [panel(40, "A", "Same mode, two models, same rows")]
     for i, (m, col) in enumerate((("RP", RP), ("HILIC", HILIC))):
-        y = 110 + i * 130
-        g.append(chip(580, y, 190, f"pre-trained {m}", col))
-        g.append(t(800, y + 23, "vs", 16, 800, SUB))
-        g.append(chip(830, y, 190, f"user {m}", col))
-        g.append(note(580, y + 70, "same evaluation rows for both"))
-    g.append(note(580, 400, "RP and HILIC are never compared with each other"))
-    g.append(note(580, 426, "User models: all candidates or best (scope)"))
+        y = 100 + i * 150
+        g.append(chip(60, y, 220, f"{m} evaluation rows", col, sub="reserved_test.csv"))
+        g.append(arrow(285, y + 23, 345, y + 23, SUB, 3))
+        g.append(chip(355, y, 190, f"pre-trained {m}", col))
+        g.append(t(575, y + 23, "vs", 16, 800, SUB))
+        g.append(chip(605, y, 190, f"user {m}", col))
+    g.append(note(60, 420, "Default evaluation rows: reserved_test.csv of each mode; or eval_file with model_type"))
+    g.append(note(60, 446, "RP and HILIC are never compared with each other"))
+    g.append(note(60, 472, "Structures used in training or validation stop the run (leakage check)"))
 
-    g.append(panel(1100, "C", "Errors on the same rows"))
-    ax, ay, aw, ah = 1150, 110, 380, 170
+    g.append(panel(960, "B", "Errors on the same rows"))
+    ax, ay, aw, ah = 1020, 110, 480, 230
     g.append(axes(ax, ay, aw, ah, "", "RMSE (min)"))
     bars = [("RP", RP, 0.75, 0.45), ("HILIC", HILIC, 0.85, 0.6)]
     for i, (m, col, pre, usr) in enumerate(bars):
-        bx = ax + 40 + i * 180
-        g.append(rect(bx, ay + ah - pre * ah, 50, pre * ah, GRAY, 3))
-        g.append(rect(bx + 60, ay + ah - usr * ah, 50, usr * ah, col, 3, op=0.9))
-        g.append(t(bx + 55, ay + ah + 22, m, 14, 700, col))
-    g.append(rect(1160, 330, 18, 14, GRAY, 3) + t(1186, 337, "pre-trained", 13, 500, SUB, "start"))
-    g.append(rect(1300, 330, 9, 14, RP, 0) + rect(1309, 330, 9, 14, HILIC, 0) + t(1326, 337, "user (RP, HILIC)", 13, 500, SUB, "start"))
-    g.append(note(1110, 386, "RMSE, MAE, R² per candidate, rank, RT plot"))
-    g.append(note(1110, 412, "comparison.csv joins modes (Mode column)"))
-    g.append(note(1110, 438, "The pre-trained models stay unchanged"))
+        bx = ax + 60 + i * 230
+        g.append(rect(bx, ay + ah - pre * ah, 70, pre * ah, GRAY, 3))
+        g.append(rect(bx + 80, ay + ah - usr * ah, 70, usr * ah, col, 3, op=0.9))
+        g.append(t(bx + 75, ay + ah + 24, m, 15, 700, col))
+    g.append(rect(1040, 395, 18, 14, GRAY, 3) + t(1066, 402, "pre-trained", 14, 500, SUB, "start"))
+    g.append(rect(1200, 395, 9, 14, RP, 0) + rect(1209, 395, 9, 14, HILIC, 0) + t(1226, 402, "user (RP, HILIC)", 14, 500, SUB, "start"))
+    g.append(note(980, 446, "RMSE, MAE, R² per candidate, rank, measured vs predicted plot"))
+    g.append(note(980, 472, "comparison.csv joins modes (Mode column); pre-trained models stay unchanged"))
     return svg("".join(g))
 
 
@@ -219,45 +211,37 @@ def rtpred_predict_ranking():
     import random as _r
     _r.seed(7)
     g = [panel(40, "A", "Predicted vs measured RT")]
-    ax, ay, aw, ah = 110, 90, 380, 300
+    ax, ay, aw, ah = 120, 90, 560, 360
     g.append(axes(ax, ay, aw, ah, "Predicted RT (min)", "Measured RT (min)"))
-    pts = []
-    for _ in range(70):
+    for _ in range(80):
         u = _r.random()
-        px, py = ax + 20 + u * (aw - 40), ay + ah - 20 - u * (ah - 40) + _r.gauss(0, 22)
-        pts.append((px, max(ay + 5, min(ay + ah - 5, py))))
-    for px, py in pts:
-        g.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="5" fill="{SUB}" opacity="0.8"/>')
+        px, py = ax + 20 + u * (aw - 40), ay + ah - 20 - u * (ah - 40) + _r.gauss(0, 26)
+        g.append(f'<circle cx="{px:.1f}" cy="{max(ay + 5, min(ay + ah - 5, py)):.1f}" r="5.5" fill="{SUB}" opacity="0.75"/>')
     g.append(line(ax + 15, ay + ah - 15, ax + aw - 15, ay + 15, RED_, 3, "10,7"))
-    hx, hy = ax + 0.45 * aw, ay + ah - 0.45 * ah
-    g.append(f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="26" fill="{GRAY}" opacity="0.35"/>')
-    g.append(note(110, 450, "Each point: a compound with known structure"))
-    g.append(note(110, 476, "Dashed line: predicted = measured"))
+    hx, hy = ax + 0.45 * aw, ay + ah - 0.45 * ah - 34
+    lx, ly = ax + 0.45 * aw, ay + ah - 0.45 * ah
+    g.append(line(hx, hy, lx, ly, SUB, 2, "4,4"))
+    g.append(f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="11" fill="{RED_}"/>')
+    g.append(line(hx - 8, hy - 8, ax + 150, ay + 62, RED_, 1.5))
+    g.append(t(ax + 30, ay + 30, "peak m/z 168.0423", 15, 700, RED_, "start"))
+    g.append(t(ax + 30, ay + 52, "distance to the line = RT error", 13, 500, SUB, "start"))
+    g.append(note(120, 510, "Points: compounds with known structure; dashed line: predicted = measured"))
 
-    g.append(panel(560, "B", "One annotated peak"))
-    cx, cy, r = 760, 240, 120
-    g.append(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{GRAY}" opacity="0.35"/>')
-    g.append(line(cx - 100, cy + 100, cx + 100, cy - 100, RED_, 3, "10,7"))
-    g.append(f'<circle cx="{cx - 20}" cy="{cy - 40}" r="16" fill="{RED_}"/>')
-    g.append(line(cx - 20, cy - 40, cx + 40, cy - 40, SUB, 2, "4,4") + line(cx - 20, cy - 40, cx - 20, cy + 20, SUB, 2, "4,4"))
-    g.append(t(cx, cy + 160, "MS peak (M+H), m/z 168.0423", 15, 700, MAIN))
-    g.append(note(600, 450, "Distance from the line = predicted RT error"))
-
-    g.append(panel(1060, "C", "Candidates ranked by RT error"))
+    g.append(panel(800, "B", "Candidates ranked by RT error"))
     cands = [("1", "Vanillic acid", "0.2", OK), ("2", "2,6-Dimethoxybenzoquinone", "1.4", RED_),
              ("3", "2,5-Dimethoxybenzoquinone", "2.1", RED_), ("4", "candidate 4", "3.0", RED_),
              ("5", "candidate 5", "4.2", RED_), ("6", "candidate 6", "5.6", RED_)]
-    g.append(t(1080, 100, "Candidates with m/z 168.0423", 15, 700, SUB, "start"))
-    g.append(t(1500, 100, "RT error", 14, 700, SUB, "end"))
+    g.append(t(840, 100, "Candidates with m/z 168.0423", 16, 700, SUB, "start"))
+    g.append(t(1450, 100, "RT error", 15, 700, SUB, "end"))
     for i, (num, name, err, col) in enumerate(cands):
-        y = 145 + i * 52
-        rr = 22 - i * 2.2
-        g.append(f'<circle cx="1105" cy="{y}" r="{rr + 6:.1f}" fill="#F6E3A1"/>')
-        g.append(f'<circle cx="1105" cy="{y}" r="13" fill="{col}"/>' + t(1105, y, num, 13, 800, "#FFFFFF"))
-        g.append(t(1145, y, name, 15, 700 if i == 0 else 500, OK if i == 0 else MAIN, "start"))
-        g.append(t(1500, y, err + " min", 14, 600, OK if i == 0 else SUB, "end"))
-    g.append(t(1545, 145, "✓", 22, 800, OK))
-    g.append(note(1060, 500, "Smaller predicted RT error → higher rank; 1 is correct"))
+        y = 150 + i * 58
+        rr = 24 - i * 2.4
+        g.append(f'<circle cx="870" cy="{y}" r="{rr + 6:.1f}" fill="#F6E3A1"/>')
+        g.append(f'<circle cx="870" cy="{y}" r="14" fill="{col}"/>' + t(870, y, num, 14, 800, "#FFFFFF"))
+        g.append(t(915, y, name, 16, 700 if i == 0 else 500, OK if i == 0 else MAIN, "start"))
+        g.append(t(1450, y, err + " min", 15, 600, OK if i == 0 else SUB, "end"))
+    g.append(t(1500, 150, "✓", 24, 800, OK))
+    g.append(note(840, 510, "Smaller predicted RT error → higher rank; 1 is the correct structure"))
     g.append(note(40, 600, "Schematic values. Adapted from Domingo-Almenara et al., Nat Commun 10, 5811 (2019), Fig. 4 (CC BY 4.0)."))
     return svg("".join(g))
 
