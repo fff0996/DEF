@@ -266,9 +266,33 @@ def rtpred_train_representation():
     return svg("".join(g))
 
 
+def rtpred_train_conditions():
+    """rtpred_train concept 3, adapted from Xie et al. 2025 Fig. 7A (CC BY 4.0): one QSRR model per
+    chromatographic condition; the model-based part (DoE, HSM, LSS) is left out."""
+    g = [t(800, 34, "One model per chromatographic condition", 22, 800, MAIN)]
+    rows = (("RP", RP, "reversed phase: more hydrophobic compounds elute later"),
+            ("HILIC", HILIC, "HILIC: more polar compounds elute later"))
+    for i, (m, col, why) in enumerate(rows):
+        y = 110 + i * 230
+        g.append(chip(40, y, 250, f"Measured RTs ({m})", col, sub="one column, mobile phase, gradient"))
+        g.append(chip(40, y + 70, 250, "Molecular descriptors", SUB, sub="same 217 RDKit descriptors"))
+        g.append(line(290, y + 23, 340, y + 23, SUB, 2.5) + line(290, y + 93, 340, y + 93, SUB, 2.5)
+                 + line(340, y + 23, 340, y + 93, SUB, 2.5) + arrow(340, y + 58, 420, y + 58, SUB, 3))
+        g.append(f'<circle cx="510" cy="{y + 58}" r="84" fill="#FFFFFF" stroke="{col}" stroke-width="2.5"/>')
+        g.append(t(510, y + 40, "QSRR model", 15, 700, col) + t(510, y + 64, "training", 15, 700, col))
+        g.append(t(510, y + 90, "(AutoGluon)", 13, 500, SUB))
+        g.append(arrow(596, y + 58, 680, y + 58, SUB, 3))
+        g.append(chip(690, y + 35, 220, f"{m} model", col))
+        g.append(arrow(912, y + 58, 990, y + 58, SUB, 3))
+        g.append(t(1000, y + 46, f"predicts RT under {m} conditions", 16, 700, MAIN, "start"))
+        g.append(t(1000, y + 72, why, 14, 500, SUB, "start"))
+    g.append(note(40, 590, "A model predicts only the condition it was trained on, so rtpred_train builds one model per model_type."))
+    g.append(note(40, 620, "Schematic. Adapted from Xie et al., J Pharm Anal 15, 101155 (2025), Fig. 7A (CC BY 4.0); the model-based part (Fig. 7B) is left out."))
+    return svg("".join(g))
+
+
 RED_ = "#D6604D"
-FIGS.update({"rtpred_predict_ranking": rtpred_predict_ranking, "rtpred_train_representation": rtpred_train_representation,
-             "rtpred_annotation_use": rtpred_annotation_use})
+FIGS.update({"rtpred_train_representation": rtpred_train_representation, "rtpred_train_conditions": rtpred_train_conditions})
 
 if __name__ == "__main__":
     for name, fn in FIGS.items():

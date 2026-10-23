@@ -101,20 +101,20 @@ The errors (RMSE, MAE) and explained variance (R²) of the default and user mode
 ### 출처 / Reference
 직접 작성한 모식도(외부 그림 사용 안 함)
 
-그림: `docs/RTpred/modules/figures/module_concepts/rtpred_annotation_use_concept.png` (그림 2)
+그림: `docs/RTpred/pipeline/figures/concept_2.png` (그림 2, 원본 `concept_2.svg`)
 
 ### 국문 (그림 2 설명)
-**그림 2. 예측 머무름 시간을 대사체 annotation에 쓰는 흐름.** (1) LC-MS에서 피크 하나의 m/z와 측정 RT를 얻습니다. (2) 같은 m/z를 가진 후보 구조를 데이터베이스에서 찾습니다. (3) RTpred가 후보마다 RT를 예측합니다. 모델은 미리 측정 RT 자료로 학습해 둔 것으로, 사전 학습 RP·HILIC 모델 또는 rtpred_train으로 만든 사용자 모델입니다. (4) 측정 RT와 예측 RT의 차이(ΔRT)로 후보 순위를 매깁니다. (5) ΔRT가 작은 후보를 m/z, MS/MS 증거와 함께 annotation에 씁니다. 값은 모식적인 값입니다. Sillé 외, Front Public Health 2025, Fig. 1을 수정(CC BY 4.0). 원 그림의 RT 보정(calibration, projection) 단계는 RTpred에 없어 뺐습니다.
+**그림 2. 구조로 머무름 시간을 예측하는 원리(QSRR).** (A) 구조를 아는 화합물들의 측정 RT를 모읍니다. (B) 구조(SMILES)를 RDKit descriptor(logP, TPSA, 수소결합 받개 수 등)로 바꿉니다. (C) descriptor와 측정 RT의 관계를 머신러닝 모델로 학습하고, (D) 학습에 쓰지 않은 자료로 검증합니다. (E) 학습한 모델이 새 구조의 RT를 예측합니다. RTpred의 rtpred_train이 A~D를(AutoGluon, 모드마다 모델 하나), rtpred_predict가 E를, rtpred_compare가 떼어 둔 자료로 D와 E를 맡으며, 이미지의 사전 학습 모델도 같은 방식으로 만들었습니다. 모식도입니다. Xie 외, J Pharm Anal 2025, Fig. 1을 수정(CC BY 4.0).
 
 ### English (figure 2 legend)
-**Figure 2. Using predicted retention times in metabolite annotation.** (1) LC-MS gives the m/z and measured RT of a peak. (2) Candidate structures with the same m/z are taken from a database. (3) RTpred predicts the RT of each candidate with a model trained beforehand on measured RTs: the pre-trained RP or HILIC model, or a user model built with rtpred_train. (4) Candidates are ranked by the difference between measured and predicted RT (ΔRT). (5) Candidates with a small ΔRT are annotated together with m/z and MS/MS evidence. Values are schematic. Adapted from Sillé et al., Front Public Health 2025, Fig. 1 (CC BY 4.0); the RT calibration (projection) step of the original is left out because RTpred has none.
+**Figure 2. The principle of predicting retention time from structure (QSRR).** (A) Measured RTs of compounds with known structures are collected. (B) Structures (SMILES) are turned into RDKit descriptors (logP, TPSA, hydrogen-bond acceptors and so on). (C) A machine learning model learns the relation between descriptors and measured RT and (D) is validated on data not used for training. (E) The trained model predicts the RT of new structures. In RTpred, rtpred_train covers A-D (AutoGluon, one model per mode), rtpred_predict covers E, and rtpred_compare covers D and E on held-out data; the pre-trained models in the image were built the same way. Schematic. Adapted from Xie et al., J Pharm Anal 2025, Fig. 1 (CC BY 4.0).
 
 ### 대체 텍스트 (그림 2)
-- 국문: LC-MS 피크, 같은 m/z 후보, RTpred 예측, ΔRT 순위, annotation으로 이어지는 다섯 단계 흐름도.
-- English: Five-step flow: LC-MS peak, candidates with the same m/z, RTpred prediction, ranking by ΔRT, annotation.
+- 국문: QSRR 원리 흐름도. 측정 RT와 구조, 분자 descriptor, 모델 학습, 검증, RT 예측의 다섯 단계와 각 단계를 맡는 RTpred 모듈.
+- English: QSRR principle: measured RTs and structures, molecular descriptors, model training, validation and RT prediction, with the RTpred module for each step.
 
 ### 출처 (그림 2)
-Sillé FCM, Prasse C, Luechtefeld T, Hartung T. AI redefines mass spectrometry chemicals identification: retention time prediction in metabolomics and for a Human Exposome Project. *Front Public Health* 13, 1687056 (2025). https://doi.org/10.3389/fpubh.2025.1687056, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+Xie J, Chen S, Zhao L, Dong X. Application of artificial intelligence to quantitative structure-retention relationship calculations in chromatography. *J Pharm Anal* 15, 101155 (2025). https://doi.org/10.1016/j.jpha.2024.101155, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ---
 

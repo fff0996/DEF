@@ -118,12 +118,6 @@ C002,NCC(=O)O,HILIC
 - 레전드(영문): **Figure. Retention time prediction with the model of each row.** (A) The compound list gives one compound per row with its separation mode (model_type: RP or HILIC); modes may be mixed, and a measured RT adds ΔRT (measured - predicted). (B) With model_dir empty, the pre-trained RP and HILIC models in the image predict; with a rtpred_train output folder, its user models predict. Each row uses the model of its own mode, and rows of a mode the user did not train (dashed) are not predicted. (C) The result table gives the predicted RT and status of every row; rows of an untrained mode are kept as no_trained_model. The predicted RT helps keep, among candidates of one m/z, those near the measured RT (green range). Values and structures are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함). 구성 참고: Retip(Bonini 외, Anal Chem 2020)의 RT 예측 흐름, METLIN SMRT(Domingo-Almenara 외, Nat Commun 2019)의 예측 RT로 후보 거르기
 
-그림: `docs/RTpred/modules/figures/module_concepts/rtpred_predict_ranking_concept.png`
-
-- 레전드(국문): **그림 2. 예측 머무름 시간 오차로 후보 순위 매기기.** (A) 구조를 아는 화합물들의 예측 RT(가로)와 측정 RT(세로)이며, 점선은 예측과 측정이 같은 선입니다. annotation할 피크(빨강, m/z 168.0423)가 점선에서 떨어진 거리가 예측 RT 오차입니다. (B) 같은 m/z를 가진 후보들을 예측 RT 오차가 작은 순서로 세우면 정답(1, vanillic acid)이 맨 위에 옵니다. 값은 모식적인 값입니다. Domingo-Almenara 외, Nat Commun 2019, Fig. 4를 수정(CC BY 4.0).
-- 레전드(영문): **Figure 2. Ranking candidates by predicted retention time error.** (A) Predicted (x) and measured (y) RTs of compounds with known structures; the dashed line is predicted = measured, and the distance of the peak to annotate (red, m/z 168.0423) from it is the predicted RT error. (B) Candidates with the same m/z, ordered by predicted RT error, put the correct one (1, vanillic acid) first. Values are schematic. Adapted from Domingo-Almenara et al., Nat Commun 2019, Fig. 4 (CC BY 4.0).
-- 출처: Domingo-Almenara X, Guijas C, Billings E, Montenegro-Burke JR, Uritboonthai W, Aisporna AE, Chen E, Benton HP, Siuzdak G. The METLIN small molecule dataset for machine learning-based retention time prediction. *Nat Commun* 10, 5811 (2019). https://doi.org/10.1038/s41467-019-13680-7, Fig. 4를 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
-
 ### 스크립트 사용 예제
 ```
 python rtpred_predict.1.0.py \
@@ -262,6 +256,12 @@ S003,O=C(O)c1ccccc1,5.40,HILIC
 - 레전드(국문): **그림 2. 머무름 시간 예측에 쓰는 분자 표현.** SMILES 같은 구조 문자열은 분자 descriptor(물리화학적 값과 그래프 연산 값), 분자 fingerprint(MACCS keys, ECFP 등), 분자 그래프(그래프 신경망용) 가운데 하나로 바뀌어 모델의 입력이 됩니다. RTpred는 Retip처럼 SMILES를 RDKit descriptor(217개)로 바꾸고, 그 값으로 AutoGluon 모델을 학습합니다(파란 경로). Liu 외, J Cheminform 2024, Fig. 4를 수정(CC BY 4.0). 원 그림의 모델 연표는 뺐습니다.
 - 레전드(영문): **Figure 2. Molecular representations for retention time prediction.** A structure string such as SMILES is turned into molecular descriptors (physicochemical values and graph operators), molecular fingerprints (MACCS keys, ECFP and so on) or molecular graphs (for graph neural networks) as model input. Like Retip, RTpred converts SMILES to RDKit descriptors (217) and trains AutoGluon models on them (blue path). Adapted from Liu et al., J Cheminform 2024, Fig. 4 (CC BY 4.0); the model timeline of the original is left out.
 - 출처: Liu Y, Yoshizawa AC, Ling Y, Okuda S. Insights into predicting small molecule retention times in liquid chromatography using deep learning. *J Cheminform* 16, 113 (2024). https://doi.org/10.1186/s13321-024-00905-1, Fig. 4를 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
+그림: `docs/RTpred/modules/figures/module_concepts/rtpred_train_conditions_concept.png`
+
+- 레전드(국문): **그림 3. 크로마토그래피 조건마다 모델 하나.** 같은 구조라도 분리 조건에 따라 머무름 순서가 다릅니다. 역상(RP)에서는 소수성이 큰 화합물이, HILIC에서는 극성이 큰 화합물이 늦게 나옵니다. 그래서 측정 RT와 descriptor로 조건마다 모델을 따로 학습하고, 각 모델은 자기가 학습한 조건의 RT만 예측합니다. rtpred_train이 model_type마다 모델을 하나씩 만드는 이유입니다. 모식도입니다. Xie 외, J Pharm Anal 2025, Fig. 7A를 수정(CC BY 4.0). 원 그림의 모델 기반 방법(Fig. 7B)은 뺐습니다.
+- 레전드(영문): **Figure 3. One model per chromatographic condition.** The same structures elute in a different order under different separation conditions: in reversed phase (RP) more hydrophobic compounds elute later, in HILIC more polar ones. A model is therefore trained per condition from measured RTs and descriptors and predicts only the condition it was trained on; this is why rtpred_train builds one model per model_type. Schematic. Adapted from Xie et al., J Pharm Anal 2025, Fig. 7A (CC BY 4.0); the model-based part of the original (Fig. 7B) is left out.
+- 출처: Xie J, Chen S, Zhao L, Dong X. Application of artificial intelligence to quantitative structure-retention relationship calculations in chromatography. *J Pharm Anal* 15, 101155 (2025). https://doi.org/10.1016/j.jpha.2024.101155, Fig. 7A를 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ### 스크립트 사용 예제
 ```
