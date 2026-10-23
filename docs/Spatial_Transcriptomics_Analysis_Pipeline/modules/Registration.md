@@ -5,28 +5,40 @@ Spatial transcriptomics 모듈 등록 정보 (스크립트 최신 버전 기준)
 CLOSHA에 공간 전사체 모듈을 등록할 때 쓰는 Input / Output / Option 정리다. 기준은 `scripts/Spatial_Transcriptomics_Analysis_Pipeline/`의 모듈별 최신 버전(아래 표)이고, 모든 스크립트는 `key=value` 인자를 받는다. 실행 이미지는 모두 `bx_spatial.1.1`(`defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def`)이다. 1.0에는 svf의 Moran's I에 필요한 ape가 없어 1.1에서 더했다.
 
 등록 메모:
-- 받은 스크립트(prep, cluster, svf, merge, labelTransfer, rctd, check_reference)는 CLOSHA 2.0에 배포된 것이다. 배포 번호는 고친 스크립트만 2.0 번호 + 1이고, 고치지 않은 스크립트는 2.0 번호 그대로다: spatial_merge 1.1(harmony 수정), 나머지 받은 스크립트 1.0. 새 모듈(spatial_condition_de, spatial_hd_prep, spatial_hd_cluster)은 배포 1.0이다(spatial_condition_de 작업 1.1 → 배포 1.0).
-- spatial_labelTransfer, spatial_rctd, check_reference는 단일세포 참조 자료로 Codespace 실행 확인을 한 뒤 이 문서와 원고에 넣는다.
-- 받은 스크립트는 `docs/CLOSHA_Script_Rules_v1.md`와 다른 점이 있다(경고가 stdout으로 나감, `logs/`의 .log/.error.log 분리 없음, output_dir 기본값 `./bx_spatial_out`, merge는 이전 결과를 지우지 않음). `docs/Spatial_Transcriptomics_Analysis_Pipeline/Spatial_Notes.md` 4절.
+- 받은 스크립트(prep, cluster, svf, merge, labelTransfer, rctd, check_reference)는 CLOSHA 2.0에 배포된 것이다. 배포 번호는 고친 스크립트만 2.0 번호 + 1이고, 이번에 모두 스크립트 규칙에 맞춰 고쳐 1.1이다. 새 모듈은 1.0이다(아래 표).
+- 받은 스크립트의 규칙 차이(경고가 stdout으로 나감, `logs/`의 .log/.error.log 분리 없음, output_dir 기본값 `./bx_spatial_out`, merge가 이전 결과를 지우지 않음, 투명 배경 그림)는 새 버전에서 고쳤다(2026-10-22).
 
 ## 0. 파이프라인 흐름
 ```
 Visium (spot 55µm):
   Space Ranger 슬라이스 폴더들 ─> [spatial_prep] ─output_dir─> [spatial_cluster] ─output_dir─┬─> [spatial_svf]
+                                                                                            ├─> [spatial_labelTransfer] (선택, 참조)
+                                                                                            ├─> [spatial_rctd] (선택, 참조)
                                                                                             └─> [spatial_merge] ─output_dir─> [spatial_condition_de]
 
 Visium HD (bin 8·16µm):
-  Space Ranger HD 슬라이드 폴더들 ─> [spatial_hd_prep] ─output_dir─> [spatial_hd_cluster] ─output_dir─> [spatial_condition_de]
+  Space Ranger HD 슬라이드 폴더들 ─> [spatial_hd_prep] ─output_dir─> [spatial_hd_cluster] ─output_dir─┬─> [spatial_condition_de]
+                                                                                                    ├─> [spatial_hd_svf]
+                                                                                                    └─> [spatial_hd_rctd] (선택, 참조) ─output_dir─> [spatial_condition_de] (group_by=rctd_first_type)
+
+참조 확인: 단일세포 참조 RDS ─> [check_reference] (reference_label_col로 쓸 열 확인)
 ```
-| 모듈 | 스크립트 | 실행 명령 | 비고 |
+| 모듈 | 작업 파일 | 배포 번호 | 비고 |
 |---|---|---|---|
-| spatial_prep | `spatial_prep.1.0.R` | `Rscript spatial_prep.1.0.R key=value ...` | 받은 스크립트 |
-| spatial_cluster | `spatial_cluster.1.0.R` | `Rscript spatial_cluster.1.0.R key=value ...` | 받은 스크립트 |
-| spatial_svf | `spatial_svf.1.0.R` | `Rscript spatial_svf.1.0.R key=value ...` | 받은 스크립트 |
-| spatial_merge | `spatial_merge.1.1.R` | `Rscript spatial_merge.1.1.R key=value ...` | 받은 스크립트 1.0에서 harmony 인자 수정 |
-| spatial_condition_de | `spatial_condition_de.1.1.R` | `Rscript spatial_condition_de.1.1.R key=value ...` | 새 모듈. Visium과 Visium HD 입력 모두 받음 |
-| spatial_hd_prep | `spatial_hd_prep.1.0.R` | `Rscript spatial_hd_prep.1.0.R key=value ...` | 새 모듈 |
-| spatial_hd_cluster | `spatial_hd_cluster.1.0.R` | `Rscript spatial_hd_cluster.1.0.R key=value ...` | 새 모듈 |
+| spatial_prep | `spatial_prep.1.1.R` | 1.1 | 2.0의 1.0에 스크립트 규칙(로그 분리, output_dir 필수, 흰 배경 그림) 적용 |
+| spatial_cluster | `spatial_cluster.1.1.R` | 1.1 | 같음 |
+| spatial_svf | `spatial_svf.1.1.R` | 1.1 | 같음. bx_spatial 1.1(ape) 필요 |
+| spatial_merge | `spatial_merge.1.2.R` | 1.1 | harmony 인자 수정(작업 1.1) + 규칙 적용, 이전 결과 정리 |
+| spatial_labelTransfer | `spatial_labelTransfer.1.1.R` | 1.1 | 규칙 적용. Seurat 5에서 참조 SCT 모델로 다시 정규화가 멈추던 문제와 작은 참조의 k.weight 오류 수정 |
+| spatial_rctd | `spatial_rctd.1.1.R` | 1.1 | 규칙 적용, max_cores 기본값 auto. 그려지지 않던 dominant 세포 유형 그림 수정 |
+| check_reference | `check_reference.1.1.R` | 1.1 | output_dir(로그, reference_columns.tsv) 추가 |
+| spatial_condition_de | `spatial_condition_de.1.2.R` | 1.0 | 새 모듈. Visium과 Visium HD 입력 |
+| spatial_hd_prep | `spatial_hd_prep.1.1.R` | 1.0 | 새 모듈 |
+| spatial_hd_cluster | `spatial_hd_cluster.1.1.R` | 1.0 | 새 모듈 |
+| spatial_hd_svf | `spatial_hd_svf.1.0.R` | 1.0 | 새 모듈 |
+| spatial_hd_rctd | `spatial_hd_rctd.1.0.R` | 1.0 | 새 모듈 |
+
+실행 명령은 모두 `Rscript <스크립트> key=value ...`이다.
 
 ## 1. spatial_prep
 슬라이스마다 Space Ranger 결과를 불러와 spot을 거르고 SCTransform으로 정규화한다.
@@ -34,7 +46,7 @@ Visium HD (bin 8·16µm):
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | 슬라이스마다 하위 폴더 하나. 각 폴더에 `outs/`(또는 `filtered_feature_bc_matrix.h5`와 `spatial/`). 하위 폴더 이름이 슬라이스 이름. 슬라이스 하나의 outs를 직접 줘도 됨 |
-| Output | `output_dir` | Directory | 필수 | (스크립트 기본 `./bx_spatial_out`) | 결과 폴더. `<slice>/<slice>_prep.rds`, `<slice>/plots/` |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더. `<slice>/<slice>_prep.rds`, `<slice>/plots/` |
 | Option | `h5_filename` | String | 선택 | `filtered_feature_bc_matrix.h5` | 슬라이스 폴더에서 찾을 h5 파일 이름 |
 | Option | `min_counts` | Integer | 선택 | `0` | UMI 수가 이보다 적은 spot 제거. 0이면 거르지 않음 |
 | Option | `feature_genes` | String | 선택 | | 조직 위에 그릴 유전자(쉼표 구분). 비우면 그리지 않음 |
@@ -46,7 +58,7 @@ Visium HD (bin 8·16µm):
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | 슬라이스마다 `<slice>/<slice>_prep.rds`(SCT assay가 있는 Seurat 객체) |
-| Output | `output_dir` | Directory | 필수 | (스크립트 기본 `./bx_spatial_out`) | 결과 폴더. `<slice>/<slice>_clustered.rds`, 군집 요약, 마커 표, `plots/` |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더. `<slice>/<slice>_clustered.rds`, 군집 요약, 마커 표, `plots/` |
 | Option | `resolution` | Float | 선택 | `0.8` | 군집 해상도. 클수록 군집이 많음 |
 | Option | `npcs` | Integer | 선택 | `30` | 사용할 주성분 수 |
 | Option | `marker_topn` | Integer | 선택 | `5` | 군집마다 그림에 넣는 마커 수 |
@@ -60,7 +72,7 @@ Visium HD (bin 8·16µm):
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | 슬라이스마다 `<slice>/<slice>_clustered.rds` |
-| Output | `output_dir` | Directory | 필수 | (스크립트 기본 `./bx_spatial_out`) | 결과 폴더. `<slice>/<slice>_svf.rds`, `<slice>_svf_<method>.csv`(rank, gene), `plots/` |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더. `<slice>/<slice>_svf.rds`, `<slice>_svf_<method>.csv`(rank, gene), `plots/` |
 | Option | `svf_method` | List (`moransi`, `markvariogram`) | 선택 | `moransi` | 공간 자기상관 방법 |
 | Option | `svf_topn` | Integer | 선택 | `1000` | 검정할 가변 유전자 수 |
 | Option | `svf_show` | Integer | 선택 | `6` | 조직 위에 그릴 상위 유전자 수 |
@@ -72,7 +84,7 @@ Visium HD (bin 8·16µm):
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | 슬라이스마다 `<slice>/<slice>_clustered.rds`(또는 input_dir 바로 아래 `*_clustered.rds`) |
-| Output | `output_dir` | Directory | 필수 | (스크립트 기본 `./bx_spatial_out`) | 결과 폴더. `merged/merged_clustered.rds`, 군집×슬라이스 표, 마커 표, `merged/plots/`, `merge_report.txt` |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더. `merged/merged_clustered.rds`, 군집×슬라이스 표, 마커 표, `merged/plots/`, `merge_report.txt` |
 | Option | `integration` | List (`none`, `harmony`) | 선택 | `none` | 슬라이스 보정. harmony = Harmony로 슬라이스 차이 보정 |
 | Option | `npcs` | Integer | 선택 | `30` | 사용할 주성분 수 |
 | Option | `resolution` | Float | 선택 | `0.8` | 군집 해상도 |
@@ -142,5 +154,79 @@ Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화�
 | Option | `pt_size` | Float | 선택 | `4` | 조직 그림의 bin 크기 |
 | Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
 
-## 8. 권장 자원
+## 8. check_reference
+단일세포 참조 자료(Seurat RDS)의 메타데이터 열을 살펴 세포 유형 열(reference_label_col) 후보를 알려 준다.
+
+| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|---|
+| Input | `reference_rds` | File (RDS) | 필수 | | 단일세포 참조 자료(Seurat 객체) |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더. `reference_columns.tsv`, `logs/` |
+
+## 9. spatial_labelTransfer
+단일세포 참조의 세포 유형을 Visium spot으로 옮겨 spot마다 세포 유형별 예측 점수를 계산한다(Seurat anchor).
+
+| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|---|
+| Input | `input_dir` | Directory | 필수 | | 슬라이스마다 `<slice>/<slice>_clustered.rds`(SCT assay와 pca) |
+| Input | `reference_rds` | File (RDS) | 필수 | | 단일세포 참조 자료(Seurat 객체) |
+| Option | `reference_label_col` | String | 필수 | | 참조의 세포 유형 열 이름(check_reference로 확인) |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이스별 `<slice>_labeltransfer.rds`, `<slice>_predicted_celltype_scores.csv`, `plots/`, `summary/` |
+| Option | `reference_ncells` | Integer | 선택 | `3000` | 참조 SCTransform 모델을 맞출 때 쓰는 세포 수(참조에 SCT 모델이 없을 때만) |
+| Option | `npcs` | Integer | 선택 | `30` | anchor 탐색과 예측에 쓰는 주성분 수 |
+| Option | `min_shared_features` | Integer | 선택 | `200` | 참조와 슬라이스의 최소 공유 유전자 수 |
+| Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
+
+## 10. spatial_rctd
+RCTD(spacexr, full 모드)로 Visium spot마다 세포 유형 비율(weight)을 추정한다.
+
+| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|---|
+| Input | `input_dir` | Directory | 필수 | | 슬라이스마다 `<slice>/<slice>_clustered.rds`(raw count assay `Spatial`) |
+| Input | `reference_rds` | File (RDS) | 필수 | | 단일세포 참조 자료(raw count와 세포 유형 열) |
+| Option | `reference_label_col` | String | 필수 | | 참조의 세포 유형 열 이름 |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이스별 `<slice>_rctd.rds`, `_rctd_object.rds`, `_rctd_weights.csv`, `_rctd_mean_abundance.csv`, `plots/`, `summary/` |
+| Option | `spatial_assay` | String | 선택 | `Spatial` | 슬라이스 객체의 raw count assay |
+| Option | `reference_assay` | String | 선택 | `RNA` | 참조 객체의 raw count assay |
+| Option | `max_cores` | String | 선택 | `auto` | 병렬 코어 수. auto = 할당 코어 수, 숫자는 할당 코어 수로 제한 |
+| Option | `min_shared_features` | Integer | 선택 | `200` | 참조와 슬라이스의 최소 공유 유전자 수 |
+| Option | `min_cells_per_type` | Integer | 선택 | `25` | 세포 수가 이보다 적은 참조 세포 유형은 뺌 |
+| Option | `plot_topn` | Integer | 선택 | `12` | 조직 위 weight 그림에 넣는 상위 세포 유형 수 |
+| Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
+
+## 11. spatial_hd_svf
+Visium HD 슬라이드마다 무작위 bin 표본으로 Moran's I를 계산해 공간 가변 유전자를 찾는다.
+
+| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|---|
+| Input | `input_dir` | Directory | 필수 | | spatial_hd_cluster 결과 폴더(`hd_slides.tsv`와 슬라이드별 객체) |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이드별 `<slide>_hd_svf.tsv`와 `plots/`, `svf_all_slides.tsv`, `svf_summary.tsv` |
+| Option | `svf_topn` | Integer | 선택 | `500` | 슬라이드마다 검정할 가변 유전자 수 |
+| Option | `max_bins` | Integer | 선택 | `4000` | Moran's I에 쓰는 무작위 bin 수(계산량은 제곱) |
+| Option | `svf_show` | Integer | 선택 | `6` | 조직 위에 그릴 상위 유전자 수 |
+| Option | `padj_cutoff` | Float | 선택 | `0.05` | 공간 가변 유전자 보정 p값(BH) 기준 |
+| Option | `pt_size` | Float | 선택 | `4` | 조직 그림의 bin 크기 |
+| Option | `seed` | Integer | 선택 | `1234` | bin 표본 난수 시드 |
+
+## 12. spatial_hd_rctd
+Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형을 붙인다.
+
+| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|---|
+| Input | `input_dir` | Directory | 필수 | | spatial_hd_cluster 결과 폴더(`hd_slides.tsv`와 슬라이드별 객체, bin assay에 raw count) |
+| Input | `reference_rds` | File (RDS) | 필수 | | 단일세포 참조 자료(raw count와 세포 유형 열) |
+| Option | `reference_label_col` | String | 필수 | | 참조의 세포 유형 열 이름 |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이드별 `<slide>_hd_rctd.rds`, `_rctd_weights.tsv.gz`, `plots/`, `hd_slides.tsv`, `celltype_by_slide.tsv`, `rctd_summary.tsv` |
+| Option | `reference_assay` | String | 선택 | `RNA` | 참조 객체의 raw count assay |
+| Option | `rctd_mode` | List (`doublet`, `full`) | 선택 | `doublet` | doublet = bin마다 세포 유형 1~2개(8µm), full = 섞인 비율(16µm) |
+| Option | `chunk_bins` | Integer | 선택 | `20000` | RCTD 한 번에 넣는 bin 수 |
+| Option | `umi_min` | Integer | 선택 | `100` | UMI 수가 이보다 적은 bin은 계산하지 않음(not_scored) |
+| Option | `min_cells_per_type` | Integer | 선택 | `25` | 세포 수가 이보다 적은 참조 세포 유형은 뺌 |
+| Option | `min_shared_features` | Integer | 선택 | `200` | 참조와 슬라이드의 최소 공유 유전자 수 |
+| Option | `max_cores` | String | 선택 | `auto` | 병렬 코어 수. auto = 할당 코어 수, 숫자는 할당 코어 수로 제한 |
+| Option | `pt_size` | Float | 선택 | `4` | 조직 그림의 bin 크기 |
+| Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
+
+결과 폴더는 spatial_condition_de의 `input_dir`로 쓸 수 있다(`group_by=rctd_first_type`).
+
+## 13. 권장 자원
 `Spatial_Notes.md` 5절(Visium)과 6절(Visium HD)을 따른다. 8µm는 사용자가 CLOSHA에서 실측한다.

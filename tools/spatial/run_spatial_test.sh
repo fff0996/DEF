@@ -9,7 +9,7 @@
 #
 # Builds a conda environment with the bx_spatial 1.0 packages, downloads four
 # 10x mouse brain Visium sections (Sagittal Anterior/Posterior, Section 1/2),
-# and runs prep -> cluster -> svf (one slice) -> merge 1.1 -> condition_de 1.1 with section 1 and 2
+# and runs prep -> cluster -> svf (one slice) -> merge 1.2 -> condition_de 1.2 with section 1 and 2
 # as the two conditions. Codespace stops processes when free memory drops
 # below about 1 GB, so the inputs are reduced for this test only: the same
 # 6000 genes in every section (most often detected over all sections; a
@@ -103,11 +103,11 @@ mkdir -p out/cluster out/cluster_small out/one
 for sl in sec1_anterior sec1_posterior sec2_anterior sec2_posterior; do
     mkdir -p "out/one/in_$sl"
     ln -sfn "$W/small/$sl" "out/one/in_$sl/$sl"
-    python3 measure.py "prep_$sl" Rscript "$M/spatial_prep.1.0.R" input_dir="$W/out/one/in_$sl" \
+    python3 measure.py "prep_$sl" Rscript "$M/spatial_prep.1.1.R" input_dir="$W/out/one/in_$sl" \
         output_dir="$W/out/one/prep_$sl" > "out/prep_$sl.stdout" 2> "out/prep_$sl.stderr" || { echo "prep $sl failed" >&2; exit 1; }
     mkdir -p "out/one/cin_$sl"
     cp -r "out/one/prep_$sl/$sl" "out/one/cin_$sl/"
-    python3 measure.py "cluster_$sl" Rscript "$M/spatial_cluster.1.0.R" input_dir="$W/out/one/cin_$sl" \
+    python3 measure.py "cluster_$sl" Rscript "$M/spatial_cluster.1.1.R" input_dir="$W/out/one/cin_$sl" \
         output_dir="$W/out/one/cl_$sl" > "out/cluster_$sl.stdout" 2> "out/cluster_$sl.stderr" || { echo "cluster $sl failed" >&2; exit 1; }
     cp -r "out/one/cl_$sl/$sl" out/cluster/
     mkdir -p "out/cluster_small/$sl"
@@ -116,11 +116,11 @@ done
 # Spatially variable features on one slice (default arguments); a failure does not stop the test.
 mkdir -p out/svf_in
 cp -r out/cluster/sec1_anterior out/svf_in/
-python3 measure.py svf Rscript "$M/spatial_svf.1.0.R" input_dir="$W/out/svf_in" output_dir="$W/out/svf" \
+python3 measure.py svf Rscript "$M/spatial_svf.1.1.R" input_dir="$W/out/svf_in" output_dir="$W/out/svf" \
     > out/svf.stdout 2> out/svf.stderr || echo "svf failed (see out/svf.stderr)" >&2
-python3 measure.py merge Rscript "$M/spatial_merge.1.1.R" input_dir="$W/out/cluster_small" output_dir="$W/out/merge" \
+python3 measure.py merge Rscript "$M/spatial_merge.1.2.R" input_dir="$W/out/cluster_small" output_dir="$W/out/merge" \
     integration=harmony > out/merge.stdout 2> out/merge.stderr || { echo "merge failed" >&2; exit 1; }
-python3 measure.py de Rscript "$M/spatial_condition_de.1.1.R" input_dir="$W/out/merge" sample_data="$W/slices.csv" \
+python3 measure.py de Rscript "$M/spatial_condition_de.1.2.R" input_dir="$W/out/merge" sample_data="$W/slices.csv" \
     output_dir="$W/out/de" reference=section1 > out/de.stdout 2> out/de.stderr
 echo "condition_de exit=$?"
 grep -h measure out/*.stderr

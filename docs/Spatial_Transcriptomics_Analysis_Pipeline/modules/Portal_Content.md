@@ -8,11 +8,10 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 선택(Optional) 입력은 빈 값이 "사용 안 함"입니다.
 - 스크립트 사용 예제는 등록하는 인자를 모두 적었고, 기본값이 있는 옵션은 기본값으로 적었습니다. 예시 값은 마우스 뇌 Visium·Visium HD 기준입니다.
 - 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`입니다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다릅니다. 기반 이미지(From)는 모든 모듈이 Rocky Linux 9.8(`rockylinux/rockylinux:9.8.20260525.0`)입니다.
-- 모든 모듈은 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지우고 시작합니다(spatial_merge는 지우지 않고 덮어씁니다).
+- 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류·경고 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지웁니다.
 - 카테고리는 기능(분석 단계) 기준의 대분류·중분류로 정했습니다(`docs/CLOSHA_Portal_Guide_v1.md` 5.2). 공간 전사체 군집은 기존 목록에 맞는 중분류가 없어 Omics / Clustering(신규)을 제안합니다. 단일세포 RNA-seq 군집 모듈도 담을 수 있는 일반 이름입니다.
-- 버전은 배포 번호입니다. CLOSHA 2.0에서 받은 스크립트 중 고친 것만 2.0 번호 + 1(spatial_merge 1.1)이고, 고치지 않은 것은 그대로(spatial_prep, spatial_cluster, spatial_svf 1.0)입니다. 3.0에서 새로 만든 모듈은 1.0입니다.
-- 등록 메모: spatial_labelTransfer, spatial_rctd, check_reference는 단일세포 참조 자료로 실행을 확인한 뒤 추가합니다.
-- 등록 메모: 모듈 개념도는 아직 만들지 않았습니다. `docs/CLOSHA_Figure_Guide_v1.md`에 따라 만든 뒤 각 모듈의 "분석 개념 이미지" 절에 넣습니다.
+- 버전은 배포 번호입니다. CLOSHA 2.0 모듈은 2.0 번호 + 1(이번에 모두 스크립트 규칙에 맞춰 고쳐 1.1)이고, 3.0에서 새로 만든 모듈은 1.0입니다.
+- 세포 유형 모듈(spatial_labelTransfer, spatial_rctd, spatial_hd_rctd)은 기존 목록에 맞는 중분류가 없어 Annotation / Cell_Type_Annotation(신규)을 제안합니다. 단일세포 RNA-seq 세포 유형 모듈도 담을 수 있는 일반 이름입니다. check_reference는 참조 자료를 살피는 보조 도구라 Utility / Genomic_data_Utility에 둡니다.
 
 ---
 
@@ -23,13 +22,13 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 |---|---|---|
 | 모듈명 | spatial_prep | spatial_prep |
 | 서브 타이틀 | 공간 전사체 불러오기와 정규화 | Loading and normalisation of spatial data |
-| 버전 | 1.0 | |
+| 버전 | 1.1 | |
 | 카테고리 대분류 | Omics | Omics |
 | 카테고리 중분류 | Expression_Quantification | Expression_Quantification |
 | 태그 | spatial transcriptomics, Visium, Seurat, SCTransform, QC | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
-| 실행 스크립트 파일 | spatial_prep.1.0.R | |
+| 실행 스크립트 파일 | spatial_prep.1.1.R | |
 | Processor Core (제안) | 4코어, 메모리 16GB(슬라이스 1장 기준) | 4 cores, 16 GB of memory (per slice) |
 
 ### 실행 이미지
@@ -96,11 +95,15 @@ Loads the Space Ranger output (count matrix and tissue image) of each 10x Visium
 | Visium HD 데이터는 이 모듈이 아니라 spatial_hd_prep으로 분석합니다. | Visium HD data are analysed with spatial_hd_prep, not with this module. |
 
 ### 분석 개념 이미지
-등록 메모: 개념도 작성 예정입니다.
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_prep_concept.png`
+
+- 레전드(국문): **그림. 슬라이스 불러오기와 정규화.** (A) 입력 폴더 아래 하위 폴더 하나가 슬라이스 하나이며, 각 폴더에 Space Ranger의 filtered_feature_bc_matrix.h5(조직 위 spot만)와 spatial/(이미지, 위치)이 있어야 합니다. 폴더 이름이 슬라이스 이름이 됩니다. (B) spot별 UMI 수(nCount_Spatial)를 violin과 조직 위에 그려 확인하고, min_counts를 주면 UMI가 적은 spot을 거릅니다. (C) 슬라이스마다 SCTransform으로 spot 사이 깊이 차이를 보정한 정규화 값을 만들어 <slice>_prep.rds로 저장합니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Loading and normalising slices.** (A) Each subfolder of the input folder is one slice holding the Space Ranger filtered_feature_bc_matrix.h5 (spots under the tissue) and spatial/ (images, positions); the folder name becomes the slice name. (B) UMI counts per spot (nCount_Spatial) are checked as a violin and on the tissue; min_counts removes low-count spots. (C) SCTransform corrects depth differences between spots per slice, and the result is saved as <slice>_prep.rds. Values and tissue shapes are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
-Rscript spatial_prep.1.0.R \
+Rscript spatial_prep.1.1.R \
   input_dir=/data/visium \
   output_dir=/data/spatial_prep \
   h5_filename=filtered_feature_bc_matrix.h5 \
@@ -128,13 +131,13 @@ Rscript spatial_prep.1.0.R \
 |---|---|---|
 | 모듈명 | spatial_cluster | spatial_cluster |
 | 서브 타이틀 | 슬라이스별 군집과 마커 | Clustering and markers per slice |
-| 버전 | 1.0 | |
+| 버전 | 1.1 | |
 | 카테고리 대분류 | Omics | Omics |
 | 카테고리 중분류 | Clustering (신규) | Clustering (new) |
 | 태그 | spatial transcriptomics, Visium, clustering, UMAP, marker genes | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
-| 실행 스크립트 파일 | spatial_cluster.1.0.R | |
+| 실행 스크립트 파일 | spatial_cluster.1.1.R | |
 | Processor Core (제안) | 4코어, 메모리 16GB | 4 cores, 16 GB of memory |
 
 ### 실행 이미지
@@ -202,11 +205,15 @@ Splits the spots of each slice into clusters of similar expression and finds mar
 | 입력 객체에 SCT assay가 있어야 합니다(spatial_prep 결과 구조). | The input objects need an SCT assay (the structure written by spatial_prep). |
 
 ### 분석 개념 이미지
-등록 메모: 개념도 작성 예정입니다.
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_cluster_concept.png`
+
+- 레전드(국문): **그림. 슬라이스별 군집과 마커.** (A) SCT 값으로 PCA(npcs), 이웃 그래프, Louvain 군집(resolution), UMAP을 차례로 계산합니다. (B) 군집은 UMAP에서 점 무리로, 조직 위에서 해부학적 영역으로 나타납니다. 군집 번호는 슬라이스마다 따로 매겨집니다. (C) 군집마다 presto로 마커를 찾아 dot plot(점 크기: 발현 spot 비율, 색: 평균 발현)과 표로 남깁니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Clusters and markers per slice.** (A) PCA (npcs), a neighbour graph, Louvain clusters (resolution) and UMAP are computed in turn on the SCT values. (B) Clusters appear as groups of points on the UMAP and as anatomical regions on the tissue; numbers are per slice. (C) Markers per cluster are found with presto and saved as a dot plot (dot size: fraction of expressing spots; colour: mean expression) and tables. Values and tissue shapes are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
-Rscript spatial_cluster.1.0.R \
+Rscript spatial_cluster.1.1.R \
   input_dir=/data/spatial_prep \
   output_dir=/data/spatial_cluster \
   resolution=0.8 \
@@ -245,13 +252,13 @@ Rscript spatial_cluster.1.0.R \
 |---|---|---|
 | 모듈명 | spatial_svf | spatial_svf |
 | 서브 타이틀 | 공간 가변 유전자 | Spatially variable genes |
-| 버전 | 1.0 | |
+| 버전 | 1.1 | |
 | 카테고리 대분류 | Omics | Omics |
 | 카테고리 중분류 | Expression_Quantification | Expression_Quantification |
 | 태그 | spatial transcriptomics, Visium, spatially variable genes, Moran's I | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
-| 실행 스크립트 파일 | spatial_svf.1.0.R | |
+| 실행 스크립트 파일 | spatial_svf.1.1.R | |
 | Processor Core (제안) | 4코어, 메모리 16GB | 4 cores, 16 GB of memory |
 
 ### 실행 이미지
@@ -315,11 +322,15 @@ Finds genes whose expression is concentrated in particular places of the tissue 
 | Moran's I 계산은 spot 수의 제곱에 비례해 오래 걸립니다(예시: spot 2,695개, 유전자 1,000개에 약 7.5분). 시간이 길면 svf_topn을 줄여 주세요. markvariogram은 더 오래 걸리므로 기본값 moransi를 권장합니다. | Moran's I grows with the square of the number of spots (example: 2,695 spots and 1,000 genes took about 7.5 minutes); lower svf_topn when it runs long. markvariogram takes longer still, so the default moransi is recommended. |
 
 ### 분석 개념 이미지
-등록 메모: 개념도 작성 예정입니다.
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_svf_concept.png`
+
+- 레전드(국문): **그림. 공간 가변 유전자.** (A) 이웃 spot끼리 발현이 비슷하게 몰린 유전자는 Moran's I가 크고(왼쪽), 무작위로 흩어진 유전자는 0에 가깝습니다(오른쪽). (B) SCT 가변 유전자 중 상위 svf_topn개에 spot 좌표로 Moran's I를 계산해(ape) 순위를 매깁니다. 계산량은 spot 수의 제곱에 비례합니다. markvariogram은 더 느린 대안입니다. (C) 순위 표(<slice>_svf_moransi.csv)와 상위 svf_show개 유전자의 조직 그림을 만듭니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Spatially variable genes.** (A) A gene whose expression is similar among neighbouring spots has a high Moran's I (left); a randomly scattered gene is near 0 (right). (B) Moran's I is computed with the spot coordinates (ape) for the svf_topn most variable SCT genes and used to rank them; the cost grows with the square of the number of spots, and markvariogram is a slower alternative. (C) A rank table (<slice>_svf_moransi.csv) and tissue plots of the svf_show top genes are written. Values and tissue shapes are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
-Rscript spatial_svf.1.0.R \
+Rscript spatial_svf.1.1.R \
   input_dir=/data/spatial_cluster \
   output_dir=/data/spatial_svf \
   svf_method=moransi \
@@ -356,6 +367,8 @@ Rscript spatial_svf.1.0.R \
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_merge.1.1.R | |
 | Processor Core (제안) | 4코어, 메모리 32GB(슬라이스 4장), 64GB(8장 이상) | 4 cores, 32 GB of memory (4 slices), 64 GB (8 or more) |
+
+등록 메모: 작업 파일 `spatial_merge.1.2.R`을 배포 번호 1.1로 올립니다.
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -425,10 +438,14 @@ Merges several slices into one object and recomputes the dimensional reduction a
 |---|---|
 | 슬라이스 사이에 배치 차이(다른 날 실험, 다른 조직 처리)가 크면 integration=harmony를 권장합니다. 보정하지 않으면 군집이 슬라이스별로 나뉠 수 있습니다. | With strong batch differences between slices (different days or tissue handling), integration=harmony is recommended; without it clusters may split by slice. |
 | 슬라이스 수에 따라 메모리가 늘어납니다. 4장은 32GB, 8장 이상은 64GB를 권장합니다. | Memory grows with the number of slices: 32 GB for 4 slices and 64 GB for 8 or more are recommended. |
-| 이 모듈은 실행 전에 output_dir를 비우지 않고 같은 이름의 파일을 덮어씁니다. 다른 설정으로 다시 실행할 때는 새 output_dir를 쓰는 것을 권장합니다. | This module does not clear output_dir before running and overwrites files of the same name; use a new output_dir when rerunning with other settings. |
+| 실행할 때마다 output_dir에서 logs/를 뺀 나머지를 지웁니다. 입력(군집 결과 폴더)을 output_dir 안에 두지 마세요. | output_dir except logs/ is cleared on every run; do not keep the input (cluster folder) inside it. |
 
 ### 분석 개념 이미지
-등록 메모: 개념도 작성 예정입니다.
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_merge_concept.png`
+
+- 레전드(국문): **그림. 여러 슬라이스 통합 군집.** (A) 슬라이스마다 따로 군집하면 같은 영역도 슬라이스마다 번호(색)가 다릅니다. (B) 슬라이스 객체를 합쳐 다시 군집하면(integration=harmony이면 Harmony로 슬라이스 차이 보정) 같은 번호가 모든 슬라이스에서 같은 영역을 뜻합니다. (C) 슬라이스별 군집 조성을 표와 누적 막대·heatmap으로 남기고, merged_clustered.rds는 조건 비교의 입력이 됩니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Joint clustering of several slices.** (A) Clustering each slice alone gives the same region different numbers (colours) in different slices. (B) Merging the slices and clustering again (with Harmony correcting slice differences when integration=harmony) makes each number mean the same region in every slice. (C) Cluster composition per slice is saved as a table, stacked bars and a heatmap, and merged_clustered.rds is the input of the condition comparison. Values and tissue shapes are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
@@ -493,6 +510,8 @@ Rscript spatial_merge.1.1.R \
 | 실행 스크립트 파일 | spatial_condition_de.1.0.R | |
 | Processor Core (제안) | 4코어, 메모리 16GB(Visium), 16~32GB(Visium HD 16µm), 32~64GB(8µm) | 4 cores, 16 GB of memory (Visium), 16-32 GB (Visium HD 16 um), 32-64 GB (8 um) |
 
+등록 메모: 작업 파일 `spatial_condition_de.1.2.R`을 배포 번호 1.0으로 올립니다.
+
 ### 실행 이미지
 이미지: bx_spatial 1.1
 
@@ -523,8 +542,6 @@ Rscript spatial_merge.1.1.R \
 - **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
 - **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
 - **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
-
-등록 메모: 작업 파일 `spatial_condition_de.1.1.R`(Visium HD 입력 추가)을 배포 번호 1.0으로 올립니다.
 
 ### 내용(국문)
 조건(예: 대조군과 처리군) 사이에서 군집별 spot 조성과 유전자 발현을 비교합니다. 같은 군집(같은 조직 영역) 안에서 비교하므로, 영역 구성의 차이와 영역 안 발현 변화를 나눠 볼 수 있습니다.
@@ -583,7 +600,11 @@ trt_2,treated,P2
 | 같은 조직의 연속 절편처럼 실제 차이가 없는 비교에서도 spot 단위 검정은 미토콘드리아·리보솜 유전자 같은 기술적 차이를 유의하게 낼 수 있습니다. | Even without real differences (for example serial sections of one tissue), spot-level tests can flag technical differences such as mitochondrial and ribosomal genes. |
 
 ### 분석 개념 이미지
-등록 메모: 개념도 작성 예정입니다.
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_condition_de_concept.png`
+
+- 레전드(국문): **그림. 조건 간 군집별 비교.** (A) 슬라이스마다 한 군집 spot의 count를 합친 pseudobulk를 만들고, 슬라이스를 반복으로 삼아 DESeq2(~ Condition, 짝 설계면 ~ Patient + Condition)로 검정합니다. 조건마다 슬라이스가 한 장뿐이면 spot 단위 Wilcoxon(탐색용)으로 비교합니다. (B) 군집마다 volcano를 그립니다(x축 log2 fold change, y축 -log10 adjusted p, 빨강 기준보다 높음, 파랑 낮음, 점선은 lfc_cutoff와 padj_cutoff). (C) de_summary.tsv에 군집별 검정 방법과 상태(ok, ok_exploratory, insufficient_slices)를 남깁니다. Visium merge 결과와 Visium HD 결과(hd_slides.tsv)를 모두 받으며, group_by로 세포 유형 열을 쓸 수도 있습니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Comparison between conditions per cluster.** (A) For each slice, the counts of one cluster's spots are summed into a pseudobulk sample, and DESeq2 (~ Condition, or ~ Patient + Condition when paired) tests the condition with slices as replicates; with one slice per condition a spot-level Wilcoxon test (exploratory) is used. (B) A volcano per cluster (x log2 fold change, y -log10 adjusted p; red higher than the reference, blue lower; dashed lines lfc_cutoff and padj_cutoff). (C) de_summary.tsv records the method and status per cluster (ok, ok_exploratory, insufficient_slices). Visium merge output and Visium HD output (hd_slides.tsv) are both accepted, and group_by may name a cell-type column. Values and tissue shapes are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
@@ -672,6 +693,8 @@ Rscript spatial_condition_de.1.0.R \
 | 실행 스크립트 파일 | spatial_hd_prep.1.0.R | |
 | Processor Core (제안) | 4코어, 메모리 16GB(16µm, 슬라이드당), 32~64GB(8µm, 슬라이드당) | 4 cores, 16 GB of memory (16 um, per slide), 32-64 GB (8 um, per slide) |
 
+등록 메모: 작업 파일 `spatial_hd_prep.1.1.R`을 배포 번호 1.0으로 올립니다.
+
 ### 실행 이미지
 이미지: bx_spatial 1.1
 
@@ -739,7 +762,11 @@ Loads 10x Visium HD slides at a chosen bin size (8 or 16 um), filters and normal
 | 한 슬라이드가 실패해도 나머지는 계속 처리하며, hd_prep_summary.tsv에 상태로 남습니다. 모든 슬라이드가 실패할 때만 종료 코드 1입니다. | A failed slide does not stop the others and is listed with its status in hd_prep_summary.tsv; the exit code is 1 only when every slide fails. |
 
 ### 분석 개념 이미지
-등록 메모: 개념도 작성 예정입니다.
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_hd_prep_concept.png`
+
+- 레전드(국문): **그림. Visium HD bin 불러오기와 sketch.** (A) Space Ranger가 2µm 사각형을 8µm 또는 16µm bin으로 묶은 binned_outputs에서 bin_size에 맞는 행렬과 위치(parquet)를 읽습니다. 2µm는 메모리 때문에 지원하지 않습니다. (B) bin별 UMI·유전자 수로 거르고(min_counts, min_features) log 정규화합니다. (C) leverage score로 정보가 많은 bin(진한 파랑)을 슬라이드마다 sketch_cells개 뽑아 sketch assay를 만듭니다. 군집은 이 sketch로 계산합니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Loading Visium HD bins and sketching.** (A) The matrix and positions (parquet) of the chosen bin_size are read from the Space Ranger binned_outputs, where 2 um squares are grouped into 8 or 16 um bins; 2 um is not supported (memory). (B) Bins are filtered by UMI counts and genes (min_counts, min_features) and log-normalised. (C) Leverage-score sampling keeps sketch_cells informative bins (dark blue) per slide in a sketch assay, on which clustering runs. Values and tissue shapes are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
@@ -791,6 +818,8 @@ Rscript spatial_hd_prep.1.0.R \
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_hd_cluster.1.0.R | |
 | Processor Core (제안) | 4코어, 메모리 32GB(16µm), 64~128GB(8µm) | 4 cores, 32 GB of memory (16 um), 64-128 GB (8 um) |
+
+등록 메모: 작업 파일 `spatial_hd_cluster.1.1.R`을 배포 번호 1.0으로 올립니다.
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -863,7 +892,11 @@ Clusters the sketched bins of all Visium HD slides together and labels every bin
 | 입력은 모두 같은 bin 크기로 전처리한 슬라이드여야 합니다. | All input slides must be prepared with the same bin size. |
 
 ### 분석 개념 이미지
-등록 메모: 개념도 작성 예정입니다.
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_hd_cluster_concept.png`
+
+- 레전드(국문): **그림. Visium HD 통합 군집과 모든 bin 배정.** (A) 모든 슬라이드의 sketch bin을 합쳐 Harmony로 슬라이드 차이를 보정하고 군집, UMAP, 마커를 계산합니다. (B) 각 bin(흰 사각형)을 같은 PCA에 투영하고, 같은 슬라이드에서 가장 가까운 sketch bin k_transfer개의 다수결로 군집을 붙입니다. 같은 군집인 이웃의 비율이 Cluster_score입니다. (C) 모든 bin에 군집이 붙은 슬라이드 객체와 hd_slides.tsv를 만들며, 조건 비교, 공간 가변 유전자, RCTD 모듈의 입력이 됩니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Joint Visium HD clustering and labels for every bin.** (A) The sketched bins of all slides are merged, slide differences corrected with Harmony, and clusters, UMAP and markers computed. (B) Each bin (white square) is projected onto the same PCA and labelled by majority vote of its k_transfer nearest sketched bins of the same slide; the fraction of agreeing neighbours is Cluster_score. (C) Slide objects with a cluster on every bin and hd_slides.tsv are written; they are the input of the condition comparison, spatially variable gene and RCTD modules. Values and tissue shapes are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
 ```
@@ -924,3 +957,535 @@ Rscript spatial_hd_cluster.1.0.R \
 
 - 레전드(국문): **슬라이드마다 모든 bin에서 군집이 차지하는 비율(Fraction of bins).** 같은 부위의 슬라이드는 비슷해야 하며, 조건 비교 전에 조성 차이를 확인합니다. 예시 데이터에서는 4분면마다 포함한 영역이 달라 조성이 달랐고, 해마 군집(13, 17)은 오른쪽 위 슬라이드에서 가장 많았습니다.
 - 레전드(영문): **Fraction of all bins per cluster in each slide (Fraction of bins).** Slides of the same part should look alike; check composition differences before comparing conditions. In the example data the quadrants contain different regions and their compositions differ, and the hippocampal clusters (13, 17) are most frequent in the top-right slide.
+
+---
+
+## 8. check_reference
+
+### 기본 정보
+| 항목 | 국문 | 영문 |
+|---|---|---|
+| 모듈명 | check_reference | check_reference |
+| 서브 타이틀 | 단일세포 참조 자료 열 확인 | Column check of a single-cell reference |
+| 버전 | 1.1 | |
+| 카테고리 대분류 | Utility | Utility |
+| 카테고리 중분류 | Genomic_data_Utility | Genomic_data_Utility |
+| 태그 | single-cell reference, Seurat, metadata, cell type | |
+| 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
+| 컨테이너 이미지 | bx_spatial.1.1 | |
+| 실행 스크립트 파일 | check_reference.1.1.R | |
+| Processor Core (제안) | 1코어, 메모리 16GB(참조 크기에 따라 32GB) | 1 core, 16 GB of memory (32 GB for large references) |
+
+### 실행 이미지
+이미지: bx_spatial 1.1
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.3.3 | https://www.r-project.org/ |
+| Seurat | 5.3.0 | https://satijalab.org/seurat/ |
+| SeuratObject | 5.2.0 | https://cran.r-project.org/package=SeuratObject |
+| presto | 1.0.0 | https://github.com/immunogenomics/presto |
+| spacexr | 2.2.1 | https://github.com/dmcable/spacexr |
+| DESeq2 | 1.42.0 | https://bioconductor.org/packages/DESeq2/ |
+| harmony | 1.2.3 | https://cran.r-project.org/package=harmony |
+| glmGamPoi | 1.14.0 | https://bioconductor.org/packages/glmGamPoi/ |
+| hdf5r | 1.3.12 | https://cran.r-project.org/package=hdf5r |
+| arrow | 21.0.0 | https://arrow.apache.org/docs/r/ |
+| ape | 5.8-1 | https://cran.r-project.org/package=ape |
+| ggplot2 | 3.5.2 | https://ggplot2.tidyverse.org/ |
+| patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
+| Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
+
+- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
+- **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
+
+### 내용(국문)
+spatial_labelTransfer, spatial_rctd, spatial_hd_rctd에 넣을 단일세포 참조 자료(Seurat RDS)의 메타데이터 열을 살펴, 세포 유형 열(reference_label_col)로 쓸 수 있는 열을 알려 줍니다. 참조 자료마다 세포 유형 열 이름이 달라(celltype, cell_type, subclass 등) 분석 전에 확인하는 단계입니다.
+- 열마다 형식(범주형, 숫자형)과, 범주형이면 범주 수와 가장 많은 값을 로그에 적습니다.
+- 범주가 2~100개인 범주형 열에 [CELLTYPE?] 표시를 붙여 후보로 알려 줍니다.
+- 같은 내용을 reference_columns.tsv 표로 남깁니다.
+- 세포 유형처럼 보이는 열이 없어도 실패가 아니라 경고로 끝납니다.
+
+### 내용(영문)
+Inspects the metadata columns of a single-cell reference (Seurat RDS) for spatial_labelTransfer, spatial_rctd and spatial_hd_rctd, and reports which columns can serve as the cell-type column (reference_label_col). References name this column differently (celltype, cell_type, subclass and so on), so it is checked before the analysis.
+- For each column the log lists its type (categorical or numeric) and, for categorical columns, the number of categories and the most frequent values.
+- Categorical columns with 2-100 categories are tagged [CELLTYPE?] as candidates.
+- The same report is written as the table reference_columns.tsv.
+- A reference without a cell-type-like column ends with a warning, not a failure.
+
+### 입출력 / 파라미터
+| 탭 | 필수 | 형식 | Name | Value | Description | English Description |
+|---|---|---|---|---|---|---|
+| Input | Required | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료. 세포 유형 열이 있는 Seurat 객체(.rds) | Single-cell reference: Seurat object (.rds) with a cell-type column |
+| Output | Required | Directory | output_dir | /data/check_reference | 결과 폴더. reference_columns.tsv(열 보고서)와 logs/ | Output folder: reference_columns.tsv (column report) and logs/ |
+
+### 주요 사항
+| 국문 | 영문 |
+|---|---|
+| [CELLTYPE?]는 범주 수만 보고 붙이는 후보 표시입니다. 표본 이름, 배치 같은 열도 후보로 나올 수 있으니 값을 보고 세포 유형 열을 고르세요. | [CELLTYPE?] is a candidate tag based only on the number of categories; columns such as sample names or batches can also appear, so choose the cell-type column by its values. |
+| spatial_rctd와 spatial_hd_rctd는 참조에 raw count가 있어야 합니다(보통 RNA assay). 로그의 assay 정보를 함께 확인하세요. | spatial_rctd and spatial_hd_rctd need raw counts in the reference (usually the RNA assay); check the assay information in the log as well. |
+| 세포 수가 min_cells_per_type(기본 25)보다 적은 세포 유형은 RCTD에서 빠집니다. 범주별 세포 수로 미리 확인할 수 있습니다. | Cell types with fewer cells than min_cells_per_type (default 25) are left out of RCTD; the cell counts per category show this in advance. |
+
+### 분석 개념 이미지
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/check_reference_concept.png`
+
+- 레전드(국문): **그림. 단일세포 참조 자료의 세포 유형 열 확인.** (A) 참조 자료는 세포마다 메타데이터(세포 유형, 배치, UMI 수 등)를 가진 Seurat 객체입니다. (B) 열마다 형식과 범주 수, 가장 많은 값을 로그에 적고, 범주가 2~100개인 범주형 열에 [CELLTYPE?]를 붙입니다. 숫자형 열과 범주가 너무 많은 열은 후보에서 뺍니다(SKIP). (C) reference_columns.tsv에서 후보를 보고 세포 유형 열을 골라 spatial_labelTransfer, spatial_rctd, spatial_hd_rctd의 reference_label_col에 넣습니다. 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. Checking the cell-type column of a single-cell reference.** (A) The reference is a Seurat object with per-cell metadata (cell type, batch, UMI counts and so on). (B) For each column the log lists its type, number of categories and most frequent values; categorical columns with 2-100 categories are tagged [CELLTYPE?], while numeric columns and columns with too many categories are skipped. (C) The cell-type column is chosen from the candidates in reference_columns.tsv and given as reference_label_col to spatial_labelTransfer, spatial_rctd and spatial_hd_rctd. Values are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
+
+### 스크립트 사용 예제
+```
+Rscript check_reference.1.1.R \
+  reference_rds=/ref/brain_reference.rds \
+  output_dir=/data/check_reference
+```
+
+### 주요 결과 이미지
+등록 메모: SIF 테스트 결과 그림을 넣을 자리입니다(Codespace 재실행 중).
+
+---
+
+## 9. spatial_labelTransfer
+
+### 기본 정보
+| 항목 | 국문 | 영문 |
+|---|---|---|
+| 모듈명 | spatial_labelTransfer | spatial_labelTransfer |
+| 서브 타이틀 | 단일세포 참조로 spot 세포 유형 예측 | Cell-type prediction of spots from a single-cell reference |
+| 버전 | 1.1 | |
+| 카테고리 대분류 | Annotation | Annotation |
+| 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |
+| 태그 | spatial transcriptomics, Visium, label transfer, Seurat, cell type | |
+| 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
+| 컨테이너 이미지 | bx_spatial.1.1 | |
+| 실행 스크립트 파일 | spatial_labelTransfer.1.1.R | |
+| Processor Core (제안) | 4코어, 메모리 32GB | 4 cores, 32 GB of memory |
+
+### 실행 이미지
+이미지: bx_spatial 1.1
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.3.3 | https://www.r-project.org/ |
+| Seurat | 5.3.0 | https://satijalab.org/seurat/ |
+| SeuratObject | 5.2.0 | https://cran.r-project.org/package=SeuratObject |
+| presto | 1.0.0 | https://github.com/immunogenomics/presto |
+| spacexr | 2.2.1 | https://github.com/dmcable/spacexr |
+| DESeq2 | 1.42.0 | https://bioconductor.org/packages/DESeq2/ |
+| harmony | 1.2.3 | https://cran.r-project.org/package=harmony |
+| glmGamPoi | 1.14.0 | https://bioconductor.org/packages/glmGamPoi/ |
+| hdf5r | 1.3.12 | https://cran.r-project.org/package=hdf5r |
+| arrow | 21.0.0 | https://arrow.apache.org/docs/r/ |
+| ape | 5.8-1 | https://cran.r-project.org/package=ape |
+| ggplot2 | 3.5.2 | https://ggplot2.tidyverse.org/ |
+| patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
+| Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
+
+- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
+- **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
+
+### 내용(국문)
+단일세포 RNA-seq 참조 자료의 세포 유형을 Visium 슬라이스의 spot으로 옮겨, spot마다 세포 유형별 예측 점수를 계산합니다. Seurat의 anchor 기반 label transfer(FindTransferAnchors, TransferData)를 씁니다.
+- 참조 자료는 한 번만 준비해 모든 슬라이스에 씁니다. raw count가 있으면 SCTransform과 PCA를 여기서 계산하고, 없으면(Azimuth형 참조) 들어 있는 assay와 차원 축소를 그대로 씁니다.
+- 참조에 SCT 모델이 있으면 슬라이스의 count를 그 모델로 다시 정규화해 같은 공간에서 anchor를 찾습니다.
+- spot마다 세포 유형별 예측 점수(0~1)를 붙이고, 세포 유형마다 조직 위 점수 그림을 그립니다.
+- 슬라이스×세포 유형 평균 점수 표와 heatmap을 만듭니다.
+
+### 내용(영문)
+Transfers the cell types of a single-cell RNA-seq reference to the spots of Visium slices and computes a prediction score per cell type for each spot, using Seurat anchor-based label transfer (FindTransferAnchors, TransferData).
+- The reference is prepared once and used for all slices. With raw counts, SCTransform and PCA are computed here; without them (Azimuth-style references), the stored assay and reduction are used as they are.
+- When the reference has an SCT model, the slice counts are re-normalised with that model so anchors are found in the same space.
+- Each spot gets a prediction score (0-1) per cell type, and the scores of each cell type are drawn on the tissue.
+- A table and a heatmap of the mean score per slice and cell type are made.
+
+### 입출력 / 파라미터
+| 탭 | 필수 | 형식 | Name | Value | Description | English Description |
+|---|---|---|---|---|---|---|
+| Input | Required | Directory | input_dir | /data/spatial_cluster | 군집 결과 폴더. 슬라이스마다 <slice>/<slice>_clustered.rds(SCT assay와 pca가 있는 Seurat 객체) | Cluster output folder: per slice <slice>/<slice>_clustered.rds (Seurat object with the SCT assay and pca) |
+| Input | Required | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료(Seurat .rds). 세포 유형 열이 있어야 함(check_reference로 확인) | Single-cell reference (Seurat .rds) with a cell-type column (check it with check_reference) |
+| Option | Required | String | reference_label_col | celltype | 참조 자료에서 세포 유형이 든 메타데이터 열 이름 | Metadata column of the reference holding the cell types |
+| Output | Required | Directory | output_dir | /data/spatial_labelTransfer | 결과 폴더. 슬라이스마다 <slice>_labeltransfer.rds, <slice>_predicted_celltype_scores.csv, plots/, 그리고 summary/(슬라이스×세포 유형 표와 heatmap) | Output folder: per slice <slice>_labeltransfer.rds, <slice>_predicted_celltype_scores.csv and plots/, and summary/ (slice-by-cell-type table and heatmap) |
+| Option | Optional | Integer | reference_ncells | 3000 | 참조 SCTransform 모델을 맞출 때 쓰는 세포 수(참조에 SCT 모델이 없을 때만) | Cells used to fit the reference SCTransform model (only when the reference has no SCT model) |
+| Option | Optional | Integer | npcs | 30 | anchor 탐색과 예측에 쓰는 주성분 수 | Principal components used for anchors and prediction |
+| Option | Optional | Integer | min_shared_features | 200 | 참조와 슬라이스가 공유해야 하는 최소 유전자 수. 모자라면 그 슬라이스는 실패(종, 유전자 ID 형식 불일치) | Minimum genes shared by the reference and a slice; with fewer, the slice fails (species or gene ID mismatch) |
+| Option | Optional | Integer | seed | 1234 | 난수 시드 | Random seed |
+
+### 주요 사항
+| 국문 | 영문 |
+|---|---|
+| 참조 자료와 슬라이스는 같은 종, 같은 유전자 이름 형식(예: 마우스 기호 Prox1)이어야 합니다. 공유 유전자가 min_shared_features보다 적으면 로그에 양쪽 유전자 이름 예시가 나옵니다. | The reference and the slices must share species and gene naming (for example mouse symbols such as Prox1); with fewer shared genes than min_shared_features, the log shows examples of both sides. |
+| 예측 점수는 참조에 있는 세포 유형 중에서 고른 값입니다. 참조에 없는 조직(예: 해마 참조로 본 소뇌)은 가장 비슷한 유형으로 잘못 칠해질 수 있습니다. | Scores choose among the cell types of the reference; tissue missing from the reference (for example cerebellum with a hippocampus reference) can be painted with the most similar type. |
+| 참조 세포가 적어 anchor가 있는 spot이 50개보다 적으면 TransferData의 k.weight를 자동으로 낮추고 경고를 남깁니다. 결과가 불안정할 수 있으니 더 큰 참조를 권장합니다. | When fewer than 50 spots carry anchors (small references), TransferData's k.weight is lowered automatically with a warning; results may be unstable, so a larger reference is recommended. |
+| Visium spot(지름 55µm)에는 세포가 여러 개 들어 있어 점수는 섞인 비율이 아니라 닮은 정도입니다. 세포 유형 비율이 필요하면 spatial_rctd를 쓰세요. | A Visium spot (55 um) holds several cells, so scores express similarity rather than proportions; use spatial_rctd for cell-type proportions. |
+
+### 분석 개념 이미지
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_labelTransfer_concept.png`
+
+- 레전드(국문): **그림. 단일세포 참조에서 spot으로 세포 유형 옮기기.** (A) 세포 유형 열(reference_label_col)이 있는 단일세포 참조 자료입니다. raw count가 있으면 SCTransform과 PCA를 여기서 계산합니다. (B) 참조 세포와 슬라이스 spot 사이에서 서로 닮은 짝(anchor)을 찾고(FindTransferAnchors), anchor를 통해 spot마다 세포 유형별 예측 점수를 계산합니다(TransferData). (C) 슬라이스마다 spot별 예측 점수 표, 세포 유형별 조직 위 점수 그림, 슬라이스×세포 유형 요약(표, heatmap)을 만듭니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Transferring cell types from a single-cell reference to spots.** (A) A single-cell reference with a cell-type column (reference_label_col); with raw counts, SCTransform and PCA are computed here. (B) Pairs of similar reference cells and slice spots (anchors) are found (FindTransferAnchors), and through them each spot gets a prediction score per cell type (TransferData). (C) Per slice, a table of scores per spot, tissue score maps per cell type, and a slice-by-cell-type summary (table, heatmap) are written. Values and tissue shapes are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
+
+### 스크립트 사용 예제
+```
+Rscript spatial_labelTransfer.1.1.R \
+  input_dir=/data/spatial_cluster \
+  reference_rds=/ref/brain_reference.rds \
+  reference_label_col=celltype \
+  output_dir=/data/spatial_labelTransfer \
+  reference_ncells=3000 \
+  npcs=30 \
+  min_shared_features=200 \
+  seed=1234
+```
+
+### 주요 결과 이미지
+등록 메모: SIF 테스트 결과 그림을 넣을 자리입니다(Codespace 재실행 중).
+
+---
+
+## 10. spatial_rctd
+
+### 기본 정보
+| 항목 | 국문 | 영문 |
+|---|---|---|
+| 모듈명 | spatial_rctd | spatial_rctd |
+| 서브 타이틀 | RCTD로 spot 세포 유형 비율 추정 | Cell-type proportions of spots with RCTD |
+| 버전 | 1.1 | |
+| 카테고리 대분류 | Annotation | Annotation |
+| 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |
+| 태그 | spatial transcriptomics, Visium, RCTD, deconvolution, cell type | |
+| 레퍼런스 URL | https://github.com/dmcable/spacexr | |
+| 컨테이너 이미지 | bx_spatial.1.1 | |
+| 실행 스크립트 파일 | spatial_rctd.1.1.R | |
+| Processor Core (제안) | 8코어, 메모리 32GB | 8 cores, 32 GB of memory |
+
+### 실행 이미지
+이미지: bx_spatial 1.1
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.3.3 | https://www.r-project.org/ |
+| Seurat | 5.3.0 | https://satijalab.org/seurat/ |
+| SeuratObject | 5.2.0 | https://cran.r-project.org/package=SeuratObject |
+| presto | 1.0.0 | https://github.com/immunogenomics/presto |
+| spacexr | 2.2.1 | https://github.com/dmcable/spacexr |
+| DESeq2 | 1.42.0 | https://bioconductor.org/packages/DESeq2/ |
+| harmony | 1.2.3 | https://cran.r-project.org/package=harmony |
+| glmGamPoi | 1.14.0 | https://bioconductor.org/packages/glmGamPoi/ |
+| hdf5r | 1.3.12 | https://cran.r-project.org/package=hdf5r |
+| arrow | 21.0.0 | https://arrow.apache.org/docs/r/ |
+| ape | 5.8-1 | https://cran.r-project.org/package=ape |
+| ggplot2 | 3.5.2 | https://ggplot2.tidyverse.org/ |
+| patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
+| Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
+
+- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
+- **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
+
+### 내용(국문)
+Visium spot 하나에는 세포가 여러 개 들어 있습니다. RCTD(spacexr)로 단일세포 참조의 세포 유형별 발현 profile을 써서 spot마다 세포 유형이 섞인 비율(weight)을 추정합니다.
+- 참조의 raw count로 세포 유형별 평균 profile을 만들고, 세포 수가 min_cells_per_type보다 적은 유형은 뺍니다.
+- spot마다 모든 세포 유형의 weight(합 1)를 계산합니다(doublet_mode=full). spot에 세포가 여러 종류 섞일 수 있는 Visium에 맞는 방식입니다.
+- spot별 weight 표, 슬라이스별 평균 비율, 가장 큰 세포 유형(dominant) 그림, 상위 세포 유형의 조직 위 weight 그림을 만듭니다.
+- 슬라이스×세포 유형 평균 비율 표와 heatmap, 누적 막대그림을 만듭니다.
+
+### 내용(영문)
+A Visium spot holds several cells. RCTD (spacexr) uses the per-cell-type expression profiles of a single-cell reference to estimate the mixture (weights) of cell types in each spot.
+- Mean profiles per cell type are built from the raw counts of the reference; types with fewer cells than min_cells_per_type are left out.
+- Each spot gets weights for all cell types, summing to 1 (doublet_mode=full), which suits Visium spots holding several kinds of cells.
+- A weight table per spot, mean proportions per slice, a dominant cell-type map and tissue weight maps of the top cell types are made.
+- A slice-by-cell-type table of mean proportions, a heatmap and a stacked bar plot are made.
+
+### 입출력 / 파라미터
+| 탭 | 필수 | 형식 | Name | Value | Description | English Description |
+|---|---|---|---|---|---|---|
+| Input | Required | Directory | input_dir | /data/spatial_cluster | 군집 결과 폴더. 슬라이스마다 <slice>/<slice>_clustered.rds(raw count assay Spatial이 있는 Seurat 객체) | Cluster output folder: per slice <slice>/<slice>_clustered.rds (Seurat object with the raw-count assay Spatial) |
+| Input | Required | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료(Seurat .rds). raw count와 세포 유형 열이 있어야 함 | Single-cell reference (Seurat .rds) with raw counts and a cell-type column |
+| Option | Required | String | reference_label_col | celltype | 참조 자료에서 세포 유형이 든 메타데이터 열 이름 | Metadata column of the reference holding the cell types |
+| Output | Required | Directory | output_dir | /data/spatial_rctd | 결과 폴더. 슬라이스마다 <slice>_rctd.rds, <slice>_rctd_object.rds, <slice>_rctd_weights.csv, <slice>_rctd_mean_abundance.csv, plots/, 그리고 summary/(표, heatmap, 누적 막대) | Output folder: per slice <slice>_rctd.rds, <slice>_rctd_object.rds, <slice>_rctd_weights.csv, <slice>_rctd_mean_abundance.csv and plots/, and summary/ (tables, heatmap, stacked bars) |
+| Option | Optional | String | spatial_assay | Spatial | 슬라이스 객체에서 raw count가 든 assay | Assay of the slice objects holding raw counts |
+| Option | Optional | String | reference_assay | RNA | 참조 객체에서 raw count가 든 assay | Assay of the reference holding raw counts |
+| Option | Optional | String | max_cores | auto | 병렬 코어 수. auto = 작업에 할당된 코어 수. 숫자를 주면 할당 코어 수를 넘지 않게 줄임 | Parallel cores. auto = cores allocated to the job; a number is capped by them |
+| Option | Optional | Integer | min_shared_features | 200 | 참조와 슬라이스가 공유해야 하는 최소 유전자 수 | Minimum genes shared by the reference and a slice |
+| Option | Optional | Integer | min_cells_per_type | 25 | 세포 수가 이보다 적은 참조 세포 유형은 뺌 | Reference cell types with fewer cells are left out |
+| Option | Optional | Integer | plot_topn | 12 | 조직 위 weight 그림에 넣는 상위 세포 유형 수 | Top cell types drawn as tissue weight maps |
+| Option | Optional | Integer | seed | 1234 | 난수 시드 | Random seed |
+
+### 주요 사항
+| 국문 | 영문 |
+|---|---|
+| RCTD는 raw count가 필요합니다. 참조의 정규화 값(SCT, log)만 있으면 실행되지 않습니다. | RCTD needs raw counts; a reference with only normalised values (SCT, log) cannot be used. |
+| weight는 참조에 있는 세포 유형 사이의 비율입니다. 참조에 없는 조직은 가장 비슷한 유형의 weight로 나타납니다. 조직 전체를 담은 참조를 권장합니다. | Weights are proportions among the reference cell types; tissue missing from the reference shows up as the most similar types, so a reference covering the whole tissue is recommended. |
+| 코어 수에 따라 메모리가 늘어납니다(작업자마다 자료를 복사). 메모리가 모자라면 max_cores를 줄이세요. | Memory grows with the cores, since each worker copies the data; lower max_cores if memory runs short. |
+| UMI 수가 매우 적은 spot(RCTD 기본 100 미만)은 계산에서 빠져 dominant 그림에서 NA로 나옵니다. | Spots with very few UMIs (below the RCTD default of 100) are not scored and appear as NA in the dominant map. |
+
+### 분석 개념 이미지
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_rctd_concept.png`
+
+- 레전드(국문): **그림. RCTD로 spot의 세포 유형 비율 추정.** (A) 단일세포 참조의 raw count로 세포 유형별 평균 발현 profile을 만듭니다. 세포 수가 min_cells_per_type 이상인 유형만 씁니다. (B) spot 하나는 여러 세포의 섞임이며, RCTD full 모드는 spot마다 모든 세포 유형의 weight(합 1)를 추정합니다. (C) spot별 weight 표와 평균 비율, 가장 큰 세포 유형과 상위 세포 유형 weight의 조직 위 그림, 슬라이스×세포 유형 요약을 만듭니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Estimating cell-type proportions of spots with RCTD.** (A) Mean expression profiles per cell type are built from the raw counts of the single-cell reference, using types with at least min_cells_per_type cells. (B) A spot is a mixture of several cells; RCTD full mode estimates weights of all cell types per spot, summing to 1. (C) A weight table per spot and mean proportions, tissue maps of the dominant cell type and of the top cell-type weights, and a slice-by-cell-type summary are written. Values and tissue shapes are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
+
+### 스크립트 사용 예제
+```
+Rscript spatial_rctd.1.1.R \
+  input_dir=/data/spatial_cluster \
+  reference_rds=/ref/brain_reference.rds \
+  reference_label_col=celltype \
+  output_dir=/data/spatial_rctd \
+  spatial_assay=Spatial \
+  reference_assay=RNA \
+  max_cores=auto \
+  min_shared_features=200 \
+  min_cells_per_type=25 \
+  plot_topn=12 \
+  seed=1234
+```
+
+### 주요 결과 이미지
+등록 메모: SIF 테스트 결과 그림을 넣을 자리입니다(Codespace 재실행 중).
+
+---
+
+## 11. spatial_hd_svf
+
+### 기본 정보
+| 항목 | 국문 | 영문 |
+|---|---|---|
+| 모듈명 | spatial_hd_svf | spatial_hd_svf |
+| 서브 타이틀 | Visium HD 공간 가변 유전자 | Spatially variable genes of Visium HD slides |
+| 버전 | 1.0 | |
+| 카테고리 대분류 | Omics | Omics |
+| 카테고리 중분류 | Expression_Quantification | Expression_Quantification |
+| 태그 | spatial transcriptomics, Visium HD, spatially variable genes, Moran's I | |
+| 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
+| 컨테이너 이미지 | bx_spatial.1.1 | |
+| 실행 스크립트 파일 | spatial_hd_svf.1.0.R | |
+| Processor Core (제안) | 4코어, 메모리 32GB(16µm), 64GB(8µm) | 4 cores, 32 GB of memory (16 um), 64 GB (8 um) |
+
+### 실행 이미지
+이미지: bx_spatial 1.1
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.3.3 | https://www.r-project.org/ |
+| Seurat | 5.3.0 | https://satijalab.org/seurat/ |
+| SeuratObject | 5.2.0 | https://cran.r-project.org/package=SeuratObject |
+| presto | 1.0.0 | https://github.com/immunogenomics/presto |
+| spacexr | 2.2.1 | https://github.com/dmcable/spacexr |
+| DESeq2 | 1.42.0 | https://bioconductor.org/packages/DESeq2/ |
+| harmony | 1.2.3 | https://cran.r-project.org/package=harmony |
+| glmGamPoi | 1.14.0 | https://bioconductor.org/packages/glmGamPoi/ |
+| hdf5r | 1.3.12 | https://cran.r-project.org/package=hdf5r |
+| arrow | 21.0.0 | https://arrow.apache.org/docs/r/ |
+| ape | 5.8-1 | https://cran.r-project.org/package=ape |
+| ggplot2 | 3.5.2 | https://ggplot2.tidyverse.org/ |
+| patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
+| Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
+
+- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
+- **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
+
+### 내용(국문)
+Visium HD 슬라이드마다 조직 위에서 뭉쳐서 발현하는 유전자(공간 가변 유전자)를 Moran's I로 찾습니다. 군집과 상관없이 해부학적 구조나 경계를 따라 발현하는 유전자를 찾는 데 씁니다.
+- 슬라이드마다 가변 유전자 svf_topn개를 검정합니다.
+- bin이 수십만 개라 모두 쓰면 계산량이 bin 수의 제곱으로 늘어나므로, max_bins개를 무작위로 뽑아 Moran's I(Seurat RunMoransI, ape)를 계산합니다.
+- 보정 p값(BH)이 padj_cutoff보다 작은 유전자를 Moran's I 순으로 순위를 매기고, 상위 svf_show개를 모든 bin 위에 그립니다.
+- 슬라이드별 표와 모든 슬라이드를 합친 표, 요약 표를 만듭니다.
+
+### 내용(영문)
+Finds genes expressed in spatial patches on each Visium HD slide (spatially variable genes) with Moran's I, for genes that follow anatomical structures or borders regardless of clusters.
+- The svf_topn most variable genes of each slide are tested.
+- Slides have hundreds of thousands of bins and the cost grows with the square of the bin count, so Moran's I (Seurat RunMoransI, ape) is computed on max_bins randomly sampled bins.
+- Genes with an adjusted p-value (BH) below padj_cutoff are ranked by Moran's I, and the top svf_show genes are drawn on all bins.
+- Per-slide tables, a table of all slides and a summary table are written.
+
+### 입출력 / 파라미터
+| 탭 | 필수 | 형식 | Name | Value | Description | English Description |
+|---|---|---|---|---|---|---|
+| Input | Required | Directory | input_dir | /data/spatial_hd_cluster | Visium HD 군집 결과 폴더. hd_slides.tsv와 슬라이드별 객체 | Visium HD cluster folder: hd_slides.tsv and the per-slide objects |
+| Output | Required | Directory | output_dir | /data/spatial_hd_svf | 결과 폴더. 슬라이드마다 <slide>_hd_svf.tsv와 plots/<slide>_top_svf, 그리고 svf_all_slides.tsv, svf_summary.tsv | Output folder: per slide <slide>_hd_svf.tsv and plots/<slide>_top_svf, plus svf_all_slides.tsv and svf_summary.tsv |
+| Option | Optional | Integer | svf_topn | 500 | 슬라이드마다 검정할 가변 유전자 수 | Most variable genes of each slide tested |
+| Option | Optional | Integer | max_bins | 4000 | 슬라이드마다 Moran's I에 쓰는 무작위 bin 수. 계산량이 이 값의 제곱으로 늘어남 | Random bins per slide used for Moran's I; the cost grows with its square |
+| Option | Optional | Integer | svf_show | 6 | 조직 위에 그릴 상위 유전자 수 | Top genes drawn on the tissue |
+| Option | Optional | Float | padj_cutoff | 0.05 | 공간 가변 유전자로 부를 보정 p값(BH) 기준 | Adjusted p-value (BH) for calling a gene spatially variable |
+| Option | Optional | Float | pt_size | 4 | 조직 그림의 bin 크기(Seurat pt.size.factor) | Bin size in the tissue plots (Seurat pt.size.factor) |
+| Option | Optional | Integer | seed | 1234 | bin 표본 난수 시드 | Random seed for the bin sample |
+
+### 주요 사항
+| 국문 | 영문 |
+|---|---|
+| Moran's I는 무작위로 뽑은 max_bins개 bin으로 계산합니다. 작은 구조(가는 띠 등)는 표본에 bin이 적게 들어가 놓칠 수 있으니 필요하면 max_bins를 올리세요. 계산 시간은 제곱으로 늘어납니다. | Moran's I uses max_bins random bins; small structures (thin bands) may get few bins in the sample and be missed, so raise max_bins if needed; the time grows with its square. |
+| 유의한 유전자가 없는 슬라이드는 실패가 아니라 경고와 상태 no_significant_genes로 남습니다. | A slide without significant genes is reported with a warning and the status no_significant_genes, not as a failure. |
+| 군집 결과(spatial_hd_cluster)를 입력으로 받지만 군집은 쓰지 않습니다. 정규화 값과 조직 좌표만 씁니다. | The cluster output (spatial_hd_cluster) is the input, but the clusters are not used; only normalised values and tissue coordinates are. |
+
+### 분석 개념 이미지
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_hd_svf_concept.png`
+
+- 레전드(국문): **그림. Visium HD 공간 가변 유전자.** (A) 슬라이드마다 bin을 max_bins개 무작위로 뽑습니다(파란 칸). Moran's I 계산량이 bin 수의 제곱으로 늘어나기 때문입니다. (B) 가변 유전자 svf_topn개마다 Moran's I와 p값, BH 보정 p값을 계산해 순위를 매깁니다. (C) 상위 유전자의 발현을 모든 bin 위에 그리고, 슬라이드별 표와 요약 표를 남깁니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Spatially variable genes of Visium HD slides.** (A) max_bins bins are sampled at random per slide (blue squares), because the cost of Moran's I grows with the square of the bin count. (B) For each of the svf_topn variable genes, Moran's I, its p-value and the BH-adjusted p-value are computed and the genes are ranked. (C) The top genes are drawn on all bins, and per-slide and summary tables are written. Values and tissue shapes are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
+
+### 스크립트 사용 예제
+```
+Rscript spatial_hd_svf.1.0.R \
+  input_dir=/data/spatial_hd_cluster \
+  output_dir=/data/spatial_hd_svf \
+  svf_topn=500 \
+  max_bins=4000 \
+  svf_show=6 \
+  padj_cutoff=0.05 \
+  pt_size=4 \
+  seed=1234
+```
+
+### 주요 결과 이미지
+등록 메모: SIF 테스트 결과 그림을 넣을 자리입니다(Codespace 재실행 중).
+
+---
+
+## 12. spatial_hd_rctd
+
+### 기본 정보
+| 항목 | 국문 | 영문 |
+|---|---|---|
+| 모듈명 | spatial_hd_rctd | spatial_hd_rctd |
+| 서브 타이틀 | Visium HD bin 세포 유형(RCTD) | Cell types of Visium HD bins with RCTD |
+| 버전 | 1.0 | |
+| 카테고리 대분류 | Annotation | Annotation |
+| 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |
+| 태그 | spatial transcriptomics, Visium HD, RCTD, deconvolution, cell type | |
+| 레퍼런스 URL | https://github.com/dmcable/spacexr | |
+| 컨테이너 이미지 | bx_spatial.1.1 | |
+| 실행 스크립트 파일 | spatial_hd_rctd.1.0.R | |
+| Processor Core (제안) | 8코어, 메모리 64GB(16µm), 128GB(8µm) | 8 cores, 64 GB of memory (16 um), 128 GB (8 um) |
+
+### 실행 이미지
+이미지: bx_spatial 1.1
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.3.3 | https://www.r-project.org/ |
+| Seurat | 5.3.0 | https://satijalab.org/seurat/ |
+| SeuratObject | 5.2.0 | https://cran.r-project.org/package=SeuratObject |
+| presto | 1.0.0 | https://github.com/immunogenomics/presto |
+| spacexr | 2.2.1 | https://github.com/dmcable/spacexr |
+| DESeq2 | 1.42.0 | https://bioconductor.org/packages/DESeq2/ |
+| harmony | 1.2.3 | https://cran.r-project.org/package=harmony |
+| glmGamPoi | 1.14.0 | https://bioconductor.org/packages/glmGamPoi/ |
+| hdf5r | 1.3.12 | https://cran.r-project.org/package=hdf5r |
+| arrow | 21.0.0 | https://arrow.apache.org/docs/r/ |
+| ape | 5.8-1 | https://cran.r-project.org/package=ape |
+| ggplot2 | 3.5.2 | https://ggplot2.tidyverse.org/ |
+| patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
+| Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
+
+- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
+- **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
+
+### 내용(국문)
+Visium HD의 모든 bin에 단일세포 참조의 세포 유형을 RCTD(spacexr)로 붙입니다. 8µm bin은 세포 하나 크기에 가까워 bin마다 세포 유형 1~2개로 볼 수 있고(doublet 모드), 16µm bin은 여러 세포가 섞인 비율로 봅니다(full 모드).
+- 슬라이드를 chunk_bins개씩 나눠 RCTD를 돌려 메모리를 일정하게 유지합니다.
+- doublet 모드는 bin마다 첫째·둘째 세포 유형과 분류(singlet, doublet_certain, doublet_uncertain, reject)를 줍니다. full 모드는 모든 세포 유형의 weight를 주고, 가장 큰 weight가 첫째 세포 유형입니다.
+- UMI 수가 umi_min보다 적은 bin은 계산하지 않고 not_scored로 남깁니다.
+- 슬라이드별 조직 위 세포 유형 그림, 슬라이드×세포 유형 비율 표와 그림을 만들며, 결과 폴더는 spatial_condition_de의 입력(group_by=rctd_first_type)이 됩니다.
+
+### 내용(영문)
+Labels every bin of Visium HD slides with the cell types of a single-cell reference using RCTD (spacexr). An 8 um bin is close to one cell, so each bin is seen as one or two cell types (doublet mode); a 16 um bin is seen as a mixture of cells (full mode).
+- Slides are processed in chunks of chunk_bins bins to keep memory bounded.
+- doublet mode gives each bin a first and second cell type and a class (singlet, doublet_certain, doublet_uncertain, reject); full mode gives weights of all cell types, and the highest weight is the first type.
+- Bins with fewer UMIs than umi_min are not scored and are marked not_scored.
+- Tissue maps of the cell types per slide and a slide-by-cell-type table and plot are made; the output folder is the input of spatial_condition_de (group_by=rctd_first_type).
+
+### 입출력 / 파라미터
+| 탭 | 필수 | 형식 | Name | Value | Description | English Description |
+|---|---|---|---|---|---|---|
+| Input | Required | Directory | input_dir | /data/spatial_hd_cluster | Visium HD 군집 결과 폴더. hd_slides.tsv와 슬라이드별 객체(bin assay에 raw count) | Visium HD cluster folder: hd_slides.tsv and the per-slide objects (raw counts in the binned assay) |
+| Input | Required | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료(Seurat .rds). raw count와 세포 유형 열이 있어야 함(check_reference로 확인) | Single-cell reference (Seurat .rds) with raw counts and a cell-type column (check it with check_reference) |
+| Option | Required | String | reference_label_col | celltype | 참조 자료에서 세포 유형이 든 메타데이터 열 이름 | Metadata column of the reference holding the cell types |
+| Output | Required | Directory | output_dir | /data/spatial_hd_rctd | 결과 폴더. 슬라이드마다 <slide>_hd_rctd.rds, <slide>_rctd_weights.tsv.gz, plots/, 그리고 hd_slides.tsv, celltype_by_slide.tsv, rctd_summary.tsv | Output folder: per slide <slide>_hd_rctd.rds, <slide>_rctd_weights.tsv.gz and plots/, plus hd_slides.tsv, celltype_by_slide.tsv and rctd_summary.tsv |
+| Option | Optional | String | reference_assay | RNA | 참조 객체에서 raw count가 든 assay | Assay of the reference holding raw counts |
+| Option | Optional | List | rctd_mode | doublet | doublet = bin마다 세포 유형 1~2개(8µm에 맞음), full = 모든 세포 유형의 섞인 비율(16µm에 맞음) | doublet = one or two cell types per bin (suits 8 um), full = mixture of all cell types (suits 16 um) |
+| Option | Optional | Integer | chunk_bins | 20000 | RCTD 한 번에 넣는 bin 수. 줄이면 메모리가 줄고 시간이 조금 늘어남 | Bins per RCTD run; smaller uses less memory and a little more time |
+| Option | Optional | Integer | umi_min | 100 | UMI 수가 이보다 적은 bin은 계산하지 않음(not_scored) | Bins with fewer UMIs are not scored (not_scored) |
+| Option | Optional | Integer | min_cells_per_type | 25 | 세포 수가 이보다 적은 참조 세포 유형은 뺌 | Reference cell types with fewer cells are left out |
+| Option | Optional | Integer | min_shared_features | 200 | 참조와 슬라이드가 공유해야 하는 최소 유전자 수 | Minimum genes shared by the reference and the slides |
+| Option | Optional | String | max_cores | auto | 병렬 코어 수. auto = 작업에 할당된 코어 수. 숫자를 주면 할당 코어 수를 넘지 않게 줄임 | Parallel cores. auto = cores allocated to the job; a number is capped by them |
+| Option | Optional | Float | pt_size | 4 | 조직 그림의 bin 크기(Seurat pt.size.factor) | Bin size in the tissue plots (Seurat pt.size.factor) |
+| Option | Optional | Integer | seed | 1234 | 난수 시드 | Random seed |
+
+### 주요 사항
+| 국문 | 영문 |
+|---|---|
+| bin 크기에 맞춰 rctd_mode를 고르세요. 기본값 doublet은 8µm용이고, 16µm는 full을 권장합니다. | Choose rctd_mode by bin size: the default doublet is for 8 um, and full is recommended for 16 um. |
+| 16µm bin은 UMI가 많아 umi_min=100에서 대부분 계산되지만, 8µm bin은 UMI가 적어 not_scored가 많을 수 있습니다. rctd_summary.tsv의 Bins_scored를 확인하세요. | 16 um bins have many UMIs and are mostly scored at umi_min=100, but 8 um bins have fewer and many may be not_scored; check Bins_scored in rctd_summary.tsv. |
+| 참조에 없는 조직은 가장 비슷한 세포 유형으로 칠해집니다. 슬라이드 조직 전체를 담은 참조를 권장합니다. | Tissue missing from the reference is painted with the most similar cell types; a reference covering the whole tissue is recommended. |
+| 코어 수에 따라 메모리가 늘어납니다(작업자마다 자료를 복사). 메모리가 모자라면 max_cores나 chunk_bins를 줄이세요. | Memory grows with the cores (each worker copies the data); lower max_cores or chunk_bins if memory runs short. |
+
+### 분석 개념 이미지
+그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_hd_rctd_concept.png`
+
+- 레전드(국문): **그림. Visium HD bin의 세포 유형(RCTD).** (A) 슬라이드의 bin을 chunk_bins개씩 나눠 단일세포 참조(raw count와 세포 유형 열)와 함께 RCTD에 넣습니다. (B) doublet 모드는 bin마다 세포 유형 하나(singlet), 둘(doublet_certain), 판정 불가(reject) 등으로 분류하고 첫째·둘째 세포 유형을 줍니다. 16µm에 쓰는 full 모드는 weight를 주고 가장 큰 weight를 첫째 세포 유형으로 씁니다. (C) 모든 bin에 세포 유형이 붙은 슬라이드 객체, weight 표, 슬라이드×세포 유형 비율을 만들고, hd_slides.tsv로 spatial_condition_de(group_by=rctd_first_type)에 넘깁니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Cell types of Visium HD bins with RCTD.** (A) The bins of a slide are passed to RCTD in chunks of chunk_bins together with the single-cell reference (raw counts and a cell-type column). (B) doublet mode classifies each bin as one cell type (singlet), two (doublet_certain) or undecided (reject) and gives a first and second type; full mode, used for 16 um, gives weights and the highest weight is the first type. (C) Slide objects with a cell type on every bin, weight tables and slide-by-cell-type proportions are written, and hd_slides.tsv passes them to spatial_condition_de (group_by=rctd_first_type). Values and tissue shapes are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
+
+### 스크립트 사용 예제
+```
+Rscript spatial_hd_rctd.1.0.R \
+  input_dir=/data/spatial_hd_cluster \
+  reference_rds=/ref/brain_reference.rds \
+  reference_label_col=celltype \
+  output_dir=/data/spatial_hd_rctd \
+  reference_assay=RNA \
+  rctd_mode=doublet \
+  chunk_bins=20000 \
+  umi_min=100 \
+  min_cells_per_type=25 \
+  min_shared_features=200 \
+  max_cores=auto \
+  pt_size=4 \
+  seed=1234
+```
+
+### 주요 결과 이미지
+등록 메모: SIF 테스트 결과 그림을 넣을 자리입니다(Codespace 재실행 중).

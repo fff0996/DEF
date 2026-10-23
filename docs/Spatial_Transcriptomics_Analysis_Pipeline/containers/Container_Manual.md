@@ -38,7 +38,7 @@ Every module of the spatial transcriptomics pipeline runs inside one Apptainer i
 
 | 이미지 | 버전 | 사용하는 모듈 (스크립트) | 주요 도구 |
 |---|---|---|---|
-| bx_spatial | 1.1 | spatial_prep (spatial_prep.1.0.R), spatial_cluster (spatial_cluster.1.0.R), spatial_svf (spatial_svf.1.0.R), spatial_merge (spatial_merge.1.1.R), spatial_condition_de (spatial_condition_de.1.0.R, 작업 파일 1.1), spatial_hd_prep (spatial_hd_prep.1.0.R), spatial_hd_cluster (spatial_hd_cluster.1.0.R), spatial_labelTransfer, spatial_rctd, check_reference | R 4.3.3, Seurat 5.3.0, spacexr 2.2.1, DESeq2 1.42.0, harmony 1.2.3 |
+| bx_spatial | 1.1 | spatial_prep, spatial_cluster, spatial_svf, spatial_merge, spatial_labelTransfer, spatial_rctd, check_reference (배포 1.1), spatial_condition_de, spatial_hd_prep, spatial_hd_cluster, spatial_hd_svf, spatial_hd_rctd (배포 1.0). 작업 파일 번호는 `modules/Registration.md` 표 | R 4.3.3, Seurat 5.3.0, spacexr 2.2.1, DESeq2 1.42.0, harmony 1.2.3 |
 
 Bootstrap `docker`, From `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8), Miniforge3 26.7.2-0 (conda-forge, bioconda)입니다.
 

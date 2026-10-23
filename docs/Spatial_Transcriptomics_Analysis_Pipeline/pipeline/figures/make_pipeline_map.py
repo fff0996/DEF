@@ -47,17 +47,20 @@ m.save(HERE / "pipeline_visium.svg", W, 1500, "Spatial transcriptomics pipeline 
 
 # ---------------------------------------------------------------- Visium HD
 m.reset()
-y = 560
+y, yS = 560, 1020
 m.route([(140, y), (550, y)], PURPLE)
 m.route([(550, y), (1350, y)], BLUE)
 m.route([(1350, y), (2100, y)], GREEN)
+m.route([(1700, y), (1700, yS), (1950, yS)], BLUE)      # clustered slides to spatial_hd_svf
 for x in (550, 1350):
     m.route([(x, y), (x, y + 150)], YELLOW)
 m.route([(2100, y), (2100, y + 170)], YELLOW)
+m.route([(1950, yS), (1950, yS + 150)], YELLOW)
 
 m.node(550, y, "spatial_hd_prep")
 m.node(1350, y, "spatial_hd_cluster")
 m.node(2100, y, "spatial_\ncondition_de")
+m.node(1950, yS, "spatial_hd_svf")
 
 m.tag(140, y, "H5 + Parquet", "in", gap=50, icon="folder")
 m.tag(950, y, "RDS", "in", gap=50, icon="table")
@@ -66,4 +69,5 @@ m.tag(1750, y, "RDS + TSV", "in", gap=50, icon="table")
 m.outputs(550, y + 150, ["RDS", "TSV", "PNG", "PDF"], above=False, gap=30)
 m.outputs(1350, y + 150, ["RDS", "TSV", "PNG", "PDF"], above=False, gap=30)
 m.outputs(2100, y + 170, ["TSV", "PDF", "PNG"], above=False, gap=46)
-m.save(HERE / "pipeline_visium_hd.svg", W, 1180, "Spatial transcriptomics pipeline (Visium HD)", STAGES, 1000)
+m.outputs(1950, yS + 150, ["TSV", "PNG", "PDF"], above=False, gap=30)
+m.save(HERE / "pipeline_visium_hd.svg", W, 1640, "Spatial transcriptomics pipeline (Visium HD)", STAGES, 1440)

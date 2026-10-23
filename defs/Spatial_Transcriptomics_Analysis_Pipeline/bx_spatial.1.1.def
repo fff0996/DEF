@@ -17,6 +17,13 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #     - spatial_condition_de.1.1.R
 #     - spatial_hd_prep.1.0.R
 #     - spatial_hd_cluster.1.0.R
+#     - spatial_prep.1.1.R, spatial_cluster.1.1.R, spatial_svf.1.1.R,
+#       spatial_labelTransfer.1.1.R, spatial_rctd.1.1.R, check_reference.1.1.R,
+#       spatial_merge.1.2.R, spatial_condition_de.1.2.R, spatial_hd_prep.1.1.R,
+#       spatial_hd_cluster.1.1.R (script rules: separated logs, required
+#       output_dir, white plot backgrounds; no new packages)
+#     - spatial_hd_svf.1.0.R (Moran's I per Visium HD slide; ape)
+#     - spatial_hd_rctd.1.0.R (RCTD on Visium HD bins; spacexr)
 #
 #   [MANDATORY BUILD RULES]
 #   1) Base OS must be Rocky Linux 9. Rocky 8 is not allowed: it causes
@@ -49,8 +56,9 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   cell-type decomposition (spatial_rctd), multi-slice merge with optional
 #   Harmony (spatial_merge), and pseudobulk comparison of conditions
 #   (spatial_condition_de), and Visium HD binned data: loading, normalisation and
-#   sketching (spatial_hd_prep) and joint sketch clustering with labels for every
-#   bin (spatial_hd_cluster).
+#   sketching (spatial_hd_prep), joint sketch clustering with labels for every
+#   bin (spatial_hd_cluster), spatially variable genes per slide (spatial_hd_svf)
+#   and RCTD cell types of every bin (spatial_hd_rctd).
 #   The analysis scripts are supplied through CLOSHA's external bind paths,
 #   rather than embedded in the image. This DEF provides their runtime.
 #
@@ -503,7 +511,7 @@ PYCLEAN
         apptainer test --cleanenv bx_spatial.1.1.sif
 
     The scripts are supplied externally through approved runtime binds, e.g.:
-        apptainer exec bx_spatial.1.1.sif Rscript spatial_prep.1.0.R key=value ...
+        apptainer exec bx_spatial.1.1.sif Rscript spatial_prep.1.1.R key=value ...
     Space Ranger outputs, references and slice sheets are inputs; the image holds
     no data. Writable runtime binds can expose host data to the analysis scripts.
     Runtime analysis requires no network access.

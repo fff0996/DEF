@@ -3,18 +3,22 @@ Spatial transcriptomics pipeline: 작업 기록
 작성일: 2026-10-22
 
 ## 1. 구성
-| 모듈 | 파일 | 상태 |
-|---|---|---|
-| spatial_prep | `spatial_prep.1.0.R` | 받은 스크립트 |
-| spatial_cluster | `spatial_cluster.1.0.R` | 받은 스크립트 |
-| spatial_svf | `spatial_svf.1.0.R` | 받은 스크립트 |
-| spatial_labelTransfer | `spatial_labelTransfer.1.0.R` | 받은 스크립트(Azimuth 없이 동작하는 분기 있음) |
-| spatial_rctd | `spatial_rctd.1.0.R` | 받은 스크립트 |
-| spatial_merge | `spatial_merge.1.1.R` | harmony 인자 수정(아래 4절) |
-| check_reference | `check_reference.1.0.R` | 받은 스크립트 |
-| spatial_condition_de | `spatial_condition_de.1.0.R`, `1.1.R` | 새 모듈: 조건 간 비교. 1.1은 Visium HD 입력도 받음 |
-| spatial_hd_prep | `spatial_hd_prep.1.0.R` | 새 모듈: Visium HD 불러오기, QC, 정규화, sketch |
-| spatial_hd_cluster | `spatial_hd_cluster.1.0.R` | 새 모듈: Visium HD 슬라이드 통합 군집, 모든 bin에 군집 배정 |
+배포 번호와 작업 파일은 `modules/Registration.md` 표를 따른다. 받은 스크립트(CLOSHA 2.0)는 고친 것만 2.0 번호 + 1이고, 새 모듈은 1.0이다(사용자 결정, 2026-10-22).
+
+| 모듈 | 작업 파일(최신) | 배포 번호 | 이전 파일 |
+|---|---|---|---|
+| spatial_prep | `spatial_prep.1.1.R` | 1.1 | 1.0(받은 스크립트) |
+| spatial_cluster | `spatial_cluster.1.1.R` | 1.1 | 1.0(받은 스크립트) |
+| spatial_svf | `spatial_svf.1.1.R` | 1.1 | 1.0(받은 스크립트) |
+| spatial_labelTransfer | `spatial_labelTransfer.1.1.R` | 1.1 | 1.0(받은 스크립트) |
+| spatial_rctd | `spatial_rctd.1.1.R` | 1.1 | 1.0(받은 스크립트) |
+| spatial_merge | `spatial_merge.1.2.R` | 1.1 | 1.0(받은 스크립트), 1.1(harmony 인자) |
+| check_reference | `check_reference.1.1.R` | 1.1 | 1.0(받은 스크립트) |
+| spatial_condition_de | `spatial_condition_de.1.2.R` | 1.0 | 1.0, 1.1 |
+| spatial_hd_prep | `spatial_hd_prep.1.1.R` | 1.0 | 1.0 |
+| spatial_hd_cluster | `spatial_hd_cluster.1.1.R` | 1.0 | 1.0 |
+| spatial_hd_svf | `spatial_hd_svf.1.0.R` | 1.0 | - |
+| spatial_hd_rctd | `spatial_hd_rctd.1.0.R` | 1.0 | - |
 
 실행 이미지: `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.0.def`(2026-10-22 Codespace 검증 빌드 성공, 8분, 1.29GB, 호스트 변화 없음), `bx_spatial.1.1.def`(r-ape 5.8-1 추가, svf용).
 
@@ -54,6 +58,10 @@ Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종�
   - `output_dir` 기본값이 `./bx_spatial_out`이다(필수가 아님).
   - merge에는 이전 결과 정리가 없다.
   - merge의 `save_plot` 결과(`[1] TRUE`)가 stdout에 찍힌다.
+  - 위 차이와 투명 배경 그림은 1.1(merge는 1.2)에서 고쳤다(2026-10-22).
+- **spatial_labelTransfer 1.0, 참조에 SCT 모델이 있으면 모든 슬라이스가 실패:** query의 raw assay(Spatial)를 `recompute.residuals = TRUE`로 넘기는데, Seurat 5.3은 이를 "Mixing SCT and non-SCT"로 막는다. 1.1에서 query의 SCT assay를 넘긴다. Seurat가 그 SCT 모델의 count assay(Spatial)로 참조 모델 기준 residual을 다시 계산하므로 원래 의도와 같다.
+- **spatial_labelTransfer 1.0, 작은 참조에서 실패:** anchor가 붙은 spot이 50개(TransferData 기본 k.weight)보다 적으면 멈춘다. 1.1에서 k.weight를 anchor spot 수 - 1로 낮추고 WARNING을 남긴다(5개 미만이면 실패).
+- **spatial_rctd 1.0, dominant 세포 유형 그림이 항상 빠짐:** Seurat 5의 SpatialDimPlot에 없는 `na.value` 인자를 넘겨 매번 경고로 건너뛴다. 1.1에서 인자를 뺐다.
 
 ## 5. 권장 자원(포탈: 코어 1/4/8/16, 메모리 8~128GB)
 | 모듈 | Visium | Core |
@@ -65,6 +73,9 @@ Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종�
 | spatial_rctd | 16~32GB | 8 |
 | spatial_merge | 슬라이스 4장 32GB, 8장 이상 64GB | 4 |
 | spatial_condition_de | 16GB | 4 |
+| check_reference | 16GB(큰 참조 32GB) | 1 |
+
+Visium HD(16µm 기준, 8µm는 사용자가 CLOSHA에서 실측): spatial_hd_svf 32GB/4코어(8µm 64GB), spatial_hd_rctd 64GB/8코어(8µm 128GB). RCTD는 작업자마다 자료를 복사하므로 코어 수에 따라 메모리가 늘어난다.
 
 ## 6. Visium HD (2026-10-22)
 기존 Visium 스크립트 5개는 그대로 두고 HD 전용 모듈을 추가했다(사용자 결정).
@@ -145,11 +156,10 @@ Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종�
 
 ## 7. 원고 (2026-10-22)
 - `modules/Registration.md`, `modules/Portal_Content.md`, `pipeline/Portal_Content.md`, `containers/Container_Manual.md`를 썼다.
-- 범위: Visium(prep, cluster, svf, merge, condition_de)과 Visium HD(hd_prep, hd_cluster, condition_de). labelTransfer, rctd, check_reference는 참조 자료로 실행 확인 뒤 넣는다.
+- 범위: 12개 모듈 모두. 파이프라인 기본 구성은 Visium(prep, cluster, svf, merge, condition_de)과 Visium HD(hd_prep, hd_cluster, hd_svf, condition_de)이다. 참조가 필요한 labelTransfer, rctd, hd_rctd, check_reference는 선택 모듈로 안내했다(파이프라인 원고 A5·B5). 세포 유형 모듈 3개의 카테고리는 Annotation / Cell_Type_Annotation(신규), check_reference는 Utility / Genomic_data_Utility(사용자 확인, 2026-10-22).
 - 노선도 2장(`pipeline/figures/pipeline_visium*.png`, 생성 `make_pipeline_map.py`, 그리기 함수는 `docs/tools/metro_map.py`), 파이프라인 개념도(`pipeline/figures/concept.png`, `make_concept.py`).
 - 테스트는 이제 빌드한 SIF 안에서 돌린다: `tools/spatial/run_spatial_test.sh <작업 폴더> <env 폴더>`의 env 폴더에 `bin/Rscript`(apptainer exec 래퍼)를 두면 conda 환경을 만들지 않는다.
 
 ## 8. 남은 일
-1. Visium HD: 8µm 자원 확인(사용자가 CLOSHA에서), HD용 RCTD와 공간 가변 유전자(2단계)
-2. labelTransfer, rctd, check_reference 실행 확인과 원고
-3. 모듈 개념도, 결과 이미지 레전드, 받은 스크립트의 CLOSHA 2.0 배포 여부 확인(배포 번호)
+1. 8µm 자원 실측(사용자가 CLOSHA에서 sacct MaxRSS, Elapsed)
+2. 파이프라인 대분류·중분류(나중에)

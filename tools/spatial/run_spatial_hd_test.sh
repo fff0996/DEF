@@ -1,6 +1,6 @@
 #!/bin/bash
 # Codespace test of the Visium HD scripts (spatial_hd_prep, spatial_hd_cluster,
-# spatial_condition_de 1.1) with the bx_spatial package set.
+# spatial_condition_de 1.2) with the bx_spatial package set.
 #
 # Usage: bash tools/spatial/run_spatial_hd_test.sh <work_dir> <env_dir>
 #   work_dir: scratch folder (about 5 GB during the download, 1 GB after)
@@ -13,7 +13,7 @@
 # (brain_left_top, brain_left_bottom, brain_right_top, brain_right_bottom; about 25,000
 # bins each) with the 6000 most often detected genes, and left and right are compared
 # as two conditions with two slides each (the pseudobulk DESeq2 path). condition_de draws
-# 3 genes on the tissue instead of 6 (spatial_genes=3), again for Codespace memory.
+# no genes on the tissue (spatial_genes=0): even 3 genes went over the Codespace memory.
 set -u
 W=${1:?work_dir is required}
 E=${2:?env_dir is required}
@@ -111,11 +111,11 @@ fi
 rm -rf slides16 out
 Rscript split_hd.R raw/binned_outputs/square_016um slides16 square_016um || exit 1
 mkdir -p out
-python3 measure.py hd_prep Rscript "$M/spatial_hd_prep.1.0.R" input_dir="$W/slides16" output_dir="$W/out/prep" \
+python3 measure.py hd_prep Rscript "$M/spatial_hd_prep.1.1.R" input_dir="$W/slides16" output_dir="$W/out/prep" \
     bin_size=16 sketch_cells=5000 > out/prep.stdout 2> out/prep.stderr || { echo "hd_prep failed" >&2; exit 1; }
-python3 measure.py hd_cluster Rscript "$M/spatial_hd_cluster.1.0.R" input_dir="$W/out/prep" output_dir="$W/out/cluster" \
+python3 measure.py hd_cluster Rscript "$M/spatial_hd_cluster.1.1.R" input_dir="$W/out/prep" output_dir="$W/out/cluster" \
     features=Prox1,Mbp > out/cluster.stdout 2> out/cluster.stderr || { echo "hd_cluster failed" >&2; exit 1; }
-python3 measure.py hd_de Rscript "$M/spatial_condition_de.1.1.R" input_dir="$W/out/cluster" sample_data="$W/slides.csv" \
-    output_dir="$W/out/de" reference=left spatial_genes=3 > out/de.stdout 2> out/de.stderr
+python3 measure.py hd_de Rscript "$M/spatial_condition_de.1.2.R" input_dir="$W/out/cluster" sample_data="$W/slides.csv" \
+    output_dir="$W/out/de" reference=left spatial_genes=0 > out/de.stdout 2> out/de.stderr
 echo "condition_de exit=$?"
 grep -h measure out/*.stderr
