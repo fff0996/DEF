@@ -1,6 +1,6 @@
-# RTpred (Retip) 파이프라인 포탈 등록 콘텐츠
+# RTpred 파이프라인 포탈 등록 콘텐츠
 
-KOBIC 포탈의 RTpred 파이프라인 상세 페이지에 들어갈 국문/영문 원고입니다. 서울대 식품대사체학 연구실의 답변(2026-10-21)에 따라 두 파이프라인(기본 모델 예측, 사용자 모델)으로 등록하는 것을 제안합니다. 모듈별 입력·옵션·결과는 `docs/Retip/modules/Registration.md`에 있습니다. 서울대 원문 자료는 `docs/Retip/CONTENT_KO.md`, `USER_GUIDE_KO.md`입니다. 작성 방법은 `docs/CLOSHA_Portal_Guide_v1.md`를 따릅니다.
+KOBIC 포탈의 RTpred 파이프라인 상세 페이지에 들어갈 국문/영문 원고입니다. 서울대 식품대사체학 연구실의 답변(2026-10-21)에 따라 두 파이프라인(기본 모델 예측, 사용자 모델)으로 등록하는 것을 제안합니다. 모듈별 입력·옵션·결과는 `docs/RTpred/modules/Registration.md`에 있습니다. 서울대 원문 자료는 `docs/RTpred/CONTENT_KO.md`, `USER_GUIDE_KO.md`입니다. 작성 방법은 `docs/CLOSHA_Portal_Guide_v1.md`를 따릅니다.
 
 포탈 스타일: 주 폰트 Pretendard, 포인트 폰트 GmarketSans, 주 폰트 컬러 #222222, 보조 #3A3A3A, 포인트 #32549C, 배경 #FFFFFF.
 
@@ -11,12 +11,12 @@ KOBIC 포탈의 RTpred 파이프라인 상세 페이지에 들어갈 국문/영�
 | 항목 | 기본 모델 예측 | 사용자 모델 |
 |---|---|---|
 | Pipeline Name | `RTpred_Default_Prediction` | `RTpred_User_Model` |
-| 구성 모듈 | retip_predict | retip_train, retip_predict, retip_compare |
+| 구성 모듈 | rtpred_predict | rtpred_train, rtpred_predict, rtpred_compare |
 | Version | 1.0 (CLOSHA 3.0 첫 배포) | 1.0 (CLOSHA 3.0 첫 배포) |
 | Reference | https://doi.org/10.1021/acs.analchem.9b05765 | https://doi.org/10.1021/acs.analchem.9b05765 |
 | Keyword(태그) | retention time prediction, metabolomics, compound annotation, LC-MS, cheminformatics | retention time prediction, metabolomics, model training, model comparison, LC-MS, machine learning |
 | 대분류 / 중분류 | 등록 메모: 포탈 파이프라인 목록에서 가장 가까운 것을 고릅니다(후보: Metabolomics / 대사체 동정). 서울대 제안: 대사체 분석 / 화학정보학 / 머신러닝 | 같음 |
-| 대표 이미지 | retip_predict 결과 그림(`docs/Retip/images/module1_result.png`) | retip_compare 결과 그림(`docs/Retip/images/module3_result.png`) |
+| 대표 이미지 | rtpred_predict 결과 그림(`docs/RTpred/images/module1_result.png`) | rtpred_compare 결과 그림(`docs/RTpred/images/module3_result.png`) |
 
 등록 메모:
 - Reference는 RTpred가 바탕으로 하는 Retip 원논문입니다: Bonini P, Kind T, Tsugawa H, Barupal DK, Fiehn O. Retip: Retention Time Prediction for Compound Annotation in Untargeted Metabolomics. *Anal Chem* 92, 7515-7522 (2020).
@@ -70,23 +70,23 @@ The errors (RMSE, MAE) and explained variance (R²) of the default and user mode
 
 ## 3. 분석 흐름 / Analysis workflow
 
-그림: `docs/Retip/pipeline/figures/pipeline_default.png` (기본 모델 예측, 원본 `pipeline_default.svg`)
+그림: `docs/RTpred/pipeline/figures/pipeline_default.png` (기본 모델 예측, 원본 `pipeline_default.svg`)
 
-그림: `docs/Retip/pipeline/figures/pipeline_user_model.png` (사용자 모델, 원본 `pipeline_user_model.svg`)
+그림: `docs/RTpred/pipeline/figures/pipeline_user_model.png` (사용자 모델, 원본 `pipeline_user_model.svg`)
 
-등록 메모: 서울대 흐름도(docs/Retip/images/pipeline_flow.png)는 "예측은 사용자 학습과 무관"으로 그려져 있습니다. 서울대 답변에 따라 예측 모듈에 학습 모델 입력(model_dir)을 더했으므로 노선도는 새로 그렸습니다.
+등록 메모: 서울대 흐름도(docs/RTpred/images/pipeline_flow.png)는 "예측은 사용자 학습과 무관"으로 그려져 있습니다. 서울대 답변에 따라 예측 모듈에 학습 모델 입력(model_dir)을 더했으므로 노선도는 새로 그렸습니다.
 
 ### 대체 텍스트 (alt)
-- 국문(기본 모델 예측): RTpred 기본 모델 예측 흐름도. 화합물 표(SMILES)가 이미지 안 기본 RP·HILIC 모델과 함께 retip_predict로 들어가 예측표와 그림, 보고서가 만들어짐.
-- English (default prediction): RTpred default prediction workflow: a compound table (SMILES) goes into retip_predict with the bundled RP and HILIC models, producing a prediction table, plots and a report.
-- 국문(사용자 모델): RTpred 사용자 모델 흐름도. 측정 RT 표로 retip_train이 모델을 학습하고, 학습 결과 폴더가 retip_predict(새 화합물 예측)와 retip_compare(예약 test로 기본 모델과 비교)로 각각 이어짐.
-- English (user model): RTpred user model workflow: retip_train learns a model from a measured RT table, and its output folder feeds retip_predict (prediction of new compounds) and retip_compare (comparison with the default model on the reserved test).
+- 국문(기본 모델 예측): RTpred 기본 모델 예측 흐름도. 화합물 표(SMILES)가 이미지 안 기본 RP·HILIC 모델과 함께 rtpred_predict로 들어가 예측표와 그림, 보고서가 만들어짐.
+- English (default prediction): RTpred default prediction workflow: a compound table (SMILES) goes into rtpred_predict with the bundled RP and HILIC models, producing a prediction table, plots and a report.
+- 국문(사용자 모델): RTpred 사용자 모델 흐름도. 측정 RT 표로 rtpred_train이 모델을 학습하고, 학습 결과 폴더가 rtpred_predict(새 화합물 예측)와 rtpred_compare(예약 test로 기본 모델과 비교)로 각각 이어짐.
+- English (user model): RTpred user model workflow: rtpred_train learns a model from a measured RT table, and its output folder feeds rtpred_predict (prediction of new compounds) and rtpred_compare (comparison with the default model on the reserved test).
 
 ---
 
 ## 4. 분석 개념 / Analysis concept
 
-그림: `docs/Retip/pipeline/figures/concept.png` (원본 `concept.svg`)
+그림: `docs/RTpred/pipeline/figures/concept.png` (원본 `concept.svg`)
 
 ### 국문 (그림 설명)
 **그림. 구조로 예측한 머무름 시간으로 대사체 후보 거르기.** (A) 화합물 구조(SMILES)를 RDKit 구조 특성(질량, 극성(logP), 고리 수, 수소결합 주개 등)으로 바꾸고, 학습된 AutoGluon 앙상블 모델(기본 모델 또는 사용자 모델)로 머무름 시간(RT)을 예측합니다. 측정 RT가 있으면 ΔRT(측정 - 예측)를 함께 계산합니다. (B) LC-MS에서 측정한 피크 하나에 같은 질량의 후보 구조가 여러 개 있을 때, 예측 RT가 측정 피크 주변 범위(초록 음영) 안에 드는 후보(초록)는 남기고 벗어나는 후보(빨강)는 뺍니다. RT, 범위, 후보는 모식적인 값입니다(측정 피크 RT 5.2).

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Metro-style schematics of the CLOSHA RTpred (Retip) pipelines (SVG):
-default prediction (retip_predict only) and user model (retip_train -> retip_predict,
-retip_train -> retip_compare)."""
-# Run: python3 docs/Retip/pipeline/figures/make_pipeline_map.py, then
-# for f in docs/Retip/pipeline/figures/pipeline_*.svg; do rsvg-convert -w 2500 "$f" -o "${f%.svg}.png"; done
+"""Metro-style schematics of the CLOSHA RTpred pipelines (SVG):
+default prediction (rtpred_predict only) and user model (rtpred_train -> rtpred_predict,
+rtpred_train -> rtpred_compare)."""
+# Run: python3 docs/RTpred/pipeline/figures/make_pipeline_map.py, then
+# for f in docs/RTpred/pipeline/figures/pipeline_*.svg; do rsvg-convert -w 2500 "$f" -o "${f%.svg}.png"; done
 import sys
 from pathlib import Path
 
@@ -19,7 +19,7 @@ m.reset()
 y = 520
 m.route([(300, y), (1250, y)], BLUE)
 m.route([(1250, y), (1250, y + 170)], YELLOW)
-m.node(1250, y, "retip_predict")
+m.node(1250, y, "rtpred_predict")
 m.refs(1250, y, [("Default RP/HILIC models (in image)", "table")])
 m.tag(300, y, "CSV / XLSX (SMILES)", "in", gap=50, icon="doc")
 m.outputs(1250, y + 170, ["CSV", "PNG", "SVG", "HTML", "JSON"], above=False, gap=46)
@@ -30,15 +30,15 @@ m.save(HERE / "pipeline_default.svg", W, 1060, "RTpred: default model prediction
 m.reset()
 yT, yB = 560, 1180
 m.route([(260, yT), (700, yT)], PURPLE)
-m.route([(700, yT), (1650, yT)], PURPLE)                 # trained model to retip_predict
-m.route([(1000, yT), (1000, yB), (1650, yB)], GREEN)       # same train output to retip_compare
+m.route([(700, yT), (1650, yT)], PURPLE)                 # trained model to rtpred_predict
+m.route([(1000, yT), (1000, yB), (1650, yB)], GREEN)       # same train output to rtpred_compare
 m.route([(700, yT), (700, yT + 150)], YELLOW)
 m.route([(1650, yT), (1650, yT + 170)], YELLOW)
 m.route([(1650, yB), (1650, yB + 170)], YELLOW)
 
-m.node(700, yT, "retip_train")
-m.node(1650, yT, "retip_predict")
-m.node(1650, yB, "retip_compare")
+m.node(700, yT, "rtpred_train")
+m.node(1650, yT, "rtpred_predict")
+m.node(1650, yB, "rtpred_compare")
 m.refs(1650, yT, [("Compounds: CSV / XLSX (SMILES)", "doc")])
 m.refs(1650, yB, [("Default models (in image)", "table"), ("Evaluation table (optional)", "doc")])
 

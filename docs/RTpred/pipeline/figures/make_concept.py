@@ -3,8 +3,8 @@
 predicted RT narrows candidate annotations of an LC-MS peak.
 
 Drawn from scratch (no published figure used); structures, RTs and the window are schematic.
-Run: python3 docs/Retip/pipeline/figures/make_concept.py, then
-rsvg-convert -w 1800 docs/Retip/pipeline/figures/concept.svg -o docs/Retip/pipeline/figures/concept.png
+Run: python3 docs/RTpred/pipeline/figures/make_concept.py, then
+rsvg-convert -w 1800 docs/RTpred/pipeline/figures/concept.svg -o docs/RTpred/pipeline/figures/concept.png
 """
 import math
 from pathlib import Path
@@ -38,7 +38,7 @@ text(40, 40, "A", 30, 800, "start", POINT)
 text(80, 40, "Retention time is predicted from structure", 24, 700, "start")
 box(40, 80, 330, 190, "Compound", ["SMILES", "O=C(O)c1ccccc1", "RP or HILIC"])
 box(450, 80, 330, 190, "RDKit descriptors", ["mass, polarity (logP),", "rings, H-bond donors ...", "one row per compound"])
-box(860, 80, 330, 190, "Trained model", ["AutoGluon ensemble", "default (bundled) or", "user model (retip_train)"])
+box(860, 80, 330, 190, "Trained model", ["AutoGluon ensemble", "default (bundled) or", "user model (rtpred_train)"])
 box(1270, 80, 330, 190, "Predicted RT", ["predicted_rt per row", "ΔRT = measured - predicted", "when RT is given"], KEEP)
 for x in (370, 780, 1190):
     arrow(x + 8, 175, x + 72, 175)

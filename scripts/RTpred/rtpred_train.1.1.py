@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Version 1.1 (changes from retip_train.1.0.py):
+# Version 1.1 (changes from rtpred_train.1.0.py):
 #   One run trains every chromatography mode in the table, as the developers
 #   intended (2026-10-23): the rows are split by model_type and a model is
 #   trained per mode (result/RP/, result/HILIC/). A table of only RP rows gives
@@ -14,10 +14,10 @@
 """RTpred module 2: train a user retention time model (pyRetip / AutoGluon).
 
 Usage:
-    python retip_train.1.1.py input_file="..." output_dir="..." [options]
+    python rtpred_train.1.1.py input_file="..." output_dir="..." [options]
 
 Example:
-    apptainer exec bx_retip_train.1.0.sif python retip_train.1.1.py \
+    apptainer exec bx_rtpred_train.1.0.sif python rtpred_train.1.1.py \
         input_file="/path/to/library.csv" \
         output_dir="/path/to/output" \
         time_limit="1200" \
@@ -59,13 +59,13 @@ Outputs (output_dir/result):
     training.png/.svg, report.html, manifest.json
     train_summary.tsv: Mode, Rows, Status, Best_model, Output
     inputs/train_<MODE>.csv: the rows given to each mode
-    The whole output_dir is the model_dir of retip_predict (1.2) and the
-    input_dir of retip_compare (1.1).
+    The whole output_dir is the model_dir of rtpred_predict (1.2) and the
+    input_dir of rtpred_compare (1.1).
 
 Logs (output_dir/logs): <time>_<pid>.log copies stdout (progress) and
 <time>_<pid>.err copies stderr (errors and warnings).
 
-Runs inside bx_retip_train.1.0.sif. Rerunning replaces output_dir/result
+Runs inside bx_rtpred_train.1.0.sif. Rerunning replaces output_dir/result
 (only that folder is removed; logs are kept).
 """
 import csv
@@ -81,7 +81,7 @@ import sys
 import threading
 
 MODULE = "train"
-IMAGE = "bx_retip_train.1.0.sif"
+IMAGE = "bx_rtpred_train.1.0.sif"
 REQUIRED = ["input_file", "output_dir"]
 OPTIONAL = {"sheet": "first", "rt_unit": "min", "time_limit": "1200",
             "cpus": "auto", "algorithms": "GBM,CAT,RF,XT,KNN", "test_size": "0.2",
@@ -342,7 +342,7 @@ def main():
             except (OSError, ValueError, KeyError):
                 best = "?"
         else:
-            log_err(logs, f"WARNING: {mode} model was not trained; retip_predict uses the default {mode} model for {mode} rows")
+            log_err(logs, f"WARNING: {mode} model was not trained; rtpred_predict uses the default {mode} model for {mode} rows")
         summary.append([mode, str(len(groups[mode])), "ok" if code == 0 else "failed", best,
                         f"{mode}/" if code == 0 else ""])
         log(logs)

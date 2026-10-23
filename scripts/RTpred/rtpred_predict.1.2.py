@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Version 1.2 (changes from retip_predict.1.1.py):
+# Version 1.2 (changes from rtpred_predict.1.1.py):
 #   Trained models of several modes: model_dir may hold the per-mode models of
-#   retip_train 1.1 (result/RP/, result/HILIC/) or the single model of
-#   retip_train 1.0. Each row is predicted with the trained model of its
+#   rtpred_train 1.1 (result/RP/, result/HILIC/) or the single model of
+#   rtpred_train 1.0. Each row is predicted with the trained model of its
 #   model_type. Rows of a mode that was not trained (for example HILIC rows
 #   when only RP was trained) are not predicted, as the developers asked
 #   (2026-10-23): they stay in predictions.csv with an empty predicted_rt,
@@ -13,30 +13,30 @@
 #   per row) is required and the model option is removed, for the default
 #   models too (1.1 also accepted model=RP/HILIC for a table without it).
 #
-# Version 1.1 (changes from retip_predict.1.0.py):
-#   Model choice: the new optional model_dir takes a retip_train output
+# Version 1.1 (changes from rtpred_predict.1.0.py):
+#   Model choice: the new optional model_dir takes a rtpred_train output
 #   directory, and the compounds are predicted with that user-trained model
 #   (its validation-best model). Empty or "default" keeps the 1.0 behavior:
-#   the bundled default RP/HILIC models. This connects retip_train to
-#   retip_predict, as the developers intended (train optional -> predict with
+#   the bundled default RP/HILIC models. This connects rtpred_train to
+#   rtpred_predict, as the developers intended (train optional -> predict with
 #   the default or the trained model -> compare optional).
 #   The image is unchanged: the user-model path uses the mdcc functions that
-#   retip_compare already uses to load trained models.
+#   rtpred_compare already uses to load trained models.
 #
 """RTpred module 1: retention time prediction with the bundled default models
-or a model trained by retip_train.
+or a model trained by rtpred_train.
 
 Usage:
-    python retip_predict.1.2.py input_file="..." output_dir="..." [model_dir="default"] [sheet="..."]
+    python rtpred_predict.1.2.py input_file="..." output_dir="..." [model_dir="default"] [sheet="..."]
 
 Examples:
     Bundled default models:
-        apptainer exec bx_retip_predict.1.0.sif python retip_predict.1.2.py \
+        apptainer exec bx_rtpred_predict.1.0.sif python rtpred_predict.1.2.py \
             input_file="/path/to/compounds.csv" \
             output_dir="/path/to/output"
 
-    Model trained by retip_train:
-        apptainer exec bx_retip_predict.1.0.sif python retip_predict.1.2.py \
+    Model trained by rtpred_train:
+        apptainer exec bx_rtpred_predict.1.0.sif python rtpred_predict.1.2.py \
             input_file="/path/to/compounds.csv" \
             output_dir="/path/to/output" \
             model_dir="/path/to/train_output"
@@ -49,7 +49,7 @@ Arguments (key=value, --key=value, or --key value):
     output_dir (required) - Output directory. Results go to output_dir/result
                             and logs to output_dir/logs.
     model_dir  (optional) - default (or empty) uses the bundled default models.
-                            Otherwise a retip_train output directory (its
+                            Otherwise a rtpred_train output directory (its
                             output_dir or output_dir/result); each row uses
                             the trained model of its mode, and rows of a mode
                             without a trained model are not predicted
@@ -68,9 +68,9 @@ Outputs (output_dir/result):
 Logs (output_dir/logs): <time>_<pid>.log copies stdout (progress) and
 <time>_<pid>.err copies stderr (errors and warnings).
 
-Runs inside bx_retip_predict.1.0.sif, where mdcc and the default models are
-installed. A trained model must come from retip_train in an image with the
-same Python and package versions (bx_retip_train.1.0.sif); mdcc checks this. Rerunning replaces output_dir/result (only that folder is removed;
+Runs inside bx_rtpred_predict.1.0.sif, where mdcc and the default models are
+installed. A trained model must come from rtpred_train in an image with the
+same Python and package versions (bx_rtpred_train.1.0.sif); mdcc checks this. Rerunning replaces output_dir/result (only that folder is removed;
 logs are kept).
 """
 import datetime
@@ -85,7 +85,7 @@ import sys
 import threading
 
 MODULE = "predict"
-IMAGE = "bx_retip_predict.1.0.sif"
+IMAGE = "bx_rtpred_predict.1.0.sif"
 REQUIRED = ["input_file", "output_dir"]
 OPTIONAL = {"model_dir": "default", "sheet": "first", "cpus": "auto"}
 TABLE_SUFFIXES = {".csv", ".xlsx"}
@@ -238,7 +238,7 @@ def run_python(logs, args, cpus, label):
     return process.returncode
 
 
-# Prediction with a retip_train model. mdcc's own predict command reads only
+# Prediction with a rtpred_train model. mdcc's own predict command reads only
 # the bundled models, so this runs the same steps (load_table, infer, plot,
 # report, manifest) with the trained model directory instead. It runs as a
 # separate Python process like the mdcc command, so its stdout and stderr are
@@ -272,7 +272,7 @@ def run(table, result, roots, sheet):
             continue
         values, status, manifest, best = infer(frame.loc[rows], roots[mode], mode)
         if manifest.get("artifact_kind") != "mdcc_user_model_v2":
-            raise ValueError("model_dir must hold models written by retip_train.")
+            raise ValueError("model_dir must hold models written by rtpred_train.")
         unit = manifest.get("rt_unit", "model unit")
         frame.loc[rows, "predicted_rt"] = values
         frame.loc[rows, ["parse_status", "warning_message"]] = status
@@ -306,7 +306,7 @@ def run(table, result, roots, sheet):
         axes[1].legend()
     axes[1].set(title="User best-model RT", xlabel=f"RT ({', '.join(sorted(units))})", ylabel="Compounds")
     save_plot(fig, out, "prediction")
-    note = (f"retip_train으로 학습한 모델({', '.join(f'{m}: {r['best_model']}' for m, r in records.items())})로 계산했습니다. "
+    note = (f"rtpred_train으로 학습한 모델({', '.join(f'{m}: {r['best_model']}' for m, r in records.items())})로 계산했습니다. "
             f"RT 단위는 학습 때의 단위({', '.join(sorted(units))})입니다.")
     if skipped:
         note += " 학습하지 않은 모드(" + ", ".join(f"{m} {n}행" for m, n in skipped.items()) + ")는 예측하지 않았습니다(parse_status=no_trained_model)."
@@ -342,8 +342,8 @@ def has_mode_column(path, sheet):
 
 
 def locate_train_models(path):
-    """Trained models by mode: retip_train 1.1 output (result/RP/model,
-    result/HILIC/model) or the single model of retip_train 1.0 (result/model)."""
+    """Trained models by mode: rtpred_train 1.1 output (result/RP/model,
+    result/HILIC/model) or the single model of rtpred_train 1.0 (result/model)."""
     found = {}
     bases = [path / "result", path]
     candidates = [b / m / "model" for b in bases for m in ("RP", "HILIC")]
@@ -358,7 +358,7 @@ def locate_train_models(path):
             fail(f"cannot read model_type from {manifest}")
         found.setdefault(mode, model_dir.resolve())
     if not found:
-        fail(f"no retip_train model (model_manifest.json) found in model_dir: {path}")
+        fail(f"no rtpred_train model (model_manifest.json) found in model_dir: {path}")
     return found
 
 

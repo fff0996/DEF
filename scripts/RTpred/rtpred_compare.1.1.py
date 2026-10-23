@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# Version 1.1 (changes from retip_compare.1.0.py):
+# Version 1.1 (changes from rtpred_compare.1.0.py):
 #   Every trained mode is compared in one run, as the developers intended
-#   (2026-10-23): for each mode in the retip_train output (retip_train 1.1:
+#   (2026-10-23): for each mode in the rtpred_train output (rtpred_train 1.1:
 #   result/RP/, result/HILIC/; 1.0: result/model) the default model of that
 #   mode and the user model are compared on that mode's evaluation rows, in
 #   result/<MODE>/. result/comparison.csv joins the per-mode tables with a
@@ -17,22 +17,22 @@
 on the same measured compounds.
 
 Usage:
-    python retip_compare.1.1.py input_dir="..." output_dir="..." [eval_file="..."] [options]
+    python rtpred_compare.1.1.py input_dir="..." output_dir="..." [eval_file="..."] [options]
 
 Examples:
-    After retip_train (its reserved_test.csv is the evaluation set):
-        apptainer exec bx_retip_compare.1.0.sif python retip_compare.1.1.py \
+    After rtpred_train (its reserved_test.csv is the evaluation set):
+        apptainer exec bx_rtpred_compare.1.0.sif python rtpred_compare.1.1.py \
             input_dir="/path/to/train_output" \
             output_dir="/path/to/output"
 
     With a separate evaluation table:
-        apptainer exec bx_retip_compare.1.0.sif python retip_compare.1.1.py \
+        apptainer exec bx_rtpred_compare.1.0.sif python rtpred_compare.1.1.py \
             input_dir="/path/to/train_output" \
             eval_file="/path/to/evaluation.csv" \
             output_dir="/path/to/output"
 
 Arguments (key=value, --key=value, or --key value):
-    input_dir  (required) - retip_train output directory (its output_dir;
+    input_dir  (required) - rtpred_train output directory (its output_dir;
                             output_dir/result or result/model also work)
     output_dir (required) - Output directory. Results go to output_dir/result
                             and logs to output_dir/logs.
@@ -40,14 +40,14 @@ Arguments (key=value, --key=value, or --key value):
                             measured RT and a model_type column, RP or HILIC
                             per row), or reserved_test (or empty)
                             for the reserved_test.csv of each trained mode
-                            written by retip_train. default: reserved_test
+                            written by rtpred_train. default: reserved_test
     cpus       (optional) - Threads for numeric libraries: auto uses the cores
                             allocated to the job (Slurm/cgroup); a number is
                             capped by them. default: auto
     sheet      (optional) - XLSX sheet name; first (or empty) reads the first
                             sheet. Ignored for CSV. default: first
     rt_unit    (optional) - RT unit label. mdcc requires it to equal the label
-                            used in retip_train; auto (or empty) reads it from
+                            used in rtpred_train; auto (or empty) reads it from
                             each user model. default: auto
     scope      (optional) - all (every user-model candidate) or best. default: all
     title      (optional) - Report title. default: Default and user model comparison
@@ -62,7 +62,7 @@ Outputs (output_dir/result):
 Logs (output_dir/logs): <time>_<pid>.log copies stdout (progress) and
 <time>_<pid>.err copies stderr (errors and warnings).
 
-Runs inside bx_retip_compare.1.0.sif. Rerunning replaces output_dir/result
+Runs inside bx_rtpred_compare.1.0.sif. Rerunning replaces output_dir/result
 (only that folder is removed; logs are kept).
 """
 import csv
@@ -78,7 +78,7 @@ import sys
 import threading
 
 MODULE = "compare"
-IMAGE = "bx_retip_compare.1.0.sif"
+IMAGE = "bx_rtpred_compare.1.0.sif"
 REQUIRED = ["input_dir", "output_dir"]
 OPTIONAL = {"eval_file": "reserved_test", "sheet": "first", "cpus": "auto", "rt_unit": "auto",
             "scope": "all", "title": "Default and user model comparison"}
@@ -274,7 +274,7 @@ def write_rows(path, header, rows):
 
 def locate_train_outputs(path):
     """Trained models by mode, with the folder holding each mode's
-    reserved_test.csv: retip_train 1.1 (result/RP, result/HILIC) or 1.0
+    reserved_test.csv: rtpred_train 1.1 (result/RP, result/HILIC) or 1.0
     (result/model)."""
     found = {}
     candidates = [(b / m / "model") for b in (path / "result", path) for m in ("RP", "HILIC")]
@@ -289,7 +289,7 @@ def locate_train_outputs(path):
             fail(f"cannot read model_type from {manifest}")
         found.setdefault(mode, (model_dir.resolve(), model_dir.parent.resolve()))
     if not found:
-        fail(f"no retip_train model found in input_dir: {path}")
+        fail(f"no rtpred_train model found in input_dir: {path}")
     return found
 
 

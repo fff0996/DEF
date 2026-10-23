@@ -1,6 +1,6 @@
-# RTpred (Retip) 모듈 포탈 등록 콘텐츠
+# RTpred 모듈 포탈 등록 콘텐츠
 
-KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 원고입니다. 항목 순서는 등록 화면을 따릅니다. 인자 정의는 `docs/Retip/modules/Registration.md`와 같습니다. 작성 방법은 `docs/CLOSHA_Portal_Guide_v1.md`를 따르고, 내용은 서울대 식품대사체학 연구실이 준 자료(`docs/Retip/CONTENT_KO.md`, `USER_GUIDE_KO.md`)를 바탕으로 했습니다.
+KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 원고입니다. 항목 순서는 등록 화면을 따릅니다. 인자 정의는 `docs/RTpred/modules/Registration.md`와 같습니다. 작성 방법은 `docs/CLOSHA_Portal_Guide_v1.md`를 따르고, 내용은 서울대 식품대사체학 연구실이 준 자료(`docs/RTpred/CONTENT_KO.md`, `USER_GUIDE_KO.md`)를 바탕으로 했습니다.
 
 등록 화면 공통 안내:
 - 모든 스크립트는 `key=value` 형식 인자를 받습니다. 등록 화면의 Name은 인자 이름, Value는 기본값입니다.
@@ -12,35 +12,35 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 분리 모드: 서울대 의도(2026-10-23 확인)에 따라 학습은 한 표의 RP·HILIC를 모드별로 나눠 각각 학습하고, 예측은 행마다 그 모드의 모델을 씁니다. 모드는 입력 표의 model_type 열(행마다 RP 또는 HILIC)로만 정하며, 세 모듈 모두 이 열이 필수입니다(모드를 고르는 인자는 없습니다). 사용자 모델로 예측할 때 학습하지 않은 모드의 행은 예측하지 않고 표시만 합니다. 이미지와 mdcc 코드는 그대로이며 래퍼 스크립트만 바뀌었습니다.
 - 모든 모듈은 결과를 `output_dir/result/`에, 로그를 `output_dir/logs/`에 남기며, 다시 실행하면 `result/`만 지우고 새로 만듭니다.
 - 카테고리: CLOSHA 프로그램 목록에 맞는 중분류가 없어 Omics / Metabolite_Identification(신규)을 제안합니다. 머무름 시간 예측은 비표적 대사체 분석에서 후보 화합물을 거르는 데 쓰이며, 다른 대사체 동정 도구도 담을 수 있는 일반 이름입니다.
-- 분석 개념 이미지와 주요 결과 이미지는 서울대가 만든 그림(`docs/Retip/images/`)입니다. 결과 그림은 서울대 예제 실행 결과이며, 학습·비교 예제의 RT는 기능 확인용 합성값입니다.
+- 분석 개념 이미지와 주요 결과 이미지는 서울대가 만든 그림(`docs/RTpred/images/`)입니다. 결과 그림은 서울대 예제 실행 결과이며, 학습·비교 예제의 RT는 기능 확인용 합성값입니다.
 - 등록 메모: 결과 그림은 우리 래퍼(`key=value`)로 CLOSHA에서 실측 데이터를 돌린 뒤 바꿀 수 있습니다. 그림 형식은 mdcc가 그리므로 같습니다.
 
 ---
 
-## 1. retip_predict
+## 1. rtpred_predict
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
 |---|---|---|
-| 모듈명 | retip_predict | retip_predict |
+| 모듈명 | rtpred_predict | rtpred_predict |
 | 서브 타이틀 | 머무름 시간 예측 | Retention time prediction |
 | 버전 | 1.0 | |
 | 카테고리 대분류 | Omics | Omics |
 | 카테고리 중분류 | Metabolite_Identification (신규) | Metabolite_Identification (new) |
 | 태그 | retention time, RT prediction, RP, HILIC, SMILES, RDKit, AutoGluon, metabolomics | |
 | 레퍼런스 URL | https://doi.org/10.1021/acs.analchem.9b05765 | |
-| 컨테이너 이미지 | bx_retip_predict.1.0 | |
-| 실행 스크립트 파일 | retip_predict.1.0.py | |
+| 컨테이너 이미지 | bx_rtpred_predict.1.0 | |
+| 실행 스크립트 파일 | rtpred_predict.1.0.py | |
 | Processor Core (제안) | 4코어, 메모리 8GB | 4 cores, 8 GB of memory |
 
-등록 메모: 작업 파일 `scripts/Retip/retip_predict.1.2.py`를 배포 번호 1.0으로 올립니다.
+등록 메모: 작업 파일 `scripts/RTpred/rtpred_predict.1.2.py`를 배포 번호 1.0으로 올립니다.
 
 ### 실행 이미지
-이미지: bx_retip_predict 1.0
+이미지: bx_rtpred_predict 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|
-| DEF 파일 | `defs/Retip/bx_retip_predict.1.0.def` |
+| DEF 파일 | `defs/RTpred/bx_rtpred_predict.1.0.def` |
 | DEF Bootstrap | `docker` |
 | DEF From | Debian 12 bookworm (`python:3.13.15-slim-bookworm`) |
 | 설치 도구 / installer | pip(해시 고정), apt (conda 사용 안 함) |
@@ -82,8 +82,8 @@ Predicts liquid chromatography retention time (RT) from compound structures (SMI
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
 | Input | Required | File | input_file | /data/compounds.csv | 화합물 표(CSV 또는 XLSX, 한 행이 화합물 하나). SMILES 열과 model_type 열(행마다 RP 또는 HILIC, 섞여도 됨) 필수. 측정 RT 열은 선택 | Compound table (CSV or XLSX, one compound per row) with a SMILES column and a model_type column (RP or HILIC per row; modes may be mixed); a measured RT column is optional |
-| Output | Required | Directory | output_dir | /data/retip_predict | 결과 폴더. result/에 predictions.csv, prediction.png·.svg, report.html, manifest.json, logs/에 로그 | Output folder: result/ holds predictions.csv, prediction.png and .svg, report.html and manifest.json; logs/ holds the logs |
-| Input | Optional | Directory | model_dir | default | 예측에 쓸 모델. default 또는 빈 값 = 이미지 안 기본 RP·HILIC 모델. 학습 모델을 쓰려면 retip_train 결과 폴더. 행마다 그 모드의 학습 모델로 예측하고, 학습하지 않은 모드의 행은 예측하지 않고 표시만 함(parse_status=no_trained_model) | Model used for prediction. default or empty = the bundled default RP and HILIC models. For trained models, the retip_train output folder: each row uses the trained model of its mode, and rows of an untrained mode are kept but not predicted (parse_status=no_trained_model) |
+| Output | Required | Directory | output_dir | /data/rtpred_predict | 결과 폴더. result/에 predictions.csv, prediction.png·.svg, report.html, manifest.json, logs/에 로그 | Output folder: result/ holds predictions.csv, prediction.png and .svg, report.html and manifest.json; logs/ holds the logs |
+| Input | Optional | Directory | model_dir | default | 예측에 쓸 모델. default 또는 빈 값 = 이미지 안 기본 RP·HILIC 모델. 학습 모델을 쓰려면 rtpred_train 결과 폴더. 행마다 그 모드의 학습 모델로 예측하고, 학습하지 않은 모드의 행은 예측하지 않고 표시만 함(parse_status=no_trained_model) | Model used for prediction. default or empty = the bundled default RP and HILIC models. For trained models, the rtpred_train output folder: each row uses the trained model of its mode, and rows of an untrained mode are kept but not predicted (parse_status=no_trained_model) |
 | Option | Optional | String | sheet | first | XLSX 시트 이름. first 또는 빈 값 = 첫 시트. CSV에는 적용 안 함 | XLSX sheet name; first or empty = the first sheet. Ignored for CSV |
 
 ### 샘플시트
@@ -107,10 +107,10 @@ C002,NCC(=O)O,HILIC
 | 학습 모델로 예측하면 행마다 그 모드의 학습 모델을 씁니다. 학습하지 않은 모드의 행(예: RP만 학습했을 때 HILIC 행)은 결과 표에 남되 predicted_rt가 비고 parse_status=no_trained_model로 표시되며, 로그에 그 행 수가 경고로 남습니다. 그 행까지 예측하려면 그 모드도 학습하거나 기본 모델(model_dir 비움)로 따로 실행해 주세요. 표의 어떤 행도 학습한 모드가 아니면 멈춥니다. | With trained models each row uses the trained model of its mode. Rows of a mode that was not trained (for example HILIC rows when only RP was trained) stay in the table with an empty predicted_rt and parse_status=no_trained_model, and the log warns with their number. To predict them, train that mode too or run separately with the default models (empty model_dir). The run stops when no row has a trained mode. |
 | 잘못되었거나 빈 SMILES 행은 지우지 않고 parse_status=invalid_smiles와 사유를 남기며 예측값은 비웁니다. 오류가 아니라 입력 데이터의 결과입니다. | Invalid or empty SMILES rows are kept with parse_status=invalid_smiles and the reason, with an empty prediction; this reflects the input, not an error. |
 | 모델이 낸 RT를 보정하거나 단위를 바꾸지 않습니다. 학습 모델로 예측하면 rt_unit 열에 학습 때의 단위가 적힙니다. | The RT returned by the model is neither corrected nor converted; with trained models the rt_unit column gives the unit used in training. |
-| 학습 모델은 같은 버전의 이미지(bx_retip_train 1.0)로 학습한 것만 쓸 수 있습니다. 패키지 버전이 다르면 서울대 코드가 멈춥니다. | Only models trained with the matching image (bx_retip_train 1.0) can be used; the SNU code stops on different package versions. |
+| 학습 모델은 같은 버전의 이미지(bx_rtpred_train 1.0)로 학습한 것만 쓸 수 있습니다. 패키지 버전이 다르면 서울대 코드가 멈춥니다. | Only models trained with the matching image (bx_rtpred_train 1.0) can be used; the SNU code stops on different package versions. |
 
 ### 분석 개념 이미지
-그림: `docs/Retip/images/module1_concept.png`
+그림: `docs/RTpred/images/module1_concept.png`
 
 - 레전드(국문): **그림. 기본 모델로 머무름 시간 예측.** (Compound input) CSV 또는 XLSX 화합물 표에서 SMILES와 RP·HILIC 모드를 읽으며, 측정 RT는 있어도 되고 없어도 됩니다. (Local best ensemble) 구조를 RDKit descriptor로 바꾸고 이미지에 저장된 best 앙상블(WeightedEnsemble_L3)로 예측합니다. (Predicted RT) 입력 한 행마다 결과 한 행을 내며, 읽지 못한 구조도 결과에 남기고 예측표·QC·분포 그림을 만듭니다.
 - 레전드(영문): **Figure. Retention time prediction with the default models.** (Compound input) SMILES and the RP or HILIC mode are read from a CSV or XLSX table; a measured RT is optional. (Local best ensemble) Structures become RDKit descriptors and the best ensemble saved in the image (WeightedEnsemble_L3) predicts. (Predicted RT) Each input row gives one result row; unreadable structures are kept, and a prediction table, QC and distribution plots are written.
@@ -118,9 +118,9 @@ C002,NCC(=O)O,HILIC
 
 ### 스크립트 사용 예제
 ```
-python retip_predict.1.0.py \
+python rtpred_predict.1.0.py \
   input_file=/data/compounds.csv \
-  output_dir=/data/retip_predict \
+  output_dir=/data/rtpred_predict \
   model_dir=default \
   sheet=first
 ```
@@ -131,37 +131,37 @@ python retip_predict.1.0.py \
 **결과 1. 예측 처리 현황과 예측 RT 분포**
 - 결과 파일: `result/prediction.png` (같은 그림 `prediction.svg`, 표 `predictions.csv`)
 
-그림: `docs/Retip/images/module1_result.png`
+그림: `docs/RTpred/images/module1_result.png`
 
 - 레전드(국문): **기본 모델 예측 결과 요약.** 왼쪽(Prediction coverage)은 구조를 읽어 예측한 행(ok)과 읽지 못한 행(invalid_smiles)의 화합물 수(Compounds)이고, 오른쪽(Default best-model RT)은 모드별(파랑 RP, 주황 HILIC) 예측 RT 분포입니다. x축은 RT (model unit)로, 모델이 학습된 단위 그대로입니다. 정상 결과는 invalid_smiles가 0이거나 입력에서 의도한 행만 있는 경우입니다. 예시 데이터에서는 8행 중 6행이 예측되었고, 의도적으로 넣은 잘못된·빈 SMILES 2행이 invalid_smiles로 남았습니다. 예측 RT는 HILIC 약 2~7, RP 약 4입니다.
 - 레전드(영문): **Summary of the default model prediction.** Left (Prediction coverage): number of compounds predicted (ok) and with unreadable structures (invalid_smiles). Right (Default best-model RT): predicted RT per mode (blue RP, orange HILIC); the x axis is RT (model unit), the unit the model was trained in. A normal result has no invalid_smiles rows or only those expected from the input. In the example data 6 of 8 rows were predicted, and the 2 deliberately invalid or empty SMILES rows remained as invalid_smiles. Predicted RTs are about 2-7 for HILIC and about 4 for RP.
 
 ---
 
-## 2. retip_train
+## 2. rtpred_train
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
 |---|---|---|
-| 모듈명 | retip_train | retip_train |
+| 모듈명 | rtpred_train | rtpred_train |
 | 서브 타이틀 | 사용자 머무름 시간 모델 학습 | User retention time model training |
 | 버전 | 1.0 | |
 | 카테고리 대분류 | Omics | Omics |
 | 카테고리 중분류 | Metabolite_Identification (신규) | Metabolite_Identification (new) |
 | 태그 | retention time, model training, AutoGluon, pyRetip, RDKit, RP, HILIC, machine learning | |
 | 레퍼런스 URL | https://doi.org/10.1021/acs.analchem.9b05765 | |
-| 컨테이너 이미지 | bx_retip_train.1.0 | |
-| 실행 스크립트 파일 | retip_train.1.0.py | |
+| 컨테이너 이미지 | bx_rtpred_train.1.0 | |
+| 실행 스크립트 파일 | rtpred_train.1.0.py | |
 | Processor Core (제안) | 4코어, 메모리 16GB | 4 cores, 16 GB of memory |
 
-등록 메모: 작업 파일 `scripts/Retip/retip_train.1.1.py`를 배포 번호 1.0으로 올립니다.
+등록 메모: 작업 파일 `scripts/RTpred/rtpred_train.1.1.py`를 배포 번호 1.0으로 올립니다.
 
 ### 실행 이미지
-이미지: bx_retip_train 1.0
+이미지: bx_rtpred_train 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|
-| DEF 파일 | `defs/Retip/bx_retip_train.1.0.def` |
+| DEF 파일 | `defs/RTpred/bx_rtpred_train.1.0.def` |
 | DEF Bootstrap | `docker` |
 | DEF From | Debian 12 bookworm (`python:3.13.15-slim-bookworm`) |
 | 설치 도구 / installer | pip(해시 고정), apt (conda 사용 안 함) |
@@ -205,7 +205,7 @@ Trains an RT prediction model from a table of retention times measured under the
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
 | Input | Required | File | input_file | /data/rt_library.csv | 학습 표(CSV 또는 XLSX). SMILES, 측정 RT, model_type 열(행마다 RP 또는 HILIC, 섞여도 됨) 필수. model_type에 있는 모드마다 따로 학습하며(RP만 있으면 RP 모델만), 모드마다 정제 후 25행, 서로 다른 구조 15개 이상 필요 | Training table (CSV or XLSX) with SMILES, measured RT and a model_type column (RP or HILIC per row; modes may be mixed). Each mode in model_type is trained separately (RP rows only give only an RP model); each mode needs at least 25 rows and 15 distinct structures after cleaning |
-| Output | Required | Directory | output_dir | /data/retip_train | 결과 폴더. result/에 모드별 폴더(RP/, HILIC/: model/, reserved_test.csv, validation_leaderboard.csv, split_assignments.csv, rejected_rows.csv, training.png·.svg, report.html, manifest.json)와 train_summary.tsv, logs/에 로그 | Output folder: result/ holds a folder per mode (RP/, HILIC/: model/, reserved_test.csv, validation_leaderboard.csv, split_assignments.csv, rejected_rows.csv, training.png and .svg, report.html, manifest.json) and train_summary.tsv; logs/ holds the logs |
+| Output | Required | Directory | output_dir | /data/rtpred_train | 결과 폴더. result/에 모드별 폴더(RP/, HILIC/: model/, reserved_test.csv, validation_leaderboard.csv, split_assignments.csv, rejected_rows.csv, training.png·.svg, report.html, manifest.json)와 train_summary.tsv, logs/에 로그 | Output folder: result/ holds a folder per mode (RP/, HILIC/: model/, reserved_test.csv, validation_leaderboard.csv, split_assignments.csv, rejected_rows.csv, training.png and .svg, report.html, manifest.json) and train_summary.tsv; logs/ holds the logs |
 | Option | Optional | String | sheet | first | XLSX 시트 이름. first 또는 빈 값 = 첫 시트. CSV에는 적용 안 함 | XLSX sheet name; first or empty = the first sheet. Ignored for CSV |
 | Option | Optional | String | rt_unit | min | 측정 RT의 단위 이름. 값은 바꾸지 않고 기록만 함. 빈 값 = min | Unit label of the measured RT; values are not converted. Empty = min |
 | Option | Optional | Integer | time_limit | 1200 | 모드마다 AutoGluon 학습 시간 예산(초). 전처리·저장을 포함한 전체 실행 시간 제한은 아님 | AutoGluon training budget per mode in seconds; not a limit on the whole run including preprocessing and saving |
@@ -243,7 +243,7 @@ S003,O=C(O)c1ccccc1,5.40,HILIC
 | rt_unit은 이름만 기록하고 값을 바꾸지 않습니다. 기본값 min은 기본 모델의 단위와 같습니다. 이후 비교에서 같은 이름을 써야 합니다. | rt_unit is only recorded and values are not converted; the default min matches the default models. Use the same label in the later comparison. |
 
 ### 분석 개념 이미지
-그림: `docs/Retip/images/module2_concept.png`
+그림: `docs/RTpred/images/module2_concept.png`
 
 - 레전드(국문): **그림. 사용자 머무름 시간 모델 학습.** (Measured library) SMILES와 측정 RT 표를 정규화한 구조 단위로 묶고, 학습 전에 예약 test 화합물을 먼저 떼어 둡니다. (Train and select) descriptor 필터는 train에서만 정하고, pyRetip 방식의 학습 인터페이스로 후보 모델을 학습한 뒤 validation RMSE로 best를 고릅니다. (Reusable models) AutoGluon 모델과 manifest, 학습 구조 해시, 학습에 쓰지 않은 예약 test CSV를 저장합니다.
 - 레전드(영문): **Figure. Training a user retention time model.** (Measured library) The table of SMILES and measured RT is grouped by canonical structure, and reserved test compounds are set aside before training. (Train and select) Descriptor filters are fitted on train only, candidate models are trained through the pyRetip-style interface, and the best is chosen by validation RMSE. (Reusable models) AutoGluon models with a manifest, training structure hashes and the unused reserved test CSV are saved.
@@ -251,9 +251,9 @@ S003,O=C(O)c1ccccc1,5.40,HILIC
 
 ### 스크립트 사용 예제
 ```
-python retip_train.1.0.py \
+python rtpred_train.1.0.py \
   input_file=/data/rt_library.csv \
-  output_dir=/data/retip_train \
+  output_dir=/data/rtpred_train \
   sheet=first \
   rt_unit=min \
   time_limit=1200 \
@@ -272,37 +272,37 @@ python retip_train.1.0.py \
 **결과 1. 구조 그룹 분할과 validation 성능**
 - 결과 파일: `result/<MODE>/training.png` (같은 그림 `training.svg`, 표 `split_assignments.csv`, `validation_leaderboard.csv`)
 
-그림: `docs/Retip/images/module2_result.png`
+그림: `docs/RTpred/images/module2_result.png`
 
 - 레전드(국문): **학습 자료 분할과 후보 모델의 validation 성능.** 왼쪽(Structure-group split)은 구조 그룹 기준으로 train, reserved_test, validation에 배정된 행 수(Rows)이고, 오른쪽(Validation model selection)은 학습에 성공한 후보 모델의 validation RMSE(model unit)입니다. 막대가 짧을수록 좋으며, 가장 짧은 모델이 best로 저장됩니다. 정상 결과는 세 분할에 모두 화합물이 있고 후보가 여러 개 학습된 경우입니다. 예시 데이터에서는 72행이 train 42, reserved_test 15, validation 15행으로 나뉘었고, ExtraTrees와 WeightedEnsemble_L2의 validation RMSE가 약 0.15로 RandomForest(약 0.18)보다 낮았습니다. 그림 위 문구처럼 합성 RT라 실제 측정 성능이 아닙니다.
 - 레전드(영문): **Split of the training data and validation performance of the candidates.** Left (Structure-group split): rows assigned to train, reserved_test and validation by structure group. Right (Validation model selection): validation RMSE (model unit) of the candidates that trained successfully; shorter is better and the shortest is saved as best. A normal result has compounds in all three splits and several trained candidates. In the example data the 72 rows split into 42 train, 15 reserved_test and 15 validation rows, and ExtraTrees and WeightedEnsemble_L2 reached a validation RMSE of about 0.15, below RandomForest (about 0.18). As the figure title says, the RTs are synthetic, so this is not measured performance.
 
 ---
 
-## 3. retip_compare
+## 3. rtpred_compare
 
 ### 기본 정보
 | 항목 | 국문 | 영문 |
 |---|---|---|
-| 모듈명 | retip_compare | retip_compare |
+| 모듈명 | rtpred_compare | rtpred_compare |
 | 서브 타이틀 | 기본·사용자 머무름 시간 모델 성능 비교 | Default and user RT model comparison |
 | 버전 | 1.0 | |
 | 카테고리 대분류 | Omics | Omics |
 | 카테고리 중분류 | Metabolite_Identification (신규) | Metabolite_Identification (new) |
 | 태그 | retention time, model comparison, RMSE, MAE, R-squared, AutoGluon, RP, HILIC | |
 | 레퍼런스 URL | https://doi.org/10.1021/acs.analchem.9b05765 | |
-| 컨테이너 이미지 | bx_retip_compare.1.0 | |
-| 실행 스크립트 파일 | retip_compare.1.0.py | |
+| 컨테이너 이미지 | bx_rtpred_compare.1.0 | |
+| 실행 스크립트 파일 | rtpred_compare.1.0.py | |
 | Processor Core (제안) | 4코어, 메모리 8GB | 4 cores, 8 GB of memory |
 
-등록 메모: 작업 파일 `scripts/Retip/retip_compare.1.1.py`를 배포 번호 1.0으로 올립니다.
+등록 메모: 작업 파일 `scripts/RTpred/rtpred_compare.1.1.py`를 배포 번호 1.0으로 올립니다.
 
 ### 실행 이미지
-이미지: bx_retip_compare 1.0
+이미지: bx_rtpred_compare 1.0
 
 | 항목 / Item | 값 / Value |
 |---|---|
-| DEF 파일 | `defs/Retip/bx_retip_compare.1.0.def` |
+| DEF 파일 | `defs/RTpred/bx_rtpred_compare.1.0.def` |
 | DEF Bootstrap | `docker` |
 | DEF From | Debian 12 bookworm (`python:3.13.15-slim-bookworm`) |
 | 설치 도구 / installer | pip(해시 고정), apt (conda 사용 안 함) |
@@ -345,8 +345,8 @@ Compares the RT prediction errors of the default model and a user model on the s
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Required | Directory | input_dir | /data/retip_train | retip_train 결과 폴더. 학습된 모드마다 model/과 reserved_test.csv가 있어야 함 | retip_train output folder with model/ and reserved_test.csv for each trained mode |
-| Output | Required | Directory | output_dir | /data/retip_compare | 결과 폴더. result/에 모드별 폴더(RP/, HILIC/: comparison.csv, predictions_long.csv, comparison.png·.svg, report.html, manifest.json), 모드 열이 붙은 통합 comparison.csv, compare_summary.tsv | Output folder: result/ holds a folder per mode (RP/, HILIC/: comparison.csv, predictions_long.csv, comparison.png and .svg, report.html, manifest.json), a joint comparison.csv with a Mode column, and compare_summary.tsv |
+| Input | Required | Directory | input_dir | /data/rtpred_train | rtpred_train 결과 폴더. 학습된 모드마다 model/과 reserved_test.csv가 있어야 함 | rtpred_train output folder with model/ and reserved_test.csv for each trained mode |
+| Output | Required | Directory | output_dir | /data/rtpred_compare | 결과 폴더. result/에 모드별 폴더(RP/, HILIC/: comparison.csv, predictions_long.csv, comparison.png·.svg, report.html, manifest.json), 모드 열이 붙은 통합 comparison.csv, compare_summary.tsv | Output folder: result/ holds a folder per mode (RP/, HILIC/: comparison.csv, predictions_long.csv, comparison.png and .svg, report.html, manifest.json), a joint comparison.csv with a Mode column, and compare_summary.tsv |
 | Input | Optional | File | eval_file | reserved_test | 평가 표(CSV 또는 XLSX). SMILES, 측정 RT, model_type 열(행마다 RP 또는 HILIC) 필수. reserved_test 또는 빈 값 = 모드마다 학습 때 떼어 둔 reserved_test.csv. 학습하지 않은 모드의 행은 쓰지 않음 | Evaluation table (CSV or XLSX) with SMILES, measured RT and a model_type column (RP or HILIC per row). reserved_test or empty = the reserved_test.csv held out per mode in training. Rows of an untrained mode are not used |
 | Option | Optional | String | sheet | first | XLSX 시트 이름. first 또는 빈 값 = 첫 시트. CSV에는 적용 안 함 | XLSX sheet name; first or empty = the first sheet. Ignored for CSV |
 | Option | Optional | String | rt_unit | auto | RT 단위 이름. auto 또는 빈 값 = 모드마다 사용자 모델에 기록된 단위. 학습 때와 다르면 그 모드는 비교하지 않음 | RT unit label. auto or empty = the unit recorded in each user model; a mode whose unit differs from training is not compared |
@@ -372,7 +372,7 @@ Compares the RT prediction errors of the default model and a user model on the s
 | 잘못된 구조는 지표에서 빠지지만 predictions_long.csv에는 남습니다. 측정 RT의 분산이 0이면 R²는 빈 값입니다. 유효한 평가 구조가 2개 미만이면 멈춥니다. | Invalid structures are excluded from the metrics but kept in predictions_long.csv; R² is empty when the measured RTs have no variance; fewer than two valid evaluation structures stop the run. |
 
 ### 분석 개념 이미지
-그림: `docs/Retip/images/module3_concept.png`
+그림: `docs/RTpred/images/module3_concept.png`
 
 - 레전드(국문): **그림. 기본 모델과 사용자 모델의 성능 비교.** (Common evaluation set) SMILES와 측정 RT 평가 표에서 사용자 학습 자료와의 중복을 확인하고, 모든 모델을 같은 유효 행으로 평가합니다. (Models to compare) 이미지의 기본 best 모델과 사용자 모델(모든 후보 또는 best)을 비교합니다. (Performance comparison) RMSE, MAE, R²와 순위표, 측정-예측 그림을 만들며, 기본 모델은 바뀌지 않습니다.
 - 레전드(영문): **Figure. Comparing the default and user models.** (Common evaluation set) The evaluation table of SMILES and measured RT is checked for overlap with the user training data, and every model is evaluated on the same valid rows. (Models to compare) The default best model of the image is compared with the user model (all candidates or the best). (Performance comparison) RMSE, MAE, R², a rank table and a measured-versus-predicted plot are produced; the default model stays unchanged.
@@ -380,9 +380,9 @@ Compares the RT prediction errors of the default model and a user model on the s
 
 ### 스크립트 사용 예제
 ```
-python retip_compare.1.0.py \
-  input_dir=/data/retip_train \
-  output_dir=/data/retip_compare \
+python rtpred_compare.1.0.py \
+  input_dir=/data/rtpred_train \
+  output_dir=/data/rtpred_compare \
   eval_file=reserved_test \
   sheet=first \
   rt_unit=auto \
@@ -396,7 +396,7 @@ python retip_compare.1.0.py \
 **결과 1. 후보별 오차와 측정-예측 비교**
 - 결과 파일: `result/<MODE>/comparison.png` (같은 그림 `comparison.svg`, 표 `comparison.csv`, `predictions_long.csv`), 모드 통합 표 `result/comparison.csv`
 
-그림: `docs/Retip/images/module3_result.png`
+그림: `docs/RTpred/images/module3_result.png`
 
 - 레전드(국문): **같은 평가 행에서 본 모델별 오차.** 왼쪽(All candidates: same evaluation rows)은 기본 모델(default/WeightedEnsemble_L3)과 사용자 모델 후보(user_1/…)의 RMSE(model unit)로, 짧을수록 좋습니다. 오른쪽(Selected best models)은 기본 best(파랑)와 사용자 best(주황)의 측정 RT(Measured RT) 대비 예측 RT(Predicted RT)이며, 점선(y = x)에 가까울수록 정확합니다. 예시 데이터에서는 사용자 후보의 RMSE가 약 0.1, 기본 모델이 약 3.6이었고 기본 모델 점은 점선 위로 크게 벗어났습니다. 사용자 모델의 학습 RT가 합성값이고 기본 모델과 LC 조건·단위가 같지 않으므로, 이 차이는 성능 우열이 아니라 비교 과정이 동작함을 보여 줍니다.
 - 레전드(영문): **Errors of each model on the same evaluation rows.** Left (All candidates: same evaluation rows): RMSE (model unit) of the default model (default/WeightedEnsemble_L3) and the user candidates (user_1/...); shorter is better. Right (Selected best models): predicted RT against measured RT for the default best (blue) and the user best (orange); points nearer the dashed y = x line are more accurate. In the example data the user candidates had an RMSE of about 0.1 and the default model about 3.6, with its points far above the line. The user training RTs are synthetic and the LC conditions and units differ from the default model, so the gap shows that the comparison works, not which model is better.

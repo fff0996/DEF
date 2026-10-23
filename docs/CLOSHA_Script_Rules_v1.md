@@ -13,7 +13,7 @@ CLOSHA 분석 스크립트 작성 규칙 1.0
 
 ## 1. 위치, 이름, 버전
 - 위치: `scripts/{파이프라인명}/`. 예: `scripts/ATAC-seq/`.
-- 이름: `{모듈명}.{주버전}.{부버전}.{확장자}`. 예: `ATAC_QC.1.0.R`, `organellar_filter.1.0.sh`, `retip_predict.1.0.py`.
+- 이름: `{모듈명}.{주버전}.{부버전}.{확장자}`. 예: `ATAC_QC.1.0.R`, `organellar_filter.1.0.sh`, `rtpred_predict.1.0.py`.
 - 지원 언어: Bash(`.sh`), R(`.R`), Python(`.py`).
 - 첫 줄: `#!/bin/bash`, `#!/usr/bin/env Rscript`, `#!/usr/bin/env python3`.
 - 한 파이프라인 노드에 스크립트 하나. 같은 실행 이미지를 여러 스크립트가 함께 쓸 수 있다(예: bx_atac_qc 이미지 = ATAC_QC + ATAC_QC_plot).
@@ -216,7 +216,7 @@ msg      <- function(...) { cat(..., "\n") }
   - 오류와 경고는 5절의 `stop_err`, `warn_msg`로 stderr와 `.error.log`에 같이 쓴다.
   - 패키지가 내는 `message()`와 `warning()`은 stderr로 나간다. `.error.log`에도 남기려면 본문을 `withCallingHandlers(..., message = function(m) cat(conditionMessage(m), file = err_con), warning = function(w) cat("WARNING: ", conditionMessage(w), "\n", file = err_con))`로 감싼다.
   - 외부 도구는 `system2(cmd, args, stdout = "", stderr = "")`처럼 두 스트림을 그대로 두거나, 파일로 받을 때도 따로 받는다.
-- Python: `print(..., file=sys.stdout)`와 `print(..., file=sys.stderr)`를 나누고, 외부 도구는 `subprocess.Popen(..., stdout=PIPE, stderr=PIPE)`로 따로 읽어 각각 `.log`, `.error.log`에 남긴다(예: `scripts/Retip/retip_*.1.0.py`).
+- Python: `print(..., file=sys.stdout)`와 `print(..., file=sys.stderr)`를 나누고, 외부 도구는 `subprocess.Popen(..., stdout=PIPE, stderr=PIPE)`로 따로 읽어 각각 `.log`, `.error.log`에 남긴다(예: `scripts/RTpred/rtpred_*.1.0.py`).
 
 ### 7.3 로그 내용
 - 로그 첫 부분:

@@ -2,10 +2,10 @@
 """RTpred module 2: train a user retention time model (pyRetip / AutoGluon).
 
 Usage:
-    python retip_train.1.0.py input_file="..." output_dir="..." [model="auto"] [options]
+    python rtpred_train.1.0.py input_file="..." output_dir="..." [model="auto"] [options]
 
 Example:
-    apptainer exec bx_retip_train.1.0.sif python retip_train.1.0.py \
+    apptainer exec bx_rtpred_train.1.0.sif python rtpred_train.1.0.py \
         input_file="/path/to/library.csv" \
         output_dir="/path/to/output" \
         model="RP" \
@@ -46,12 +46,12 @@ Outputs (output_dir/result):
     model/ (trained models and manifest), reserved_test.csv (held-out
     compounds), validation_leaderboard.csv, split_assignments.csv,
     rejected_rows.csv, training.png/.svg, report.html, manifest.json
-    The whole output_dir is the input_dir of retip_compare.
+    The whole output_dir is the input_dir of rtpred_compare.
 
 Logs (output_dir/logs): <time>_<pid>.log copies stdout (progress) and
 <time>_<pid>.err copies stderr (errors and warnings).
 
-Runs inside bx_retip_train.1.0.sif. Rerunning replaces output_dir/result
+Runs inside bx_rtpred_train.1.0.sif. Rerunning replaces output_dir/result
 (only that folder is removed; logs are kept).
 """
 import csv
@@ -66,7 +66,7 @@ import sys
 import threading
 
 MODULE = "train"
-IMAGE = "bx_retip_train.1.0.sif"
+IMAGE = "bx_rtpred_train.1.0.sif"
 REQUIRED = ["input_file", "output_dir"]
 OPTIONAL = {"model": "auto", "sheet": "first", "rt_unit": "auto", "time_limit": "1200",
             "cpus": "auto", "algorithms": "GBM,CAT,RF,XT,KNN", "test_size": "0.2",

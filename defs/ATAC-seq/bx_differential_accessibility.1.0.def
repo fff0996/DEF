@@ -167,7 +167,7 @@ From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9e
 #   fakeroot-command mode was reproduced locally with an account without
 #   /etc/subuid entries and a test DEF holding the same %post and %test start
 #   blocks on ubuntu:24.04; the blocks passed and no file reached the host /tmp
-#   or /dev/shm. A production build of a Retip DEF with the same blocks also
+#   or /dev/shm. A production build of an RTpred DEF with the same blocks also
 #   passed them. Built SIF size: 719.9 MiB. The APPTAINER_BINDPATH negative
 #   test was run on 2026-09-30 with the earlier blocks and was not repeated.
 #   Not performed: a production build of these ATAC-seq DEFs, or analysis of

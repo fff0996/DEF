@@ -1,57 +1,42 @@
 #!/usr/bin/env python3
-"""RTpred module 3: compare the bundled default model with a user-trained model
-on the same measured compounds.
+"""RTpred module 1: retention time prediction with the bundled default models.
 
 Usage:
-    python retip_compare.1.0.py input_dir="..." output_dir="..." model="RP" [eval_file="..."] [options]
+    python rtpred_predict.1.0.py input_file="..." output_dir="..." [model="RP"] [sheet="..."]
 
-Examples:
-    After retip_train (its reserved_test.csv is the evaluation set):
-        apptainer exec bx_retip_compare.1.0.sif python retip_compare.1.0.py \
-            input_dir="/path/to/train_output" \
-            output_dir="/path/to/output" \
-            model="RP"
-
-    With a separate evaluation table:
-        apptainer exec bx_retip_compare.1.0.sif python retip_compare.1.0.py \
-            input_dir="/path/to/train_output" \
-            eval_file="/path/to/evaluation.csv" \
-            output_dir="/path/to/output" \
-            model="RP"
+Example:
+    apptainer exec bx_rtpred_predict.1.0.sif python rtpred_predict.1.0.py \
+        input_file="/path/to/compounds.csv" \
+        output_dir="/path/to/output" \
+        model="RP"
 
 Arguments (key=value, --key=value, or --key value):
-    input_dir  (required) - retip_train output directory (its output_dir;
-                            output_dir/result or result/model also work)
+    input_file (required) - Compound table (*.csv or *.xlsx) with a SMILES
+                            column (smiles or structure); experimental_rt is
+                            optional.
     output_dir (required) - Output directory. Results go to output_dir/result
                             and logs to output_dir/logs.
-    model      (required) - RP or HILIC (must match the user model)
-    eval_file  (optional) - Evaluation table (*.csv or *.xlsx with SMILES and
-                            measured RT), or reserved_test (or empty) for the
-                            reserved_test.csv written by retip_train.
-                            default: reserved_test
+    model      (optional) - RP, HILIC, or auto. auto (or empty) uses the
+                            table's model_type column (RP or HILIC per row),
+                            so one table may mix both modes. RP or HILIC
+                            requires every row to match. default: auto
     cpus       (optional) - Threads for numeric libraries: auto uses the cores
                             allocated to the job (Slurm/cgroup); a number is
                             capped by them. default: auto
     sheet      (optional) - XLSX sheet name; first (or empty) reads the first
                             sheet. Ignored for CSV. default: first
-    rt_unit    (optional) - RT unit label. mdcc requires it to equal the label
-                            used in retip_train; auto (or empty) reads it from
-                            the user model. default: auto
-    scope      (optional) - all (every user-model candidate) or best. default: all
-    title      (optional) - Report title. default: Default and user model comparison
 
 Outputs (output_dir/result):
-    comparison.csv, predictions_long.csv, comparison.png/.svg, report.html,
-    manifest.json
+    predictions.csv, prediction.png/.svg, report.html, manifest.json
 
 Logs (output_dir/logs): <time>_<pid>.log copies stdout (progress) and
 <time>_<pid>.err copies stderr (errors and warnings).
 
-Runs inside bx_retip_compare.1.0.sif. Rerunning replaces output_dir/result
-(only that folder is removed; logs are kept).
+Runs inside bx_rtpred_predict.1.0.sif, where mdcc and the default models are
+installed. Rerunning replaces output_dir/result (only that folder is removed;
+logs are kept).
 """
 import datetime
-import json
 import importlib.util
 import os
 from pathlib import Path
@@ -61,11 +46,10 @@ import subprocess
 import sys
 import threading
 
-MODULE = "compare"
-IMAGE = "bx_retip_compare.1.0.sif"
-REQUIRED = ["input_dir", "output_dir", "model"]
-OPTIONAL = {"eval_file": "reserved_test", "sheet": "first", "cpus": "auto", "rt_unit": "auto",
-            "scope": "all", "title": "Default and user model comparison"}
+MODULE = "predict"
+IMAGE = "bx_rtpred_predict.1.0.sif"
+REQUIRED = ["input_file", "output_dir"]
+OPTIONAL = {"model": "auto", "sheet": "first", "cpus": "auto"}
 TABLE_SUFFIXES = {".csv", ".xlsx"}
 
 
@@ -209,55 +193,22 @@ def run_mdcc(logs, args, cpus):
     return process.returncode
 
 
-def locate_train_output(path):
-    """Accept a retip_train output_dir, its result/ directory, or result/model.
-
-    Returns (model directory, directory holding reserved_test.csv).
-    """
-    for model_dir in (path / "result" / "model", path / "model", path):
-        if (model_dir / "model_manifest.json").is_file():
-            return model_dir, model_dir.parent
-    fail(f"no retip_train model found in input_dir: {path}")
-
-
-def select_eval_table(eval_file, train_result):
-    if eval_file in ("", "reserved_test"):
-        table = train_result / "reserved_test.csv"
-        if not table.is_file():
-            fail(f"reserved_test.csv not found in {train_result}; set eval_file")
-        return table
-    table = Path(eval_file)
-    if not table.is_file():
-        fail(f"eval_file not found: {table}")
-    if table.suffix.lower() not in TABLE_SUFFIXES:
-        fail(f"eval_file must be a *.csv or *.xlsx table: {table}")
-    return table
-
-
 def main():
     params = parse_args(sys.argv[1:])
-    input_dir = Path(params["input_dir"])
+    input_file = Path(params["input_file"])
     output_dir = Path(params["output_dir"])
-    model = params["model"]
+    # auto (or empty) leaves --model out, so mdcc uses each row's model_type.
     cpus = resolve_cpus(params["cpus"])
+    model = "" if params["model"] in ("", "auto") else params["model"]
 
-    if model not in ("RP", "HILIC"):
-        fail(f"model must be RP or HILIC: {model}")
-    if params["scope"] not in ("all", "best"):
-        fail(f"scope must be all or best: {params['scope']}")
-    if not input_dir.is_dir():
-        fail(f"input_dir not found: {input_dir}")
-    model_dir, train_result = locate_train_output(input_dir)
-    table = select_eval_table(params["eval_file"], train_result)
+    if model and model not in ("RP", "HILIC"):
+        fail(f"model must be RP, HILIC, or auto: {model}")
+    if not input_file.is_file():
+        fail(f"input_file not found: {input_file}")
+    if input_file.suffix.lower() not in TABLE_SUFFIXES:
+        fail(f"input_file must be a *.csv or *.xlsx table: {input_file}")
     result_dir = output_dir / "result"
-    check_inputs_outside(result_dir, input_dir, model_dir, table)
-    rt_unit = params["rt_unit"]
-    if rt_unit in ("", "auto"):
-        # mdcc compare stops unless this matches the unit used in training.
-        try:
-            rt_unit = json.loads((model_dir / "model_manifest.json").read_text())["rt_unit"]
-        except (OSError, ValueError, KeyError):
-            fail(f"cannot read rt_unit from {model_dir / 'model_manifest.json'}; set rt_unit")
+    check_inputs_outside(result_dir, input_file)
     if importlib.util.find_spec("mdcc") is None:
         fail(f"mdcc is not importable; run inside {IMAGE}")
 
@@ -267,19 +218,16 @@ def main():
     log(logs, f"Start time: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
     log(logs)
     log(logs, "parameters:")
-    log(logs, f"  input_dir  = {input_dir}")
-    log(logs, f"  user model = {model_dir}")
-    log(logs, f"  eval table = {table}")
+    log(logs, f"  input_file = {input_file}")
     log(logs, f"  output_dir = {output_dir}")
-    log(logs, f"  rt_unit    = {rt_unit} (requested {params['rt_unit']})")
     log(logs, f"  cpus       = {cpus} (requested {params['cpus']}, allocated {allocated_cpus()})")
-    for key in ["model", "sheet", "scope", "title"]:
-        log(logs, f"  {key:<10} = {params.get(key) or '<default>'}")
+    log(logs, f"  model      = {model or 'auto (input model_type column)'}")
+    log(logs, f"  sheet      = {params['sheet'] or 'first'}")
     log(logs)
 
-    args = [MODULE, "--input", str(table), "--output", str(result_dir),
-            "--model", model, "--user-model", str(model_dir),
-            "--rt-unit", rt_unit, "--scope", params["scope"], "--title", params["title"]]
+    args = [MODULE, "--input", str(input_file), "--output", str(result_dir)]
+    if model:
+        args += ["--model", model]
     # "first" (or an empty value) keeps mdcc's default: the first XLSX sheet.
     if params["sheet"] not in ("", "first"):
         args += ["--sheet", params["sheet"]]

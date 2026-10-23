@@ -2,19 +2,19 @@ Bootstrap: docker
 From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a5e26
 
 # =============================================================================
-# bx_retip_predict / DEF version 1.0
+# bx_rtpred_compare / DEF version 1.0
 #
 # [PURPOSE AND TARGET]
-#   RTpred (Retip) module "predict": runs `python -m mdcc.cli predict`.
-#   Revised from the received containers/predict.def (Pipeline RTpred,
+#   RTpred module "compare": runs `python -m mdcc.cli compare`.
+#   Revised from the received containers/compare.def (Pipeline RTpred,
 #   Revision 2) to follow the CLOSHA DEF policy; the image content (Python
 #   packages, apt packages, mdcc code, models) is unchanged.
 #   The mdcc package and the trained models are embedded with %files, as in the
-#   received DEF. Build from defs/Retip, because %files paths are relative to
+#   received DEF. Build from defs/RTpred, because %files paths are relative to
 #   the directory where `apptainer build` is run (checked with Apptainer 1.4.5).
 #
 # [INPUT AND OUTPUT STRUCTURE]
-#   Defined by mdcc.cli predict (see `--help`). Output directories must be
+#   Defined by mdcc.cli compare (see `--help`). Output directories must be
 #   empty; the module refuses to write into a non-empty directory.
 #
 # [REQUIRED RUNTIME DEPENDENCIES]
@@ -86,9 +86,9 @@ From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a
 #   /.singularity.d/libs/getopt (the fakeroot wrapper script calls getopt);
 #   the allowlist accepts it like the other read-only fakeroot helpers.
 #   Local test builds (2026-10-07, GitHub Codespace, Apptainer 1.4.5 with
-#   the production apptainer.conf, built from defs/Retip) succeeded as root
+#   the production apptainer.conf, built from defs/RTpred) succeeded as root
 #   and with --fakeroot, including %test (check_runtime, package imports,
-#   RP/HILIC model loading, and `mdcc.cli predict --help`).
+#   RP/HILIC model loading, and `mdcc.cli compare --help`).
 #   Root builds were traced with strace: no process opened any /proc or /sys
 #   path for writing, and host sysctl values did not change. inotify and
 #   before/after listings showed no DEF-caused change in the host /tmp or
@@ -114,14 +114,14 @@ From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a
 #   APT package versions may change between builds; they are recorded.
 #
 # [CHANGELOG]
-#   2026-10-01 / 1.0: Policy-aligned revision of the received predict.def.
+#   2026-10-01 / 1.0: Policy-aligned revision of the received compare.def.
 # =============================================================================
 
 %labels
     Pipeline RTpred
     Revision 2
-    Module predict
-    Name bx_retip_predict
+    Module compare
+    Name bx_rtpred_compare
     Version 1.0
     BaseOS Debian-12-bookworm
     Python 3.13.15
@@ -332,7 +332,7 @@ From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a
     rmdir -- "$BUILD_ROOT"
 
 %runscript
-    exec /usr/local/bin/python -m mdcc.cli predict "$@"
+    exec /usr/local/bin/python -m mdcc.cli compare "$@"
 
 %test
     set -eu
@@ -365,7 +365,7 @@ From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a
     python -c 'from mdcc.core import check_runtime; check_runtime()'
     python -c 'import rdkit, autogluon.tabular, lightgbm, catboost, sklearn, scipy, matplotlib, openpyxl'
     python -c 'from mdcc.core import load_model; [load_model("/opt/mdcc/models/" + m.lower() + "_model", m) for m in ("RP", "HILIC")]'
-    python -m mdcc.cli predict --help >/dev/null
+    python -m mdcc.cli compare --help >/dev/null
 
     # The build workspace must not remain in the image.
     if [ -e /__closha_build ]; then
@@ -373,21 +373,21 @@ From: python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a
         exit 1
     fi
 
-    echo 'RTpred predict: runtime dependency checks passed.'
+    echo 'RTpred compare: runtime dependency checks passed.'
 
 %help
-    RTpred (Retip) predict module: Python 3.13.15 (Debian 12 slim), hash-locked
+    RTpred compare module: Python 3.13.15 (Debian 12 slim), hash-locked
     PyPI wheels (rdkit, autogluon.tabular, LightGBM, CatBoost, scikit-learn),
     and the embedded mdcc package and trained RP/HILIC models.
 
     The CLOSHA build system builds this DEF with its fixed Slurm job (policy
     section 6.2) from its --chdir directory, where mdcc/ (without __pycache__)
     and models/ must be uploaded first, since %files paths are relative to it:
-        apptainer build bx_retip_predict.1.0.sif bx_retip_predict.1.0.def
+        apptainer build bx_rtpred_compare.1.0.sif bx_rtpred_compare.1.0.def
     It must pass both as root and with fakeroot.
     Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
 
     Check and run the image:
-        apptainer test --cleanenv bx_retip_predict.1.0.sif
-        apptainer run bx_retip_predict.1.0.sif --help
+        apptainer test --cleanenv bx_rtpred_compare.1.0.sif
+        apptainer run bx_rtpred_compare.1.0.sif --help
     Output directories must be empty. Runtime analysis needs no network.
