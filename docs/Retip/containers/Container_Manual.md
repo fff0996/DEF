@@ -34,9 +34,9 @@ Each of the three RTpred modules runs inside its own Apptainer image (SIF). The 
 
 | 이미지 | 버전 | 사용하는 모듈 (스크립트) | 기본 모델 | SIF 크기 |
 |---|---|---|---|---|
-| bx_retip_predict | 1.0 | retip_predict (retip_predict.1.0.py, 작업 파일 1.1) | 포함 | 605MB |
-| bx_retip_train | 1.0 | retip_train (retip_train.1.0.py) | 없음 | 381MB |
-| bx_retip_compare | 1.0 | retip_compare (retip_compare.1.0.py) | 포함 | 605MB |
+| bx_retip_predict | 1.0 | retip_predict (retip_predict.1.0.py, 작업 파일 1.2) | 포함 | 605MB |
+| bx_retip_train | 1.0 | retip_train (retip_train.1.0.py, 작업 파일 1.1) | 없음 | 381MB |
+| bx_retip_compare | 1.0 | retip_compare (retip_compare.1.0.py, 작업 파일 1.1) | 포함 | 605MB |
 
 공통 도구(세 이미지 같음):
 
