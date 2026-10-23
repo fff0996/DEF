@@ -14,7 +14,7 @@ RTpred의 세 모듈은 각자의 Apptainer 이미지(SIF) 안에서 실행됩�
   - Bootstrap: `docker`
   - From: `python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a5e26`
 - **도구 설치:** 서울대 구성을 따라 conda 대신 pip(패키지 해시 고정)과 apt(`libgomp1`, `libstdc++6`, `fonts-dejavu-core`)를 씁니다.
-- **분석 코드와 모델:** 서울대 mdcc 코드는 `/opt/mdcc/mdcc`, 기본 RP·HILIC 모델은 `/opt/mdcc/models`(예측·비교 이미지)에 있습니다. 모델 파일은 SHA256 목록으로 확인합니다.
+- **분석 코드와 모델:** 서울대 mdcc 코드는 `/opt/mdcc/mdcc`, 서울대학교 식품대사체학 연구실이 사전 학습한 기본 RP·HILIC 모델은 `/opt/mdcc/models`(예측·비교 이미지)에 있습니다. 모델 파일은 SHA256 목록으로 확인합니다.
 - **KOBIC 래퍼 스크립트:** `rtpred_predict`, `rtpred_train`, `rtpred_compare` 래퍼는 이미지에 넣지 않고 실행할 때 연결합니다.
 - **인터넷:** 실행 중에는 인터넷과 GPU를 쓰지 않습니다.
 
@@ -24,7 +24,7 @@ Each of the three RTpred modules runs inside its own Apptainer image (SIF). The 
   - Bootstrap: `docker`
   - From: `python@sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a5e26`
 - **Tool installation:** following the SNU setup, pip (hash-pinned packages) and apt (`libgomp1`, `libstdc++6`, `fonts-dejavu-core`) are used instead of conda.
-- **Analysis code and models:** the SNU mdcc code is in `/opt/mdcc/mdcc` and the default RP and HILIC models in `/opt/mdcc/models` (prediction and comparison images); model files are checked against a SHA256 list.
+- **Analysis code and models:** the SNU mdcc code is in `/opt/mdcc/mdcc` and the RP and HILIC default models pre-trained by the SNU food metabolomics lab in `/opt/mdcc/models` (prediction and comparison images); model files are checked against a SHA256 list.
 - **KOBIC wrapper scripts:** the `rtpred_predict`, `rtpred_train` and `rtpred_compare` wrappers are not stored in the images; they are bound at run time.
 - **Internet:** no internet access or GPU at run time.
 
@@ -53,7 +53,7 @@ Each of the three RTpred modules runs inside its own Apptainer image (SIF). The 
 | CatBoost | 1.2.10 | https://catboost.ai/ |
 | Matplotlib | 3.10.9 | https://matplotlib.org/ |
 | openpyxl | 3.1.5 | https://openpyxl.readthedocs.io/ |
-| mdcc (RTpred 코드, 서울대 식품대사체학 연구실) | Revision 2 | - |
+| RTpred (서울대학교 식품대사체학 연구실 개발, 코드명 mdcc) | Revision 2 | 공개 저장소 없음(이미지에 포함). 방법 출처(Retip): https://doi.org/10.1021/acs.analchem.9b05765 |
 
 ---
 
@@ -62,7 +62,7 @@ Each of the three RTpred modules runs inside its own Apptainer image (SIF). The 
 ### 3.1 bx_rtpred_predict 1.0
 - **태그(키워드):** 머무름시간예측, 대사체동정, RDKit, AutoGluon
 - **내용(국문):** 화합물 구조(SMILES)로 액체크로마토그래피 머무름 시간(RT)을 예측하는 실행 환경입니다. RDKit으로 구조 descriptor를 계산하고 AutoGluon 모델로 예측합니다. RP·HILIC 기본 모델(best: WeightedEnsemble_L3)이 들어 있어 실행 중 인터넷과 GPU를 쓰지 않습니다.
-- **내용(영문):** Runtime environment for predicting liquid chromatography retention time (RT) from compound structures (SMILES). RDKit computes structure descriptors and AutoGluon models predict. The default RP and HILIC models (best: WeightedEnsemble_L3) are bundled, so no internet access or GPU is used at run time.
+- **내용(영문):** Runtime environment for predicting liquid chromatography retention time (RT) from compound structures (SMILES). RDKit computes structure descriptors and AutoGluon models predict. Pre-trained default RP and HILIC models (best: WeightedEnsemble_L3) are bundled, so no internet access or GPU is used at run time.
 
 ### 3.2 bx_rtpred_train 1.0
 - **태그(키워드):** 머무름시간예측, 모델학습, AutoGluon, RDKit
