@@ -18,9 +18,10 @@ KOBIC 포탈의 RTpred 파이프라인 상세 페이지에 들어갈 국문/영�
 | Reference | https://doi.org/10.1021/acs.analchem.9b05765 |
 | Keyword(태그) | retention time prediction, metabolomics, untargeted metabolomics, metabolite annotation, LC-MS, reversed phase, HILIC, model training, model comparison, machine learning, cheminformatics |
 | 대분류 / 중분류 | Metabolomics / Cheminformatics (서울대 제안 "대사체 분석 / 화학정보학 / 머신러닝"을 옮김. 머신러닝은 Keyword로) |
-| 대표 이미지 | rtpred_predict 결과 그림(`docs/RTpred/images/module1_result.png`) |
+| 대표 이미지 | `docs/RTpred/pipeline/figures/thumbnail.png`: rtpred_compare 결과의 측정 RT 대 예측 RT 산점도(HILIC, 공개 실측 자료) |
 
 등록 메모:
+- 대표 이미지(썸네일)는 공개 RT 저장소 RepoRT(Kretschmer 외, Nat Methods 2024, CC BY-SA 4.0)의 RP 데이터셋 0063(Waters ACQUITY UPLC BEH C18, 455개)과 HILIC 데이터셋 0228(Waters ACQUITY UPLC BEH Amide, 270개)을 한 표로 섞어 rtpred_train → rtpred_compare로 돌린 결과(2026-10-26, Codespace 검증 빌드)에서, HILIC `comparison.png`의 오른쪽 패널(Selected best models)을 잘라낸 것입니다. 점은 바꾸지 않았습니다. 이 평가에서 HILIC은 사전 학습 모델 RMSE 1.71분(R² 0.72), 사용자 모델 1.77분(R² 0.70), RP는 사전 학습 모델 1.97분(R² 0.12), 사용자 모델 1.22분(R² 0.66)이었습니다. 모듈의 주요 결과 이미지는 서울대 예제 그대로 둡니다.
 - Reference는 RTpred가 바탕으로 하는 Retip 원논문입니다: Bonini P, Kind T, Tsugawa H, Barupal DK, Fiehn O. Retip: Retention Time Prediction for Compound Annotation in Untargeted Metabolomics. *Anal Chem* 92, 7515-7522 (2020).
 - 서울대가 제안한 파이프라인 이름은 "RTpred", 부제목은 "내장 best model의 RT 예측부터 사용자 실험 자료 기반 모델 생성, 기본·사용자 모델 성능 비교까지 제공하는 분석 도구"입니다(`CONTENT_KO.md` 1~5). 서브 타이틀은 포탈 규칙(10~20자)에 맞춰 줄였습니다.
 
