@@ -11,8 +11,8 @@ KOBIC 포탈의 RTpred 파이프라인 상세 페이지에 들어갈 국문/영�
 | 항목 | 값 |
 |---|---|
 | Pipeline Name | `RTpred` |
-| 서브 타이틀(국문) | 화합물 구조로 LC 머무름 시간을 예측하고, 내 실험 자료로 모델을 학습해 사전 학습 모델과 성능을 비교하는 분석 도구 |
-| 서브 타이틀(영문) | Retention time prediction from compound structures, with user model training and comparison against the pre-trained models |
+| 서브 타이틀(국문) | 머무름 시간 예측과 모델 학습 |
+| 서브 타이틀(영문) | Retention time prediction and model training |
 | 구성 모듈 | rtpred_train, rtpred_predict, rtpred_compare |
 | Version | 1.0 (CLOSHA 3.0 첫 배포) |
 | Reference | https://doi.org/10.1021/acs.analchem.9b05765 |
@@ -22,7 +22,7 @@ KOBIC 포탈의 RTpred 파이프라인 상세 페이지에 들어갈 국문/영�
 
 등록 메모:
 - Reference는 RTpred가 바탕으로 하는 Retip 원논문입니다: Bonini P, Kind T, Tsugawa H, Barupal DK, Fiehn O. Retip: Retention Time Prediction for Compound Annotation in Untargeted Metabolomics. *Anal Chem* 92, 7515-7522 (2020).
-- 서울대가 제안한 파이프라인 이름은 "RTpred", 부제목은 "내장 best model의 RT 예측부터 사용자 실험 자료 기반 모델 생성, 기본·사용자 모델 성능 비교까지 제공하는 분석 도구"입니다(`CONTENT_KO.md` 1~5). 서브 타이틀은 이 제안을 지금 용어(사전 학습 모델)와 흐름(학습 → 예측 → 비교)에 맞게 다듬었습니다.
+- 서울대가 제안한 파이프라인 이름은 "RTpred", 부제목은 "내장 best model의 RT 예측부터 사용자 실험 자료 기반 모델 생성, 기본·사용자 모델 성능 비교까지 제공하는 분석 도구"입니다(`CONTENT_KO.md` 1~5). 서브 타이틀은 포탈 규칙(10~20자)에 맞춰 줄였습니다.
 
 ---
 

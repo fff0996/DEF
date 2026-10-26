@@ -293,7 +293,7 @@ python rtpred_train.1.0.py \
 | 항목 | 국문 | 영문 |
 |---|---|---|
 | 모듈명 | rtpred_compare | rtpred_compare |
-| 서브 타이틀 | 기본·사용자 머무름 시간 모델 성능 비교 | Default and user RT model comparison |
+| 서브 타이틀 | 사전 학습·사용자 모델 비교 | Pre-trained and user model comparison |
 | 버전 | 1.0 | |
 | 카테고리 대분류 | Annotation | Annotation |
 | 카테고리 중분류 | Metabolite_Annotation (신규) | Metabolite_Annotation (new) |
