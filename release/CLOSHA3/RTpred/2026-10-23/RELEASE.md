@@ -14,7 +14,7 @@ CLOSHA 3.0 신규 파이프라인이므로 세 모듈 모두 1.0입니다. 각 �
 
 - 작업 파일 기준 커밋: `4483f07`
 - 실행 이미지는 세 개 모두 `defs/RTpred/`에서 빌드합니다(`%files`가 `mdcc`를 상대 경로로 넣음). 이미지 안의 mdcc 코드와 기본 모델은 서울대가 준 그대로입니다.
-- 파이프라인 두 개: 기본 모델 예측(rtpred_predict만), 사용자 모델(rtpred_train → rtpred_predict, rtpred_train → rtpred_compare)
+- 파이프라인 `RTpred` 하나: rtpred_train → rtpred_predict, rtpred_train → rtpred_compare. 학습 자료가 없으면 rtpred_predict만 단독으로 실행해 사전 학습 모델로 예측합니다.
 
 ## 서울대와 정한 동작 (2026-10-21~23)
 

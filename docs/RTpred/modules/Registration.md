@@ -15,12 +15,12 @@ CLOSHA에 RTpred 모듈을 등록할 때 쓰는 Input / Output / Option 정리�
 ## 0. 파이프라인 흐름
 서울대 답변(2026-10-21)에 따른 흐름: train(선택) → predict(기본 모델 또는 학습 모델) → compare(선택, train을 쓸 때만).
 ```
-기본 모델 예측 (RTpred_Default_Prediction):
-  화합물 표 ─> [rtpred_predict] (model_dir 비움 = 이미지 안 기본 모델)
-
-사용자 모델 (RTpred_User_Model):
+파이프라인 RTpred:
   학습 표 ─> [rtpred_train] ─output_dir─┬─> [rtpred_predict] (model_dir) <── 화합물 표
                                        └─> [rtpred_compare] (input_dir) <── 평가 표(선택, 비우면 reserved_test.csv)
+
+학습 자료가 없을 때 (rtpred_predict 단독 실행):
+  화합물 표 ─> [rtpred_predict] (model_dir 비움 = 이미지 안 사전 학습 모델)
 ```
 | 모듈 | 스크립트 | 실행 이미지 | 실행 명령 |
 |---|---|---|---|
