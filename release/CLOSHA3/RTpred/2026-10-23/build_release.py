@@ -68,8 +68,7 @@ IMAGES = [
     ("modules/figures/module_concepts/rtpred_compare_concept.png", "rtpred_compare/rtpred_compare_concept.png"),
     ("images/module3_result.png", "rtpred_compare/rtpred_compare_result_1.png"),
     ("pipeline/figures/pipeline.png", "pipeline/pipeline.png"),
-    ("pipeline/figures/concept.png", "pipeline/concept.png"),
-    ("pipeline/figures/concept_2.png", "pipeline/concept_2.png"),
+    ("pipeline/figures/concept_xie2025_fig1.png", "pipeline/concept.png"),
 ]
 # Docs copied as they are: (source under docs/RTpred, target under docs)
 DOC_FILES = [
@@ -81,10 +80,7 @@ DOC_FILES = [
     ("pipeline/Portal_Content.docx", "pipeline/Portal_Content.docx"),
     ("pipeline/figures/pipeline.png", "pipeline/pipeline.png"),
     ("pipeline/figures/pipeline.svg", "pipeline/pipeline.svg"),
-    ("pipeline/figures/concept.png", "pipeline/concept.png"),
-    ("pipeline/figures/concept.svg", "pipeline/concept.svg"),
-    ("pipeline/figures/concept_2.png", "pipeline/concept_2.png"),
-    ("pipeline/figures/concept_2.svg", "pipeline/concept_2.svg"),
+    ("pipeline/figures/concept_xie2025_fig1.png", "pipeline/concept_xie2025_fig1.png"),
 ]
 
 

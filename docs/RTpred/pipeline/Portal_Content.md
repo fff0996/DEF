@@ -78,35 +78,22 @@ The errors (RMSE, MAE) and explained variance (R²) of the default and user mode
 
 ## 4. 분석 개념 / Analysis concept
 
-그림: `docs/RTpred/pipeline/figures/concept.png` (원본 `concept.svg`)
+그림: `docs/RTpred/pipeline/figures/concept_xie2025_fig1.png`
+
+등록 메모: 논문 그림을 수정하지 않고 그대로 씁니다(CC BY 4.0, 출판사 고해상도 원본 3091×1676). 예전 직접 그린 개념도(`concept.png`, 같은 질량 후보를 예측 RT로 거르는 그림)는 RTpred에 없는 단계로 오해할 수 있어 쓰지 않습니다.
 
 ### 국문 (그림 설명)
-**그림. 구조로 예측한 머무름 시간으로 대사체 후보 거르기.** (A) 화합물 구조(SMILES)를 RDKit 구조 특성(질량, 극성(logP), 고리 수, 수소결합 주개 등)으로 바꾸고, 학습된 AutoGluon 앙상블 모델(기본 모델 또는 사용자 모델)로 머무름 시간(RT)을 예측합니다. 측정 RT가 있으면 ΔRT(측정 - 예측)를 함께 계산합니다. (B) LC-MS에서 측정한 피크 하나에 같은 질량의 후보 구조가 여러 개 있을 때, 예측 RT가 측정 피크 주변 범위(초록 음영) 안에 드는 후보(초록)는 남기고 벗어나는 후보(빨강)는 뺍니다. RT, 범위, 후보는 모식적인 값입니다(측정 피크 RT 5.2).
+**그림. 구조로 머무름 시간을 예측하는 원리(QSRR).** (A) 구조를 아는 화합물들의 머무름 시간(RT)을 LC로 측정해 모읍니다. (B) 구조(SMILES)를 RDKit 등으로 분자 descriptor(logP, TPSA, 수소결합 받개 수 등)로 바꿉니다. (C) 자료를 학습용과 시험용으로 나누고, descriptor와 RT의 관계를 머신러닝 모델로 학습합니다. (D) 교차 검증과 새 자료를 쓴 외부 검증으로 모델을 평가합니다. (E) 예측 RT와 측정 RT를 비교해 정확도를 확인하고, 새 구조의 RT를 예측합니다. RTpred에서는 rtpred_train이 A~D(RDKit descriptor, AutoGluon, 분리 모드마다 모델 하나)를, rtpred_predict가 새 화합물의 예측을, rtpred_compare가 학습에 쓰지 않은 화합물로 E의 비교를 맡습니다. 이미지에 들어 있는 사전 학습 모델도 같은 방식으로 만들었습니다. 출처: Xie 외, J Pharm Anal 2025, Fig. 1(CC BY 4.0).
 
 ### English (figure legend)
-**Figure. Filtering metabolite candidates with retention times predicted from structure.** (A) Compound structures (SMILES) are turned into RDKit descriptors (mass, polarity (logP), ring count, hydrogen-bond donors and so on), and a trained AutoGluon ensemble (default or user model) predicts the retention time (RT); with a measured RT, ΔRT (measured - predicted) is also computed. (B) When several candidate structures share the mass of one LC-MS peak, candidates whose predicted RT falls within a window around the measured peak (green shading) are kept (green) and the others are dropped (red). RTs, the window and the candidates are schematic (measured peak RT 5.2).
+**Figure. The principle of predicting retention time from structure (QSRR).** (A) Retention times (RT) of compounds with known structures are measured by LC and collected. (B) Structures (SMILES) are converted into molecular descriptors (logP, TPSA, hydrogen-bond acceptors and so on) with tools such as RDKit. (C) The data are split into training and test sets, and a machine learning model learns the relation between descriptors and RT. (D) The model is evaluated by cross-validation and external validation on new data. (E) Predicted and measured RTs are compared to check accuracy, and the model predicts the RT of new structures. In RTpred, rtpred_train covers A-D (RDKit descriptors, AutoGluon, one model per separation mode), rtpred_predict predicts new compounds, and rtpred_compare performs the comparison in E on compounds not used for training; the pre-trained models in the image were built the same way. Source: Xie et al., J Pharm Anal 2025, Fig. 1 (CC BY 4.0).
 
 ### 대체 텍스트 (alt)
-- 국문: RTpred 개념도. 구조에서 descriptor와 모델을 거쳐 RT를 예측하는 과정과, 예측 RT 범위로 같은 질량의 후보 화합물을 거르는 예를 보여 줌.
-- English: RTpred concept: RT prediction from structure through descriptors and a model, and filtering of same-mass candidates by the predicted RT window.
+- 국문: QSRR 원리 그림. 화합물 구조와 크로마토그램(측정 RT), SMILES와 분자 descriptor, 학습·시험 자료와 모델, 교차·외부 검증, 예측 RT 대 측정 RT 산점도의 다섯 패널.
+- English: QSRR principle: structures and a chromatogram (measured RT), SMILES and molecular descriptors, training and test data with a model, cross- and external validation, and a predicted-versus-experimental RT plot.
 
 ### 출처 / Reference
-직접 작성한 모식도(외부 그림 사용 안 함)
-
-그림: `docs/RTpred/pipeline/figures/concept_2.png` (그림 2, 원본 `concept_2.svg`)
-
-### 국문 (그림 2 설명)
-**그림 2. 구조로 머무름 시간을 예측하는 원리(QSRR).** (A) 구조를 아는 화합물들의 측정 RT를 모읍니다. (B) 구조(SMILES)를 RDKit descriptor(logP, TPSA, 수소결합 받개 수 등)로 바꿉니다. (C) descriptor와 측정 RT의 관계를 머신러닝 모델로 학습하고, (D) 학습에 쓰지 않은 자료로 검증합니다. (E) 학습한 모델이 새 구조의 RT를 예측합니다. RTpred의 rtpred_train이 A~D를(AutoGluon, 모드마다 모델 하나), rtpred_predict가 E를, rtpred_compare가 떼어 둔 자료로 D와 E를 맡으며, 이미지의 사전 학습 모델도 같은 방식으로 만들었습니다. 모식도입니다. Xie 외, J Pharm Anal 2025, Fig. 1을 수정(CC BY 4.0).
-
-### English (figure 2 legend)
-**Figure 2. The principle of predicting retention time from structure (QSRR).** (A) Measured RTs of compounds with known structures are collected. (B) Structures (SMILES) are turned into RDKit descriptors (logP, TPSA, hydrogen-bond acceptors and so on). (C) A machine learning model learns the relation between descriptors and measured RT and (D) is validated on data not used for training. (E) The trained model predicts the RT of new structures. In RTpred, rtpred_train covers A-D (AutoGluon, one model per mode), rtpred_predict covers E, and rtpred_compare covers D and E on held-out data; the pre-trained models in the image were built the same way. Schematic. Adapted from Xie et al., J Pharm Anal 2025, Fig. 1 (CC BY 4.0).
-
-### 대체 텍스트 (그림 2)
-- 국문: QSRR 원리 흐름도. 측정 RT와 구조, 분자 descriptor, 모델 학습, 검증, RT 예측의 다섯 단계와 각 단계를 맡는 RTpred 모듈.
-- English: QSRR principle: measured RTs and structures, molecular descriptors, model training, validation and RT prediction, with the RTpred module for each step.
-
-### 출처 (그림 2)
-Xie J, Chen S, Zhao L, Dong X. Application of artificial intelligence to quantitative structure-retention relationship calculations in chromatography. *J Pharm Anal* 15, 101155 (2025). https://doi.org/10.1016/j.jpha.2024.101155, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+Xie J, Chen S, Zhao L, Dong X. Application of artificial intelligence to quantitative structure-retention relationship calculations in chromatography. *J Pharm Anal* 15, 101155 (2025). https://doi.org/10.1016/j.jpha.2024.101155, Fig. 1. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ---
 
