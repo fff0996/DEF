@@ -166,26 +166,6 @@ def stepbox(x, y, w, h, title, lines, color=POINT, fill="#FFFFFF"):
     return out
 
 
-def rtpred_train_representation():
-    """rtpred_train concept 2, adapted from Liu et al. 2024 Fig. 4 (CC BY 4.0): the representations;
-    the model timeline is left out."""
-    g = [t(800, 34, "Molecular representations for RT prediction", 22, 800, MAIN)]
-    g.append(stepbox(620, 90, 360, 140, "String of symbols", ["SMILES, canonical SMILES, InChI", "(input of RTpred: SMILES)"], SUB, "#F5F6F8"))
-    boxes = [(80, "Molecular descriptors", ["physicochemical values", "and graph operators", "RTpred: 217 RDKit descriptors"], POINT, "#EAF0FA"),
-             (620, "Molecular fingerprints", ["MACCS keys", "ECFP, PFP"], GRAY, "#FFFFFF"),
-             (1160, "Molecular graphs", ["computer-generated graphs", "for graph neural networks"], GRAY, "#FFFFFF")]
-    for x, title, lines, col, fill in boxes:
-        g.append(stepbox(x, 320, 360, 170, title, lines, col, fill))
-    g.append(arrow(700, 230, 300, 316, POINT, 3.5))
-    g.append(arrow(800, 230, 800, 316, GRAY, 3))
-    g.append(arrow(900, 230, 1300, 316, GRAY, 3))
-    g.append(t(470, 262, "convert (RDKit)", 14, 700, POINT))
-    g.append(t(1150, 262, "convert", 14, 600, SUB))
-    g.append(note(80, 530, "RTpred (like Retip) converts SMILES to descriptors and trains AutoGluon models on them."))
-    g.append(note(80, 600, "Adapted from Liu et al., J Cheminform 16, 113 (2024), Fig. 4 (CC BY 4.0); the model timeline is left out."))
-    return svg("".join(g))
-
-
 def rtpred_train_conditions():
     """rtpred_train concept 3, adapted from Xie et al. 2025 Fig. 7A (CC BY 4.0): one QSRR model per
     chromatographic condition; the model-based part (DoE, HSM, LSS) is left out."""
@@ -212,7 +192,7 @@ def rtpred_train_conditions():
 
 
 RED_ = "#D6604D"
-FIGS.update({"rtpred_train_representation": rtpred_train_representation, "rtpred_train_conditions": rtpred_train_conditions})
+FIGS.update({"rtpred_train_conditions": rtpred_train_conditions})
 
 if __name__ == "__main__":
     for name, fn in FIGS.items():
