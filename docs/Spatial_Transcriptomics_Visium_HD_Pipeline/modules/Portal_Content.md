@@ -6,10 +6,10 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 Visium HD �
 - 모든 스크립트는 `key=value` 형식 인자를 받습니다. 등록 화면의 Name은 인자 이름, Value는 기본값입니다.
 - 필수(Required) 입력·출력은 Value가 비어 있으면 포탈에 등록되지 않으므로 예시 경로(`/data/…`)를 넣었습니다. 기본값이 아니며, 실행할 때 캔버스에서 실제 경로로 바꿉니다. 예시 경로가 그대로 넘어가면 스크립트가 "not found"로 멈춥니다.
 - 선택(Optional) 입력은 빈 값이 "사용 안 함"입니다.
-- 스크립트 사용 예제는 등록하는 인자를 모두 적었고, 기본값이 있는 옵션은 기본값으로 적었습니다. 예시 값은 Visium HD 기준입니다.
+- 스크립트 사용 예제는 등록하는 인자를 모두 적었고, 기본값이 있는 옵션은 기본값으로 적었습니다. 예시 값은 Visium HD 사람 대장암 예시(종양 3장, 정상 2장, 16µm) 기준입니다.
 - 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`입니다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다릅니다. 기반 이미지(From)는 모든 모듈이 Rocky Linux 9.8(`rockylinux/rockylinux:9.8.20260525.0`)입니다.
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류·경고 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지웁니다.
-- 카테고리는 대분류 = 분석 단계, 중분류 = 구체적 작업으로 정했습니다(사용자 결정, 2026-10-27). 데이터 종류는 모듈 이름(spatial_*)이 보여 줍니다. spatial_prep·spatial_hd_prep은 Preprocessing(신규) / Normalization(신규), 군집 모듈은 Clustering(신규) / Spatial_Clustering(신규; 묶는 대상별 중분류로 나중에 Cell_Clustering, Sample_Clustering 등을 둔다), 공간 통계량(Moran's I 등)을 계산하는 spatial_svf·spatial_hd_svf(hd_svf는 p값과 BH 보정까지 냄)와 p값을 내는 검정인 spatial_condition_de(DESeq2)는 Statistics_and_Visualization 아래 Spatial_Statistics(신규)와 Differential_Analysis(신규)에 둡니다. 세포 유형 모듈과 check_reference는 기존 Annotation의 "무엇에 주석을 다는가" 방식에 맞춰 Cell_Type_Annotation(신규)입니다. 포탈의 현재 이름 Statisitcs_and_Visualization은 오타라 Statistics_and_Visualization으로 적었습니다.
+- 카테고리는 대분류 = 분석 단계, 중분류 = 구체적 작업으로 정했습니다(사용자 결정, 2026-10-27). 데이터 종류는 모듈 이름(spatial_*)이 보여 줍니다. spatial_prep·spatial_hd_prep은 Preprocessing(신규) / Normalization(신규), 군집 모듈은 Clustering(신규) / Spatial_Clustering(신규; 묶는 대상별 중분류로 나중에 Cell_Clustering, Sample_Clustering 등을 둔다), 공간 통계량(Moran's I 등)을 계산하는 spatial_svf·spatial_hd_svf(hd_svf는 p값과 BH 보정까지 냄)와 p값을 내는 검정인 spatial_condition_de(DESeq2)는 Statistics_and_Visualization 아래 Spatial_Omics(신규)와 Differential_Analysis(신규)에 둡니다. 세포 유형 모듈과 check_reference는 기존 Annotation의 "무엇에 주석을 다는가" 방식에 맞춰 Cell_Type_Annotation(신규)입니다. 포탈의 현재 이름 Statisitcs_and_Visualization은 오타라 Statistics_and_Visualization으로 적었습니다.
 - 버전은 배포 번호입니다. CLOSHA 2.0 모듈은 2.0 번호 + 1(이번에 모두 스크립트 규칙에 맞춰 고쳐 1.1)이고, 3.0에서 새로 만든 모듈은 1.0입니다.
 
 ---
@@ -120,23 +120,23 @@ Rscript spatial_hd_prep.1.0.R \
 ```
 
 ### 주요 결과 이미지
-예시 데이터는 10x Genomics 공개 Visium HD 마우스 뇌(FFPE) 한 장의 16µm bin입니다. Codespace 메모리 때문에 4분면으로 잘라 슬라이드 4장(각 약 2만 2천~2만 7천 bin)으로 쓰고, 유전자는 6,000개로 줄였습니다. 대표 슬라이드는 brain_left_top입니다.
+예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다.
+
+등록 메모: CLOSHA 실행 결과로 그림과 레전드의 수치를 넣습니다. 그림 파일 이름은 아래 경로로 둡니다.
 
 **결과 1. bin별 UMI·유전자 수 QC(대표 그림)**
 - 결과 파일: `<slide>/plots/<slide>_qc.png` (PDF도 있음)
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_prep_result_1.png`
 
-그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_prep_result_1.png`
-
-- 레전드(국문): **bin별 UMI 수와 검출 유전자 수.** 왼쪽 두 violin은 bin별 UMI 수(nCount_Spatial.016um)와 검출 유전자 수(nFeature_Spatial.016um) 분포이고, 오른쪽은 UMI 수를 조직 위에 칠한 것입니다. 조직 밖이나 UMI가 매우 낮은 bin이 많으면 min_counts, min_features를 올립니다. 예시 데이터에서는 bin당 UMI 중앙값이 711, 유전자 중앙값이 570이었고, 피질에서 높고 백질(뇌량)에서 낮았습니다. 분석에 쓰지 않은 4분면 바깥은 조직 이미지만 보입니다. 두 violin의 제목이 붙어 보이는 것은 그림 배치 문제로, 다음 버전에서 고칩니다.
-- 레전드(영문): **UMI counts and detected genes per bin.** The two violins show UMI counts (nCount_Spatial.016um) and detected genes (nFeature_Spatial.016um) per bin; the right panel shows UMI counts on the tissue. With many bins outside the tissue or with very low counts, raise min_counts or min_features. In the example data the median bin had 711 UMIs and 570 genes, higher in the cortex and lower in the white matter (corpus callosum); outside the quadrant only the tissue image shows. The two violin titles run together, a layout issue to be fixed in the next version.
+- 레전드(국문): **bin별 UMI 수와 검출 유전자 수.** 왼쪽 두 violin은 bin별 UMI 수와 검출 유전자 수 분포이고, 오른쪽은 UMI 수를 조직 위에 칠한 것입니다. 조직 밖이나 UMI가 매우 낮은 bin이 많으면 min_counts, min_features를 올립니다. 예시 데이터에서는 (CLOSHA 결과: bin당 UMI·유전자 중앙값, 종양과 점막·근육층의 차이).
+- 레전드(영문): **UMI counts and detected genes per bin.** The violins show UMI counts and detected genes per bin; the right panel shows UMI counts on the tissue. With many bins outside the tissue or with very low counts, raise min_counts or min_features. In the example data (CLOSHA result: median UMIs and genes per bin, tumour versus mucosa and muscle).
 
 **결과 2. 슬라이드별 요약표**
-- 결과 파일: `hd_prep_summary.tsv` (표를 그림으로 만들었습니다)
+- 결과 파일: `hd_prep_summary.tsv` (표를 그림으로 만듦)
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_prep_result_2.png`
 
-그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_prep_result_2.png`
-
-- 레전드(국문): **슬라이드별 bin 수와 sketch.** 거르기 전·후 bin 수(Bins_raw, Bins), bin당 UMI·유전자 중앙값, sketch에 남긴 bin 수, 상태와 걸린 시간(초)입니다. 예시 데이터에서는 슬라이드 4장이 2만 2,477~2만 6,981 bin이었고, Space Ranger가 이미 조직 밖 bin을 걸러 min_counts=10으로 빠진 bin은 없었으며, 슬라이드마다 5,000 bin을 sketch로 뽑았습니다(테스트 설정, 기본값 5만).
-- 레전드(영문): **Bins and sketch per slide.** Bins before and after filtering (Bins_raw, Bins), median UMIs and genes per bin, sketched bins, status and seconds. In the example data the four slides had 22,477-26,981 bins; Space Ranger had already removed bins outside the tissue, so min_counts=10 removed none, and 5,000 bins per slide were sketched (test setting; the default is 50,000).
+- 레전드(국문): **슬라이드별 bin 수와 sketch.** 거르기 전·후 bin 수, bin당 UMI·유전자 중앙값, sketch에 남긴 bin 수, 상태와 걸린 시간입니다. 예시 데이터에서는 (CLOSHA 결과: 슬라이드 5장의 bin 수 범위, 걸러진 bin 수).
+- 레전드(영문): **Bins and sketch per slide.** Bins before and after filtering, median UMIs and genes per bin, sketched bins, status and seconds. In the example data (CLOSHA result: range of bins over the five slides, bins removed).
 
 ---
 
@@ -248,52 +248,43 @@ Rscript spatial_hd_cluster.1.0.R \
   marker_min_pct=0.25 \
   marker_logfc=0.25 \
   marker_topn=5 \
+  features=EPCAM,PTPRC,COL1A1 \
   pt_size=4 \
   seed=1234
 ```
 
 ### 주요 결과 이미지
-예시 데이터는 10x Genomics 공개 Visium HD 마우스 뇌(FFPE) 한 장의 16µm bin입니다. Codespace 메모리 때문에 4분면으로 잘라 슬라이드 4장(각 약 2만 2천~2만 7천 bin)으로 쓰고, 유전자는 6,000개로 줄였습니다. 조직 그림의 대표 슬라이드는 해마가 들어 있는 brain_right_top입니다.
+예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다.
 
-**결과 1. 통합 sketch UMAP**
-- 결과 파일: `joint/plots/umap_clusters.png` (PDF도 있음)
+등록 메모: CLOSHA 실행 결과로 그림과 레전드의 수치를 넣습니다. 그림 파일 이름은 아래 경로로 둡니다.
 
-그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_1.png`
-
-- 레전드(국문): **모든 슬라이드의 sketch bin으로 만든 통합 군집.** UMAP 위 점이 sketch bin이고 색과 숫자가 군집입니다. 이 군집이 모든 bin에 옮겨 붙습니다. 예시 데이터(sketch 2만 bin, Harmony, dims 30, resolution 0.8)에서는 군집 18개가 나왔습니다.
-- 레전드(영문): **Joint clusters from the sketched bins of all slides.** Points on the UMAP are sketched bins; colours and numbers are clusters, which are then transferred to every bin. In the example data (20,000 sketched bins, Harmony, dims 30, resolution 0.8) 18 clusters appeared.
-
-**결과 2. 모든 bin의 조직 위 군집(대표 그림)**
+**결과 1. 모든 bin의 조직 위 군집(대표 그림)**
 - 결과 파일: `<slide>/plots/<slide>_clusters_spatial.png` (PDF도 있음)
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_1.png`
 
-그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_2.png`
+- 레전드(국문): **슬라이드의 모든 bin에 붙인 통합 군집.** sketch에서 만든 군집을 가까운 sketch bin의 다수결로 모든 bin에 옮겨 조직 위에 칠했습니다. 예시 데이터에서는 종양 덩어리, 정상 점막, 근육층, 기질(섬유모세포·면역세포 영역)이 다른 군집으로 나뉩니다(CLOSHA 결과로 확인).
+- 레전드(영문): **Joint clusters on every bin of a slide.** Clusters made on the sketch are transferred to every bin by majority vote of the nearest sketch bins and drawn on the tissue. In the example data tumour masses, normal mucosa, muscle layers and stroma (fibroblast and immune areas) fall into different clusters (to be confirmed with the CLOSHA result).
 
-- 레전드(국문): **슬라이드의 모든 bin에 붙인 통합 군집.** sketch에서 만든 군집을 가까운 sketch bin 10개(k_transfer)의 다수결로 모든 bin에 붙여 조직 위에 칠한 것입니다. 군집 번호는 모든 슬라이드에서 같은 뜻입니다. 예시 데이터에서는 해마의 CA 피라미드 세포층(군집 13)과 치아이랑 과립세포층(군집 17)이 가는 띠로 뚜렷이 나뉘었고, 위쪽 피질과 아래쪽 큰 영역도 서로 다른 군집으로 구분되었습니다. 16µm bin이라 세포 하나 크기의 경계까지 보입니다.
-- 레전드(영문): **Joint clusters on every bin of a slide.** Clusters made on the sketch are transferred to every bin by majority vote of its 10 nearest sketched bins (k_transfer) and painted on the tissue; cluster numbers mean the same in every slide. In the example data the hippocampal CA pyramidal layer (cluster 13) and the dentate gyrus granule layer (cluster 17) separate as thin bands, and the cortex above and the large region below form distinct clusters. With 16 um bins, borders close to single-cell size are visible.
+**결과 2. 유전자의 조직 위 발현**
+- 결과 파일: `<slide>/plots/<slide>_feature_<gene>.png` (features=EPCAM,PTPRC,COL1A1)
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_2.png`
 
-**결과 3. 유전자의 조직 위 발현**
-- 결과 파일: `<slide>/plots/<slide>_feature_<gene>.png` (PDF도 있음, features를 줄 때)
+- 레전드(국문): **features로 지정한 유전자의 bin별 발현.** EPCAM은 상피와 종양, PTPRC는 면역세포, COL1A1은 섬유모세포(기질)의 표지 유전자입니다. 군집 영역과 표지 유전자 위치가 맞는지 확인합니다.
+- 레전드(영문): **Bin expression of genes given in features.** EPCAM marks epithelium and tumour, PTPRC immune cells and COL1A1 fibroblasts (stroma); check that cluster regions match the marker locations.
 
-그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_3.png`
+**결과 3. 슬라이드로 칠한 UMAP**
+- 결과 파일: `joint/plots/umap_slides.png`
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_3.png`
 
-- 레전드(국문): **features로 지정한 유전자의 bin별 발현.** 색은 log 정규화 발현입니다(파랑 낮음, 빨강 높음). 군집의 정체를 알려진 표지 유전자로 확인하는 데 씁니다. 예시 데이터에서 치아이랑 과립세포 표지 Prox1은 군집 17과 같은 띠에서만 높게 나와, 군집이 해부학적 구조와 맞음을 보여 줍니다.
-- 레전드(영문): **Bin expression of genes given in features.** Colour is log-normalised expression (blue low, red high); it checks cluster identity with known markers. In the example data the dentate gyrus granule cell marker Prox1 is high only in the band of cluster 17, showing that the clusters match the anatomy.
+- 레전드(국문): **통합 sketch UMAP을 슬라이드로 칠한 그림.** 같은 조직 유형이 여러 슬라이드에 있으면 색이 섞여야 합니다(harmony 보정). 종양에만 있는 군집은 종양 슬라이드 색으로만 모입니다.
+- 레전드(영문): **The joint sketch UMAP coloured by slide.** Shared tissue types should mix colours across slides (harmony correction); clusters present only in tumours gather in the tumour slides' colours.
 
-**결과 4. 슬라이드로 칠한 UMAP**
-- 결과 파일: `joint/plots/umap_slides.png` (PDF도 있음)
+**결과 4. 슬라이드별 군집 조성**
+- 결과 파일: `joint/plots/cluster_by_slide.png`, 표 `joint/cluster_by_slide.tsv`
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_4.png`
 
-그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_4.png`
-
-- 레전드(국문): **통합 sketch UMAP을 슬라이드로 칠한 그림.** 같은 영역이 여러 슬라이드에 있으면 색이 섞여야 하며, 한 슬라이드 색만 따로 모이면 그 슬라이드에만 있는 영역이거나 보정이 부족한 것입니다. 예시 데이터에서는 왼쪽 두 슬라이드끼리, 오른쪽 두 슬라이드끼리 주로 섞이고 왼쪽과 오른쪽은 따로 모였습니다. 같은 절편의 왼쪽과 오른쪽이 서로 다른 뇌 영역을 담고 있기 때문입니다.
-- 레전드(영문): **The joint sketch UMAP coloured by slide.** When a region is present in several slides their colours should mix; a slide colour gathering alone means a region present only there, or too little correction. In the example data the two left slides mixed mostly with each other, as did the two right slides, while left and right gathered apart, because the left and right halves of the section contain different brain regions.
-
-**결과 5. 슬라이드별 군집 조성**
-- 결과 파일: `joint/plots/cluster_by_slide.png` (PDF도 있음), 표 `joint/cluster_by_slide.tsv`
-
-그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_5.png`
-
-- 레전드(국문): **슬라이드마다 모든 bin에서 군집이 차지하는 비율(Fraction of bins).** 같은 부위의 슬라이드는 비슷해야 하며, 조건 비교 전에 조성 차이를 확인합니다. 예시 데이터에서는 4분면마다 포함한 영역이 달라 조성이 달랐고, 해마 군집(13, 17)은 오른쪽 위 슬라이드에서 가장 많았습니다.
-- 레전드(영문): **Fraction of all bins per cluster in each slide (Fraction of bins).** Slides of the same part should look alike; check composition differences before comparing conditions. In the example data the quadrants contain different regions and their compositions differ, and the hippocampal clusters (13, 17) are most frequent in the top-right slide.
+- 레전드(국문): **슬라이드마다 군집이 차지하는 bin 비율.** 종양 군집은 crc_* 슬라이드에, 정상 상피 군집은 normal_* 슬라이드에 몰려야 합니다.
+- 레전드(영문): **Fraction of bins per cluster in each slide.** Tumour clusters should concentrate in the crc_* slides and normal epithelium clusters in the normal_* slides.
 
 ---
 
@@ -306,7 +297,7 @@ Rscript spatial_hd_cluster.1.0.R \
 | 서브 타이틀 | Visium HD 공간 가변 유전자 | Spatially variable genes of Visium HD slides |
 | 버전 | 1.0 | |
 | 카테고리 대분류 | Statistics_and_Visualization | Statistics_and_Visualization |
-| 카테고리 중분류 | Spatial_Statistics (신규) | Spatial_Statistics (new) |
+| 카테고리 중분류 | Spatial_Omics (신규) | Spatial_Omics (new) |
 | 태그 | spatial transcriptomics, Visium HD, spatially variable genes, Moran's I | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
@@ -398,7 +389,23 @@ Rscript spatial_hd_svf.1.0.R \
 ```
 
 ### 주요 결과 이미지
-등록 메모: SIF 테스트 결과 그림을 넣을 자리입니다(Codespace 재실행 중).
+예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다.
+
+등록 메모: CLOSHA 실행 결과로 그림과 레전드의 수치를 넣습니다. 그림 파일 이름은 아래 경로로 둡니다.
+
+**결과 1. 상위 공간 가변 유전자(대표 그림)**
+- 결과 파일: `<slide>/plots/<slide>_top_svf.png` (PDF도 있음), 표 `<slide>/<slide>_hd_svf.tsv`
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_svf_result_1.png`
+
+- 레전드(국문): **Moran's I 상위 유전자의 조직 위 발현.** 공간적으로 몰려 발현하는 유전자가 점막층, 종양 경계, 근육층 같은 구조를 따라 띠나 덩어리 모양으로 나타납니다.
+- 레전드(영문): **Tissue expression of the top genes by Moran's I.** Spatially concentrated genes follow structures such as the mucosal layer, tumour borders and muscle layers as bands or patches.
+
+**결과 2. 슬라이드별 요약**
+- 결과 파일: `svf_summary.tsv`
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_svf_result_2.png`
+
+- 레전드(국문): **슬라이드별 검정 bin 수, 검정 유전자 수, 유의 유전자 수(BH 보정 p < padj_cutoff), 상위 유전자.**
+- 레전드(영문): **Bins and genes tested, significant genes (BH-adjusted p < padj_cutoff) and top genes per slide.**
 
 ---
 
@@ -468,8 +475,8 @@ Compares the spot composition of clusters and the gene expression within cluster
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Required | Directory | input_dir | /data/spatial_merge | 군집 결과 폴더. Visium: merged/merged_clustered.rds(원래 Spatial count, slice 열, 군집 열이 있는 Seurat 객체). Visium HD: hd_slides.tsv(Slide, RDS, Assay)와 슬라이드별 <slide>/<slide>_hd_clustered.rds | Clustered folder. Visium: merged/merged_clustered.rds (Seurat object with raw Spatial counts, a slice column and cluster labels). Visium HD: hd_slides.tsv (Slide, RDS, Assay) and <slide>/<slide>_hd_clustered.rds per slide |
-| Input | Required | File | sample_data | /data/slices.csv | 슬라이스 시트(CSV). 열: SliceID(객체의 슬라이스 이름), Condition, 선택 Patient(짝 설계) | Slice sheet (CSV): SliceID (slice name in the object), Condition, optional Patient (paired design) |
+| Input | Required | Directory | input_dir | /data/spatial_hd_cluster | 군집 결과 폴더. Visium: merged/merged_clustered.rds(원래 Spatial count, slice 열, 군집 열이 있는 Seurat 객체). Visium HD: hd_slides.tsv(Slide, RDS, Assay)와 슬라이드별 <slide>/<slide>_hd_clustered.rds | Clustered folder. Visium: merged/merged_clustered.rds (Seurat object with raw Spatial counts, a slice column and cluster labels). Visium HD: hd_slides.tsv (Slide, RDS, Assay) and <slide>/<slide>_hd_clustered.rds per slide |
+| Input | Required | File | sample_data | /data/hd_slides.csv | 슬라이스 시트(CSV). 열: SliceID(객체의 슬라이스 이름), Condition, 선택 Patient(짝 설계) | Slice sheet (CSV): SliceID (slice name in the object), Condition, optional Patient (paired design) |
 | Output | Required | Directory | output_dir | /data/spatial_condition_de | 결과 폴더(01_composition/, 02_de/de_<test>_vs_<reference>.tsv, 03_plots/, 04_summary/de_summary.tsv) | Output folder (01_composition/, 02_de/de_<test>_vs_<reference>.tsv, 03_plots/, 04_summary/de_summary.tsv) |
 | Option | Optional | String | group_by | seurat_clusters | 안에서 조건을 비교할 spot 묶음의 메타데이터 열(군집 또는 세포 유형 열) | Metadata column defining the spot groups compared within (clusters or a cell-type column) |
 | Option | Optional | String | reference |  | 기준 조건. 나머지 조건을 이것과 비교. 비우면 sample_data의 첫 Condition | Reference condition that the others are compared with. Empty: the first Condition in sample_data |
@@ -529,7 +536,7 @@ normal_2,normal,P2
 ```
 Rscript spatial_condition_de.1.0.R \
   input_dir=/data/spatial_hd_cluster \
-  sample_data=/data/slices.csv \
+  sample_data=/data/hd_slides.csv \
   output_dir=/data/spatial_condition_de \
   group_by=seurat_clusters \
   min_spots=20 \
@@ -544,15 +551,30 @@ Rscript spatial_condition_de.1.0.R \
 ```
 
 ### 주요 결과 이미지
-등록 메모: 예시 데이터를 사람 대장암 Visium HD(종양 3장, 정상 2장)로 바꿨습니다. 아래 그림은 이전 예시(마우스 뇌 Visium HD를 좌우로 나눈 4장) 결과이며, CLOSHA 결과로 바꿉니다.
+예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다.
 
-**결과 1. 군집별 volcano (Visium HD 입력)**
-- 결과 파일: `03_plots/volcano_<test>_vs_<reference>.png` (Visium HD 입력)
+등록 메모: CLOSHA 실행 결과로 그림과 레전드의 수치를 넣습니다. 그림 파일 이름은 아래 경로로 둡니다.
 
-그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_1.png`
+**결과 1. 슬라이드별 군집 조성**
+- 결과 파일: `03_plots/composition_stacked.png`, 표 `01_composition/`
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_1.png`
 
-- 레전드(국문): **Visium HD 결과(spatial_hd_cluster 출력)를 넣은 조건 비교.** HD 입력에서는 슬라이드를 하나씩 읽어 pseudobulk를 합칩니다. 예시 데이터(right vs left, 조건마다 슬라이드 2장)에서는 군집 12개를 pseudobulk DESeq2로 검정했고, 군집 2(Gad1, Sst 등 감소)처럼 유의 유전자가 많이 나왔습니다. 왼쪽과 오른쪽은 서로 다른 뇌 영역을 담고 있어 해부학적 차이가 나오는 것이 정상이며, 실제 조건 비교가 아닙니다.
-- 레전드(영문): **Condition comparison with Visium HD input (spatial_hd_cluster output).** With HD input the slides are read one at a time and summed into pseudobulk samples. In the example data (right vs left, two slides per condition) twelve clusters were tested with pseudobulk DESeq2, and some, such as cluster 2 (Gad1, Sst and others lower), had many significant genes. The left and right halves contain different brain regions, so anatomical differences are expected; this is not a real condition comparison.
+- 레전드(국문): **슬라이드마다 군집 비율을 쌓은 막대.** 종양 3장과 정상 2장의 구성이 다릅니다. 조건 간 비율 검정은 `01_composition/composition_test.tsv`에 있습니다.
+- 레전드(영문): **Stacked cluster fractions per slide.** The three tumour and two normal slides differ in composition; tests between conditions are in `01_composition/composition_test.tsv`.
+
+**결과 2. 군집별 volcano(대표 그림)**
+- 결과 파일: `03_plots/volcano_tumor_vs_normal.png`, 표 `02_de/de_tumor_vs_normal.tsv`
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_2.png`
+
+- 레전드(국문): **군집마다 종양과 정상 사이의 유전자 발현 차이.** x축은 log2 fold change(정상 대비), y축은 -log10 보정 p입니다. 조건마다 슬라이드가 2장 이상이라 슬라이드를 반복으로 삼은 pseudobulk DESeq2로 검정합니다.
+- 레전드(영문): **Expression differences between tumour and normal per cluster.** The x axis is log2 fold change (against normal) and the y axis -log10 adjusted p. With two or more slides per condition, pseudobulk DESeq2 tests with slides as replicates.
+
+**결과 3. 군집별 유의 유전자 수**
+- 결과 파일: `03_plots/de_counts.png`, 표 `04_summary/de_summary.tsv`
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_3.png`
+
+- 레전드(국문): **군집마다 유의하게 높아진(up)·낮아진(down) 유전자 수.** 검정 방법이 pseudobulk_DESeq2인지 de_summary.tsv에서 확인합니다.
+- 레전드(영문): **Significantly increased (up) and decreased (down) genes per cluster.** Check in de_summary.tsv that the method is pseudobulk_DESeq2.
 
 ---
 
@@ -623,8 +645,8 @@ Labels every bin of Visium HD slides with the cell types of a single-cell refere
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
 | Input | Required | Directory | input_dir | /data/spatial_hd_cluster | Visium HD 군집 결과 폴더. hd_slides.tsv와 슬라이드별 객체(bin assay에 raw count) | Visium HD cluster folder: hd_slides.tsv and the per-slide objects (raw counts in the binned assay) |
-| Input | Optional | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료(Seurat .rds). raw count와 세포 유형 열이 있어야 함. 비우면 이 모듈은 건너뜀(skipped.txt) | Single-cell reference (Seurat .rds) with raw counts and a cell-type column. Empty: the module is skipped (skipped.txt) |
-| Option | Optional | String | reference_label_col | celltype | 참조 자료에서 세포 유형이 든 메타데이터 열 이름. 참조를 주면 반드시 입력. 비었거나 참조에 없는 열이면 세포 유형 후보 열을 보여 주고 멈춤 | Metadata column of the reference holding the cell types; required when a reference is given. When empty or not in the reference, the run stops and lists the cell-type column candidates |
+| Input | Optional | File | reference_rds | /ref/human_colon_crc_flex_300pertype.rds | 단일세포 참조 자료(Seurat .rds). raw count와 세포 유형 열이 있어야 함. 비우면 이 모듈은 건너뜀(skipped.txt) | Single-cell reference (Seurat .rds) with raw counts and a cell-type column. Empty: the module is skipped (skipped.txt) |
+| Option | Optional | String | reference_label_col | Level1 | 참조 자료에서 세포 유형이 든 메타데이터 열 이름. 참조를 주면 반드시 입력. 비었거나 참조에 없는 열이면 세포 유형 후보 열을 보여 주고 멈춤 | Metadata column of the reference holding the cell types; required when a reference is given. When empty or not in the reference, the run stops and lists the cell-type column candidates |
 | Output | Required | Directory | output_dir | /data/spatial_hd_rctd | 결과 폴더. 슬라이드마다 <slide>_hd_rctd.rds, <slide>_rctd_weights.tsv.gz, plots/, 그리고 hd_slides.tsv, celltype_by_slide.tsv, rctd_summary.tsv | Output folder: per slide <slide>_hd_rctd.rds, <slide>_rctd_weights.tsv.gz and plots/, plus hd_slides.tsv, celltype_by_slide.tsv and rctd_summary.tsv |
 | Option | Optional | String | reference_assay | RNA | 참조 객체에서 raw count가 든 assay | Assay of the reference holding raw counts |
 | Option | Optional | List | rctd_mode | doublet | doublet = bin마다 세포 유형 1~2개(8µm에 맞음), full = 모든 세포 유형의 섞인 비율(16µm에 맞음) | doublet = one or two cell types per bin (suits 8 um), full = mixture of all cell types (suits 16 um) |
@@ -655,11 +677,11 @@ Labels every bin of Visium HD slides with the cell types of a single-cell refere
 ```
 Rscript spatial_hd_rctd.1.0.R \
   input_dir=/data/spatial_hd_cluster \
-  reference_rds=/ref/brain_reference.rds \
-  reference_label_col=celltype \
+  reference_rds=/ref/human_colon_crc_flex_300pertype.rds \
+  reference_label_col=Level1 \
   output_dir=/data/spatial_hd_rctd \
   reference_assay=RNA \
-  rctd_mode=doublet \
+  rctd_mode=full \
   chunk_bins=20000 \
   umi_min=100 \
   min_cells_per_type=25 \
@@ -669,7 +691,24 @@ Rscript spatial_hd_rctd.1.0.R \
 ```
 
 ### 주요 결과 이미지
-등록 메모: SIF 테스트 결과 그림을 넣을 자리입니다(Codespace 재실행 중).
+예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다.
+
+등록 메모: CLOSHA 실행 결과로 그림과 레전드의 수치를 넣습니다. 그림 파일 이름은 아래 경로로 둡니다.
+
+**결과 1. 조직 위 세포 유형(대표 그림)**
+- 결과 파일: `<slide>/plots/<slide>_rctd_first_type.png` (PDF도 있음)
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_rctd_result_1.png`
+
+- 레전드(국문): **bin마다 가장 비중이 큰 세포 유형(Level1).** 참조는 같은 연구의 단일세포 자료입니다. 종양 영역은 Tumor, 근육층은 Smooth Muscle, 그 사이에 Fibroblast와 면역세포(T cells, B cells, Myeloid)가 칠해집니다. UMI가 umi_min보다 적은 bin은 NA입니다.
+- 레전드(영문): **The cell type with the largest weight in each bin (Level1).** The reference is single-cell data from the same study. Tumour areas show Tumor, muscle layers Smooth Muscle, with Fibroblast and immune cells (T cells, B cells, Myeloid) between them. Bins below umi_min are NA.
+
+**결과 2. 슬라이드별 세포 유형 구성**
+- 결과 파일: `plots/celltype_by_slide.png`, 표 `celltype_by_slide.tsv`, `rctd_summary.tsv`
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_rctd_result_2.png`
+
+- 레전드(국문): **슬라이드마다 세포 유형이 차지하는 bin 비율.** 종양 슬라이드는 Tumor, 정상 슬라이드는 Intestinal Epithelial 비율이 높아야 합니다. 이 결과를 spatial_condition_de(group_by=rctd_first_type)에 넣으면 세포 유형별로 종양과 정상을 비교합니다.
+- 레전드(영문): **Fraction of bins per cell type in each slide.** Tumour slides should be rich in Tumor and normal slides in Intestinal Epithelial. Given to spatial_condition_de (group_by=rctd_first_type), this output compares tumour and normal per cell type.
+
 ## 6. check_reference
 
 ### 기본 정보
@@ -734,7 +773,7 @@ Inspects the metadata columns of a single-cell reference (Seurat RDS) for spatia
 ### 입출력 / 파라미터
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
-| Input | Required | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료. 세포 유형 열이 있는 Seurat 객체(.rds) | Single-cell reference: Seurat object (.rds) with a cell-type column |
+| Input | Required | File | reference_rds | /ref/human_colon_crc_flex_300pertype.rds | 단일세포 참조 자료. 세포 유형 열이 있는 Seurat 객체(.rds) | Single-cell reference: Seurat object (.rds) with a cell-type column |
 | Output | Required | Directory | output_dir | /data/check_reference | 결과 폴더. reference_columns.tsv(열 보고서)와 logs/ | Output folder: reference_columns.tsv (column report) and logs/ |
 
 ### 주요 사항
@@ -754,12 +793,21 @@ Inspects the metadata columns of a single-cell reference (Seurat RDS) for spatia
 ### 스크립트 사용 예제
 ```
 Rscript check_reference.1.1.R \
-  reference_rds=/ref/brain_reference.rds \
+  reference_rds=/ref/human_colon_crc_flex_300pertype.rds \
   output_dir=/data/check_reference
 ```
 
 ### 주요 결과 이미지
-등록 메모: SIF 테스트 결과 그림을 넣을 자리입니다(Codespace 재실행 중).
+예시 참조는 사람 대장암 단일세포 자료(10x Chromium Flex, Oliveira et al., Nat Genet 2025)를 세포 유형마다 최대 300세포씩 뽑은 Seurat 객체입니다(세포 10,333개).
+
+등록 메모: CLOSHA 실행 결과로 그림을 넣습니다.
+
+**결과 1. 참조 열 보고서**
+- 결과 파일: `reference_columns.tsv`, `logs/<stamp>.log`
+- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/check_reference_result_1.png`
+
+- 레전드(국문): **참조 메타데이터 열의 형식과 범주.** 범주가 2~100개인 범주형 열에 [CELLTYPE?]가 붙습니다. 예시 참조에서는 Level1(9종: Tumor, Fibroblast, T cells 등)과 Level2(38종)가 세포 유형 열이고, Patient(8종)도 후보로 잡히지만 세포 유형이 아니므로 고르지 않습니다.
+- 레전드(영문): **Type and categories of the reference metadata columns.** Categorical columns with 2-100 categories are tagged [CELLTYPE?]. In the example reference Level1 (9 types: Tumor, Fibroblast, T cells and others) and Level2 (38 types) are the cell-type columns; Patient (8 values) is also tagged but is not a cell type.
 
 ---
 
