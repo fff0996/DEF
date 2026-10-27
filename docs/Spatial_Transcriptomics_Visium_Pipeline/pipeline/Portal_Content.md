@@ -20,7 +20,7 @@ KOBIC 포탈의 Visium 공간 전사체 파이프라인 상세 페이지에 들�
 | Version | 1.1 (CLOSHA 2.0 파이프라인 버전 + 1. 등록 메모: 2.0 파이프라인 버전이 1.0이라는 전제이며, 다르면 그 번호 + 1로 고칩니다) |
 | Reference | https://satijalab.org/seurat/articles/spatial_vignette |
 | Keyword(태그) | spatial transcriptomics, Visium, clustering, spatially variable genes, multi-slice integration, differential expression, cell type deconvolution, label transfer |
-| 대분류 / 중분류 | 등록 메모: 포탈 파이프라인 목록에서 가장 가까운 것을 고릅니다(후보: Transcriptomics / Spatial transcriptomics). |
+| 대분류 / 중분류 | Transcriptomics / Spatial_Transcriptomics (포탈 파이프라인 목록에 없으면 신규로 제안) |
 | 대표 이미지 | 등록 메모: 결과 그림을 본 뒤 고릅니다(후보: spatial_merge 조직 위 통합 군집). |
 
 ## 1. 파이프라인 소개 / Introduction

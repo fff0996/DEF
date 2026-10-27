@@ -20,7 +20,7 @@ KOBIC 포탈의 Visium HD 공간 전사체 파이프라인 상세 페이지에 �
 | Version | 1.0 (CLOSHA 3.0 첫 배포) |
 | Reference | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette |
 | Keyword(태그) | spatial transcriptomics, Visium HD, high-resolution spatial, clustering, sketch, spatially variable genes, differential expression, cell type annotation, RCTD |
-| 대분류 / 중분류 | 등록 메모: 포탈 파이프라인 목록에서 가장 가까운 것을 고릅니다(후보: Transcriptomics / Spatial transcriptomics). |
+| 대분류 / 중분류 | Transcriptomics / Spatial_Transcriptomics (포탈 파이프라인 목록에 없으면 신규로 제안) |
 | 대표 이미지 | 등록 메모: 결과 그림을 본 뒤 고릅니다(후보: spatial_hd_cluster 조직 위 군집). |
 
 ## 1. 파이프라인 소개 / Introduction

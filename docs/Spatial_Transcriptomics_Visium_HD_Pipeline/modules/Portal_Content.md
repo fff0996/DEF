@@ -9,7 +9,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 Visium HD �
 - 스크립트 사용 예제는 등록하는 인자를 모두 적었고, 기본값이 있는 옵션은 기본값으로 적었습니다. 예시 값은 Visium HD 기준입니다.
 - 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`입니다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다릅니다. 기반 이미지(From)는 모든 모듈이 Rocky Linux 9.8(`rockylinux/rockylinux:9.8.20260525.0`)입니다.
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류·경고 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지웁니다.
-- 카테고리는 기능(분석 단계) 기준의 대분류·중분류로 정했습니다(`docs/CLOSHA_Portal_Guide_v1.md` 5.2). 공간 전사체 군집은 기존 목록에 맞는 중분류가 없어 Omics / Clustering(신규)을 제안합니다. 단일세포 RNA-seq 군집 모듈도 담을 수 있는 일반 이름입니다.
+- 카테고리는 기능(분석 단계) 기준의 대분류·중분류로 정했습니다(`docs/CLOSHA_Portal_Guide_v1.md` 5.2). 공간 전사체 군집은 기존 목록에 맞는 중분류가 없어 Omics / Clustering(신규)을 제안합니다. 공간 가변 유전자 모듈은 정량이 아니라 공간 통계 분석이라 Omics / Spatial_Analysis(신규)를 제안합니다. 공간 영역 탐지나 이웃 분석 같은 다른 공간 모듈도 담을 수 있는 이름입니다. 단일세포 RNA-seq 군집 모듈도 담을 수 있는 일반 이름입니다.
 - 버전은 배포 번호입니다. CLOSHA 2.0 모듈은 2.0 번호 + 1(이번에 모두 스크립트 규칙에 맞춰 고쳐 1.1)이고, 3.0에서 새로 만든 모듈은 1.0입니다.
 - 세포 유형 모듈(spatial_labelTransfer, spatial_rctd, spatial_hd_rctd)은 기존 목록에 맞는 중분류가 없어 Annotation / Cell_Type_Annotation(신규)을 제안합니다. 단일세포 RNA-seq 세포 유형 모듈도 담을 수 있는 일반 이름입니다. check_reference는 참조 자료를 살피는 보조 도구라 Utility / Genomic_data_Utility에 둡니다.
 
@@ -307,7 +307,7 @@ Rscript spatial_hd_cluster.1.0.R \
 | 서브 타이틀 | Visium HD 공간 가변 유전자 | Spatially variable genes of Visium HD slides |
 | 버전 | 1.0 | |
 | 카테고리 대분류 | Omics | Omics |
-| 카테고리 중분류 | Expression_Quantification | Expression_Quantification |
+| 카테고리 중분류 | Spatial_Analysis (신규) | Spatial_Analysis (new) |
 | 태그 | spatial transcriptomics, Visium HD, spatially variable genes, Moran's I | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |

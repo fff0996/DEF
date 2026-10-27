@@ -150,7 +150,7 @@ Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종�
 
 ## 7. 원고 (2026-10-22)
 - `modules/Registration.md`, `modules/Portal_Content.md`, `pipeline/Portal_Content.md`, `containers/Container_Manual.md`를 썼다.
-- 범위: 12개 모듈 모두. 파이프라인 기본 구성은 Visium(prep, cluster, svf, merge, condition_de)과 Visium HD(hd_prep, hd_cluster, hd_svf, condition_de)이다. 참조가 필요한 labelTransfer, rctd, hd_rctd, check_reference는 선택 모듈로 안내했다(파이프라인 원고 A5·B5). 2026-10-27에 세포 유형 모듈을 파이프라인 안으로 옮겼다(7.1). 세포 유형 모듈 3개의 카테고리는 Annotation / Cell_Type_Annotation(신규), check_reference는 Utility / Genomic_data_Utility(사용자 확인, 2026-10-22).
+- 범위: 12개 모듈 모두. 파이프라인 기본 구성은 Visium(prep, cluster, svf, merge, condition_de)과 Visium HD(hd_prep, hd_cluster, hd_svf, condition_de)이다. 참조가 필요한 labelTransfer, rctd, hd_rctd, check_reference는 선택 모듈로 안내했다(파이프라인 원고 A5·B5). 2026-10-27에 세포 유형 모듈을 파이프라인 안으로 옮겼다(7.1). 세포 유형 모듈 3개의 카테고리는 Annotation / Cell_Type_Annotation(신규), check_reference는 Utility / Genomic_data_Utility(사용자 확인, 2026-10-22). 2026-10-27: svf와 hd_svf는 Omics / Spatial_Analysis(신규), 두 파이프라인은 Transcriptomics / Spatial_Transcriptomics로 정했다(사용자가 결정을 맡김).
 - 노선도 2장(`pipeline/figures/pipeline_visium*.png`, 생성 `make_pipeline_map.py`, 그리기 함수는 `docs/tools/metro_map.py`), 파이프라인 개념도(`pipeline/figures/concept.png`, `make_concept.py`).
 - 테스트는 이제 빌드한 SIF 안에서 돌린다: `tools/spatial/run_spatial_test.sh <작업 폴더> <env 폴더>`의 env 폴더에 `bin/Rscript`(apptainer exec 래퍼)를 두면 conda 환경을 만들지 않는다.
 
@@ -188,4 +188,3 @@ Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종�
 
 ## 8. 남은 일
 1. 8µm 자원 실측(사용자가 CLOSHA에서 sacct MaxRSS, Elapsed)
-2. 파이프라인 대분류·중분류(나중에)
