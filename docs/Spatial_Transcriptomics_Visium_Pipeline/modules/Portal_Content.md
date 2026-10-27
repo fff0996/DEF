@@ -9,7 +9,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 Visium 파�
 - 스크립트 사용 예제는 등록하는 인자를 모두 적었고, 기본값이 있는 옵션은 기본값으로 적었습니다. 예시 값은 Visium 기준입니다.
 - 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`입니다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다릅니다. 기반 이미지(From)는 모든 모듈이 Rocky Linux 9.8(`rockylinux/rockylinux:9.8.20260525.0`)입니다.
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류·경고 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지웁니다.
-- 카테고리는 대분류를 데이터 분야, 중분류를 작업으로 정했습니다(사용자 결정, 2026-10-27). Galaxy(usegalaxy.eu 도구 메뉴: Single-cell, Spatial Omics, RNA Analysis 등 분야 메뉴)와 bio.tools/EDAM(Topic = 분야, Operation = 작업)을 참고했고, 사용자가 "내 데이터로 무엇을 할 수 있나"로 찾는 순서에 맞췄습니다. 모든 공간 전사체 모듈은 대분류 Transcriptomics(신규) 아래 Normalization, Clustering, Spatial_Statistics, Differential_Expression, Cell_Type_Annotation(모두 신규)에 둡니다. check_reference는 세포 유형 모듈에 넣을 참조를 확인하는 도구라 Cell_Type_Annotation에 함께 둡니다. 단일세포·bulk RNA-seq 모듈도 같은 중분류에 넣고 모듈 이름으로 구분합니다.
+- 카테고리는 대분류 = 분석 단계, 중분류 = 구체적 작업으로 정했습니다(사용자 결정, 2026-10-27). 데이터 종류는 모듈 이름(spatial_*)이 보여 줍니다. spatial_prep·spatial_hd_prep은 Preprocessing(신규) / Normalization(신규), 군집 모듈은 Clustering(신규) / Spatial_Clustering(신규; 묶는 대상별 중분류로 나중에 Cell_Clustering, Sample_Clustering 등을 둔다), p값을 내는 검정인 spatial_svf·spatial_hd_svf(Moran's I)와 spatial_condition_de(DESeq2)는 Statistics_and_Visualization 아래 Spatial_Statistics(신규)와 Differential_Analysis(신규)에 둡니다. 세포 유형 모듈과 check_reference는 기존 Annotation의 "무엇에 주석을 다는가" 방식에 맞춰 Cell_Type_Annotation(신규)입니다. 포탈의 현재 이름 Statisitcs_and_Visualization은 오타라 Statistics_and_Visualization으로 적었습니다.
 - 버전은 배포 번호입니다. CLOSHA 2.0 모듈은 2.0 번호 + 1(이번에 모두 스크립트 규칙에 맞춰 고쳐 1.1)이고, 3.0에서 새로 만든 모듈은 1.0입니다.
 
 ---
@@ -22,7 +22,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 Visium 파�
 | 모듈명 | spatial_prep | spatial_prep |
 | 서브 타이틀 | 공간 전사체 불러오기와 정규화 | Loading and normalisation of spatial data |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
+| 카테고리 대분류 | Preprocessing (신규) | Preprocessing (new) |
 | 카테고리 중분류 | Normalization (신규) | Normalization (new) |
 | 태그 | spatial transcriptomics, Visium, Seurat, SCTransform, QC | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
@@ -131,8 +131,8 @@ Rscript spatial_prep.1.1.R \
 | 모듈명 | spatial_cluster | spatial_cluster |
 | 서브 타이틀 | 슬라이스별 군집과 마커 | Clustering and markers per slice |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
-| 카테고리 중분류 | Clustering (신규) | Clustering (new) |
+| 카테고리 대분류 | Clustering (신규) | Clustering (new) |
+| 카테고리 중분류 | Spatial_Clustering (신규) | Spatial_Clustering (new) |
 | 태그 | spatial transcriptomics, Visium, clustering, UMAP, marker genes | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
@@ -252,7 +252,7 @@ Rscript spatial_cluster.1.1.R \
 | 모듈명 | spatial_svf | spatial_svf |
 | 서브 타이틀 | 공간 가변 유전자 탐색 | Spatially variable genes |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
+| 카테고리 대분류 | Statistics_and_Visualization | Statistics_and_Visualization |
 | 카테고리 중분류 | Spatial_Statistics (신규) | Spatial_Statistics (new) |
 | 태그 | spatial transcriptomics, Visium, spatially variable genes, Moran's I | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
@@ -359,8 +359,8 @@ Rscript spatial_svf.1.1.R \
 | 모듈명 | spatial_merge | spatial_merge |
 | 서브 타이틀 | 여러 슬라이스 통합 군집 | Joint clustering of multiple slices |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
-| 카테고리 중분류 | Clustering (신규) | Clustering (new) |
+| 카테고리 대분류 | Clustering (신규) | Clustering (new) |
+| 카테고리 중분류 | Spatial_Clustering (신규) | Spatial_Clustering (new) |
 | 태그 | spatial transcriptomics, Visium, integration, Harmony, multi-slice | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
@@ -501,8 +501,8 @@ Rscript spatial_merge.1.1.R \
 | 모듈명 | spatial_condition_de | spatial_condition_de |
 | 서브 타이틀 | 조건 간 공간 발현 비교 | Spatial expression comparison between conditions |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
-| 카테고리 중분류 | Differential_Expression (신규) | Differential_Expression (new) |
+| 카테고리 대분류 | Statistics_and_Visualization | Statistics_and_Visualization |
+| 카테고리 중분류 | Differential_Analysis (신규) | Differential_Analysis (new) |
 | 태그 | spatial transcriptomics, Visium, Visium HD, differential expression, pseudobulk, DESeq2 | |
 | 레퍼런스 URL | https://bioconductor.org/packages/DESeq2/ | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
@@ -687,7 +687,7 @@ Rscript spatial_condition_de.1.0.R \
 | 모듈명 | spatial_labelTransfer | spatial_labelTransfer |
 | 서브 타이틀 | 참조 기반 spot 세포 유형 예측 | Cell-type prediction of spots from a single-cell reference |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
+| 카테고리 대분류 | Annotation | Annotation |
 | 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |
 | 태그 | spatial transcriptomics, Visium, label transfer, Seurat, cell type | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
@@ -796,7 +796,7 @@ Rscript spatial_labelTransfer.1.1.R \
 | 모듈명 | spatial_rctd | spatial_rctd |
 | 서브 타이틀 | spot 세포 유형 비율 추정 | Cell-type proportions of spots with RCTD |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
+| 카테고리 대분류 | Annotation | Annotation |
 | 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |
 | 태그 | spatial transcriptomics, Visium, RCTD, deconvolution, cell type | |
 | 레퍼런스 URL | https://github.com/dmcable/spacexr | |
@@ -909,7 +909,7 @@ Rscript spatial_rctd.1.1.R \
 | 모듈명 | check_reference | check_reference |
 | 서브 타이틀 | 단일세포 참조 자료 열 확인 | Column check of a single-cell reference |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
+| 카테고리 대분류 | Annotation | Annotation |
 | 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |
 | 태그 | single-cell reference, Seurat, metadata, cell type | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
