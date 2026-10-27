@@ -237,8 +237,8 @@ Clusters the sketched bins of all Visium HD slides together and labels every bin
 
 그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/spatial_hd_cluster_concept.png`
 
-- 레전드(국문): **그림. Visium HD 통합 군집과 모든 bin 배정.** (A) 모든 슬라이드의 sketch bin을 합쳐 Harmony로 슬라이드 차이를 보정하고 군집, UMAP, 마커를 계산합니다. (B) 각 bin(흰 사각형)을 같은 PCA에 투영하고, 같은 슬라이드에서 가장 가까운 sketch bin k_transfer개의 다수결로 군집을 붙입니다. 같은 군집인 이웃의 비율이 Cluster_score입니다. (C) 모든 bin에 군집이 붙은 슬라이드 객체와 hd_slides.tsv를 만들며, 조건 비교, 공간 가변 유전자, RCTD 모듈의 입력이 됩니다. 값과 조직 모양은 모식적인 값입니다.
-- 레전드(영문): **Figure. Joint Visium HD clustering and labels for every bin.** (A) The sketched bins of all slides are merged, slide differences corrected with Harmony, and clusters, UMAP and markers computed. (B) Each bin (white square) is projected onto the same PCA and labelled by majority vote of its k_transfer nearest sketched bins of the same slide; the fraction of agreeing neighbours is Cluster_score. (C) Slide objects with a cluster on every bin and hd_slides.tsv are written; they are the input of the condition comparison, spatially variable gene and RCTD modules. Values and tissue shapes are schematic.
+- 레전드(국문): **그림. Visium HD 통합 군집과 모든 bin 배정.** (A) 모든 슬라이드의 sketch bin을 합쳐 Harmony로 슬라이드 차이를 보정하고 군집, UMAP, 마커를 계산합니다. (B) 각 bin(흰 사각형)을 같은 PCA에 투영하고, 같은 슬라이드에서 가장 가까운 sketch bin k_transfer개의 다수결로 군집을 붙입니다. 같은 군집인 이웃의 비율이 Cluster_score입니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Joint Visium HD clustering and labels for every bin.** (A) The sketched bins of all slides are merged, slide differences corrected with Harmony, and clusters, UMAP and markers computed. (B) Each bin (white square) is projected onto the same PCA and labelled by majority vote of its k_transfer nearest sketched bins of the same slide; the fraction of agreeing neighbours is Cluster_score. Values and tissue shapes are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -377,8 +377,8 @@ Finds genes expressed in spatial patches on each Visium HD slide (spatially vari
 ### 분석 개념 이미지
 그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/spatial_hd_svf_concept.png`
 
-- 레전드(국문): **그림. Visium HD 공간 가변 유전자.** (A) 슬라이드마다 bin을 max_bins개 무작위로 뽑습니다(파란 칸). Moran's I 계산량이 bin 수의 제곱으로 늘어나기 때문입니다. (B) 가변 유전자 svf_topn개마다 Moran's I와 p값, BH 보정 p값을 계산해 순위를 매깁니다. (C) 상위 유전자의 발현을 모든 bin 위에 그리고, 슬라이드별 표와 요약 표를 남깁니다. 값과 조직 모양은 모식적인 값입니다.
-- 레전드(영문): **Figure. Spatially variable genes of Visium HD slides.** (A) max_bins bins are sampled at random per slide (blue squares), because the cost of Moran's I grows with the square of the bin count. (B) For each of the svf_topn variable genes, Moran's I, its p-value and the BH-adjusted p-value are computed and the genes are ranked. (C) The top genes are drawn on all bins, and per-slide and summary tables are written. Values and tissue shapes are schematic.
+- 레전드(국문): **그림. Visium HD 공간 가변 유전자.** (A) 슬라이드마다 bin을 max_bins개 무작위로 뽑습니다(파란 칸). Moran's I 계산량이 bin 수의 제곱으로 늘어나기 때문입니다. (B) 가변 유전자 svf_topn개마다 Moran's I와 p값, BH 보정 p값을 계산해 순위를 매깁니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Spatially variable genes of Visium HD slides.** (A) max_bins bins are sampled at random per slide (blue squares), because the cost of Moran's I grows with the square of the bin count. (B) For each of the svf_topn variable genes, Moran's I, its p-value and the BH-adjusted p-value are computed and the genes are ranked. Values and tissue shapes are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -540,8 +540,8 @@ normal_2,normal,P2
 
 그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/spatial_condition_de_concept.png`
 
-- 레전드(국문): **그림. 조건 간 군집별 비교.** (A) 슬라이스마다 한 군집 spot의 count를 합친 pseudobulk를 만들고, 슬라이스를 반복으로 삼아 DESeq2(~ Condition, 짝 설계면 ~ Patient + Condition)로 검정합니다. 조건마다 슬라이스가 한 장뿐이면 spot 단위 Wilcoxon(탐색용)으로 비교합니다. (B) 군집마다 volcano를 그립니다(x축 log2 fold change, y축 -log10 adjusted p, 빨강 기준보다 높음, 파랑 낮음, 점선은 lfc_cutoff와 padj_cutoff). (C) de_summary.tsv에 군집별 검정 방법과 상태(ok, ok_exploratory, insufficient_slices)를 남깁니다. Visium merge 결과와 Visium HD 결과(hd_slides.tsv)를 모두 받으며, group_by로 세포 유형 열을 쓸 수도 있습니다. 값과 조직 모양은 모식적인 값입니다.
-- 레전드(영문): **Figure. Comparison between conditions per cluster.** (A) For each slice, the counts of one cluster's spots are summed into a pseudobulk sample, and DESeq2 (~ Condition, or ~ Patient + Condition when paired) tests the condition with slices as replicates; with one slice per condition a spot-level Wilcoxon test (exploratory) is used. (B) A volcano per cluster (x log2 fold change, y -log10 adjusted p; red higher than the reference, blue lower; dashed lines lfc_cutoff and padj_cutoff). (C) de_summary.tsv records the method and status per cluster (ok, ok_exploratory, insufficient_slices). Visium merge output and Visium HD output (hd_slides.tsv) are both accepted, and group_by may name a cell-type column. Values and tissue shapes are schematic.
+- 레전드(국문): **그림. 조건 간 군집별 비교.** (A) 군집마다 volcano를 그립니다(x축 log2 fold change, y축 -log10 adjusted p, 빨강 기준보다 높음, 파랑 낮음, 점선은 lfc_cutoff와 padj_cutoff). (B) de_summary.tsv에 군집별 검정 방법과 상태(ok, ok_exploratory, insufficient_slices)를 남깁니다. Visium merge 결과와 Visium HD 결과(hd_slides.tsv)를 모두 받으며, group_by로 세포 유형 열을 쓸 수도 있습니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Comparison between conditions per cluster.** (A) A volcano per cluster (x log2 fold change, y -log10 adjusted p; red higher than the reference, blue lower; dashed lines lfc_cutoff and padj_cutoff). (B) de_summary.tsv records the method and status per cluster (ok, ok_exploratory, insufficient_slices). Visium merge output and Visium HD output (hd_slides.tsv) are both accepted, and group_by may name a cell-type column. Values and tissue shapes are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -681,8 +681,8 @@ Labels every bin of Visium HD slides with the cell types of a single-cell refere
 ### 분석 개념 이미지
 그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/spatial_hd_rctd_concept.png`
 
-- 레전드(국문): **그림. Visium HD bin의 세포 유형(RCTD).** (A) 슬라이드의 bin을 chunk_bins개씩 나눠 단일세포 참조(raw count와 세포 유형 열)와 함께 RCTD에 넣습니다. (B) doublet 모드는 bin마다 세포 유형 하나(singlet), 둘(doublet_certain), 판정 불가(reject) 등으로 분류하고 첫째·둘째 세포 유형을 줍니다. 16µm에 쓰는 full 모드는 weight를 주고 가장 큰 weight를 첫째 세포 유형으로 씁니다. (C) 모든 bin에 세포 유형이 붙은 슬라이드 객체, weight 표, 슬라이드×세포 유형 비율을 만들고, hd_slides.tsv로 spatial_condition_de(group_by=rctd_first_type)에 넘깁니다. 값과 조직 모양은 모식적인 값입니다.
-- 레전드(영문): **Figure. Cell types of Visium HD bins with RCTD.** (A) The bins of a slide are passed to RCTD in chunks of chunk_bins together with the single-cell reference (raw counts and a cell-type column). (B) doublet mode classifies each bin as one cell type (singlet), two (doublet_certain) or undecided (reject) and gives a first and second type; full mode, used for 16 um, gives weights and the highest weight is the first type. (C) Slide objects with a cell type on every bin, weight tables and slide-by-cell-type proportions are written, and hd_slides.tsv passes them to spatial_condition_de (group_by=rctd_first_type). Values and tissue shapes are schematic.
+- 레전드(국문): **그림. Visium HD bin의 세포 유형(RCTD).** (A) 슬라이드의 bin을 chunk_bins개씩 나눠 단일세포 참조(raw count와 세포 유형 열)와 함께 RCTD에 넣습니다. (B) doublet 모드는 bin마다 세포 유형 하나(singlet), 둘(doublet_certain), 판정 불가(reject) 등으로 분류하고 첫째·둘째 세포 유형을 줍니다. 16µm에 쓰는 full 모드는 weight를 주고 가장 큰 weight를 첫째 세포 유형으로 씁니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Cell types of Visium HD bins with RCTD.** (A) The bins of a slide are passed to RCTD in chunks of chunk_bins together with the single-cell reference (raw counts and a cell-type column). (B) doublet mode classifies each bin as one cell type (singlet), two (doublet_certain) or undecided (reject) and gives a first and second type; full mode, used for 16 um, gives weights and the highest weight is the first type. Values and tissue shapes are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -798,8 +798,8 @@ Inspects the metadata columns of a single-cell reference (Seurat RDS) for spatia
 ### 분석 개념 이미지
 그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/check_reference_concept.png`
 
-- 레전드(국문): **그림. 단일세포 참조 자료의 세포 유형 열 확인.** (A) 참조 자료는 세포마다 메타데이터(세포 유형, 배치, UMI 수 등)를 가진 Seurat 객체입니다. (B) 열마다 형식과 범주 수, 가장 많은 값을 로그에 적고, 범주가 2~100개인 범주형 열에 [CELLTYPE?]를 붙입니다. 숫자형 열과 범주가 너무 많은 열은 후보에서 뺍니다(SKIP). (C) reference_columns.tsv에서 후보를 보고 세포 유형 열을 골라 spatial_labelTransfer, spatial_rctd, spatial_hd_rctd의 reference_label_col에 넣습니다. 값은 모식적인 값입니다.
-- 레전드(영문): **Figure. Checking the cell-type column of a single-cell reference.** (A) The reference is a Seurat object with per-cell metadata (cell type, batch, UMI counts and so on). (B) For each column the log lists its type, number of categories and most frequent values; categorical columns with 2-100 categories are tagged [CELLTYPE?], while numeric columns and columns with too many categories are skipped. (C) The cell-type column is chosen from the candidates in reference_columns.tsv and given as reference_label_col to spatial_labelTransfer, spatial_rctd and spatial_hd_rctd. Values are schematic.
+- 레전드(국문): **그림. 단일세포 참조 자료의 세포 유형 열 확인.** (A) 열마다 형식과 범주 수, 가장 많은 값을 로그에 적고, 범주가 2~100개인 범주형 열에 [CELLTYPE?]를 붙입니다. 숫자형 열과 범주가 너무 많은 열은 후보에서 뺍니다(SKIP). (B) reference_columns.tsv에서 후보를 보고 세포 유형 열을 골라 spatial_labelTransfer, spatial_rctd, spatial_hd_rctd의 reference_label_col에 넣습니다. 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. Checking the cell-type column of a single-cell reference.** (A) For each column the log lists its type, number of categories and most frequent values; categorical columns with 2-100 categories are tagged [CELLTYPE?], while numeric columns and columns with too many categories are skipped. (B) The cell-type column is chosen from the candidates in reference_columns.tsv and given as reference_label_col to spatial_labelTransfer, spatial_rctd and spatial_hd_rctd. Values are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제

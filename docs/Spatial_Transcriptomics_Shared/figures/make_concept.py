@@ -83,19 +83,12 @@ def tissue_bg(cx, cy, rx, ry):
     g.append(f'<ellipse cx="{cx}" cy="{cy}" rx="{rx + 14}" ry="{ry + 14}" fill="{TISSUE}" stroke="{EDGE}" stroke-width="3"/>')
 
 
-# (A) measurement units
-panel_label(40, 50, "A", "Expression is measured on a grid over the tissue")
-tissue_bg(250, 270, 170, 140)
-tissue(250, 270, 170, 140, "spots")
-text(250, 460, "Visium: 55 µm spots", 22, 700)
-text(250, 492, "1-10 cells per spot", 19, 500, "middle", TXT2)
-tissue_bg(640, 270, 170, 140)
-tissue(640, 270, 170, 140, "bins")
-text(640, 460, "Visium HD: 8 or 16 µm bins", 22, 700)
-text(640, 492, "about one cell per 8 µm bin", 19, 500, "middle", TXT2)
+# The measurement panel (spots and bins on a grid) was dropped: Figure 1 of the pipeline
+# content (Williams et al. 2022, Fig. 1) shows it.
 
-# (B) clusters as regions
-panel_label(900, 50, "B", "Clusters of similar spots map tissue regions")
+# (A) clusters as regions
+B0 = len(g)
+panel_label(900, 50, "A", "Clusters of similar spots map tissue regions")
 tissue_bg(1110, 270, 170, 140)
 tissue(1110, 270, 170, 140, "clusters")
 # UMAP-like cloud next to it
@@ -108,10 +101,11 @@ for k, (ux, uy) in enumerate([(1450, 170), (1600, 210), (1480, 340), (1640, 360)
 text(1110, 460, "clusters on the tissue", 22, 700)
 text(1545, 460, "UMAP", 22, 700)
 g.append(f'<path d="M1300,270 L1380,270" stroke="{TXT2}" stroke-width="3" marker-end="url(#ar)"/>')
+g[B0:] = ['<g transform="translate(-860,0)">' + "".join(g[B0:]) + "</g>"]
 
 # (C) condition comparison
 yC = 600
-panel_label(40, yC - 40, "C", "Conditions are compared within a cluster, with slices as replicates")
+panel_label(40, yC - 40, "B", "Conditions are compared within a cluster, with slices as replicates")
 slices = [("control", 1), ("control", 2), ("treated", 1), ("treated", 2)]
 for i, (cond, rep) in enumerate(slices):
     cx = 130 + i * 190
@@ -145,7 +139,7 @@ text(1180, yC + 245, "One slice per condition: spot-level test only (exploratory
 
 # (D) cell types from a single-cell reference
 yD = 930
-panel_label(40, yD - 40, "D", "With a single-cell reference, cell types are assigned to spots and bins")
+panel_label(40, yD - 40, "C", "With a single-cell reference, cell types are assigned to spots and bins")
 # reference: cells grouped by type, with a mean expression profile per type
 g.append(f'<rect x="60" y="{yD}" width="330" height="230" rx="14" fill="#F7F7FA" stroke="#D5D8DE" stroke-width="2"/>')
 text(225, yD + 28, "single-cell reference", 19, 700)

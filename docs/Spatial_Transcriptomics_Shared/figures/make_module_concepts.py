@@ -10,6 +10,7 @@ for f in docs/Spatial_Transcriptomics_Visium*_Pipeline/modules/figures/module_co
 Tissue shapes, clusters and values are schematic, not data.
 """
 import math
+import re
 import random
 import sys
 from pathlib import Path
@@ -426,11 +427,37 @@ FIGS = {"spatial_prep": spatial_prep, "spatial_cluster": spatial_cluster, "spati
         "spatial_hd_prep": spatial_hd_prep, "spatial_hd_cluster": spatial_hd_cluster, "spatial_hd_svf": spatial_hd_svf,
         "spatial_hd_rctd": spatial_hd_rctd}
 
+# Panels kept per figure. Panels that repeat the paper figure placed before the drawing, that
+# list inputs already in the parameter table, or that show outputs instead of the principle
+# are dropped; the kept panels are relettered A, B, ... (a single panel has no letter).
+KEEP = {"spatial_prep": "BC", "spatial_cluster": "BC", "spatial_svf": "AB", "spatial_merge": "AB",
+        "spatial_condition_de": "BC", "spatial_labelTransfer": "AB", "spatial_rctd": "AB", "check_reference": "BC",
+        "spatial_hd_prep": "ABC", "spatial_hd_cluster": "AB", "spatial_hd_svf": "AB", "spatial_hd_rctd": "AB"}
+REGION_X = {"A": 0, "B": 540, "C": 1080}   # each drawing has three 540-px-wide panel regions
+PANEL_X = {"A": 40, "B": 560, "C": 1100}   # x of the panel letter
+
+
+def keep_panels(drawing, keep):
+    """Cut the kept panel regions out of a three-panel drawing and set them side by side."""
+    if keep == "ABC":
+        return drawing
+    height = int(re.search(r'height="(\d+)"', drawing).group(1))
+    inner = drawing[drawing.index(">") + 1:drawing.rindex("</svg>")]
+    for i, old in enumerate(keep):
+        new = "" if len(keep) == 1 else "ABC"[i]
+        inner = re.sub(rf'(<text x="{PANEL_X[old]}" y="40"[^>]*>){old}(</text>)', rf"\g<1>{new}\g<2>", inner)
+    width = 540 * len(keep) + 20
+    parts = [f'<svg x="{i * 540}" y="0" width="540" height="{height}" viewBox="{REGION_X[p]} 0 540 {height}">{inner}</svg>'
+             for i, p in enumerate(keep)]
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
+            f'<rect width="{width}" height="{height}" fill="#FFFFFF"/>' + "".join(parts) + "</svg>")
+
+
 if __name__ == "__main__":
     for name, fn in FIGS.items():
         dirs = [HD] if name.startswith("spatial_hd_") else \
             [VIS, HD] if name in ("spatial_condition_de", "check_reference") else [VIS]
-        drawing = fn()
+        drawing = keep_panels(fn(), KEEP[name])
         for d in dirs:
             p = d / f"{name}_concept.svg"
             p.write_text(drawing)

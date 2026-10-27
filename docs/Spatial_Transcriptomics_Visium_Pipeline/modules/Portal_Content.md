@@ -96,8 +96,8 @@ Loads the Space Ranger output (count matrix and tissue image) of each 10x Visium
 ### 분석 개념 이미지
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/spatial_prep_concept.png`
 
-- 레전드(국문): **그림. 슬라이스 불러오기와 정규화.** (A) 입력 폴더 아래 하위 폴더 하나가 슬라이스 하나이며, 각 폴더에 Space Ranger의 filtered_feature_bc_matrix.h5(조직 위 spot만)와 spatial/(이미지, 위치)이 있어야 합니다. 폴더 이름이 슬라이스 이름이 됩니다. (B) spot별 UMI 수(nCount_Spatial)를 violin과 조직 위에 그려 확인하고, min_counts를 주면 UMI가 적은 spot을 거릅니다. (C) 슬라이스마다 SCTransform으로 spot 사이 깊이 차이를 보정한 정규화 값을 만들어 <slice>_prep.rds로 저장합니다. 값과 조직 모양은 모식적인 값입니다.
-- 레전드(영문): **Figure. Loading and normalising slices.** (A) Each subfolder of the input folder is one slice holding the Space Ranger filtered_feature_bc_matrix.h5 (spots under the tissue) and spatial/ (images, positions); the folder name becomes the slice name. (B) UMI counts per spot (nCount_Spatial) are checked as a violin and on the tissue; min_counts removes low-count spots. (C) SCTransform corrects depth differences between spots per slice, and the result is saved as <slice>_prep.rds. Values and tissue shapes are schematic.
+- 레전드(국문): **그림. 슬라이스 불러오기와 정규화.** (A) spot별 UMI 수(nCount_Spatial)를 violin과 조직 위에 그려 확인하고, min_counts를 주면 UMI가 적은 spot을 거릅니다. (B) 슬라이스마다 SCTransform으로 spot 사이 깊이 차이를 보정한 정규화 값을 만들어 <slice>_prep.rds로 저장합니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Loading and normalising slices.** (A) UMI counts per spot (nCount_Spatial) are checked as a violin and on the tissue; min_counts removes low-count spots. (B) SCTransform corrects depth differences between spots per slice, and the result is saved as <slice>_prep.rds. Values and tissue shapes are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -212,8 +212,8 @@ Splits the spots of each slice into clusters of similar expression and finds mar
 
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/spatial_cluster_concept.png`
 
-- 레전드(국문): **그림. 슬라이스별 군집과 마커.** (A) SCT 값으로 PCA(npcs), 이웃 그래프, Louvain 군집(resolution), UMAP을 차례로 계산합니다. (B) 군집은 UMAP에서 점 무리로, 조직 위에서 해부학적 영역으로 나타납니다. 군집 번호는 슬라이스마다 따로 매겨집니다. (C) 군집마다 presto로 마커를 찾아 dot plot(점 크기: 발현 spot 비율, 색: 평균 발현)과 표로 남깁니다. 값과 조직 모양은 모식적인 값입니다.
-- 레전드(영문): **Figure. Clusters and markers per slice.** (A) PCA (npcs), a neighbour graph, Louvain clusters (resolution) and UMAP are computed in turn on the SCT values. (B) Clusters appear as groups of points on the UMAP and as anatomical regions on the tissue; numbers are per slice. (C) Markers per cluster are found with presto and saved as a dot plot (dot size: fraction of expressing spots; colour: mean expression) and tables. Values and tissue shapes are schematic.
+- 레전드(국문): **그림. 슬라이스별 군집과 마커.** (A) 군집은 UMAP에서 점 무리로, 조직 위에서 해부학적 영역으로 나타납니다. 군집 번호는 슬라이스마다 따로 매겨집니다. (B) 군집마다 presto로 마커를 찾아 dot plot(점 크기: 발현 spot 비율, 색: 평균 발현)과 표로 남깁니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Clusters and markers per slice.** (A) Clusters appear as groups of points on the UMAP and as anatomical regions on the tissue; numbers are per slice. (B) Markers per cluster are found with presto and saved as a dot plot (dot size: fraction of expressing spots; colour: mean expression) and tables. Values and tissue shapes are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -329,8 +329,8 @@ Finds genes whose expression is concentrated in particular places of the tissue 
 ### 분석 개념 이미지
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/spatial_svf_concept.png`
 
-- 레전드(국문): **그림. 공간 가변 유전자.** (A) 이웃 spot끼리 발현이 비슷하게 몰린 유전자는 Moran's I가 크고(왼쪽), 무작위로 흩어진 유전자는 0에 가깝습니다(오른쪽). (B) SCT 가변 유전자 중 상위 svf_topn개에 spot 좌표로 Moran's I를 계산해(ape) 순위를 매깁니다. 계산량은 spot 수의 제곱에 비례합니다. markvariogram은 더 느린 대안입니다. (C) 순위 표(<slice>_svf_moransi.csv)와 상위 svf_show개 유전자의 조직 그림을 만듭니다. 값과 조직 모양은 모식적인 값입니다.
-- 레전드(영문): **Figure. Spatially variable genes.** (A) A gene whose expression is similar among neighbouring spots has a high Moran's I (left); a randomly scattered gene is near 0 (right). (B) Moran's I is computed with the spot coordinates (ape) for the svf_topn most variable SCT genes and used to rank them; the cost grows with the square of the number of spots, and markvariogram is a slower alternative. (C) A rank table (<slice>_svf_moransi.csv) and tissue plots of the svf_show top genes are written. Values and tissue shapes are schematic.
+- 레전드(국문): **그림. 공간 가변 유전자.** (A) 이웃 spot끼리 발현이 비슷하게 몰린 유전자는 Moran's I가 크고(왼쪽), 무작위로 흩어진 유전자는 0에 가깝습니다(오른쪽). (B) SCT 가변 유전자 중 상위 svf_topn개에 spot 좌표로 Moran's I를 계산해(ape) 순위를 매깁니다. 계산량은 spot 수의 제곱에 비례합니다. markvariogram은 더 느린 대안입니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Spatially variable genes.** (A) A gene whose expression is similar among neighbouring spots has a high Moran's I (left); a randomly scattered gene is near 0 (right). (B) Moran's I is computed with the spot coordinates (ape) for the svf_topn most variable SCT genes and used to rank them; the cost grows with the square of the number of spots, and markvariogram is a slower alternative. Values and tissue shapes are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -454,8 +454,8 @@ Merges several slices into one object and recomputes the dimensional reduction a
 
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/spatial_merge_concept.png`
 
-- 레전드(국문): **그림. 여러 슬라이스 통합 군집.** (A) 슬라이스마다 따로 군집하면 같은 영역도 슬라이스마다 번호(색)가 다릅니다. (B) 슬라이스 객체를 합쳐 다시 군집하면(integration=harmony이면 Harmony로 슬라이스 차이 보정) 같은 번호가 모든 슬라이스에서 같은 영역을 뜻합니다. (C) 슬라이스별 군집 조성을 표와 누적 막대·heatmap으로 남기고, merged_clustered.rds는 조건 비교의 입력이 됩니다. 값과 조직 모양은 모식적인 값입니다.
-- 레전드(영문): **Figure. Joint clustering of several slices.** (A) Clustering each slice alone gives the same region different numbers (colours) in different slices. (B) Merging the slices and clustering again (with Harmony correcting slice differences when integration=harmony) makes each number mean the same region in every slice. (C) Cluster composition per slice is saved as a table, stacked bars and a heatmap, and merged_clustered.rds is the input of the condition comparison. Values and tissue shapes are schematic.
+- 레전드(국문): **그림. 여러 슬라이스 통합 군집.** (A) 슬라이스마다 따로 군집하면 같은 영역도 슬라이스마다 번호(색)가 다릅니다. (B) 슬라이스 객체를 합쳐 다시 군집하면(integration=harmony이면 Harmony로 슬라이스 차이 보정) 같은 번호가 모든 슬라이스에서 같은 영역을 뜻합니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Joint clustering of several slices.** (A) Clustering each slice alone gives the same region different numbers (colours) in different slices. (B) Merging the slices and clustering again (with Harmony correcting slice differences when integration=harmony) makes each number mean the same region in every slice. Values and tissue shapes are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -630,8 +630,8 @@ normal_2,normal,P2
 
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/spatial_condition_de_concept.png`
 
-- 레전드(국문): **그림. 조건 간 군집별 비교.** (A) 슬라이스마다 한 군집 spot의 count를 합친 pseudobulk를 만들고, 슬라이스를 반복으로 삼아 DESeq2(~ Condition, 짝 설계면 ~ Patient + Condition)로 검정합니다. 조건마다 슬라이스가 한 장뿐이면 spot 단위 Wilcoxon(탐색용)으로 비교합니다. (B) 군집마다 volcano를 그립니다(x축 log2 fold change, y축 -log10 adjusted p, 빨강 기준보다 높음, 파랑 낮음, 점선은 lfc_cutoff와 padj_cutoff). (C) de_summary.tsv에 군집별 검정 방법과 상태(ok, ok_exploratory, insufficient_slices)를 남깁니다. Visium merge 결과와 Visium HD 결과(hd_slides.tsv)를 모두 받으며, group_by로 세포 유형 열을 쓸 수도 있습니다. 값과 조직 모양은 모식적인 값입니다.
-- 레전드(영문): **Figure. Comparison between conditions per cluster.** (A) For each slice, the counts of one cluster's spots are summed into a pseudobulk sample, and DESeq2 (~ Condition, or ~ Patient + Condition when paired) tests the condition with slices as replicates; with one slice per condition a spot-level Wilcoxon test (exploratory) is used. (B) A volcano per cluster (x log2 fold change, y -log10 adjusted p; red higher than the reference, blue lower; dashed lines lfc_cutoff and padj_cutoff). (C) de_summary.tsv records the method and status per cluster (ok, ok_exploratory, insufficient_slices). Visium merge output and Visium HD output (hd_slides.tsv) are both accepted, and group_by may name a cell-type column. Values and tissue shapes are schematic.
+- 레전드(국문): **그림. 조건 간 군집별 비교.** (A) 군집마다 volcano를 그립니다(x축 log2 fold change, y축 -log10 adjusted p, 빨강 기준보다 높음, 파랑 낮음, 점선은 lfc_cutoff와 padj_cutoff). (B) de_summary.tsv에 군집별 검정 방법과 상태(ok, ok_exploratory, insufficient_slices)를 남깁니다. Visium merge 결과와 Visium HD 결과(hd_slides.tsv)를 모두 받으며, group_by로 세포 유형 열을 쓸 수도 있습니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Comparison between conditions per cluster.** (A) A volcano per cluster (x log2 fold change, y -log10 adjusted p; red higher than the reference, blue lower; dashed lines lfc_cutoff and padj_cutoff). (B) de_summary.tsv records the method and status per cluster (ok, ok_exploratory, insufficient_slices). Visium merge output and Visium HD output (hd_slides.tsv) are both accepted, and group_by may name a cell-type column. Values and tissue shapes are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -784,8 +784,8 @@ Transfers the cell types of a single-cell RNA-seq reference to the spots of Visi
 ### 분석 개념 이미지
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/spatial_labelTransfer_concept.png`
 
-- 레전드(국문): **그림. 단일세포 참조에서 spot으로 세포 유형 옮기기.** (A) 세포 유형 열(reference_label_col)이 있는 단일세포 참조 자료입니다. raw count가 있으면 SCTransform과 PCA를 여기서 계산합니다. (B) 참조 세포와 슬라이스 spot 사이에서 서로 닮은 짝(anchor)을 찾고(FindTransferAnchors), anchor를 통해 spot마다 세포 유형별 예측 점수를 계산합니다(TransferData). (C) 슬라이스마다 spot별 예측 점수 표, 세포 유형별 조직 위 점수 그림, 슬라이스×세포 유형 요약(표, heatmap)을 만듭니다. 값과 조직 모양은 모식적인 값입니다.
-- 레전드(영문): **Figure. Transferring cell types from a single-cell reference to spots.** (A) A single-cell reference with a cell-type column (reference_label_col); with raw counts, SCTransform and PCA are computed here. (B) Pairs of similar reference cells and slice spots (anchors) are found (FindTransferAnchors), and through them each spot gets a prediction score per cell type (TransferData). (C) Per slice, a table of scores per spot, tissue score maps per cell type, and a slice-by-cell-type summary (table, heatmap) are written. Values and tissue shapes are schematic.
+- 레전드(국문): **그림. 단일세포 참조에서 spot으로 세포 유형 옮기기.** (A) 세포 유형 열(reference_label_col)이 있는 단일세포 참조 자료입니다. raw count가 있으면 SCTransform과 PCA를 여기서 계산합니다. (B) 참조 세포와 슬라이스 spot 사이에서 서로 닮은 짝(anchor)을 찾고(FindTransferAnchors), anchor를 통해 spot마다 세포 유형별 예측 점수를 계산합니다(TransferData). 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Transferring cell types from a single-cell reference to spots.** (A) A single-cell reference with a cell-type column (reference_label_col); with raw counts, SCTransform and PCA are computed here. (B) Pairs of similar reference cells and slice spots (anchors) are found (FindTransferAnchors), and through them each spot gets a prediction score per cell type (TransferData). Values and tissue shapes are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -895,8 +895,8 @@ A Visium spot holds several cells. RCTD (spacexr) uses the per-cell-type express
 ### 분석 개념 이미지
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/spatial_rctd_concept.png`
 
-- 레전드(국문): **그림. RCTD로 spot의 세포 유형 비율 추정.** (A) 단일세포 참조의 raw count로 세포 유형별 평균 발현 profile을 만듭니다. 세포 수가 min_cells_per_type 이상인 유형만 씁니다. (B) spot 하나는 여러 세포의 섞임이며, RCTD full 모드는 spot마다 모든 세포 유형의 weight(합 1)를 추정합니다. (C) spot별 weight 표와 평균 비율, 가장 큰 세포 유형과 상위 세포 유형 weight의 조직 위 그림, 슬라이스×세포 유형 요약을 만듭니다. 값과 조직 모양은 모식적인 값입니다.
-- 레전드(영문): **Figure. Estimating cell-type proportions of spots with RCTD.** (A) Mean expression profiles per cell type are built from the raw counts of the single-cell reference, using types with at least min_cells_per_type cells. (B) A spot is a mixture of several cells; RCTD full mode estimates weights of all cell types per spot, summing to 1. (C) A weight table per spot and mean proportions, tissue maps of the dominant cell type and of the top cell-type weights, and a slice-by-cell-type summary are written. Values and tissue shapes are schematic.
+- 레전드(국문): **그림. RCTD로 spot의 세포 유형 비율 추정.** (A) 단일세포 참조의 raw count로 세포 유형별 평균 발현 profile을 만듭니다. 세포 수가 min_cells_per_type 이상인 유형만 씁니다. (B) spot 하나는 여러 세포의 섞임이며, RCTD full 모드는 spot마다 모든 세포 유형의 weight(합 1)를 추정합니다. 값과 조직 모양은 모식적인 값입니다.
+- 레전드(영문): **Figure. Estimating cell-type proportions of spots with RCTD.** (A) Mean expression profiles per cell type are built from the raw counts of the single-cell reference, using types with at least min_cells_per_type cells. (B) A spot is a mixture of several cells; RCTD full mode estimates weights of all cell types per spot, summing to 1. Values and tissue shapes are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
@@ -996,8 +996,8 @@ Inspects the metadata columns of a single-cell reference (Seurat RDS) for spatia
 ### 분석 개념 이미지
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/check_reference_concept.png`
 
-- 레전드(국문): **그림. 단일세포 참조 자료의 세포 유형 열 확인.** (A) 참조 자료는 세포마다 메타데이터(세포 유형, 배치, UMI 수 등)를 가진 Seurat 객체입니다. (B) 열마다 형식과 범주 수, 가장 많은 값을 로그에 적고, 범주가 2~100개인 범주형 열에 [CELLTYPE?]를 붙입니다. 숫자형 열과 범주가 너무 많은 열은 후보에서 뺍니다(SKIP). (C) reference_columns.tsv에서 후보를 보고 세포 유형 열을 골라 spatial_labelTransfer, spatial_rctd, spatial_hd_rctd의 reference_label_col에 넣습니다. 값은 모식적인 값입니다.
-- 레전드(영문): **Figure. Checking the cell-type column of a single-cell reference.** (A) The reference is a Seurat object with per-cell metadata (cell type, batch, UMI counts and so on). (B) For each column the log lists its type, number of categories and most frequent values; categorical columns with 2-100 categories are tagged [CELLTYPE?], while numeric columns and columns with too many categories are skipped. (C) The cell-type column is chosen from the candidates in reference_columns.tsv and given as reference_label_col to spatial_labelTransfer, spatial_rctd and spatial_hd_rctd. Values are schematic.
+- 레전드(국문): **그림. 단일세포 참조 자료의 세포 유형 열 확인.** (A) 열마다 형식과 범주 수, 가장 많은 값을 로그에 적고, 범주가 2~100개인 범주형 열에 [CELLTYPE?]를 붙입니다. 숫자형 열과 범주가 너무 많은 열은 후보에서 뺍니다(SKIP). (B) reference_columns.tsv에서 후보를 보고 세포 유형 열을 골라 spatial_labelTransfer, spatial_rctd, spatial_hd_rctd의 reference_label_col에 넣습니다. 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. Checking the cell-type column of a single-cell reference.** (A) For each column the log lists its type, number of categories and most frequent values; categorical columns with 2-100 categories are tagged [CELLTYPE?], while numeric columns and columns with too many categories are skipped. (B) The cell-type column is chosen from the candidates in reference_columns.tsv and given as reference_label_col to spatial_labelTransfer, spatial_rctd and spatial_hd_rctd. Values are schematic.
 - 출처: 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ### 스크립트 사용 예제
