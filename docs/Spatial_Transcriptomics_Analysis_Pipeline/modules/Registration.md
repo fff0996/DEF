@@ -272,7 +272,7 @@ Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형
 |---|---|---|
 | Visium | 10x Mouse Brain Sagittal 4장: `V1_Mouse_Brain_Sagittal_Anterior`, `_Anterior_Section_2`, `_Posterior`, `_Posterior_Section_2` (https://cf.10xgenomics.com/samples/spatial-exp/1.1.0/, 각각 `*_filtered_feature_bc_matrix.h5`, `*_spatial.tar.gz`) | `/data/visium/<slice>/filtered_feature_bc_matrix.h5`, `/data/visium/<slice>/spatial/` |
 | Visium HD | 10x Visium HD Mouse Brain (https://cf.10xgenomics.com/samples/spatial-exp/3.0.0/Visium_HD_Mouse_Brain/Visium_HD_Mouse_Brain_binned_outputs.tar.gz). 슬라이드가 1장이라, 조건 비교를 보려면 4등분해 4장으로 쓴다(Codespace 테스트와 같은 방식) | `/data/hd/<slide>/binned_outputs/square_016um/...` |
-| 참조 | `hippocampus_reference.rds`: spacexr 예제로 만든 Seurat 객체, 세포 510개, 세포 유형 열 `celltype`. Codespace 사본 `_incoming/spatial_test/reference.rds`(같은 파일, git 제외 폴더). RNA assay에 raw count, 307 유전자, 17개 유형 × 30세포 | |
+| 참조 | `hippocampus_reference.rds`: spacexr 예제로 만든 Seurat 객체, 세포 510개, 세포 유형 열 `celltype`. 저장소 `tools/spatial/reference/reference.rds`(출처, 만드는 법, 한계는 같은 폴더 README.md). RNA assay에 raw count, 307 유전자, 17개 유형 × 30세포 | |
 
 슬라이스 정보 CSV:
 ```
