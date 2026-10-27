@@ -1,8 +1,8 @@
-Spatial transcriptomics 모듈 등록 정보 (스크립트 최신 버전 기준)
+Visium 공간 전사체 모듈 등록 정보 (스크립트 최신 버전 기준)
 
 작성일: 2026-10-22, 갱신: 2026-10-27 (세포 유형 가지, 자원, CLOSHA 테스트 예제)
 
-CLOSHA에 공간 전사체 모듈을 등록할 때 쓰는 Input / Output / Option 정리다. 기준은 `scripts/Spatial_Transcriptomics_Analysis_Pipeline/`의 모듈별 최신 버전(아래 표)이고, 모든 스크립트는 `key=value` 인자를 받는다. 실행 이미지는 모두 `bx_spatial.1.1`(`defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def`)이다. 1.0에는 svf의 Moran's I에 필요한 ape가 없어 1.1에서 더했다.
+CLOSHA에 Visium 파이프라인 모듈을 등록할 때 쓰는 Input / Output / Option 정리다. 기준은 `scripts/Spatial_Transcriptomics_Analysis_Pipeline/`의 모듈별 최신 버전(아래 표)이고, 모든 스크립트는 `key=value` 인자를 받는다. 실행 이미지는 모두 `bx_spatial.1.1`(`defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def`)이다. 1.0에는 svf의 Moran's I에 필요한 ape가 없어 1.1에서 더했다.
 
 등록 메모:
 - 받은 스크립트(prep, cluster, svf, merge, labelTransfer, rctd, check_reference)는 CLOSHA 2.0에 배포된 것이다. 배포 번호는 고친 스크립트만 2.0 번호 + 1이고, 이번에 모두 스크립트 규칙에 맞춰 고쳐 1.1이다. 새 모듈은 1.0이다(아래 표).
@@ -16,16 +16,13 @@ Visium (spot 55µm):
                                                                                             ├─> [spatial_rctd] (참조가 있을 때)
                                                                                             └─> [spatial_merge] ─output_dir─> [spatial_condition_de]
 
-Visium HD (bin 8·16µm):
-  Space Ranger HD 슬라이드 폴더들 ─> [spatial_hd_prep] ─output_dir─> [spatial_hd_cluster] ─output_dir─┬─> [spatial_condition_de]
-                                                                                                    ├─> [spatial_hd_svf]
-                                                                                                    └─> [spatial_hd_rctd] (참조가 있을 때) ─output_dir─> [spatial_condition_de] (group_by=rctd_first_type)
-
 참조 확인(보조): 단일세포 참조 RDS ─> [check_reference] (reference_label_col로 쓸 열 확인)
 ```
-세포 유형 모듈(labelTransfer, rctd, hd_rctd)은 파이프라인 안에 두고, 참조는 파이프라인의 선택 입력(`reference_rds`, `reference_label_col`)으로 받는다(사용자 결정, 2026-10-27).
-- 참조를 주지 않으면 세 모듈은 `output_dir/skipped.txt`를 남기고 정상 종료한다. 그 결과를 받는 spatial_condition_de도 같은 방식으로 건너뛴다.
+
+세포 유형 모듈(labelTransfer, rctd)은 파이프라인 안에 두고, 참조는 파이프라인의 선택 입력(`reference_rds`, `reference_label_col`)으로 받는다(사용자 결정, 2026-10-27).
+- 참조를 주지 않으면 두 모듈은 `output_dir/skipped.txt`를 남기고 정상 종료한다. (Visium의 condition_de는 merge 결과를 받으므로 영향이 없다.)
 - CLOSHA 입력은 필수/선택 둘뿐이라 `reference_rds`와 `reference_label_col` 모두 선택으로 등록한다. 참조를 주면 `reference_label_col`도 필요하다. 비었거나 참조에 없는 열이면 참조를 읽은 직후 멈추고, 세포 유형 후보 열(범주 2~100개)과 첫 범주들을 오류 로그에 보여 준다. 사용자가 확인하고 열 이름을 넣어 다시 실행한다. 자동으로 고르지 않는다(틀린 열로 조용히 분석되는 것을 막는다).
+
 | 모듈 | 작업 파일 | 배포 번호 | 비고 |
 |---|---|---|---|
 | spatial_prep | `spatial_prep.1.1.R` | 1.1 | 2.0의 1.0에 스크립트 규칙(로그 분리, output_dir 필수, 흰 배경 그림) 적용 |
@@ -36,10 +33,6 @@ Visium HD (bin 8·16µm):
 | spatial_rctd | `spatial_rctd.1.2.R` | 1.1 | 규칙 적용. 참조가 없으면 건너뜀(작업 1.2). max_cores 기본값 auto. 그려지지 않던 dominant 세포 유형 그림 수정 |
 | check_reference | `check_reference.1.1.R` | 1.1 | output_dir(로그, reference_columns.tsv) 추가 |
 | spatial_condition_de | `spatial_condition_de.1.4.R` | 1.0 | 새 모듈. Visium과 Visium HD 입력. 앞 모듈이 건너뛰면 같이 건너뜀 |
-| spatial_hd_prep | `spatial_hd_prep.1.1.R` | 1.0 | 새 모듈 |
-| spatial_hd_cluster | `spatial_hd_cluster.1.1.R` | 1.0 | 새 모듈 |
-| spatial_hd_svf | `spatial_hd_svf.1.0.R` | 1.0 | 새 모듈 |
-| spatial_hd_rctd | `spatial_hd_rctd.1.2.R` | 1.0 | 새 모듈. 참조가 없으면 건너뜀 |
 
 실행 명령은 모두 `Rscript <스크립트> key=value ...`이다.
 
@@ -128,52 +121,7 @@ Visium HD (bin 8·16µm):
 
 결과: `01_composition/`, `02_de/de_<test>_vs_<reference>.tsv`, `03_plots/`, `04_summary/de_summary.tsv`, `logs/`. `input_dir`에 `skipped.txt`가 있으면(앞의 세포 유형 모듈이 참조 없이 건너뜀) 비교도 건너뛰고 `skipped.txt`를 남긴다.
 
-## 6. spatial_hd_prep
-Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화한 뒤 sketch(대표 bin 표본)를 만든다.
-자원(코어, 메모리): 8코어, 64GB
-
-| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
-|---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 필수 | | 슬라이드마다 하위 폴더 하나. 각 폴더에 `binned_outputs/`(또는 `outs/binned_outputs/`)와 그 안의 `square_<NNN>um/filtered_feature_bc_matrix.h5`, `spatial/` |
-| Output | `output_dir` | Directory | 필수 | | 결과 폴더. `<slide>/<slide>_hd_prep.rds`, `<slide>/plots/`, `hd_prep_summary.tsv` |
-| Option | `bin_size` | List (`8`, `16`) | 선택 | `8` | bin 크기(µm). 2µm는 지원하지 않음 |
-| Option | `min_counts` | Integer | 선택 | `10` | UMI 수가 이보다 적은 bin 제거 |
-| Option | `min_features` | Integer | 선택 | `0` | 검출 유전자 수가 이보다 적은 bin 제거. 0이면 거르지 않음 |
-| Option | `nfeatures` | Integer | 선택 | `2000` | 슬라이드별 가변 유전자 수 |
-| Option | `sketch_cells` | Integer | 선택 | `50000` | 슬라이드마다 sketch에 남기는 bin 수 |
-| Option | `pt_size` | Float | 선택 | `4` | 조직 QC 그림의 bin 크기 |
-| Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
-
-## 7. spatial_hd_cluster
-모든 슬라이드의 sketch를 합쳐 군집을 만들고, 각 슬라이드의 모든 bin에 군집을 붙인다.
-자원(코어, 메모리): 8코어, 128GB
-
-| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
-|---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 필수 | | 슬라이드마다 `<slide>/<slide>_hd_prep.rds`(bin assay `Spatial.<NNN>um`과 `sketch` assay) |
-| Output | `output_dir` | Directory | 필수 | | 결과 폴더. `joint/`, 슬라이드별 `<slide>_hd_clustered.rds`와 `plots/`, `hd_slides.tsv` |
-| Option | `dims` | Integer | 선택 | `30` | 사용할 주성분 수 |
-| Option | `resolution` | Float | 선택 | `0.8` | 군집 해상도 |
-| Option | `integration` | List (`auto`, `harmony`, `none`) | 선택 | `auto` | auto = 슬라이드 2장 이상이면 harmony |
-| Option | `nfeatures` | Integer | 선택 | `2000` | 합친 sketch의 가변 유전자 수 |
-| Option | `k_transfer` | Integer | 선택 | `10` | 각 bin의 군집을 정할 때 보는 가까운 sketch bin 수 |
-| Option | `marker_min_pct` | Float | 선택 | `0.25` | 마커 검정 최소 발현 비율 |
-| Option | `marker_logfc` | Float | 선택 | `0.25` | 마커 검정 최소 log fold change |
-| Option | `marker_topn` | Integer | 선택 | `5` | 군집마다 dot plot에 넣는 마커 수 |
-| Option | `features` | String | 선택 | | 조직 위에 그릴 유전자(쉼표 구분). 비우면 그리지 않음 |
-| Option | `pt_size` | Float | 선택 | `4` | 조직 그림의 bin 크기 |
-| Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
-
-## 8. check_reference
-단일세포 참조 자료(Seurat RDS)의 메타데이터 열을 살펴 세포 유형 열(reference_label_col) 후보를 알려 준다.
-자원(코어, 메모리): 4코어, 64GB (큰 참조 RDS를 통째로 읽는다)
-
-| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
-|---|---|---|---|---|---|
-| Input | `reference_rds` | File (RDS) | 필수 | | 단일세포 참조 자료(Seurat 객체) |
-| Output | `output_dir` | Directory | 필수 | | 결과 폴더. `reference_columns.tsv`, `logs/` |
-
-## 9. spatial_labelTransfer
+## 6. spatial_labelTransfer
 단일세포 참조의 세포 유형을 Visium spot으로 옮겨 spot마다 세포 유형별 예측 점수를 계산한다(Seurat anchor).
 자원(코어, 메모리): 8코어, 128GB (참조 전체로 anchor를 찾아 큰 참조에서 메모리가 가장 많이 든다)
 
@@ -188,7 +136,7 @@ Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화�
 | Option | `min_shared_features` | Integer | 선택 | `200` | 참조와 슬라이스의 최소 공유 유전자 수 |
 | Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
 
-## 10. spatial_rctd
+## 7. spatial_rctd
 RCTD(spacexr, full 모드)로 Visium spot마다 세포 유형 비율(weight)을 추정한다.
 자원(코어, 메모리): 8코어, 64GB (코어마다 자료를 복사해 코어 수만큼 메모리가 는다)
 
@@ -205,43 +153,16 @@ RCTD(spacexr, full 모드)로 Visium spot마다 세포 유형 비율(weight)을 
 | Option | `plot_topn` | Integer | 선택 | `12` | 조직 위 weight 그림에 넣는 상위 세포 유형 수 |
 | Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
 
-## 11. spatial_hd_svf
-Visium HD 슬라이드마다 무작위 bin 표본으로 Moran's I를 계산해 공간 가변 유전자를 찾는다.
-자원(코어, 메모리): 8코어, 64GB
+## 8. check_reference
+단일세포 참조 자료(Seurat RDS)의 메타데이터 열을 살펴 세포 유형 열(reference_label_col) 후보를 알려 준다.
+자원(코어, 메모리): 4코어, 64GB (큰 참조 RDS를 통째로 읽는다)
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 필수 | | spatial_hd_cluster 결과 폴더(`hd_slides.tsv`와 슬라이드별 객체) |
-| Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이드별 `<slide>_hd_svf.tsv`와 `plots/`, `svf_all_slides.tsv`, `svf_summary.tsv` |
-| Option | `svf_topn` | Integer | 선택 | `500` | 슬라이드마다 검정할 가변 유전자 수 |
-| Option | `max_bins` | Integer | 선택 | `4000` | Moran's I에 쓰는 무작위 bin 수(계산량은 제곱) |
-| Option | `svf_show` | Integer | 선택 | `6` | 조직 위에 그릴 상위 유전자 수 |
-| Option | `padj_cutoff` | Float | 선택 | `0.05` | 공간 가변 유전자 보정 p값(BH) 기준 |
-| Option | `pt_size` | Float | 선택 | `4` | 조직 그림의 bin 크기 |
-| Option | `seed` | Integer | 선택 | `1234` | bin 표본 난수 시드 |
+| Input | `reference_rds` | File (RDS) | 필수 | | 단일세포 참조 자료(Seurat 객체) |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더. `reference_columns.tsv`, `logs/` |
 
-## 12. spatial_hd_rctd
-Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형을 붙인다.
-자원(코어, 메모리): 8코어, 128GB (코어마다 자료를 복사해 코어 수만큼 메모리가 는다)
-
-| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
-|---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 필수 | | spatial_hd_cluster 결과 폴더(`hd_slides.tsv`와 슬라이드별 객체, bin assay에 raw count) |
-| Input | `reference_rds` | File (RDS) | 선택 | | 단일세포 참조 자료(raw count와 세포 유형 열). 비우면 건너뜀(`skipped.txt`) |
-| Option | `reference_label_col` | String | 선택 | | 참조의 세포 유형 열 이름. **참조를 주면 반드시 입력.** 비었거나 틀리면 후보 열을 보여 주고 멈춤 (CLOSHA에는 조건부 필수가 없어 선택으로 등록) |
-| Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이드별 `<slide>_hd_rctd.rds`, `_rctd_weights.tsv.gz`, `plots/`, `hd_slides.tsv`, `celltype_by_slide.tsv`, `rctd_summary.tsv` |
-| Option | `reference_assay` | String | 선택 | `RNA` | 참조 객체의 raw count assay |
-| Option | `rctd_mode` | List (`doublet`, `full`) | 선택 | `doublet` | doublet = bin마다 세포 유형 1~2개(8µm), full = 섞인 비율(16µm) |
-| Option | `chunk_bins` | Integer | 선택 | `20000` | RCTD 한 번에 넣는 bin 수 |
-| Option | `umi_min` | Integer | 선택 | `100` | UMI 수가 이보다 적은 bin은 계산하지 않음(not_scored) |
-| Option | `min_cells_per_type` | Integer | 선택 | `25` | 세포 수가 이보다 적은 참조 세포 유형은 뺌 |
-| Option | `min_shared_features` | Integer | 선택 | `200` | 참조와 슬라이드의 최소 공유 유전자 수 |
-| Option | `pt_size` | Float | 선택 | `4` | 조직 그림의 bin 크기 |
-| Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
-
-결과 폴더는 spatial_condition_de의 `input_dir`로 쓸 수 있다(`group_by=rctd_first_type`).
-
-## 13. 권장 자원
+## 9. 권장 자원
 포탈 선택값(코어 1/4/8/16, 메모리 8~128GB) 안에서 넉넉하게 잡은 값이다(사용자 결정, 2026-10-27). 모듈마다 위 "자원" 줄에도 적었다.
 
 | 모듈 | 코어 | 메모리 | 비고 |
@@ -253,10 +174,6 @@ Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형
 | spatial_condition_de | 8 | 64GB |  |
 | spatial_labelTransfer | 8 | 128GB | 참조 전체로 anchor를 찾아 큰 참조에서 메모리가 가장 많이 든다 |
 | spatial_rctd | 8 | 64GB | 코어마다 자료를 복사해 코어 수만큼 메모리가 는다 |
-| spatial_hd_prep | 8 | 64GB |  |
-| spatial_hd_cluster | 8 | 128GB |  |
-| spatial_hd_svf | 8 | 64GB |  |
-| spatial_hd_rctd | 8 | 128GB | 코어마다 자료를 복사해 코어 수만큼 메모리가 는다 |
 | check_reference | 4 | 64GB | 큰 참조 RDS를 통째로 읽는다 |
 
 근거와 한계:
@@ -264,16 +181,14 @@ Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형
 - Codespace 테스트는 줄인 데이터(유전자 6,000개, spot 축소, 1코어)와 510세포 예제 참조로 했다. 최대 메모리는 대부분 2~4GB였다(hd_rctd 3.7GB, hd_svf 2.0GB, condition_de 2.0GB).
 - 실제 참조(수만~수십만 세포)와 8µm는 측정하지 않았다. 참조 모듈은 `readRDS`로 참조 전체를 올리고, labelTransfer는 참조 전체로 anchor를 찾는다. RCTD는 세포 유형마다 최대 1만 세포만 쓴다(spacexr `n_max_cells` 기본값). CLOSHA에서 `sacct`의 MaxRSS, Elapsed, TotalCPU로 실측한 뒤 이 표를 고친다.
 
-## 14. CLOSHA 테스트 (2026-10-27)
+## 10. CLOSHA 테스트 (2026-10-27)
 테스트에는 작업 파일 이름을 그대로 쓴다. 배포 이름(위 표의 배포 번호)으로 바꾸는 것은 배포 때 한다. 실행 이미지는 `bx_spatial.1.1`이다.
 
-예제 데이터와 받는 법은 `tools/spatial/example/README.md`에 있다(사용자 결정, 2026-10-27: HD 예제를 쥐 뇌 1장에서 사람 대장암 5장으로 바꿈).
+예제 데이터와 받는 법은 `tools/spatial/example/README.md`에 있다(사용자 결정, 2026-10-27: Visium은 사람 심장 8장, Visium HD는 사람 대장암 5장으로 예제를 바꿈).
 | 용도 | 데이터 | 폴더 구조 |
 |---|---|---|
 | Visium | 사람 심장 8장(Kuppe 2022, CC BY 4.0): 정상 4장 vs 심근경색 허혈 구역 4장. `tools/spatial/example/download_visium_mi.sh`로 받는다 | `$BASE/visium_mi/<slice>/filtered_feature_bc_matrix.h5`, `spatial/` |
-| Visium HD | 10x 사람 대장암 FFPE 5장: 종양 P1, P2, P5, 정상 인접 P3, P5. `tools/spatial/example/download_hd_crc.sh`로 받는다 | `$BASE/hd_crc/<slide>/binned_outputs/square_016um/...` |
 | 참조(Visium) | 심장 참조는 아직 없다(같은 연구 단일핵 RNA-seq 7.9GB h5ad를 변환해야 함). 그 전에는 참조 없이 돌린다. 쥐 해마 참조 `tools/spatial/reference/reference.rds`는 동작 확인용 | |
-| 참조(HD) | `human_colon_crc_flex_300pertype.rds`: 같은 연구 단일세포 10,333개, 열 `Level1`(9종), `Level2`(38종). `tools/spatial/reference/human/colon_crc_flex/`의 명령으로 만든다 | |
 
 슬라이스 정보 CSV(`tools/spatial/example/`):
 ```
@@ -287,14 +202,6 @@ iz_p3,ischemic
 iz_p10,ischemic
 iz_p15,ischemic
 iz_p16,ischemic
-
-# hd_slides.csv
-SliceID,Condition
-crc_p1,tumor
-crc_p2,tumor
-crc_p5,tumor
-normal_p3,normal
-normal_p5,normal
 ```
 
 실행 예:
@@ -309,27 +216,14 @@ Rscript spatial_condition_de.1.4.R input_dir=$BASE/out/merge sample_data=$BASE/v
 Rscript spatial_labelTransfer.1.2.R input_dir=$BASE/out/cluster output_dir=$BASE/out/labeltransfer
 Rscript spatial_rctd.1.2.R input_dir=$BASE/out/cluster output_dir=$BASE/out/rctd
 
-# Visium HD (사람 대장암)
-Rscript spatial_hd_prep.1.1.R    input_dir=$BASE/hd_crc output_dir=$BASE/out/hd_prep bin_size=16
-Rscript spatial_hd_cluster.1.1.R input_dir=$BASE/out/hd_prep output_dir=$BASE/out/hd_cluster features=EPCAM,PTPRC,COL1A1
-Rscript spatial_condition_de.1.4.R input_dir=$BASE/out/hd_cluster sample_data=$BASE/hd_slides.csv output_dir=$BASE/out/hd_de reference=normal
-Rscript spatial_hd_svf.1.0.R  input_dir=$BASE/out/hd_cluster output_dir=$BASE/out/hd_svf
-Rscript spatial_hd_rctd.1.2.R input_dir=$BASE/out/hd_cluster output_dir=$BASE/out/hd_rctd \
-        reference_rds=$BASE/human_colon_crc_flex_300pertype.rds reference_label_col=Level1
-Rscript spatial_condition_de.1.4.R input_dir=$BASE/out/hd_rctd sample_data=$BASE/hd_slides.csv \
-        output_dir=$BASE/out/hd_de_celltype reference=normal group_by=rctd_first_type
-
 # 보조
-Rscript check_reference.1.1.R reference_rds=$BASE/human_colon_crc_flex_300pertype.rds output_dir=$BASE/out/check_reference
+Rscript check_reference.1.1.R reference_rds=$BASE/<참조>.rds output_dir=$BASE/out/check_reference
 ```
-`min_shared_features=100`은 쥐 예제 참조(공유 유전자 268개)에만 쓴다. 대장암 참조는 HD와 같은 probe set이라 기본값 200으로 둔다.
-
-HD 예제를 바꿨으므로 모듈 원고의 HD 결과 그림(hd_prep, hd_cluster, hd_svf, hd_rctd, condition_de)은 쥐 뇌 결과다. CLOSHA에서 대장암으로 돌린 결과로 바꾼다.
+Visium 예제를 바꿨으므로 모듈 원고의 Visium 결과 그림은 마우스 뇌 결과다. CLOSHA에서 심장으로 돌린 결과로 바꾼다. `min_shared_features=100`은 마우스 예제 참조(공유 유전자 268개)에만 쓴다.
 
 확인할 것:
-1. 참조 입력을 비운 파이프라인 실행이 정상 완료되는지(세 모듈과 세포 유형 기준 condition_de에 `skipped.txt`)
+1. 참조 입력을 비운 파이프라인 실행이 정상 완료되는지(두 모듈에 `skipped.txt`)
 2. `reference_label_col`을 비우거나 틀리게 넣었을 때 오류 로그에 후보 열이 나오는지
-3. hd_rctd 기본값(doublet)으로 결과가 나오는지(Codespace는 full만 확인)
-4. 원본 크기 데이터의 시간과 메모리(`sacct -j <작업번호> --format=JobName,AllocCPUS,Elapsed,TotalCPU,MaxRSS`). 13절 값을 이것으로 고친다.
-5. 로그 첫머리의 코어 수가 할당 코어 수와 같은지 본다: hd_rctd `max_cores used = N (allocated N)`, rctd `max_cores : N (requested auto, allocated N)`. 노드 전체 코어 수가 나오면 `SLURM_CPUS_PER_TASK`를 먼저 보도록 스크립트를 고친다.
-6. 규모 확인: 510세포 예제 참조는 동작 확인용이다. 실제 규모 참조로 한 번 더 돌린다(중간 규모: Seurat 공간 안내의 Allen 피질 참조 `allen_cortex.rds`, 약 1만 4천 세포, 세포 유형 열 `subclass`. 큰 규모: 쥐 뇌 10만 세포 이상 참조).
+3. 원본 크기 데이터의 시간과 메모리(`sacct -j <작업번호> --format=JobName,AllocCPUS,Elapsed,TotalCPU,MaxRSS`). 9절 값을 이것으로 고친다.
+4. 로그 첫머리의 코어 수가 할당 코어 수와 같은지 본다: rctd `max_cores : N (requested auto, allocated N)`. 노드 전체 코어 수가 나오면 `SLURM_CPUS_PER_TASK`를 먼저 보도록 스크립트를 고친다.
+5. 규모 확인: 510세포 예제 참조는 동작 확인용이다. 실제 규모 참조로 한 번 더 돌린다(중간 규모: Seurat 공간 안내의 Allen 피질 참조 `allen_cortex.rds`, 약 1만 4천 세포, 세포 유형 열 `subclass`. 큰 규모: 쥐 뇌 10만 세포 이상 참조).

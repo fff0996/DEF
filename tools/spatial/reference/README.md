@@ -27,4 +27,4 @@
 ## 한계
 - 유전자 307개, 유형마다 30세포라 결과 그림은 모양만 확인하는 용도다.
 - 해마 참조라서 피질이 많은 슬라이스(Visium anterior 등)는 비슷한 해마 유형으로 칠해진다.
-- 실제 규모(수만 세포 이상) 테스트는 별도 참조로 한다(`docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/Registration.md` 14절).
+- 실제 규모(수만 세포 이상) 테스트는 별도 참조로 한다(`docs/Spatial_Transcriptomics_Visium_Pipeline/modules/Registration.md`, `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/Registration.md`의 CLOSHA 테스트 절).

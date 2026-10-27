@@ -2,8 +2,11 @@
 """Concept figures for the spatial transcriptomics modules, one drawing per module, in the
 style of the ATAC-seq module concepts (drawing helpers imported from there).
 
-Run: python3 docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/make_module_concepts.py,
-then for f in <that folder>/*.svg; do rsvg-convert -w 1600 "$f" -o "${f%.svg}.png"; done
+Each figure is written to the module_concepts folder of the pipeline(s) using the module
+(spatial_condition_de and check_reference to both).
+Run: python3 docs/Spatial_Transcriptomics_Shared/figures/make_module_concepts.py, then
+for f in docs/Spatial_Transcriptomics_Visium*_Pipeline/modules/figures/module_concepts/*.svg; do
+    rsvg-convert -w 1600 "$f" -o "${f%.svg}.png"; done
 Tissue shapes, clusters and values are schematic, not data.
 """
 import math
@@ -11,8 +14,10 @@ import random
 import sys
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent
-sys.path.insert(0, str(OUT.parents[3] / "ATAC-seq" / "modules" / "figures" / "module_concepts"))
+DOCS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(DOCS / "ATAC-seq" / "modules" / "figures" / "module_concepts"))
+VIS = DOCS / "Spatial_Transcriptomics_Visium_Pipeline" / "modules" / "figures" / "module_concepts"
+HD = DOCS / "Spatial_Transcriptomics_Visium_HD_Pipeline" / "modules" / "figures" / "module_concepts"
 from make_module_concepts import (MAIN, SUB, POINT, TINT, GRAY, PALE, t, panel, line, rect, arrow,  # noqa: E402
                                   axes, svg, table, legend)
 
@@ -423,6 +428,10 @@ FIGS = {"spatial_prep": spatial_prep, "spatial_cluster": spatial_cluster, "spati
 
 if __name__ == "__main__":
     for name, fn in FIGS.items():
-        p = OUT / f"{name}_concept.svg"
-        p.write_text(fn())
-        print(p)
+        dirs = [HD] if name.startswith("spatial_hd_") else \
+            [VIS, HD] if name in ("spatial_condition_de", "check_reference") else [VIS]
+        drawing = fn()
+        for d in dirs:
+            p = d / f"{name}_concept.svg"
+            p.write_text(drawing)
+            print(p)

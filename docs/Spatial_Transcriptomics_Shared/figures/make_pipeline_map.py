@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Metro-style schematics of the CLOSHA spatial transcriptomics pipelines (Visium, Visium HD) (SVG)."""
-# Run: python3 docs/Spatial_Transcriptomics_Analysis_Pipeline/pipeline/figures/make_pipeline_map.py, then
-# for f in docs/Spatial_Transcriptomics_Analysis_Pipeline/pipeline/figures/pipeline_*.svg; do
+# Run: python3 docs/Spatial_Transcriptomics_Shared/figures/make_pipeline_map.py, then
+# for f in docs/Spatial_Transcriptomics_Visium*_Pipeline/pipeline/figures/pipeline_*.svg; do
 #     rsvg-convert -w 2500 "$f" -o "${f%.svg}.png"; done
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parents[2] / "tools"))
+sys.path.insert(0, str(HERE.parents[1] / "tools"))
+DOCS = HERE.parents[1]
 import metro_map as m  # noqa: E402
 
 PURPLE, BLUE, GREEN, YELLOW = m.PURPLE, m.BLUE, m.GREEN, m.YELLOW
@@ -55,7 +56,7 @@ m.outputs(2270, y + 170, ["TSV", "PDF", "PNG"], above=False, gap=46)
 m.outputs(1500, yS + 150, ["RDS", "CSV", "PNG"], above=False, gap=30)
 m.outputs(1750, yL - 150, ["RDS", "CSV", "PNG"], above=True, gap=30)
 m.outputs(1750, yR - 150, ["RDS", "CSV", "PNG"], above=True, gap=30)
-m.save(HERE / "pipeline_visium.svg", W, 2030, "Spatial transcriptomics pipeline (Visium)", STAGES, 1790)
+m.save(DOCS / "Spatial_Transcriptomics_Visium_Pipeline" / "pipeline" / "figures" / "pipeline_visium.svg", W, 2030, "Spatial transcriptomics pipeline (Visium)", STAGES, 1790)
 
 # ---------------------------------------------------------------- Visium HD
 m.reset()
@@ -90,4 +91,4 @@ m.outputs(2100, y + 170, ["TSV", "PDF", "PNG"], above=False, gap=46)
 m.outputs(1950, yS + 150, ["TSV", "PNG", "PDF"], above=False, gap=30)
 m.outputs(1900, yC - 150, ["RDS", "TSV", "PNG"], above=True, gap=30)
 m.outputs(2320, yC - 150, ["TSV", "PDF", "PNG"], above=True, gap=30)
-m.save(HERE / "pipeline_visium_hd.svg", W, 2000, "Spatial transcriptomics pipeline (Visium HD)", STAGES, 1740)
+m.save(DOCS / "Spatial_Transcriptomics_Visium_HD_Pipeline" / "pipeline" / "figures" / "pipeline_visium_hd.svg", W, 2000, "Spatial transcriptomics pipeline (Visium HD)", STAGES, 1740)

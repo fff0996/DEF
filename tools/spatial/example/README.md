@@ -1,6 +1,6 @@
 # 공간 전사체 예제 입력
 
-CLOSHA 테스트와 포탈 예제에 쓰는 입력 정리. 모듈별 입력값은 `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/Registration.md` 14절.
+CLOSHA 테스트와 포탈 예제에 쓰는 입력 정리. 모듈별 입력값은 `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/Registration.md`, `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/Registration.md`의 CLOSHA 테스트 절.
 
 ## 예제 데이터 (10x Genomics 공개 자료)
 | 파이프라인 | 데이터 | 조건 | 참조 |

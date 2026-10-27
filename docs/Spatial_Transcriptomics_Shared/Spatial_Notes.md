@@ -3,7 +3,7 @@ Spatial transcriptomics pipeline: 작업 기록
 작성일: 2026-10-22
 
 ## 1. 구성
-배포 번호와 작업 파일은 `modules/Registration.md` 표를 따른다. 받은 스크립트(CLOSHA 2.0)는 고친 것만 2.0 번호 + 1이고, 새 모듈은 1.0이다(사용자 결정, 2026-10-22).
+배포 번호와 작업 파일은 각 파이프라인의 `modules/Registration.md` 표(`docs/Spatial_Transcriptomics_Visium_Pipeline/`, `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/`)를 따른다. 받은 스크립트(CLOSHA 2.0)는 고친 것만 2.0 번호 + 1이고, 새 모듈은 1.0이다(사용자 결정, 2026-10-22).
 
 | 모듈 | 작업 파일(최신) | 배포 번호 | 이전 파일 |
 |---|---|---|---|
@@ -64,7 +64,7 @@ Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종�
 - **spatial_rctd 1.0, dominant 세포 유형 그림이 항상 빠짐:** Seurat 5의 SpatialDimPlot에 없는 `na.value` 인자를 넘겨 매번 경고로 건너뛴다. 1.1에서 인자를 뺐다.
 
 ## 5. 권장 자원(포탈: 코어 1/4/8/16, 메모리 8~128GB)
-2026-10-27에 넉넉한 값으로 올렸다(사용자 결정). 표와 근거는 `modules/Registration.md` 13절을 따른다.
+2026-10-27에 넉넉한 값으로 올렸다(사용자 결정). 표와 근거는 각 파이프라인 `modules/Registration.md`의 권장 자원 절을 따른다.
 - 8코어: 공간 전사체 작업 기준에 맞춘 값. 여러 코어를 실제로 쓰는 모듈은 rctd 두 개뿐이다.
 - 128GB: spatial_labelTransfer, spatial_hd_cluster, spatial_hd_rctd
 - 64GB: spatial_merge, spatial_condition_de, spatial_rctd, spatial_hd_prep, spatial_hd_svf, check_reference(4코어)
@@ -176,6 +176,15 @@ Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종�
 | 열 이름 맞음 | 열 확인 통과 | 열 확인 통과 | 참조 준비 통과 | - |
 
 참조가 있을 때의 분석 코드는 1.1과 같다. 1.2로 전체 분석은 다시 돌리지 않았다. 확인 시점에 Codespace가 다시 시작돼 슬라이드 객체가 지워졌다.
+
+## 7.2 파이프라인별 폴더로 나눔 (2026-10-27)
+사용자 결정: 두 파이프라인은 모듈 구성이 달라 원고를 따로 관리한다.
+- `docs/Spatial_Transcriptomics_Visium_Pipeline/`: Visium 파이프라인 원고, 모듈 8개(prep, cluster, svf, merge, condition_de, labelTransfer, rctd, check_reference) 원고와 Registration, 그림
+- `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/`: Visium HD 파이프라인 원고, 모듈 6개(hd_prep, hd_cluster, hd_svf, condition_de, hd_rctd, check_reference) 원고와 Registration, 그림
+- `docs/Spatial_Transcriptomics_Shared/`: 두 파이프라인 공통. 이 노트, 컨테이너 문서, 그림 생성 스크립트(`figures/make_pipeline_map.py`, `make_concept.py`, `make_module_concepts.py`; 결과를 각 파이프라인 폴더에 쓴다)
+- 스크립트(`scripts/Spatial_Transcriptomics_Analysis_Pipeline/`)와 DEF(`defs/Spatial_Transcriptomics_Analysis_Pipeline/`)는 같은 이미지(bx_spatial 1.1)를 쓰므로 나누지 않았다.
+- spatial_condition_de와 check_reference는 양쪽 모듈 원고와 Registration에 같은 내용으로 있다. 고칠 때 양쪽을 함께 고친다.
+- 7절 이전 기록의 `modules/...`, `pipeline/...` 경로는 나누기 전 `docs/Spatial_Transcriptomics_Analysis_Pipeline/` 기준이다.
 
 ## 8. 남은 일
 1. 8µm 자원 실측(사용자가 CLOSHA에서 sacct MaxRSS, Elapsed)

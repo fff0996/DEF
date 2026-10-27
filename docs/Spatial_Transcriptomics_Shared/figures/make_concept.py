@@ -4,14 +4,17 @@ regions, condition comparison with slice-level pseudobulk, and cell types from a
 single-cell reference.
 
 Drawn from scratch (no published figure used); the tissue and counts are schematic.
-Run: python3 docs/Spatial_Transcriptomics_Analysis_Pipeline/pipeline/figures/make_concept.py, then
-rsvg-convert -w 1800 docs/Spatial_Transcriptomics_Analysis_Pipeline/pipeline/figures/concept.svg \
-    -o docs/Spatial_Transcriptomics_Analysis_Pipeline/pipeline/figures/concept.png
+Both pipelines use the same figure, so it is written to each pipeline's figures folder.
+Run: python3 docs/Spatial_Transcriptomics_Shared/figures/make_concept.py, then
+for d in docs/Spatial_Transcriptomics_Visium*_Pipeline/pipeline/figures; do
+    rsvg-convert -w 1800 $d/concept.svg -o $d/concept.png; done
 """
 import math
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent / "concept.svg"
+DOCS = Path(__file__).resolve().parents[2]
+OUTS = [DOCS / p / "pipeline" / "figures" / "concept.svg"
+        for p in ("Spatial_Transcriptomics_Visium_Pipeline", "Spatial_Transcriptomics_Visium_HD_Pipeline")]
 W, H = 1800, 1220
 FONT = "Pretendard, 'Noto Sans KR', sans-serif"
 TXT, TXT2, POINT = "#222222", "#3A3A3A", "#32549C"
@@ -191,5 +194,6 @@ svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBo
        f'<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">'
        f'<path d="M0,0 L10,5 L0,10 z" fill="{TXT2}"/></marker></defs>'
        f'<rect width="{W}" height="{H}" fill="#fff"/>' + "".join(g) + "</svg>")
-OUT.write_text(svg)
-print(OUT)
+for out in OUTS:
+    out.write_text(svg)
+    print(out)
