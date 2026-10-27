@@ -1,5 +1,6 @@
 SliceID,Condition
-brain_left_top,left
-brain_left_bottom,left
-brain_right_top,right
-brain_right_bottom,right
+crc_p1,tumor
+crc_p2,tumor
+crc_p5,tumor
+normal_p3,normal
+normal_p5,normal

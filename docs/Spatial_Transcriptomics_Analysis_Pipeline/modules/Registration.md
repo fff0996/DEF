@@ -267,57 +267,61 @@ Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형
 ## 14. CLOSHA 테스트 (2026-10-27)
 테스트에는 작업 파일 이름을 그대로 쓴다. 배포 이름(위 표의 배포 번호)으로 바꾸는 것은 배포 때 한다. 실행 이미지는 `bx_spatial.1.1`이다.
 
-예제 데이터:
+예제 데이터와 받는 법은 `tools/spatial/example/README.md`에 있다(사용자 결정, 2026-10-27: HD 예제를 쥐 뇌 1장에서 사람 대장암 5장으로 바꿈).
 | 용도 | 데이터 | 폴더 구조 |
 |---|---|---|
-| Visium | 10x Mouse Brain Sagittal 4장: `V1_Mouse_Brain_Sagittal_Anterior`, `_Anterior_Section_2`, `_Posterior`, `_Posterior_Section_2` (https://cf.10xgenomics.com/samples/spatial-exp/1.1.0/, 각각 `*_filtered_feature_bc_matrix.h5`, `*_spatial.tar.gz`) | `/data/visium/<slice>/filtered_feature_bc_matrix.h5`, `/data/visium/<slice>/spatial/` |
-| Visium HD | 10x Visium HD Mouse Brain (https://cf.10xgenomics.com/samples/spatial-exp/3.0.0/Visium_HD_Mouse_Brain/Visium_HD_Mouse_Brain_binned_outputs.tar.gz). 슬라이드가 1장이라, 조건 비교를 보려면 4등분해 4장으로 쓴다(Codespace 테스트와 같은 방식) | `/data/hd/<slide>/binned_outputs/square_016um/...` |
-| 참조 | `hippocampus_reference.rds`: spacexr 예제로 만든 Seurat 객체, 세포 510개, 세포 유형 열 `celltype`. 저장소 `tools/spatial/reference/reference.rds`(출처, 만드는 법, 한계는 같은 폴더 README.md). RNA assay에 raw count, 307 유전자, 17개 유형 × 30세포 | |
+| Visium | 10x 쥐 뇌 시상 절편 4장(Anterior, Posterior × Section 1, 2) | `$BASE/visium/<slice>/filtered_feature_bc_matrix.h5`, `spatial/` |
+| Visium HD | 10x 사람 대장암 FFPE 5장: 종양 P1, P2, P5, 정상 인접 P3, P5. `tools/spatial/example/download_hd_crc.sh`로 받는다 | `$BASE/hd_crc/<slide>/binned_outputs/square_016um/...` |
+| 참조(Visium) | `tools/spatial/reference/reference.rds`: 쥐 해마 510세포, 열 `celltype` | |
+| 참조(HD) | `human_colon_crc_flex_300pertype.rds`: 같은 연구 단일세포 10,333개, 열 `Level1`(9종), `Level2`(38종). `tools/spatial/reference/human/colon_crc_flex/`의 명령으로 만든다 | |
 
-슬라이스 정보 CSV:
+슬라이스 정보 CSV(`tools/spatial/example/`):
 ```
-# Visium
+# visium_slices.csv
 SliceID,Condition
 sec1_anterior,section1
 sec1_posterior,section1
 sec2_anterior,section2
 sec2_posterior,section2
 
-# Visium HD
+# hd_slides.csv
 SliceID,Condition
-brain_left_top,left
-brain_left_bottom,left
-brain_right_top,right
-brain_right_bottom,right
+crc_p1,tumor
+crc_p2,tumor
+crc_p5,tumor
+normal_p3,normal
+normal_p5,normal
 ```
 
 실행 예:
 ```bash
 # Visium
-Rscript spatial_prep.1.1.R    input_dir=/data/visium output_dir=/out/prep
-Rscript spatial_cluster.1.1.R input_dir=/out/prep    output_dir=/out/cluster
-Rscript spatial_svf.1.1.R     input_dir=/out/cluster output_dir=/out/svf
-Rscript spatial_merge.1.2.R   input_dir=/out/cluster output_dir=/out/merge integration=harmony
-Rscript spatial_condition_de.1.4.R input_dir=/out/merge sample_data=/data/visium_slices.csv output_dir=/out/de reference=section1
-Rscript spatial_labelTransfer.1.2.R input_dir=/out/cluster output_dir=/out/labeltransfer \
-        reference_rds=/data/hippocampus_reference.rds reference_label_col=celltype min_shared_features=100
-Rscript spatial_rctd.1.2.R input_dir=/out/cluster output_dir=/out/rctd \
-        reference_rds=/data/hippocampus_reference.rds reference_label_col=celltype min_shared_features=100
+Rscript spatial_prep.1.1.R    input_dir=$BASE/visium output_dir=$BASE/out/prep
+Rscript spatial_cluster.1.1.R input_dir=$BASE/out/prep    output_dir=$BASE/out/cluster
+Rscript spatial_svf.1.1.R     input_dir=$BASE/out/cluster output_dir=$BASE/out/svf
+Rscript spatial_merge.1.2.R   input_dir=$BASE/out/cluster output_dir=$BASE/out/merge integration=harmony
+Rscript spatial_condition_de.1.4.R input_dir=$BASE/out/merge sample_data=$BASE/visium_slices.csv output_dir=$BASE/out/de reference=section1
+Rscript spatial_labelTransfer.1.2.R input_dir=$BASE/out/cluster output_dir=$BASE/out/labeltransfer \
+        reference_rds=$BASE/reference.rds reference_label_col=celltype min_shared_features=100
+Rscript spatial_rctd.1.2.R input_dir=$BASE/out/cluster output_dir=$BASE/out/rctd \
+        reference_rds=$BASE/reference.rds reference_label_col=celltype min_shared_features=100
 
-# Visium HD
-Rscript spatial_hd_prep.1.1.R    input_dir=/data/hd output_dir=/out/hd_prep bin_size=16
-Rscript spatial_hd_cluster.1.1.R input_dir=/out/hd_prep output_dir=/out/hd_cluster features=Prox1,Mbp
-Rscript spatial_condition_de.1.4.R input_dir=/out/hd_cluster sample_data=/data/hd_slides.csv output_dir=/out/hd_de reference=left
-Rscript spatial_hd_svf.1.0.R  input_dir=/out/hd_cluster output_dir=/out/hd_svf
-Rscript spatial_hd_rctd.1.2.R input_dir=/out/hd_cluster output_dir=/out/hd_rctd \
-        reference_rds=/data/hippocampus_reference.rds reference_label_col=celltype min_shared_features=100
-Rscript spatial_condition_de.1.4.R input_dir=/out/hd_rctd sample_data=/data/hd_slides.csv \
-        output_dir=/out/hd_de_celltype reference=left group_by=rctd_first_type
+# Visium HD (사람 대장암)
+Rscript spatial_hd_prep.1.1.R    input_dir=$BASE/hd_crc output_dir=$BASE/out/hd_prep bin_size=16
+Rscript spatial_hd_cluster.1.1.R input_dir=$BASE/out/hd_prep output_dir=$BASE/out/hd_cluster features=EPCAM,PTPRC,COL1A1
+Rscript spatial_condition_de.1.4.R input_dir=$BASE/out/hd_cluster sample_data=$BASE/hd_slides.csv output_dir=$BASE/out/hd_de reference=normal
+Rscript spatial_hd_svf.1.0.R  input_dir=$BASE/out/hd_cluster output_dir=$BASE/out/hd_svf
+Rscript spatial_hd_rctd.1.2.R input_dir=$BASE/out/hd_cluster output_dir=$BASE/out/hd_rctd \
+        reference_rds=$BASE/human_colon_crc_flex_300pertype.rds reference_label_col=Level1
+Rscript spatial_condition_de.1.4.R input_dir=$BASE/out/hd_rctd sample_data=$BASE/hd_slides.csv \
+        output_dir=$BASE/out/hd_de_celltype reference=normal group_by=rctd_first_type
 
 # 보조
-Rscript check_reference.1.1.R reference_rds=/data/hippocampus_reference.rds output_dir=/out/check_reference
+Rscript check_reference.1.1.R reference_rds=$BASE/human_colon_crc_flex_300pertype.rds output_dir=$BASE/out/check_reference
 ```
-`min_shared_features=100`은 이 예제 참조(공유 유전자 268개)에만 쓴다. 실제 참조는 기본값 200으로 둔다.
+`min_shared_features=100`은 쥐 예제 참조(공유 유전자 268개)에만 쓴다. 대장암 참조는 HD와 같은 probe set이라 기본값 200으로 둔다.
+
+HD 예제를 바꿨으므로 모듈 원고의 HD 결과 그림(hd_prep, hd_cluster, hd_svf, hd_rctd, condition_de)은 쥐 뇌 결과다. CLOSHA에서 대장암으로 돌린 결과로 바꾼다.
 
 확인할 것:
 1. 참조 입력을 비운 파이프라인 실행이 정상 완료되는지(세 모듈과 세포 유형 기준 condition_de에 `skipped.txt`)
