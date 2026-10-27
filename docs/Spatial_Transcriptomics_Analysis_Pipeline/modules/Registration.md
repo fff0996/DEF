@@ -200,7 +200,6 @@ RCTD(spacexr, full 모드)로 Visium spot마다 세포 유형 비율(weight)을 
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이스별 `<slice>_rctd.rds`, `_rctd_object.rds`, `_rctd_weights.csv`, `_rctd_mean_abundance.csv`, `plots/`, `summary/` |
 | Option | `spatial_assay` | String | 선택 | `Spatial` | 슬라이스 객체의 raw count assay |
 | Option | `reference_assay` | String | 선택 | `RNA` | 참조 객체의 raw count assay |
-| Option | `max_cores` | String | 선택 | `auto` | 병렬 코어 수. auto = 할당 코어 수, 숫자는 할당 코어 수로 제한 |
 | Option | `min_shared_features` | Integer | 선택 | `200` | 참조와 슬라이스의 최소 공유 유전자 수 |
 | Option | `min_cells_per_type` | Integer | 선택 | `25` | 세포 수가 이보다 적은 참조 세포 유형은 뺌 |
 | Option | `plot_topn` | Integer | 선택 | `12` | 조직 위 weight 그림에 넣는 상위 세포 유형 수 |
@@ -237,7 +236,6 @@ Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형
 | Option | `umi_min` | Integer | 선택 | `100` | UMI 수가 이보다 적은 bin은 계산하지 않음(not_scored) |
 | Option | `min_cells_per_type` | Integer | 선택 | `25` | 세포 수가 이보다 적은 참조 세포 유형은 뺌 |
 | Option | `min_shared_features` | Integer | 선택 | `200` | 참조와 슬라이드의 최소 공유 유전자 수 |
-| Option | `max_cores` | String | 선택 | `auto` | 병렬 코어 수. auto = 할당 코어 수, 숫자는 할당 코어 수로 제한 |
 | Option | `pt_size` | Float | 선택 | `4` | 조직 그림의 bin 크기 |
 | Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
 
@@ -262,7 +260,7 @@ Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형
 | check_reference | 4 | 64GB | 큰 참조 RDS를 통째로 읽는다 |
 
 근거와 한계:
-- 여러 코어를 실제로 쓰는 모듈은 spatial_rctd, spatial_hd_rctd뿐이다(`max_cores=auto`). 나머지는 병렬 설정이 없어 사실상 1코어지만, 공간 전사체 작업 기준에 맞춰 8코어로 통일했다. 결과에는 영향이 없다. rctd 두 모듈은 코어마다 자료를 복사하므로 16코어로 올리지 않았다(128GB를 넘길 수 있음).
+- 여러 코어를 실제로 쓰는 모듈은 spatial_rctd, spatial_hd_rctd뿐이다. 두 스크립트의 `max_cores`는 CLOSHA에 등록하지 않는다(사용자 결정, 2026-10-27): 기본값 `auto`가 할당된 코어 수(`nproc`)만큼 작업자를 만들고, 코어 수는 자원 선택 하나로 정한다. 메모리가 모자라면 코어 수를 낮춘다(작업자마다 자료를 복사). 나머지는 병렬 설정이 없어 사실상 1코어지만, 공간 전사체 작업 기준에 맞춰 8코어로 통일했다. 결과에는 영향이 없다. rctd 두 모듈은 코어마다 자료를 복사하므로 16코어로 올리지 않았다(128GB를 넘길 수 있음).
 - Codespace 테스트는 줄인 데이터(유전자 6,000개, spot 축소, 1코어)와 510세포 예제 참조로 했다. 최대 메모리는 대부분 2~4GB였다(hd_rctd 3.7GB, hd_svf 2.0GB, condition_de 2.0GB).
 - 실제 참조(수만~수십만 세포)와 8µm는 측정하지 않았다. 참조 모듈은 `readRDS`로 참조 전체를 올리고, labelTransfer는 참조 전체로 anchor를 찾는다. RCTD는 세포 유형마다 최대 1만 세포만 쓴다(spacexr `n_max_cells` 기본값). CLOSHA에서 `sacct`의 MaxRSS, Elapsed, TotalCPU로 실측한 뒤 이 표를 고친다.
 
@@ -326,4 +324,5 @@ Rscript check_reference.1.1.R reference_rds=/data/hippocampus_reference.rds outp
 2. `reference_label_col`을 비우거나 틀리게 넣었을 때 오류 로그에 후보 열이 나오는지
 3. hd_rctd 기본값(doublet)으로 결과가 나오는지(Codespace는 full만 확인)
 4. 원본 크기 데이터의 시간과 메모리(`sacct -j <작업번호> --format=JobName,AllocCPUS,Elapsed,TotalCPU,MaxRSS`). 13절 값을 이것으로 고친다.
-5. 규모 확인: 510세포 예제 참조는 동작 확인용이다. 실제 규모 참조로 한 번 더 돌린다(중간 규모: Seurat 공간 안내의 Allen 피질 참조 `allen_cortex.rds`, 약 1만 4천 세포, 세포 유형 열 `subclass`. 큰 규모: 쥐 뇌 10만 세포 이상 참조).
+5. 로그 첫머리의 코어 수가 할당 코어 수와 같은지 본다: hd_rctd `max_cores used = N (allocated N)`, rctd `max_cores : N (requested auto, allocated N)`. 노드 전체 코어 수가 나오면 `SLURM_CPUS_PER_TASK`를 먼저 보도록 스크립트를 고친다.
+6. 규모 확인: 510세포 예제 참조는 동작 확인용이다. 실제 규모 참조로 한 번 더 돌린다(중간 규모: Seurat 공간 안내의 Allen 피질 참조 `allen_cortex.rds`, 약 1만 4천 세포, 세포 유형 열 `subclass`. 큰 규모: 쥐 뇌 10만 세포 이상 참조).

@@ -1234,7 +1234,6 @@ A Visium spot holds several cells. RCTD (spacexr) uses the per-cell-type express
 | Output | Required | Directory | output_dir | /data/spatial_rctd | 결과 폴더. 슬라이스마다 <slice>_rctd.rds, <slice>_rctd_object.rds, <slice>_rctd_weights.csv, <slice>_rctd_mean_abundance.csv, plots/, 그리고 summary/(표, heatmap, 누적 막대) | Output folder: per slice <slice>_rctd.rds, <slice>_rctd_object.rds, <slice>_rctd_weights.csv, <slice>_rctd_mean_abundance.csv and plots/, and summary/ (tables, heatmap, stacked bars) |
 | Option | Optional | String | spatial_assay | Spatial | 슬라이스 객체에서 raw count가 든 assay | Assay of the slice objects holding raw counts |
 | Option | Optional | String | reference_assay | RNA | 참조 객체에서 raw count가 든 assay | Assay of the reference holding raw counts |
-| Option | Optional | String | max_cores | auto | 병렬 코어 수. auto = 작업에 할당된 코어 수. 숫자를 주면 할당 코어 수를 넘지 않게 줄임 | Parallel cores. auto = cores allocated to the job; a number is capped by them |
 | Option | Optional | Integer | min_shared_features | 200 | 참조와 슬라이스가 공유해야 하는 최소 유전자 수 | Minimum genes shared by the reference and a slice |
 | Option | Optional | Integer | min_cells_per_type | 25 | 세포 수가 이보다 적은 참조 세포 유형은 뺌 | Reference cell types with fewer cells are left out |
 | Option | Optional | Integer | plot_topn | 12 | 조직 위 weight 그림에 넣는 상위 세포 유형 수 | Top cell types drawn as tissue weight maps |
@@ -1246,7 +1245,7 @@ A Visium spot holds several cells. RCTD (spacexr) uses the per-cell-type express
 | 참조 자료(reference_rds)를 주지 않으면 이 모듈은 건너뛰고(결과 폴더에 skipped.txt) 정상 종료하므로, 참조가 없어도 파이프라인은 끝까지 실행됩니다. 참조를 주면 세포 유형 열 이름(reference_label_col)도 넣어 주세요. 열 이름을 모르면 비워 두고 한 번 실행하면, 분석 전에 멈추고 오류 로그에 세포 유형 후보 열과 그 값들을 보여 줍니다. 확인한 열 이름을 넣어 다시 실행하세요. | Without a reference (reference_rds) the module is skipped (skipped.txt in the output folder) and ends without error, so the pipeline still runs to the end. With a reference, also give its cell-type column (reference_label_col). If the column name is unknown, leave it empty and run once: the run stops before the analysis and the error log lists the cell-type column candidates with their values. Run again with the chosen column. |
 | RCTD는 raw count가 필요합니다. 참조의 정규화 값(SCT, log)만 있으면 실행되지 않습니다. | RCTD needs raw counts; a reference with only normalised values (SCT, log) cannot be used. |
 | weight는 참조에 있는 세포 유형 사이의 비율입니다. 참조에 없는 조직은 가장 비슷한 유형의 weight로 나타납니다. 조직 전체를 담은 참조를 권장합니다. | Weights are proportions among the reference cell types; tissue missing from the reference shows up as the most similar types, so a reference covering the whole tissue is recommended. |
-| 코어 수에 따라 메모리가 늘어납니다(작업자마다 자료를 복사). 메모리가 모자라면 max_cores를 줄이세요. | Memory grows with the cores, since each worker copies the data; lower max_cores if memory runs short. |
+| 코어 수에 따라 메모리가 늘어납니다(작업자마다 자료를 복사). 병렬 작업자 수는 할당한 코어 수를 따르므로, 메모리가 모자라면 코어 수를 낮춰 주세요. | Memory grows with the cores, since each worker copies the data; the number of workers follows the allocated cores, so lower the cores if memory runs short. |
 | UMI 수가 매우 적은 spot(RCTD 기본 100 미만)은 계산에서 빠져 dominant 그림에서 NA로 나옵니다. | Spots with very few UMIs (below the RCTD default of 100) are not scored and appear as NA in the dominant map. |
 
 ### 분석 개념 이미지
@@ -1265,7 +1264,6 @@ Rscript spatial_rctd.1.1.R \
   output_dir=/data/spatial_rctd \
   spatial_assay=Spatial \
   reference_assay=RNA \
-  max_cores=auto \
   min_shared_features=200 \
   min_cells_per_type=25 \
   plot_topn=12 \
@@ -1458,7 +1456,6 @@ Labels every bin of Visium HD slides with the cell types of a single-cell refere
 | Option | Optional | Integer | umi_min | 100 | UMI 수가 이보다 적은 bin은 계산하지 않음(not_scored) | Bins with fewer UMIs are not scored (not_scored) |
 | Option | Optional | Integer | min_cells_per_type | 25 | 세포 수가 이보다 적은 참조 세포 유형은 뺌 | Reference cell types with fewer cells are left out |
 | Option | Optional | Integer | min_shared_features | 200 | 참조와 슬라이드가 공유해야 하는 최소 유전자 수 | Minimum genes shared by the reference and the slides |
-| Option | Optional | String | max_cores | auto | 병렬 코어 수. auto = 작업에 할당된 코어 수. 숫자를 주면 할당 코어 수를 넘지 않게 줄임 | Parallel cores. auto = cores allocated to the job; a number is capped by them |
 | Option | Optional | Float | pt_size | 4 | 조직 그림의 bin 크기(Seurat pt.size.factor) | Bin size in the tissue plots (Seurat pt.size.factor) |
 | Option | Optional | Integer | seed | 1234 | 난수 시드 | Random seed |
 
@@ -1469,7 +1466,7 @@ Labels every bin of Visium HD slides with the cell types of a single-cell refere
 | bin 크기에 맞춰 rctd_mode를 고르세요. 기본값 doublet은 8µm용이고, 16µm는 full을 권장합니다. | Choose rctd_mode by bin size: the default doublet is for 8 um, and full is recommended for 16 um. |
 | 16µm bin은 UMI가 많아 umi_min=100에서 대부분 계산되지만, 8µm bin은 UMI가 적어 not_scored가 많을 수 있습니다. rctd_summary.tsv의 Bins_scored를 확인하세요. | 16 um bins have many UMIs and are mostly scored at umi_min=100, but 8 um bins have fewer and many may be not_scored; check Bins_scored in rctd_summary.tsv. |
 | 참조에 없는 조직은 가장 비슷한 세포 유형으로 칠해집니다. 슬라이드 조직 전체를 담은 참조를 권장합니다. | Tissue missing from the reference is painted with the most similar cell types; a reference covering the whole tissue is recommended. |
-| 코어 수에 따라 메모리가 늘어납니다(작업자마다 자료를 복사). 메모리가 모자라면 max_cores나 chunk_bins를 줄이세요. | Memory grows with the cores (each worker copies the data); lower max_cores or chunk_bins if memory runs short. |
+| 코어 수에 따라 메모리가 늘어납니다(작업자마다 자료를 복사). 병렬 작업자 수는 할당한 코어 수를 따르므로, 메모리가 모자라면 코어 수나 chunk_bins를 낮춰 주세요. | Memory grows with the cores (each worker copies the data); the number of workers follows the allocated cores, so lower the cores or chunk_bins if memory runs short. |
 
 ### 분석 개념 이미지
 그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/modules/figures/module_concepts/spatial_hd_rctd_concept.png`
@@ -1491,7 +1488,6 @@ Rscript spatial_hd_rctd.1.0.R \
   umi_min=100 \
   min_cells_per_type=25 \
   min_shared_features=200 \
-  max_cores=auto \
   pt_size=4 \
   seed=1234
 ```
