@@ -29,7 +29,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_prep.1.1.R | |
-| Processor Core (제안) | 4코어, 메모리 16GB(슬라이스 1장 기준) | 4 cores, 16 GB of memory (per slice) |
+| Processor Core (제안) | 8코어, 메모리 32GB | 8 cores, 32 GB of memory |
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -138,7 +138,7 @@ Rscript spatial_prep.1.1.R \
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_cluster.1.1.R | |
-| Processor Core (제안) | 4코어, 메모리 16GB | 4 cores, 16 GB of memory |
+| Processor Core (제안) | 8코어, 메모리 32GB | 8 cores, 32 GB of memory |
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -259,7 +259,7 @@ Rscript spatial_cluster.1.1.R \
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_svf.1.1.R | |
-| Processor Core (제안) | 4코어, 메모리 16GB | 4 cores, 16 GB of memory |
+| Processor Core (제안) | 8코어, 메모리 32GB | 8 cores, 32 GB of memory |
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -366,7 +366,7 @@ Rscript spatial_svf.1.1.R \
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_merge.1.1.R | |
-| Processor Core (제안) | 4코어, 메모리 32GB(슬라이스 4장), 64GB(8장 이상) | 4 cores, 32 GB of memory (4 slices), 64 GB (8 or more) |
+| Processor Core (제안) | 8코어, 메모리 64GB | 8 cores, 64 GB of memory |
 
 등록 메모: 작업 파일 `spatial_merge.1.2.R`을 배포 번호 1.1로 올립니다.
 
@@ -437,7 +437,7 @@ Merges several slices into one object and recomputes the dimensional reduction a
 | 국문 | 영문 |
 |---|---|
 | 슬라이스 사이에 배치 차이(다른 날 실험, 다른 조직 처리)가 크면 integration=harmony를 권장합니다. 보정하지 않으면 군집이 슬라이스별로 나뉠 수 있습니다. | With strong batch differences between slices (different days or tissue handling), integration=harmony is recommended; without it clusters may split by slice. |
-| 슬라이스 수에 따라 메모리가 늘어납니다. 4장은 32GB, 8장 이상은 64GB를 권장합니다. | Memory grows with the number of slices: 32 GB for 4 slices and 64 GB for 8 or more are recommended. |
+| 슬라이스 수에 따라 메모리가 늘어납니다. 64GB를 권장하며, 슬라이스가 아주 많으면 128GB로 올려 주세요. | Memory grows with the number of slices: 64 GB is recommended, and 128 GB for very many slices. |
 | 실행할 때마다 output_dir에서 logs/를 뺀 나머지를 지웁니다. 입력(군집 결과 폴더)을 output_dir 안에 두지 마세요. | output_dir except logs/ is cleared on every run; do not keep the input (cluster folder) inside it. |
 
 ### 분석 개념 이미지
@@ -508,7 +508,7 @@ Rscript spatial_merge.1.1.R \
 | 레퍼런스 URL | https://bioconductor.org/packages/DESeq2/ | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_condition_de.1.0.R | |
-| Processor Core (제안) | 4코어, 메모리 16GB(Visium), 16~32GB(Visium HD 16µm), 32~64GB(8µm) | 4 cores, 16 GB of memory (Visium), 16-32 GB (Visium HD 16 um), 32-64 GB (8 um) |
+| Processor Core (제안) | 8코어, 메모리 64GB | 8 cores, 64 GB of memory |
 
 등록 메모: 작업 파일 `spatial_condition_de.1.4.R`을 배포 번호 1.0으로 올립니다.
 
@@ -691,7 +691,7 @@ Rscript spatial_condition_de.1.0.R \
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_hd_prep.1.0.R | |
-| Processor Core (제안) | 4코어, 메모리 16GB(16µm, 슬라이드당), 32~64GB(8µm, 슬라이드당) | 4 cores, 16 GB of memory (16 um, per slide), 32-64 GB (8 um, per slide) |
+| Processor Core (제안) | 8코어, 메모리 64GB | 8 cores, 64 GB of memory |
 
 등록 메모: 작업 파일 `spatial_hd_prep.1.1.R`을 배포 번호 1.0으로 올립니다.
 
@@ -817,7 +817,7 @@ Rscript spatial_hd_prep.1.0.R \
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_hd_cluster.1.0.R | |
-| Processor Core (제안) | 4코어, 메모리 32GB(16µm), 64~128GB(8µm) | 4 cores, 32 GB of memory (16 um), 64-128 GB (8 um) |
+| Processor Core (제안) | 8코어, 메모리 128GB | 8 cores, 128 GB of memory |
 
 등록 메모: 작업 파일 `spatial_hd_cluster.1.1.R`을 배포 번호 1.0으로 올립니다.
 
@@ -974,7 +974,7 @@ Rscript spatial_hd_cluster.1.0.R \
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | check_reference.1.1.R | |
-| Processor Core (제안) | 1코어, 메모리 16GB(참조 크기에 따라 32GB) | 1 core, 16 GB of memory (32 GB for large references) |
+| Processor Core (제안) | 4코어, 메모리 64GB | 4 cores, 64 GB of memory |
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -1067,7 +1067,7 @@ Rscript check_reference.1.1.R \
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_labelTransfer.1.1.R | |
-| Processor Core (제안) | 4코어, 메모리 32GB | 4 cores, 32 GB of memory |
+| Processor Core (제안) | 8코어, 메모리 128GB | 8 cores, 128 GB of memory |
 
 등록 메모: 작업 파일 `spatial_labelTransfer.1.2.R`을 배포 번호 1.1로 올립니다.
 
@@ -1176,7 +1176,7 @@ Rscript spatial_labelTransfer.1.1.R \
 | 레퍼런스 URL | https://github.com/dmcable/spacexr | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_rctd.1.1.R | |
-| Processor Core (제안) | 8코어, 메모리 32GB | 8 cores, 32 GB of memory |
+| Processor Core (제안) | 8코어, 메모리 64GB | 8 cores, 64 GB of memory |
 
 등록 메모: 작업 파일 `spatial_rctd.1.2.R`을 배포 번호 1.1로 올립니다.
 
@@ -1291,7 +1291,7 @@ Rscript spatial_rctd.1.1.R \
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_hd_svf.1.0.R | |
-| Processor Core (제안) | 4코어, 메모리 32GB(16µm), 64GB(8µm) | 4 cores, 32 GB of memory (16 um), 64 GB (8 um) |
+| Processor Core (제안) | 8코어, 메모리 64GB | 8 cores, 64 GB of memory |
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -1396,7 +1396,7 @@ Rscript spatial_hd_svf.1.0.R \
 | 레퍼런스 URL | https://github.com/dmcable/spacexr | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_hd_rctd.1.0.R | |
-| Processor Core (제안) | 8코어, 메모리 64GB(16µm), 128GB(8µm) | 8 cores, 64 GB of memory (16 um), 128 GB (8 um) |
+| Processor Core (제안) | 8코어, 메모리 128GB | 8 cores, 128 GB of memory |
 
 등록 메모: 작업 파일 `spatial_hd_rctd.1.2.R`을 배포 번호 1.0으로 올립니다.
 

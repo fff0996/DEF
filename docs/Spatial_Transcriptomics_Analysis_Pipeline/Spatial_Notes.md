@@ -64,18 +64,12 @@ Codespace는 남은 메모리가 1GB 아래로 내려가면 프로세스를 종�
 - **spatial_rctd 1.0, dominant 세포 유형 그림이 항상 빠짐:** Seurat 5의 SpatialDimPlot에 없는 `na.value` 인자를 넘겨 매번 경고로 건너뛴다. 1.1에서 인자를 뺐다.
 
 ## 5. 권장 자원(포탈: 코어 1/4/8/16, 메모리 8~128GB)
-| 모듈 | Visium | Core |
-|---|---|---|
-| spatial_prep | 16GB | 4 |
-| spatial_cluster | 16GB | 4 |
-| spatial_svf | 16GB | 4 |
-| spatial_labelTransfer | 32~64GB(참조 크기에 따라) | 4 |
-| spatial_rctd | 16~32GB | 8 |
-| spatial_merge | 슬라이스 4장 32GB, 8장 이상 64GB | 4 |
-| spatial_condition_de | 16GB | 4 |
-| check_reference | 16GB(큰 참조 32GB) | 1 |
-
-Visium HD(16µm 기준, 8µm는 사용자가 CLOSHA에서 실측): spatial_hd_svf 32GB/4코어(8µm 64GB), spatial_hd_rctd 64GB/8코어(8µm 128GB). RCTD는 작업자마다 자료를 복사하므로 코어 수에 따라 메모리가 늘어난다.
+2026-10-27에 넉넉한 값으로 올렸다(사용자 결정). 표와 근거는 `modules/Registration.md` 13절을 따른다.
+- 8코어: 공간 전사체 작업 기준에 맞춘 값. 여러 코어를 실제로 쓰는 모듈은 rctd 두 개뿐이다.
+- 128GB: spatial_labelTransfer, spatial_hd_cluster, spatial_hd_rctd
+- 64GB: spatial_merge, spatial_condition_de, spatial_rctd, spatial_hd_prep, spatial_hd_svf, check_reference(4코어)
+- 32GB: spatial_prep, spatial_cluster, spatial_svf
+- 실제 규모 참조(수만 세포 이상)와 8µm는 CLOSHA에서 실측해 고친다.
 
 ## 6. Visium HD (2026-10-22)
 기존 Visium 스크립트 5개는 그대로 두고 HD 전용 모듈을 추가했다(사용자 결정).

@@ -45,7 +45,7 @@ Visium HD (bin 8·16µm):
 
 ## 1. spatial_prep
 슬라이스마다 Space Ranger 결과를 불러와 spot을 거르고 SCTransform으로 정규화한다.
-자원(코어, 메모리): 4코어, 16GB (슬라이스를 하나씩 처리)
+자원(코어, 메모리): 8코어, 32GB
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -58,7 +58,7 @@ Visium HD (bin 8·16µm):
 
 ## 2. spatial_cluster
 슬라이스마다 PCA, 군집, UMAP, 군집 마커를 계산한다.
-자원(코어, 메모리): 4코어, 16GB
+자원(코어, 메모리): 8코어, 32GB
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -73,7 +73,7 @@ Visium HD (bin 8·16µm):
 
 ## 3. spatial_svf
 슬라이스마다 공간적으로 몰려 발현하는 유전자(spatially variable features)를 찾는다.
-자원(코어, 메모리): 4코어, 16GB
+자원(코어, 메모리): 8코어, 32GB
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -86,7 +86,7 @@ Visium HD (bin 8·16µm):
 
 ## 4. spatial_merge
 슬라이스 객체를 하나로 합쳐 다시 차원 축소와 군집을 해서, 군집 번호가 슬라이스 사이에서 같은 뜻이 되게 한다.
-자원(코어, 메모리): 4코어, 32GB (슬라이스 8장 이상 64GB)
+자원(코어, 메모리): 8코어, 64GB
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -107,7 +107,7 @@ Visium HD (bin 8·16µm):
 
 ## 5. spatial_condition_de
 조건(예: control, treated) 사이에서 군집 조성과 군집별 유전자 발현을 비교한다. Visium(spatial_merge 결과)과 Visium HD(spatial_hd_cluster 결과)를 모두 받는다.
-자원(코어, 메모리): 4코어, 16GB (Visium HD 16µm 16~32GB, 8µm 32~64GB)
+자원(코어, 메모리): 8코어, 64GB
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -130,7 +130,7 @@ Visium HD (bin 8·16µm):
 
 ## 6. spatial_hd_prep
 Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화한 뒤 sketch(대표 bin 표본)를 만든다.
-자원(코어, 메모리): 4코어, 16GB (16µm, 슬라이드당; 8µm 32~64GB)
+자원(코어, 메모리): 8코어, 64GB
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -146,7 +146,7 @@ Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화�
 
 ## 7. spatial_hd_cluster
 모든 슬라이드의 sketch를 합쳐 군집을 만들고, 각 슬라이드의 모든 bin에 군집을 붙인다.
-자원(코어, 메모리): 4코어, 32GB (16µm; 8µm 64~128GB)
+자원(코어, 메모리): 8코어, 128GB
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -166,7 +166,7 @@ Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화�
 
 ## 8. check_reference
 단일세포 참조 자료(Seurat RDS)의 메타데이터 열을 살펴 세포 유형 열(reference_label_col) 후보를 알려 준다.
-자원(코어, 메모리): 1코어, 16GB (큰 참조 32GB)
+자원(코어, 메모리): 4코어, 64GB (큰 참조 RDS를 통째로 읽는다)
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -175,7 +175,7 @@ Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화�
 
 ## 9. spatial_labelTransfer
 단일세포 참조의 세포 유형을 Visium spot으로 옮겨 spot마다 세포 유형별 예측 점수를 계산한다(Seurat anchor).
-자원(코어, 메모리): 4코어, 32GB (큰 참조 64GB)
+자원(코어, 메모리): 8코어, 128GB (참조 전체로 anchor를 찾아 큰 참조에서 메모리가 가장 많이 든다)
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -190,7 +190,7 @@ Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화�
 
 ## 10. spatial_rctd
 RCTD(spacexr, full 모드)로 Visium spot마다 세포 유형 비율(weight)을 추정한다.
-자원(코어, 메모리): 8코어, 32GB (코어마다 자료를 복사해 코어 수만큼 메모리가 는다)
+자원(코어, 메모리): 8코어, 64GB (코어마다 자료를 복사해 코어 수만큼 메모리가 는다)
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -208,7 +208,7 @@ RCTD(spacexr, full 모드)로 Visium spot마다 세포 유형 비율(weight)을 
 
 ## 11. spatial_hd_svf
 Visium HD 슬라이드마다 무작위 bin 표본으로 Moran's I를 계산해 공간 가변 유전자를 찾는다.
-자원(코어, 메모리): 4코어, 32GB (16µm; 8µm 64GB)
+자원(코어, 메모리): 8코어, 64GB
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -223,7 +223,7 @@ Visium HD 슬라이드마다 무작위 bin 표본으로 Moran's I를 계산해 �
 
 ## 12. spatial_hd_rctd
 Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형을 붙인다.
-자원(코어, 메모리): 8코어, 64GB (16µm; 8µm 128GB). 코어 수만큼 메모리가 는다
+자원(코어, 메모리): 8코어, 128GB (코어마다 자료를 복사해 코어 수만큼 메모리가 는다)
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -244,26 +244,27 @@ Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형
 결과 폴더는 spatial_condition_de의 `input_dir`로 쓸 수 있다(`group_by=rctd_first_type`).
 
 ## 13. 권장 자원
-포탈 선택값(코어 1/4/8/16, 메모리 8~128GB)에 맞춘 값이다. 모듈마다 위 "자원" 줄에도 적었다.
+포탈 선택값(코어 1/4/8/16, 메모리 8~128GB) 안에서 넉넉하게 잡은 값이다(사용자 결정, 2026-10-27). 모듈마다 위 "자원" 줄에도 적었다.
 
 | 모듈 | 코어 | 메모리 | 비고 |
 |---|---|---|---|
-| spatial_prep | 4 | 16GB | 슬라이스를 하나씩 처리 |
-| spatial_cluster | 4 | 16GB | |
-| spatial_svf | 4 | 16GB | |
-| spatial_merge | 4 | 32GB | 슬라이스 8장 이상 64GB |
-| spatial_condition_de | 4 | 16GB | HD 16µm 16~32GB, 8µm 32~64GB |
-| spatial_labelTransfer | 4 | 32GB | 큰 참조 64GB |
-| spatial_rctd | 8 | 32GB | 코어 수만큼 메모리가 는다 |
-| spatial_hd_prep | 4 | 16GB | 16µm 슬라이드당. 8µm 32~64GB |
-| spatial_hd_cluster | 4 | 32GB | 8µm 64~128GB |
-| spatial_hd_svf | 4 | 32GB | 8µm 64GB |
-| spatial_hd_rctd | 8 | 64GB | 8µm 128GB. 코어 수만큼 메모리가 는다 |
-| check_reference | 1 | 16GB | 큰 참조 32GB |
+| spatial_prep | 8 | 32GB |  |
+| spatial_cluster | 8 | 32GB |  |
+| spatial_svf | 8 | 32GB |  |
+| spatial_merge | 8 | 64GB |  |
+| spatial_condition_de | 8 | 64GB |  |
+| spatial_labelTransfer | 8 | 128GB | 참조 전체로 anchor를 찾아 큰 참조에서 메모리가 가장 많이 든다 |
+| spatial_rctd | 8 | 64GB | 코어마다 자료를 복사해 코어 수만큼 메모리가 는다 |
+| spatial_hd_prep | 8 | 64GB |  |
+| spatial_hd_cluster | 8 | 128GB |  |
+| spatial_hd_svf | 8 | 64GB |  |
+| spatial_hd_rctd | 8 | 128GB | 코어마다 자료를 복사해 코어 수만큼 메모리가 는다 |
+| check_reference | 4 | 64GB | 큰 참조 RDS를 통째로 읽는다 |
 
 근거와 한계:
-- Codespace 테스트는 줄인 데이터(유전자 6,000개, spot 축소, 1코어)여서 최대 메모리가 대부분 2~4GB였다(hd_rctd 3.7GB, hd_svf 2.0GB, condition_de 2.0GB). 위 값은 원본 크기를 생각해 여유를 둔 추정치다.
-- 8µm는 실측하지 않았다. CLOSHA에서 돌린 뒤 `sacct`의 MaxRSS, Elapsed로 고친다.
+- 여러 코어를 실제로 쓰는 모듈은 spatial_rctd, spatial_hd_rctd뿐이다(`max_cores=auto`). 나머지는 병렬 설정이 없어 사실상 1코어지만, 공간 전사체 작업 기준에 맞춰 8코어로 통일했다. 결과에는 영향이 없다. rctd 두 모듈은 코어마다 자료를 복사하므로 16코어로 올리지 않았다(128GB를 넘길 수 있음).
+- Codespace 테스트는 줄인 데이터(유전자 6,000개, spot 축소, 1코어)와 510세포 예제 참조로 했다. 최대 메모리는 대부분 2~4GB였다(hd_rctd 3.7GB, hd_svf 2.0GB, condition_de 2.0GB).
+- 실제 참조(수만~수십만 세포)와 8µm는 측정하지 않았다. 참조 모듈은 `readRDS`로 참조 전체를 올리고, labelTransfer는 참조 전체로 anchor를 찾는다. RCTD는 세포 유형마다 최대 1만 세포만 쓴다(spacexr `n_max_cells` 기본값). CLOSHA에서 `sacct`의 MaxRSS, Elapsed, TotalCPU로 실측한 뒤 이 표를 고친다.
 
 ## 14. CLOSHA 테스트 (2026-10-27)
 테스트에는 작업 파일 이름을 그대로 쓴다. 배포 이름(위 표의 배포 번호)으로 바꾸는 것은 배포 때 한다. 실행 이미지는 `bx_spatial.1.1`이다.
@@ -324,4 +325,5 @@ Rscript check_reference.1.1.R reference_rds=/data/hippocampus_reference.rds outp
 1. 참조 입력을 비운 파이프라인 실행이 정상 완료되는지(세 모듈과 세포 유형 기준 condition_de에 `skipped.txt`)
 2. `reference_label_col`을 비우거나 틀리게 넣었을 때 오류 로그에 후보 열이 나오는지
 3. hd_rctd 기본값(doublet)으로 결과가 나오는지(Codespace는 full만 확인)
-4. 원본 크기 데이터의 시간과 메모리(`sacct` MaxRSS, Elapsed). 13절 값을 이것으로 고친다.
+4. 원본 크기 데이터의 시간과 메모리(`sacct -j <작업번호> --format=JobName,AllocCPUS,Elapsed,TotalCPU,MaxRSS`). 13절 값을 이것으로 고친다.
+5. 규모 확인: 510세포 예제 참조는 동작 확인용이다. 실제 규모 참조로 한 번 더 돌린다(중간 규모: Seurat 공간 안내의 Allen 피질 참조 `allen_cortex.rds`, 약 1만 4천 세포, 세포 유형 열 `subclass`. 큰 규모: 쥐 뇌 10만 세포 이상 참조).
