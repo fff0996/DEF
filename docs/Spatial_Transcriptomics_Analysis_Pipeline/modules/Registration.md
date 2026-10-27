@@ -25,7 +25,7 @@ Visium HD (bin 8·16µm):
 ```
 세포 유형 모듈(labelTransfer, rctd, hd_rctd)은 파이프라인 안에 두고, 참조는 파이프라인의 선택 입력(`reference_rds`, `reference_label_col`)으로 받는다(사용자 결정, 2026-10-27).
 - 참조를 주지 않으면 세 모듈은 `output_dir/skipped.txt`를 남기고 정상 종료한다. 그 결과를 받는 spatial_condition_de도 같은 방식으로 건너뛴다.
-- 참조를 주면 `reference_label_col`도 필요하다. 비었거나 참조에 없는 열이면 참조를 읽은 직후 멈추고, 세포 유형 후보 열(범주 2~100개)과 첫 범주들을 오류 로그에 보여 준다. 사용자가 확인하고 열 이름을 넣어 다시 실행한다. 자동으로 고르지 않는다(틀린 열로 조용히 분석되는 것을 막는다).
+- CLOSHA 입력은 필수/선택 둘뿐이라 `reference_rds`와 `reference_label_col` 모두 선택으로 등록한다. 참조를 주면 `reference_label_col`도 필요하다. 비었거나 참조에 없는 열이면 참조를 읽은 직후 멈추고, 세포 유형 후보 열(범주 2~100개)과 첫 범주들을 오류 로그에 보여 준다. 사용자가 확인하고 열 이름을 넣어 다시 실행한다. 자동으로 고르지 않는다(틀린 열로 조용히 분석되는 것을 막는다).
 | 모듈 | 작업 파일 | 배포 번호 | 비고 |
 |---|---|---|---|
 | spatial_prep | `spatial_prep.1.1.R` | 1.1 | 2.0의 1.0에 스크립트 규칙(로그 분리, output_dir 필수, 흰 배경 그림) 적용 |
@@ -181,7 +181,7 @@ Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화�
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | 슬라이스마다 `<slice>/<slice>_clustered.rds`(SCT assay와 pca) |
 | Input | `reference_rds` | File (RDS) | 선택 | | 단일세포 참조 자료(Seurat 객체). 비우면 건너뜀(`skipped.txt`) |
-| Option | `reference_label_col` | String | 참조가 있으면 필수 | | 참조의 세포 유형 열 이름. 비었거나 틀리면 후보 열을 보여 주고 멈춤 |
+| Option | `reference_label_col` | String | 선택 | | 참조의 세포 유형 열 이름. **참조를 주면 반드시 입력.** 비었거나 틀리면 후보 열을 보여 주고 멈춤 (CLOSHA에는 조건부 필수가 없어 선택으로 등록) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이스별 `<slice>_labeltransfer.rds`, `<slice>_predicted_celltype_scores.csv`, `plots/`, `summary/` |
 | Option | `reference_ncells` | Integer | 선택 | `3000` | 참조 SCTransform 모델을 맞출 때 쓰는 세포 수(참조에 SCT 모델이 없을 때만) |
 | Option | `npcs` | Integer | 선택 | `30` | anchor 탐색과 예측에 쓰는 주성분 수 |
@@ -196,7 +196,7 @@ RCTD(spacexr, full 모드)로 Visium spot마다 세포 유형 비율(weight)을 
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | 슬라이스마다 `<slice>/<slice>_clustered.rds`(raw count assay `Spatial`) |
 | Input | `reference_rds` | File (RDS) | 선택 | | 단일세포 참조 자료(raw count와 세포 유형 열). 비우면 건너뜀(`skipped.txt`) |
-| Option | `reference_label_col` | String | 참조가 있으면 필수 | | 참조의 세포 유형 열 이름. 비었거나 틀리면 후보 열을 보여 주고 멈춤 |
+| Option | `reference_label_col` | String | 선택 | | 참조의 세포 유형 열 이름. **참조를 주면 반드시 입력.** 비었거나 틀리면 후보 열을 보여 주고 멈춤 (CLOSHA에는 조건부 필수가 없어 선택으로 등록) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이스별 `<slice>_rctd.rds`, `_rctd_object.rds`, `_rctd_weights.csv`, `_rctd_mean_abundance.csv`, `plots/`, `summary/` |
 | Option | `spatial_assay` | String | 선택 | `Spatial` | 슬라이스 객체의 raw count assay |
 | Option | `reference_assay` | String | 선택 | `RNA` | 참조 객체의 raw count assay |
@@ -229,7 +229,7 @@ Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | spatial_hd_cluster 결과 폴더(`hd_slides.tsv`와 슬라이드별 객체, bin assay에 raw count) |
 | Input | `reference_rds` | File (RDS) | 선택 | | 단일세포 참조 자료(raw count와 세포 유형 열). 비우면 건너뜀(`skipped.txt`) |
-| Option | `reference_label_col` | String | 참조가 있으면 필수 | | 참조의 세포 유형 열 이름. 비었거나 틀리면 후보 열을 보여 주고 멈춤 |
+| Option | `reference_label_col` | String | 선택 | | 참조의 세포 유형 열 이름. **참조를 주면 반드시 입력.** 비었거나 틀리면 후보 열을 보여 주고 멈춤 (CLOSHA에는 조건부 필수가 없어 선택으로 등록) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이드별 `<slide>_hd_rctd.rds`, `_rctd_weights.tsv.gz`, `plots/`, `hd_slides.tsv`, `celltype_by_slide.tsv`, `rctd_summary.tsv` |
 | Option | `reference_assay` | String | 선택 | `RNA` | 참조 객체의 raw count assay |
 | Option | `rctd_mode` | List (`doublet`, `full`) | 선택 | `doublet` | doublet = bin마다 세포 유형 1~2개(8µm), full = 섞인 비율(16µm) |
