@@ -54,7 +54,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 | Matplotlib | 3.11.2 | https://matplotlib.org/ |
 | UCSC cytoBand (hg38, hg19) | - | https://hgdownload.soe.ucsc.edu/ |
 
-- **태그(키워드):** 복제수변이, 체세포CNV, CNVkit, 코호트요약
+- **태그(키워드):** copy number variation, somatic CNV, CNVkit, cohort summary
 - **내용(국문):** 종양 시료의 체세포 복제수 변이(CNV)를 CNVkit으로 분석하는 실행 환경입니다. 정상 시료로 기준을 만들고, 종양의 커버리지를 보정·분절·판정하며, 샘플별 그림과 코호트 그림, HTML 리포트를 만듭니다. 염색체 팔 경계를 위한 UCSC cytoband 표(hg38, hg19)가 들어 있어 실행 중 인터넷을 쓰지 않습니다.
 - **내용(영문):** Runtime environment for somatic copy-number variation (CNV) analysis of tumor samples with CNVkit. It builds a reference from normal samples, corrects, segments and calls tumor coverage, and draws per-sample and cohort figures with an HTML report. UCSC cytoband tables (hg38, hg19) for chromosome arms are bundled, so no internet access is needed at run time.
 
@@ -176,7 +176,7 @@ python cnvkit_reference.1.0.py \
 | R | 4.4.3 | https://www.r-project.org/ |
 | HTSlib | 1.24 | https://www.htslib.org/ |
 
-- **태그(키워드):** 종양순도, 배수성, LOH, FACETS
+- **태그(키워드):** tumor purity, ploidy, LOH, FACETS
 - **내용(국문):** 종양-정상 쌍에서 FACETS로 종양 순도, 배수성, 대립유전자별 복제수(LOH 포함)를 추정하는 실행 환경입니다. snp-pileup으로 SNP 위치의 read 수를 세고, FACETS로 분절과 적합을 합니다. FACETS가 R 4.4까지만 지원해 CNVkit 이미지와 나눴습니다.
 - **내용(영문):** Runtime environment for estimating tumor purity, ploidy and allele-specific copy number (including LOH) from tumor-normal pairs with FACETS. snp-pileup counts reads at SNP sites and FACETS segments and fits them. It is separate from the CNVkit image because FACETS supports R up to 4.4.
 
@@ -333,7 +333,7 @@ Rscript cnv_facets.1.0.R \
 | Matplotlib | 3.11.2 | https://matplotlib.org/ |
 | UCSC cytoBand (hg38, hg19) | - | https://hgdownload.soe.ucsc.edu/ |
 
-- **태그(키워드):** 복제수변이, 체세포CNV, CNVkit, 코호트요약
+- **태그(키워드):** copy number variation, somatic CNV, CNVkit, cohort summary
 - **내용(국문):** 종양 시료의 체세포 복제수 변이(CNV)를 CNVkit으로 분석하는 실행 환경입니다. 정상 시료로 기준을 만들고, 종양의 커버리지를 보정·분절·판정하며, 샘플별 그림과 코호트 그림, HTML 리포트를 만듭니다. 염색체 팔 경계를 위한 UCSC cytoband 표(hg38, hg19)가 들어 있어 실행 중 인터넷을 쓰지 않습니다.
 - **내용(영문):** Runtime environment for somatic copy-number variation (CNV) analysis of tumor samples with CNVkit. It builds a reference from normal samples, corrects, segments and calls tumor coverage, and draws per-sample and cohort figures with an HTML report. UCSC cytoband tables (hg38, hg19) for chromosome arms are bundled, so no internet access is needed at run time.
 
@@ -492,7 +492,7 @@ python cnvkit_call.1.0.py \
 | Matplotlib | 3.11.2 | https://matplotlib.org/ |
 | UCSC cytoBand (hg38, hg19) | - | https://hgdownload.soe.ucsc.edu/ |
 
-- **태그(키워드):** 복제수변이, 체세포CNV, CNVkit, 코호트요약
+- **태그(키워드):** copy number variation, somatic CNV, CNVkit, cohort summary
 - **내용(국문):** 종양 시료의 체세포 복제수 변이(CNV)를 CNVkit으로 분석하는 실행 환경입니다. 정상 시료로 기준을 만들고, 종양의 커버리지를 보정·분절·판정하며, 샘플별 그림과 코호트 그림, HTML 리포트를 만듭니다. 염색체 팔 경계를 위한 UCSC cytoband 표(hg38, hg19)가 들어 있어 실행 중 인터넷을 쓰지 않습니다.
 - **내용(영문):** Runtime environment for somatic copy-number variation (CNV) analysis of tumor samples with CNVkit. It builds a reference from normal samples, corrects, segments and calls tumor coverage, and draws per-sample and cohort figures with an HTML report. UCSC cytoband tables (hg38, hg19) for chromosome arms are bundled, so no internet access is needed at run time.
 

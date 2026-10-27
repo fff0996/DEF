@@ -61,7 +61,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 | RTpred | 1.0 | - |
 | RTpred 사전 학습 모델 (RP, HILIC) | 1.0 | - |
 
-- **태그(키워드):** 머무름시간예측, 대사체동정, RDKit, AutoGluon
+- **태그(키워드):** retention time prediction, metabolite identification, RDKit, AutoGluon
 - **내용(국문):** 화합물 구조(SMILES)로 액체크로마토그래피 머무름 시간(RT)을 예측하는 실행 환경입니다. RDKit으로 구조 descriptor를 계산하고 AutoGluon 모델로 예측·학습합니다. 사전 학습된 RP·HILIC 기본 모델(best: WeightedEnsemble_L3)이 이미지 안 `/opt/mdcc/models`에 들어 있습니다. 실행 중 인터넷과 GPU를 쓰지 않습니다.
 - **내용(영문):** Runtime environment for predicting liquid chromatography retention time (RT) from compound structures (SMILES). RDKit computes structure descriptors and AutoGluon models predict and train. Pre-trained default RP and HILIC models (best: WeightedEnsemble_L3) are bundled in `/opt/mdcc/models`. No internet access or GPU is used at run time.
 
@@ -183,7 +183,7 @@ python rtpred_predict.1.0.py \
 | openpyxl | 3.1.5 | https://openpyxl.readthedocs.io/ |
 | RTpred | 1.0 | - |
 
-- **태그(키워드):** 머무름시간예측, 대사체동정, RDKit, AutoGluon
+- **태그(키워드):** retention time prediction, metabolite identification, RDKit, AutoGluon
 - **내용(국문):** 화합물 구조(SMILES)로 액체크로마토그래피 머무름 시간(RT)을 예측하는 실행 환경입니다. RDKit으로 구조 descriptor를 계산하고 AutoGluon 모델로 예측·학습합니다. 기본 모델은 넣지 않았습니다(학습 전용). 실행 중 인터넷과 GPU를 쓰지 않습니다.
 - **내용(영문):** Runtime environment for predicting liquid chromatography retention time (RT) from compound structures (SMILES). RDKit computes structure descriptors and AutoGluon models predict and train. The default models are not included (training only). No internet access or GPU is used at run time.
 
@@ -331,7 +331,7 @@ python rtpred_train.1.0.py \
 | RTpred | 1.0 | - |
 | RTpred 사전 학습 모델 (RP, HILIC) | 1.0 | - |
 
-- **태그(키워드):** 머무름시간예측, 대사체동정, RDKit, AutoGluon
+- **태그(키워드):** retention time prediction, metabolite identification, RDKit, AutoGluon
 - **내용(국문):** 화합물 구조(SMILES)로 액체크로마토그래피 머무름 시간(RT)을 예측하는 실행 환경입니다. RDKit으로 구조 descriptor를 계산하고 AutoGluon 모델로 예측·학습합니다. 사전 학습된 RP·HILIC 기본 모델(best: WeightedEnsemble_L3)이 이미지 안 `/opt/mdcc/models`에 들어 있습니다. 실행 중 인터넷과 GPU를 쓰지 않습니다.
 - **내용(영문):** Runtime environment for predicting liquid chromatography retention time (RT) from compound structures (SMILES). RDKit computes structure descriptors and AutoGluon models predict and train. Pre-trained default RP and HILIC models (best: WeightedEnsemble_L3) are bundled in `/opt/mdcc/models`. No internet access or GPU is used at run time.
 

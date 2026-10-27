@@ -57,7 +57,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 Visium 파�
 | patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
 | Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
 
-- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat
 - **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
 - **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
 
@@ -166,7 +166,7 @@ Rscript spatial_prep.1.1.R \
 | patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
 | Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
 
-- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat
 - **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
 - **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
 
@@ -293,7 +293,7 @@ Rscript spatial_cluster.1.1.R \
 | patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
 | Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
 
-- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat
 - **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
 - **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
 
@@ -402,7 +402,7 @@ Rscript spatial_svf.1.1.R \
 | patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
 | Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
 
-- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat
 - **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
 - **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
 
@@ -550,7 +550,7 @@ Rscript spatial_merge.1.1.R \
 | patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
 | Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
 
-- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat
 - **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
 - **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
 
@@ -742,7 +742,7 @@ Rscript spatial_condition_de.1.0.R \
 | patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
 | Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
 
-- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat
 - **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
 - **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
 
@@ -851,7 +851,7 @@ Rscript spatial_labelTransfer.1.1.R \
 | patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
 | Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
 
-- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat
 - **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
 - **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
 
@@ -962,7 +962,7 @@ Rscript spatial_rctd.1.1.R \
 | patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
 | Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
 
-- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat
 - **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
 - **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
 
