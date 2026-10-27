@@ -120,7 +120,7 @@ python3 measure.py svf Rscript "$M/spatial_svf.1.1.R" input_dir="$W/out/svf_in" 
     > out/svf.stdout 2> out/svf.stderr || echo "svf failed (see out/svf.stderr)" >&2
 python3 measure.py merge Rscript "$M/spatial_merge.1.2.R" input_dir="$W/out/cluster_small" output_dir="$W/out/merge" \
     integration=harmony > out/merge.stdout 2> out/merge.stderr || { echo "merge failed" >&2; exit 1; }
-python3 measure.py de Rscript "$M/spatial_condition_de.1.3.R" input_dir="$W/out/merge" sample_data="$W/slices.csv" \
+python3 measure.py de Rscript "$M/spatial_condition_de.1.4.R" input_dir="$W/out/merge" sample_data="$W/slices.csv" \
     output_dir="$W/out/de" reference=section1 > out/de.stdout 2> out/de.stderr
 echo "condition_de exit=$?"
 grep -h measure out/*.stderr

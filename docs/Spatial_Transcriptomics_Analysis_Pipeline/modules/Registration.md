@@ -12,31 +12,34 @@ CLOSHA에 공간 전사체 모듈을 등록할 때 쓰는 Input / Output / Optio
 ```
 Visium (spot 55µm):
   Space Ranger 슬라이스 폴더들 ─> [spatial_prep] ─output_dir─> [spatial_cluster] ─output_dir─┬─> [spatial_svf]
-                                                                                            ├─> [spatial_labelTransfer] (선택, 참조)
-                                                                                            ├─> [spatial_rctd] (선택, 참조)
+                                                                                            ├─> [spatial_labelTransfer] (참조가 있을 때)
+                                                                                            ├─> [spatial_rctd] (참조가 있을 때)
                                                                                             └─> [spatial_merge] ─output_dir─> [spatial_condition_de]
 
 Visium HD (bin 8·16µm):
   Space Ranger HD 슬라이드 폴더들 ─> [spatial_hd_prep] ─output_dir─> [spatial_hd_cluster] ─output_dir─┬─> [spatial_condition_de]
                                                                                                     ├─> [spatial_hd_svf]
-                                                                                                    └─> [spatial_hd_rctd] (선택, 참조) ─output_dir─> [spatial_condition_de] (group_by=rctd_first_type)
+                                                                                                    └─> [spatial_hd_rctd] (참조가 있을 때) ─output_dir─> [spatial_condition_de] (group_by=rctd_first_type)
 
-참조 확인: 단일세포 참조 RDS ─> [check_reference] (reference_label_col로 쓸 열 확인)
+참조 확인(보조): 단일세포 참조 RDS ─> [check_reference] (reference_label_col로 쓸 열 확인)
 ```
+세포 유형 모듈(labelTransfer, rctd, hd_rctd)은 파이프라인 안에 두고, 참조는 파이프라인의 선택 입력(`reference_rds`, `reference_label_col`)으로 받는다(사용자 결정, 2026-10-27).
+- 참조를 주지 않으면 세 모듈은 `output_dir/skipped.txt`를 남기고 정상 종료한다. 그 결과를 받는 spatial_condition_de도 같은 방식으로 건너뛴다.
+- 참조를 주면 `reference_label_col`도 필요하다. 비었거나 참조에 없는 열이면 참조를 읽은 직후 멈추고, 세포 유형 후보 열(범주 2~100개)과 첫 범주들을 오류 로그에 보여 준다. 사용자가 확인하고 열 이름을 넣어 다시 실행한다. 자동으로 고르지 않는다(틀린 열로 조용히 분석되는 것을 막는다).
 | 모듈 | 작업 파일 | 배포 번호 | 비고 |
 |---|---|---|---|
 | spatial_prep | `spatial_prep.1.1.R` | 1.1 | 2.0의 1.0에 스크립트 규칙(로그 분리, output_dir 필수, 흰 배경 그림) 적용 |
 | spatial_cluster | `spatial_cluster.1.1.R` | 1.1 | 같음 |
 | spatial_svf | `spatial_svf.1.1.R` | 1.1 | 같음. bx_spatial 1.1(ape) 필요 |
 | spatial_merge | `spatial_merge.1.2.R` | 1.1 | harmony 인자 수정(작업 1.1) + 규칙 적용, 이전 결과 정리 |
-| spatial_labelTransfer | `spatial_labelTransfer.1.1.R` | 1.1 | 규칙 적용. Seurat 5에서 참조 SCT 모델로 다시 정규화가 멈추던 문제와 작은 참조의 k.weight 오류 수정 |
-| spatial_rctd | `spatial_rctd.1.1.R` | 1.1 | 규칙 적용, max_cores 기본값 auto. 그려지지 않던 dominant 세포 유형 그림 수정 |
+| spatial_labelTransfer | `spatial_labelTransfer.1.2.R` | 1.1 | 규칙 적용. 참조가 없으면 건너뜀(작업 1.2). Seurat 5에서 참조 SCT 모델로 다시 정규화가 멈추던 문제와 작은 참조의 k.weight 오류 수정 |
+| spatial_rctd | `spatial_rctd.1.2.R` | 1.1 | 규칙 적용. 참조가 없으면 건너뜀(작업 1.2). max_cores 기본값 auto. 그려지지 않던 dominant 세포 유형 그림 수정 |
 | check_reference | `check_reference.1.1.R` | 1.1 | output_dir(로그, reference_columns.tsv) 추가 |
-| spatial_condition_de | `spatial_condition_de.1.3.R` | 1.0 | 새 모듈. Visium과 Visium HD 입력 |
+| spatial_condition_de | `spatial_condition_de.1.4.R` | 1.0 | 새 모듈. Visium과 Visium HD 입력. 앞 모듈이 건너뛰면 같이 건너뜀 |
 | spatial_hd_prep | `spatial_hd_prep.1.1.R` | 1.0 | 새 모듈 |
 | spatial_hd_cluster | `spatial_hd_cluster.1.1.R` | 1.0 | 새 모듈 |
 | spatial_hd_svf | `spatial_hd_svf.1.0.R` | 1.0 | 새 모듈 |
-| spatial_hd_rctd | `spatial_hd_rctd.1.1.R` | 1.0 | 새 모듈 |
+| spatial_hd_rctd | `spatial_hd_rctd.1.2.R` | 1.0 | 새 모듈. 참조가 없으면 건너뜀 |
 
 실행 명령은 모두 `Rscript <스크립트> key=value ...`이다.
 
@@ -118,7 +121,7 @@ Visium HD (bin 8·16µm):
 | Option | `spot_level_max` | Integer | 선택 | `3000` | spot 단위 검정에 쓰는 슬라이스·군집당 최대 spot(bin) 수 |
 | Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
 
-결과: `01_composition/`, `02_de/de_<test>_vs_<reference>.tsv`, `03_plots/`, `04_summary/de_summary.tsv`, `logs/`.
+결과: `01_composition/`, `02_de/de_<test>_vs_<reference>.tsv`, `03_plots/`, `04_summary/de_summary.tsv`, `logs/`. `input_dir`에 `skipped.txt`가 있으면(앞의 세포 유형 모듈이 참조 없이 건너뜀) 비교도 건너뛰고 `skipped.txt`를 남긴다.
 
 ## 6. spatial_hd_prep
 Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화한 뒤 sketch(대표 bin 표본)를 만든다.
@@ -168,8 +171,8 @@ Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화�
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | 슬라이스마다 `<slice>/<slice>_clustered.rds`(SCT assay와 pca) |
-| Input | `reference_rds` | File (RDS) | 필수 | | 단일세포 참조 자료(Seurat 객체) |
-| Option | `reference_label_col` | String | 필수 | | 참조의 세포 유형 열 이름(check_reference로 확인) |
+| Input | `reference_rds` | File (RDS) | 선택 | | 단일세포 참조 자료(Seurat 객체). 비우면 건너뜀(`skipped.txt`) |
+| Option | `reference_label_col` | String | 참조가 있으면 필수 | | 참조의 세포 유형 열 이름. 비었거나 틀리면 후보 열을 보여 주고 멈춤 |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이스별 `<slice>_labeltransfer.rds`, `<slice>_predicted_celltype_scores.csv`, `plots/`, `summary/` |
 | Option | `reference_ncells` | Integer | 선택 | `3000` | 참조 SCTransform 모델을 맞출 때 쓰는 세포 수(참조에 SCT 모델이 없을 때만) |
 | Option | `npcs` | Integer | 선택 | `30` | anchor 탐색과 예측에 쓰는 주성분 수 |
@@ -182,8 +185,8 @@ RCTD(spacexr, full 모드)로 Visium spot마다 세포 유형 비율(weight)을 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | 슬라이스마다 `<slice>/<slice>_clustered.rds`(raw count assay `Spatial`) |
-| Input | `reference_rds` | File (RDS) | 필수 | | 단일세포 참조 자료(raw count와 세포 유형 열) |
-| Option | `reference_label_col` | String | 필수 | | 참조의 세포 유형 열 이름 |
+| Input | `reference_rds` | File (RDS) | 선택 | | 단일세포 참조 자료(raw count와 세포 유형 열). 비우면 건너뜀(`skipped.txt`) |
+| Option | `reference_label_col` | String | 참조가 있으면 필수 | | 참조의 세포 유형 열 이름. 비었거나 틀리면 후보 열을 보여 주고 멈춤 |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이스별 `<slice>_rctd.rds`, `_rctd_object.rds`, `_rctd_weights.csv`, `_rctd_mean_abundance.csv`, `plots/`, `summary/` |
 | Option | `spatial_assay` | String | 선택 | `Spatial` | 슬라이스 객체의 raw count assay |
 | Option | `reference_assay` | String | 선택 | `RNA` | 참조 객체의 raw count assay |
@@ -213,8 +216,8 @@ Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | spatial_hd_cluster 결과 폴더(`hd_slides.tsv`와 슬라이드별 객체, bin assay에 raw count) |
-| Input | `reference_rds` | File (RDS) | 필수 | | 단일세포 참조 자료(raw count와 세포 유형 열) |
-| Option | `reference_label_col` | String | 필수 | | 참조의 세포 유형 열 이름 |
+| Input | `reference_rds` | File (RDS) | 선택 | | 단일세포 참조 자료(raw count와 세포 유형 열). 비우면 건너뜀(`skipped.txt`) |
+| Option | `reference_label_col` | String | 참조가 있으면 필수 | | 참조의 세포 유형 열 이름. 비었거나 틀리면 후보 열을 보여 주고 멈춤 |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. 슬라이드별 `<slide>_hd_rctd.rds`, `_rctd_weights.tsv.gz`, `plots/`, `hd_slides.tsv`, `celltype_by_slide.tsv`, `rctd_summary.tsv` |
 | Option | `reference_assay` | String | 선택 | `RNA` | 참조 객체의 raw count assay |
 | Option | `rctd_mode` | List (`doublet`, `full`) | 선택 | `doublet` | doublet = bin마다 세포 유형 1~2개(8µm), full = 섞인 비율(16µm) |

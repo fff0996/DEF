@@ -77,11 +77,11 @@ for sl in sec1_posterior sec2_posterior; do
 done
 python3 measure.py check_reference Rscript "$M/check_reference.1.1.R" reference_rds="$W/hippocampus_reference.rds" \
     output_dir="$W/out/check_reference" > out/check.stdout 2> out/check.stderr || { echo "check_reference failed" >&2; exit 1; }
-python3 measure.py labelTransfer Rscript "$M/spatial_labelTransfer.1.1.R" input_dir="$W/in" \
+python3 measure.py labelTransfer Rscript "$M/spatial_labelTransfer.1.2.R" input_dir="$W/in" \
     reference_rds="$W/hippocampus_reference.rds" reference_label_col=celltype output_dir="$W/out/labeltransfer" \
     min_shared_features=100 > out/lt.stdout 2> out/lt.stderr
 echo "labelTransfer exit=$?"
-python3 measure.py rctd Rscript "$M/spatial_rctd.1.1.R" input_dir="$W/in" \
+python3 measure.py rctd Rscript "$M/spatial_rctd.1.2.R" input_dir="$W/in" \
     reference_rds="$W/hippocampus_reference.rds" reference_label_col=celltype output_dir="$W/out/rctd" \
     min_shared_features=100 max_cores=1 > out/rctd.stdout 2> out/rctd.stderr
 echo "rctd exit=$?"

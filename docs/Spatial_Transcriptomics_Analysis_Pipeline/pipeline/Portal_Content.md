@@ -15,7 +15,8 @@ KOBIC 포탈의 공간 전사체 파이프라인 상세 페이지에 들어갈 �
 | 항목 | 값 |
 |---|---|
 | Pipeline Name | `Spatial_Transcriptomics_Visium_Pipeline` |
-| 구성 모듈 | spatial_prep, spatial_cluster, spatial_svf, spatial_merge, spatial_condition_de |
+| 구성 모듈 | spatial_prep, spatial_cluster, spatial_svf, spatial_merge, spatial_condition_de, spatial_labelTransfer, spatial_rctd (세포 유형 2개는 참조를 줄 때 실행) |
+| 파이프라인 입력 | Space Ranger 슬라이스 폴더(필수), 슬라이스 정보 CSV(필수), 단일세포 참조 RDS `reference_rds`와 세포 유형 열 `reference_label_col`(선택) |
 | Version | 1.1 (CLOSHA 2.0 파이프라인 버전 + 1. 등록 메모: 2.0 파이프라인 버전이 1.0이라는 전제이며, 다르면 그 번호 + 1로 고칩니다) |
 | Reference | https://satijalab.org/seurat/articles/spatial_vignette |
 | Keyword(태그) | spatial transcriptomics, Visium, clustering, spatially variable genes, multi-slice integration, differential expression |
@@ -67,8 +68,8 @@ After all slices are clustered on a common basis, cluster proportions and per-cl
 그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/pipeline/figures/pipeline_visium.png` (원본 `pipeline_visium.svg`)
 
 ### 대체 텍스트 (alt)
-- 국문: Visium 공간 전사체 파이프라인 흐름도. 슬라이스별 불러오기·정규화(spatial_prep), 군집(spatial_cluster) 뒤 공간 가변 유전자(spatial_svf)와 슬라이스 통합 군집(spatial_merge)으로 갈라지고, 통합 군집이 조건 간 비교(spatial_condition_de)로 이어짐.
-- English: Visium spatial transcriptomics workflow: per-slice loading and normalisation (spatial_prep) and clustering (spatial_cluster), then spatially variable genes (spatial_svf) and joint clustering of slices (spatial_merge), followed by condition comparison (spatial_condition_de).
+- 국문: Visium 공간 전사체 파이프라인 흐름도. 슬라이스별 불러오기·정규화(spatial_prep), 군집(spatial_cluster) 뒤 공간 가변 유전자(spatial_svf), 슬라이스 통합 군집(spatial_merge), 단일세포 참조를 쓰는 세포 유형 분석(spatial_labelTransfer, spatial_rctd)으로 갈라지고, 통합 군집이 조건 간 비교(spatial_condition_de)로 이어짐. 세포 유형 분석은 참조를 줄 때만 실행됨.
+- English: Visium spatial transcriptomics workflow: per-slice loading and normalisation (spatial_prep) and clustering (spatial_cluster), then spatially variable genes (spatial_svf), joint clustering of slices (spatial_merge) followed by condition comparison (spatial_condition_de), and cell-type analysis with a single-cell reference (spatial_labelTransfer, spatial_rctd), which runs only when a reference is given.
 
 ## A4. 분석 개념 / Analysis concept
 
@@ -96,7 +97,7 @@ After all slices are clustered on a common basis, cluster proportions and per-cl
 4. **같은 종, 같은 참조로 만든 Space Ranger 결과만 함께 분석해 주세요.** 슬라이스마다 유전자 목록이 다르면 합칠 때 일부 유전자가 0이 되어 가짜 차이가 생길 수 있습니다.
 5. **결과 해석 전에 QC 그림을 확인해 주세요.** spot별 UMI 수 분포와 조직 위 분포에서 조직 밖이나 UMI가 매우 낮은 spot이 많으면 거르는 기준(`min_counts`)을 올려 다시 실행합니다.
 6. **슬라이스가 많을수록 통합 단계의 메모리가 늘어납니다.** 슬라이스 4장은 32GB, 8장 이상은 64GB를 권장합니다.
-7. **세포 유형 분석은 선택 모듈로 더할 수 있습니다.** 같은 종의 단일세포 참조 자료(Seurat RDS)가 있으면 spatial_cluster 결과에 spatial_labelTransfer(세포 유형 예측 점수)나 spatial_rctd(세포 유형 비율)를 이어 붙입니다. 참조의 세포 유형 열 이름은 check_reference로 먼저 확인합니다. 참조가 필요해 파이프라인 기본 구성에는 넣지 않았습니다.
+7. **세포 유형은 같은 종, 같은 조직의 단일세포 참조 자료(Seurat RDS)로 붙입니다.** 참조(reference_rds)와 세포 유형 열 이름(reference_label_col)을 주면 spatial_labelTransfer(세포 유형 예측 점수)와 spatial_rctd(spot 안의 세포 유형 비율)가 실행됩니다. 참조를 주지 않으면 두 모듈은 건너뛰고 나머지 분석은 그대로 끝나며, 군집은 마커 유전자와 조직 위치로 해석합니다. 공개 단일세포 아틀라스(예: CELLxGENE, Allen Brain Cell Atlas)를 참조로 쓸 수 있습니다. 열 이름을 모르면 비워 두고 실행하면 분석 전에 멈추고 오류 로그에 후보 열을 보여 줍니다.
 8. **모든 분석은 인터넷 연결 없이 수행됩니다.**
 
 ### English
@@ -106,7 +107,7 @@ After all slices are clustered on a common basis, cluster proportions and per-cl
 4. **Analyse together only Space Ranger outputs made for the same species and reference.** Different gene lists between slices zero some genes when merging and can create false differences.
 5. **Check the QC plots before interpreting results.** If the UMI counts per spot and their distribution on the tissue show many spots outside the tissue or with very low counts, raise the filter (`min_counts`) and rerun.
 6. **Memory of the integration step grows with the number of slices.** 32 GB is recommended for 4 slices and 64 GB for 8 or more.
-7. **Cell-type analysis can be added with optional modules.** With a single-cell reference of the same species (Seurat RDS), attach spatial_labelTransfer (cell-type prediction scores) or spatial_rctd (cell-type proportions) to the spatial_cluster output; check the cell-type column of the reference first with check_reference. They need a reference, so they are not part of the default pipeline.
+7. **Cell types come from a single-cell reference (Seurat RDS) of the same species and tissue.** Given a reference (reference_rds) and its cell-type column (reference_label_col), spatial_labelTransfer (cell-type prediction scores) and spatial_rctd (cell-type proportions within spots) run. Without a reference both are skipped and the rest of the analysis finishes as usual; clusters are then interpreted by their marker genes and tissue location. Public single-cell atlases (for example CELLxGENE, Allen Brain Cell Atlas) can serve as references. If the column name is unknown, leave it empty: the run stops before the analysis and the error log lists the candidate columns.
 8. **All analyses run without internet access.**
 
 ---
@@ -118,7 +119,8 @@ After all slices are clustered on a common basis, cluster proportions and per-cl
 | 항목 | 값 |
 |---|---|
 | Pipeline Name | `Spatial_Transcriptomics_Visium_HD_Pipeline` |
-| 구성 모듈 | spatial_hd_prep, spatial_hd_cluster, spatial_hd_svf, spatial_condition_de |
+| 구성 모듈 | spatial_hd_prep, spatial_hd_cluster, spatial_hd_svf, spatial_condition_de(군집 기준), spatial_hd_rctd, spatial_condition_de(세포 유형 기준) (마지막 2개는 참조를 줄 때 실행) |
+| 파이프라인 입력 | Space Ranger HD 슬라이드 폴더(필수), 슬라이드 정보 CSV(필수), 단일세포 참조 RDS `reference_rds`와 세포 유형 열 `reference_label_col`(선택) |
 | Version | 1.0 (CLOSHA 3.0 첫 배포) |
 | Reference | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette |
 | Keyword(태그) | spatial transcriptomics, Visium HD, high-resolution spatial, clustering, sketch, spatially variable genes, differential expression |
@@ -170,8 +172,8 @@ After all slides are clustered on a common basis, cluster proportions and per-cl
 그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/pipeline/figures/pipeline_visium_hd.png` (원본 `pipeline_visium_hd.svg`)
 
 ### 대체 텍스트 (alt)
-- 국문: Visium HD 공간 전사체 파이프라인 흐름도. bin 불러오기·정규화·sketch(spatial_hd_prep), 슬라이드 통합 군집과 모든 bin 배정(spatial_hd_cluster) 뒤 조건 간 비교(spatial_condition_de)와 공간 가변 유전자(spatial_hd_svf)로 갈라짐.
-- English: Visium HD spatial transcriptomics workflow: bin loading, normalisation and sketching (spatial_hd_prep), joint clustering of slides with labels for every bin (spatial_hd_cluster), then condition comparison (spatial_condition_de) and spatially variable genes (spatial_hd_svf).
+- 국문: Visium HD 공간 전사체 파이프라인 흐름도. bin 불러오기·정규화·sketch(spatial_hd_prep), 슬라이드 통합 군집과 모든 bin 배정(spatial_hd_cluster) 뒤 조건 간 비교(spatial_condition_de), 공간 가변 유전자(spatial_hd_svf), 단일세포 참조로 모든 bin에 세포 유형을 붙이는 분석(spatial_hd_rctd)으로 갈라지고, 세포 유형 결과가 세포 유형별 조건 간 비교(spatial_condition_de)로 이어짐. 세포 유형 분석은 참조를 줄 때만 실행됨.
+- English: Visium HD spatial transcriptomics workflow: bin loading, normalisation and sketching (spatial_hd_prep), joint clustering of slides with labels for every bin (spatial_hd_cluster), then condition comparison (spatial_condition_de), spatially variable genes (spatial_hd_svf), and cell types for every bin from a single-cell reference (spatial_hd_rctd) followed by condition comparison per cell type (spatial_condition_de); the cell-type branch runs only when a reference is given.
 
 ## B4. 분석 개념 / Analysis concept
 
@@ -199,7 +201,7 @@ After all slides are clustered on a common basis, cluster proportions and per-cl
 4. **슬라이드 정보 파일(CSV)에 `SliceID`, `Condition`을 적어 주세요.** `SliceID`는 슬라이드 폴더 이름과 같아야 합니다. 같은 개체가 각 조건에 있으면 `Patient` 열로 짝 설계를 씁니다.
 5. **같은 종, 같은 참조로 만든 Space Ranger 결과만 함께 분석해 주세요.** 슬라이드마다 유전자 목록이 다르면 합칠 때 일부 유전자가 0이 되어 가짜 차이가 생길 수 있습니다.
 6. **메모리를 많이 씁니다.** 8µm는 슬라이드당 32~64GB, 여러 장의 통합 군집은 64~128GB를 권장합니다. 메모리가 부족하면 bin 크기 16µm를 쓰거나 `min_counts`를 올려 주세요.
-7. **세포 유형 분석은 선택 모듈로 더할 수 있습니다.** 같은 종의 단일세포 참조 자료(Seurat RDS)가 있으면 spatial_hd_cluster 결과에 spatial_hd_rctd를 이어 모든 bin에 세포 유형을 붙이고, 그 결과로 spatial_condition_de를 세포 유형별로(`group_by=rctd_first_type`) 돌릴 수 있습니다. 참조의 세포 유형 열 이름은 check_reference로 먼저 확인합니다. 참조가 필요해 파이프라인 기본 구성에는 넣지 않았습니다.
+7. **세포 유형은 같은 종, 같은 조직의 단일세포 참조 자료(Seurat RDS)로 붙입니다.** 참조(reference_rds)와 세포 유형 열 이름(reference_label_col)을 주면 spatial_hd_rctd가 모든 bin에 세포 유형을 붙이고, 그 결과로 spatial_condition_de가 세포 유형별로(`group_by=rctd_first_type`) 조건을 비교합니다. 참조를 주지 않으면 이 두 단계는 건너뛰고 나머지 분석은 그대로 끝나며, 군집은 마커 유전자와 조직 위치로 해석합니다. 공개 단일세포 아틀라스(예: CELLxGENE, Allen Brain Cell Atlas)를 참조로 쓸 수 있습니다. 열 이름을 모르면 비워 두고 실행하면 분석 전에 멈추고 오류 로그에 후보 열을 보여 줍니다.
 8. **모든 분석은 인터넷 연결 없이 수행됩니다.**
 
 ### English
@@ -209,5 +211,5 @@ After all slides are clustered on a common basis, cluster proportions and per-cl
 4. **List `SliceID` and `Condition` in the slide sheet (CSV).** `SliceID` must equal the slide folder name. When the same individual appears in each condition, add a `Patient` column for a paired design.
 5. **Analyse together only Space Ranger outputs made for the same species and reference.** Different gene lists between slides zero some genes when merging and can create false differences.
 6. **Memory use is high.** 32-64 GB per slide is recommended for 8 um, and 64-128 GB for joint clustering of several slides. When memory runs out, use 16 um bins or a higher `min_counts`.
-7. **Cell-type analysis can be added with optional modules.** With a single-cell reference of the same species (Seurat RDS), attach spatial_hd_rctd to the spatial_hd_cluster output to give every bin a cell type, and run spatial_condition_de per cell type on its output (`group_by=rctd_first_type`); check the cell-type column of the reference first with check_reference. They need a reference, so they are not part of the default pipeline.
+7. **Cell types come from a single-cell reference (Seurat RDS) of the same species and tissue.** Given a reference (reference_rds) and its cell-type column (reference_label_col), spatial_hd_rctd gives every bin a cell type and spatial_condition_de then compares conditions per cell type (`group_by=rctd_first_type`). Without a reference these two steps are skipped and the rest of the analysis finishes as usual; clusters are then interpreted by their marker genes and tissue location. Public single-cell atlases (for example CELLxGENE, Allen Brain Cell Atlas) can serve as references. If the column name is unknown, leave it empty: the run stops before the analysis and the error log lists the candidate columns.
 8. **All analyses run without internet access.**

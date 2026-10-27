@@ -510,7 +510,7 @@ Rscript spatial_merge.1.1.R \
 | 실행 스크립트 파일 | spatial_condition_de.1.0.R | |
 | Processor Core (제안) | 4코어, 메모리 16GB(Visium), 16~32GB(Visium HD 16µm), 32~64GB(8µm) | 4 cores, 16 GB of memory (Visium), 16-32 GB (Visium HD 16 um), 32-64 GB (8 um) |
 
-등록 메모: 작업 파일 `spatial_condition_de.1.3.R`을 배포 번호 1.0으로 올립니다.
+등록 메모: 작업 파일 `spatial_condition_de.1.4.R`을 배포 번호 1.0으로 올립니다.
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -1069,6 +1069,8 @@ Rscript check_reference.1.1.R \
 | 실행 스크립트 파일 | spatial_labelTransfer.1.1.R | |
 | Processor Core (제안) | 4코어, 메모리 32GB | 4 cores, 32 GB of memory |
 
+등록 메모: 작업 파일 `spatial_labelTransfer.1.2.R`을 배포 번호 1.1로 올립니다.
+
 ### 실행 이미지
 이미지: bx_spatial 1.1
 
@@ -1118,8 +1120,8 @@ Transfers the cell types of a single-cell RNA-seq reference to the spots of Visi
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
 | Input | Required | Directory | input_dir | /data/spatial_cluster | 군집 결과 폴더. 슬라이스마다 <slice>/<slice>_clustered.rds(SCT assay와 pca가 있는 Seurat 객체) | Cluster output folder: per slice <slice>/<slice>_clustered.rds (Seurat object with the SCT assay and pca) |
-| Input | Required | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료(Seurat .rds). 세포 유형 열이 있어야 함(check_reference로 확인) | Single-cell reference (Seurat .rds) with a cell-type column (check it with check_reference) |
-| Option | Required | String | reference_label_col | celltype | 참조 자료에서 세포 유형이 든 메타데이터 열 이름 | Metadata column of the reference holding the cell types |
+| Input | Optional | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료(Seurat .rds). 세포 유형 열이 있어야 함. 비우면 이 모듈은 건너뜀(skipped.txt) | Single-cell reference (Seurat .rds) with a cell-type column. Empty: the module is skipped (skipped.txt) |
+| Option | Required (with reference_rds) | String | reference_label_col | celltype | 참조 자료에서 세포 유형이 든 메타데이터 열 이름. 비었거나 참조에 없는 열이면 세포 유형 후보 열을 보여 주고 멈춤 | Metadata column of the reference holding the cell types. When empty or not in the reference, the run stops and lists the cell-type column candidates |
 | Output | Required | Directory | output_dir | /data/spatial_labelTransfer | 결과 폴더. 슬라이스마다 <slice>_labeltransfer.rds, <slice>_predicted_celltype_scores.csv, plots/, 그리고 summary/(슬라이스×세포 유형 표와 heatmap) | Output folder: per slice <slice>_labeltransfer.rds, <slice>_predicted_celltype_scores.csv and plots/, and summary/ (slice-by-cell-type table and heatmap) |
 | Option | Optional | Integer | reference_ncells | 3000 | 참조 SCTransform 모델을 맞출 때 쓰는 세포 수(참조에 SCT 모델이 없을 때만) | Cells used to fit the reference SCTransform model (only when the reference has no SCT model) |
 | Option | Optional | Integer | npcs | 30 | anchor 탐색과 예측에 쓰는 주성분 수 | Principal components used for anchors and prediction |
@@ -1129,6 +1131,7 @@ Transfers the cell types of a single-cell RNA-seq reference to the spots of Visi
 ### 주요 사항
 | 국문 | 영문 |
 |---|---|
+| 참조 자료(reference_rds)를 주지 않으면 이 모듈은 건너뛰고(결과 폴더에 skipped.txt) 정상 종료하므로, 참조가 없어도 파이프라인은 끝까지 실행됩니다. 참조를 주면 세포 유형 열 이름(reference_label_col)도 넣어 주세요. 열 이름을 모르면 비워 두고 한 번 실행하면, 분석 전에 멈추고 오류 로그에 세포 유형 후보 열과 그 값들을 보여 줍니다. 확인한 열 이름을 넣어 다시 실행하세요. | Without a reference (reference_rds) the module is skipped (skipped.txt in the output folder) and ends without error, so the pipeline still runs to the end. With a reference, also give its cell-type column (reference_label_col). If the column name is unknown, leave it empty and run once: the run stops before the analysis and the error log lists the cell-type column candidates with their values. Run again with the chosen column. |
 | 참조 자료와 슬라이스는 같은 종, 같은 유전자 이름 형식(예: 마우스 기호 Prox1)이어야 합니다. 공유 유전자가 min_shared_features보다 적으면 로그에 양쪽 유전자 이름 예시가 나옵니다. | The reference and the slices must share species and gene naming (for example mouse symbols such as Prox1); with fewer shared genes than min_shared_features, the log shows examples of both sides. |
 | 예측 점수는 참조에 있는 세포 유형 중에서 고른 값입니다. 참조에 없는 조직(예: 해마 참조로 본 소뇌)은 가장 비슷한 유형으로 잘못 칠해질 수 있습니다. | Scores choose among the cell types of the reference; tissue missing from the reference (for example cerebellum with a hippocampus reference) can be painted with the most similar type. |
 | 참조 세포가 적어 anchor가 있는 spot이 50개보다 적으면 TransferData의 k.weight를 자동으로 낮추고 경고를 남깁니다. 결과가 불안정할 수 있으니 더 큰 참조를 권장합니다. | When fewer than 50 spots carry anchors (small references), TransferData's k.weight is lowered automatically with a warning; results may be unstable, so a larger reference is recommended. |
@@ -1174,6 +1177,8 @@ Rscript spatial_labelTransfer.1.1.R \
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_rctd.1.1.R | |
 | Processor Core (제안) | 8코어, 메모리 32GB | 8 cores, 32 GB of memory |
+
+등록 메모: 작업 파일 `spatial_rctd.1.2.R`을 배포 번호 1.1로 올립니다.
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -1224,8 +1229,8 @@ A Visium spot holds several cells. RCTD (spacexr) uses the per-cell-type express
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
 | Input | Required | Directory | input_dir | /data/spatial_cluster | 군집 결과 폴더. 슬라이스마다 <slice>/<slice>_clustered.rds(raw count assay Spatial이 있는 Seurat 객체) | Cluster output folder: per slice <slice>/<slice>_clustered.rds (Seurat object with the raw-count assay Spatial) |
-| Input | Required | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료(Seurat .rds). raw count와 세포 유형 열이 있어야 함 | Single-cell reference (Seurat .rds) with raw counts and a cell-type column |
-| Option | Required | String | reference_label_col | celltype | 참조 자료에서 세포 유형이 든 메타데이터 열 이름 | Metadata column of the reference holding the cell types |
+| Input | Optional | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료(Seurat .rds). raw count와 세포 유형 열이 있어야 함. 비우면 이 모듈은 건너뜀(skipped.txt) | Single-cell reference (Seurat .rds) with raw counts and a cell-type column. Empty: the module is skipped (skipped.txt) |
+| Option | Required (with reference_rds) | String | reference_label_col | celltype | 참조 자료에서 세포 유형이 든 메타데이터 열 이름. 비었거나 참조에 없는 열이면 세포 유형 후보 열을 보여 주고 멈춤 | Metadata column of the reference holding the cell types. When empty or not in the reference, the run stops and lists the cell-type column candidates |
 | Output | Required | Directory | output_dir | /data/spatial_rctd | 결과 폴더. 슬라이스마다 <slice>_rctd.rds, <slice>_rctd_object.rds, <slice>_rctd_weights.csv, <slice>_rctd_mean_abundance.csv, plots/, 그리고 summary/(표, heatmap, 누적 막대) | Output folder: per slice <slice>_rctd.rds, <slice>_rctd_object.rds, <slice>_rctd_weights.csv, <slice>_rctd_mean_abundance.csv and plots/, and summary/ (tables, heatmap, stacked bars) |
 | Option | Optional | String | spatial_assay | Spatial | 슬라이스 객체에서 raw count가 든 assay | Assay of the slice objects holding raw counts |
 | Option | Optional | String | reference_assay | RNA | 참조 객체에서 raw count가 든 assay | Assay of the reference holding raw counts |
@@ -1238,6 +1243,7 @@ A Visium spot holds several cells. RCTD (spacexr) uses the per-cell-type express
 ### 주요 사항
 | 국문 | 영문 |
 |---|---|
+| 참조 자료(reference_rds)를 주지 않으면 이 모듈은 건너뛰고(결과 폴더에 skipped.txt) 정상 종료하므로, 참조가 없어도 파이프라인은 끝까지 실행됩니다. 참조를 주면 세포 유형 열 이름(reference_label_col)도 넣어 주세요. 열 이름을 모르면 비워 두고 한 번 실행하면, 분석 전에 멈추고 오류 로그에 세포 유형 후보 열과 그 값들을 보여 줍니다. 확인한 열 이름을 넣어 다시 실행하세요. | Without a reference (reference_rds) the module is skipped (skipped.txt in the output folder) and ends without error, so the pipeline still runs to the end. With a reference, also give its cell-type column (reference_label_col). If the column name is unknown, leave it empty and run once: the run stops before the analysis and the error log lists the cell-type column candidates with their values. Run again with the chosen column. |
 | RCTD는 raw count가 필요합니다. 참조의 정규화 값(SCT, log)만 있으면 실행되지 않습니다. | RCTD needs raw counts; a reference with only normalised values (SCT, log) cannot be used. |
 | weight는 참조에 있는 세포 유형 사이의 비율입니다. 참조에 없는 조직은 가장 비슷한 유형의 weight로 나타납니다. 조직 전체를 담은 참조를 권장합니다. | Weights are proportions among the reference cell types; tissue missing from the reference shows up as the most similar types, so a reference covering the whole tissue is recommended. |
 | 코어 수에 따라 메모리가 늘어납니다(작업자마다 자료를 복사). 메모리가 모자라면 max_cores를 줄이세요. | Memory grows with the cores, since each worker copies the data; lower max_cores if memory runs short. |
@@ -1392,7 +1398,7 @@ Rscript spatial_hd_svf.1.0.R \
 | 실행 스크립트 파일 | spatial_hd_rctd.1.0.R | |
 | Processor Core (제안) | 8코어, 메모리 64GB(16µm), 128GB(8µm) | 8 cores, 64 GB of memory (16 um), 128 GB (8 um) |
 
-등록 메모: 작업 파일 `spatial_hd_rctd.1.1.R`을 배포 번호 1.0으로 올립니다.
+등록 메모: 작업 파일 `spatial_hd_rctd.1.2.R`을 배포 번호 1.0으로 올립니다.
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -1443,8 +1449,8 @@ Labels every bin of Visium HD slides with the cell types of a single-cell refere
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
 | Input | Required | Directory | input_dir | /data/spatial_hd_cluster | Visium HD 군집 결과 폴더. hd_slides.tsv와 슬라이드별 객체(bin assay에 raw count) | Visium HD cluster folder: hd_slides.tsv and the per-slide objects (raw counts in the binned assay) |
-| Input | Required | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료(Seurat .rds). raw count와 세포 유형 열이 있어야 함(check_reference로 확인) | Single-cell reference (Seurat .rds) with raw counts and a cell-type column (check it with check_reference) |
-| Option | Required | String | reference_label_col | celltype | 참조 자료에서 세포 유형이 든 메타데이터 열 이름 | Metadata column of the reference holding the cell types |
+| Input | Optional | File | reference_rds | /ref/brain_reference.rds | 단일세포 참조 자료(Seurat .rds). raw count와 세포 유형 열이 있어야 함. 비우면 이 모듈은 건너뜀(skipped.txt) | Single-cell reference (Seurat .rds) with raw counts and a cell-type column. Empty: the module is skipped (skipped.txt) |
+| Option | Required (with reference_rds) | String | reference_label_col | celltype | 참조 자료에서 세포 유형이 든 메타데이터 열 이름. 비었거나 참조에 없는 열이면 세포 유형 후보 열을 보여 주고 멈춤 | Metadata column of the reference holding the cell types. When empty or not in the reference, the run stops and lists the cell-type column candidates |
 | Output | Required | Directory | output_dir | /data/spatial_hd_rctd | 결과 폴더. 슬라이드마다 <slide>_hd_rctd.rds, <slide>_rctd_weights.tsv.gz, plots/, 그리고 hd_slides.tsv, celltype_by_slide.tsv, rctd_summary.tsv | Output folder: per slide <slide>_hd_rctd.rds, <slide>_rctd_weights.tsv.gz and plots/, plus hd_slides.tsv, celltype_by_slide.tsv and rctd_summary.tsv |
 | Option | Optional | String | reference_assay | RNA | 참조 객체에서 raw count가 든 assay | Assay of the reference holding raw counts |
 | Option | Optional | List | rctd_mode | doublet | doublet = bin마다 세포 유형 1~2개(8µm에 맞음), full = 모든 세포 유형의 섞인 비율(16µm에 맞음) | doublet = one or two cell types per bin (suits 8 um), full = mixture of all cell types (suits 16 um) |
@@ -1459,6 +1465,7 @@ Labels every bin of Visium HD slides with the cell types of a single-cell refere
 ### 주요 사항
 | 국문 | 영문 |
 |---|---|
+| 참조 자료(reference_rds)를 주지 않으면 이 모듈은 건너뛰고(결과 폴더에 skipped.txt) 정상 종료하므로, 참조가 없어도 파이프라인은 끝까지 실행됩니다. 참조를 주면 세포 유형 열 이름(reference_label_col)도 넣어 주세요. 열 이름을 모르면 비워 두고 한 번 실행하면, 분석 전에 멈추고 오류 로그에 세포 유형 후보 열과 그 값들을 보여 줍니다. 확인한 열 이름을 넣어 다시 실행하세요. | Without a reference (reference_rds) the module is skipped (skipped.txt in the output folder) and ends without error, so the pipeline still runs to the end. With a reference, also give its cell-type column (reference_label_col). If the column name is unknown, leave it empty and run once: the run stops before the analysis and the error log lists the cell-type column candidates with their values. Run again with the chosen column. |
 | bin 크기에 맞춰 rctd_mode를 고르세요. 기본값 doublet은 8µm용이고, 16µm는 full을 권장합니다. | Choose rctd_mode by bin size: the default doublet is for 8 um, and full is recommended for 16 um. |
 | 16µm bin은 UMI가 많아 umi_min=100에서 대부분 계산되지만, 8µm bin은 UMI가 적어 not_scored가 많을 수 있습니다. rctd_summary.tsv의 Bins_scored를 확인하세요. | 16 um bins have many UMIs and are mostly scored at umi_min=100, but 8 um bins have fewer and many may be not_scored; check Bins_scored in rctd_summary.tsv. |
 | 참조에 없는 조직은 가장 비슷한 세포 유형으로 칠해집니다. 슬라이드 조직 전체를 담은 참조를 권장합니다. | Tissue missing from the reference is painted with the most similar cell types; a reference covering the whole tissue is recommended. |

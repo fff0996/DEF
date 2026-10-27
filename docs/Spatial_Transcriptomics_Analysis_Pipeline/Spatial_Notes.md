@@ -10,15 +10,15 @@ Spatial transcriptomics pipeline: 작업 기록
 | spatial_prep | `spatial_prep.1.1.R` | 1.1 | 1.0(받은 스크립트) |
 | spatial_cluster | `spatial_cluster.1.1.R` | 1.1 | 1.0(받은 스크립트) |
 | spatial_svf | `spatial_svf.1.1.R` | 1.1 | 1.0(받은 스크립트) |
-| spatial_labelTransfer | `spatial_labelTransfer.1.1.R` | 1.1 | 1.0(받은 스크립트) |
-| spatial_rctd | `spatial_rctd.1.1.R` | 1.1 | 1.0(받은 스크립트) |
+| spatial_labelTransfer | `spatial_labelTransfer.1.2.R` | 1.1 | 1.0(받은 스크립트), 1.1 |
+| spatial_rctd | `spatial_rctd.1.2.R` | 1.1 | 1.0(받은 스크립트), 1.1 |
 | spatial_merge | `spatial_merge.1.2.R` | 1.1 | 1.0(받은 스크립트), 1.1(harmony 인자) |
 | check_reference | `check_reference.1.1.R` | 1.1 | 1.0(받은 스크립트) |
-| spatial_condition_de | `spatial_condition_de.1.3.R` | 1.0 | 1.0, 1.1, 1.2 |
+| spatial_condition_de | `spatial_condition_de.1.4.R` | 1.0 | 1.0, 1.1, 1.2, 1.3 |
 | spatial_hd_prep | `spatial_hd_prep.1.1.R` | 1.0 | 1.0 |
 | spatial_hd_cluster | `spatial_hd_cluster.1.1.R` | 1.0 | 1.0 |
 | spatial_hd_svf | `spatial_hd_svf.1.0.R` | 1.0 | - |
-| spatial_hd_rctd | `spatial_hd_rctd.1.1.R` | 1.0 | 1.0 |
+| spatial_hd_rctd | `spatial_hd_rctd.1.2.R` | 1.0 | 1.0, 1.1 |
 
 실행 이미지: `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.0.def`(2026-10-22 Codespace 검증 빌드 성공, 8분, 1.29GB, 호스트 변화 없음), `bx_spatial.1.1.def`(r-ape 5.8-1 추가, svf용).
 
@@ -156,9 +156,32 @@ Visium HD(16µm 기준, 8µm는 사용자가 CLOSHA에서 실측): spatial_hd_sv
 
 ## 7. 원고 (2026-10-22)
 - `modules/Registration.md`, `modules/Portal_Content.md`, `pipeline/Portal_Content.md`, `containers/Container_Manual.md`를 썼다.
-- 범위: 12개 모듈 모두. 파이프라인 기본 구성은 Visium(prep, cluster, svf, merge, condition_de)과 Visium HD(hd_prep, hd_cluster, hd_svf, condition_de)이다. 참조가 필요한 labelTransfer, rctd, hd_rctd, check_reference는 선택 모듈로 안내했다(파이프라인 원고 A5·B5). 세포 유형 모듈 3개의 카테고리는 Annotation / Cell_Type_Annotation(신규), check_reference는 Utility / Genomic_data_Utility(사용자 확인, 2026-10-22).
+- 범위: 12개 모듈 모두. 파이프라인 기본 구성은 Visium(prep, cluster, svf, merge, condition_de)과 Visium HD(hd_prep, hd_cluster, hd_svf, condition_de)이다. 참조가 필요한 labelTransfer, rctd, hd_rctd, check_reference는 선택 모듈로 안내했다(파이프라인 원고 A5·B5). 2026-10-27에 세포 유형 모듈을 파이프라인 안으로 옮겼다(7.1). 세포 유형 모듈 3개의 카테고리는 Annotation / Cell_Type_Annotation(신규), check_reference는 Utility / Genomic_data_Utility(사용자 확인, 2026-10-22).
 - 노선도 2장(`pipeline/figures/pipeline_visium*.png`, 생성 `make_pipeline_map.py`, 그리기 함수는 `docs/tools/metro_map.py`), 파이프라인 개념도(`pipeline/figures/concept.png`, `make_concept.py`).
 - 테스트는 이제 빌드한 SIF 안에서 돌린다: `tools/spatial/run_spatial_test.sh <작업 폴더> <env 폴더>`의 env 폴더에 `bin/Rscript`(apptainer exec 래퍼)를 두면 conda 환경을 만들지 않는다.
+
+## 7.1 세포 유형 가지를 파이프라인 안으로 (2026-10-27)
+사용자 결정:
+- labelTransfer, rctd(Visium)와 hd_rctd → condition_de(세포 유형 기준, HD)를 파이프라인 안에 둔다.
+- 참조는 파이프라인의 선택 입력(`reference_rds`, `reference_label_col`)으로 받는다. CLOSHA는 선택 입력을 지원한다.
+- 참조가 없으면 세 모듈은 `output_dir/skipped.txt`를 남기고 정상 종료한다. condition_de 1.4는 `input_dir`에 `skipped.txt`가 있으면 같이 건너뛴다.
+- 열 이름은 자동으로 고르지 않는다. 참조 기반 어노테이션이 표준이지만 참조마다 열 이름이 달라서, 비었거나 틀리면 참조를 읽은 직후 멈춘다. 그때 세포 유형 후보 열(범주 2~100개, check_reference와 같은 기준)과 첫 범주들을 오류 로그에 보여 준다. 사용자가 확인하고 다시 실행한다.
+- check_reference는 2.0에 배포된 모듈이라 그대로 두고, 보조 모듈로 안내한다.
+
+같은 날 고친 버그(Codespace HD 2장 테스트에서 발견):
+- hd_rctd 1.1: 첫 세포 유형 가중치를 꺼낼 때 `cbind(bin 이름, 열 번호)`가 열 번호를 문자로 바꿔, 모든 슬라이드가 `subscript out of bounds`로 실패했다.
+- condition_de 1.3: hd_rctd에서 UMI가 적어 세포 유형이 NA인 bin 때문에 `non-conformable arguments`로 실패했다. 이제 그 bin은 경고와 함께 뺀다.
+- 결과: hd_rctd(full, 16µm, 2장) 1,896초, 최대 3.74GB(1코어). condition_de(세포 유형 17종) 45초, 2.0GB.
+
+확인(bx_spatial 1.1 SIF, 2026-10-27):
+| 경우 | labelTransfer 1.2 | rctd 1.2 | hd_rctd 1.2 | condition_de 1.4 |
+|---|---|---|---|---|
+| 참조 없음 | 건너뜀, exit 0 | 건너뜀, exit 0 | 건너뜀, exit 0 | 앞이 건너뜀 → 건너뜀, exit 0 |
+| 열 이름 비었음 | 후보 표시 후 exit 1 | 후보 표시 후 exit 1 | 후보 표시 후 exit 1 | - |
+| 열 이름 틀림 | - | 후보 표시 후 exit 1 | - | - |
+| 열 이름 맞음 | 열 확인 통과 | 열 확인 통과 | 참조 준비 통과 | - |
+
+참조가 있을 때의 분석 코드는 1.1과 같다. 1.2로 전체 분석은 다시 돌리지 않았다. 확인 시점에 Codespace가 다시 시작돼 슬라이드 객체가 지워졌다.
 
 ## 8. 남은 일
 1. 8µm 자원 실측(사용자가 CLOSHA에서 sacct MaxRSS, Elapsed)

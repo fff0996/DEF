@@ -40,10 +40,10 @@ mkdir -p out
 python3 measure.py hd_svf Rscript "$M/spatial_hd_svf.1.0.R" input_dir="$C" output_dir="$W/out/hd_svf" \
     svf_topn=200 max_bins=2000 > out/svf.stdout 2> out/svf.stderr
 echo "hd_svf exit=$?"
-python3 measure.py hd_rctd Rscript "$M/spatial_hd_rctd.1.1.R" input_dir="$C" reference_rds="$R" \
+python3 measure.py hd_rctd Rscript "$M/spatial_hd_rctd.1.2.R" input_dir="$C" reference_rds="$R" \
     reference_label_col=celltype output_dir="$W/out/hd_rctd" rctd_mode=full min_shared_features=100 max_cores=1 \
     > out/rctd.stdout 2> out/rctd.stderr || { echo "hd_rctd failed" >&2; exit 1; }
-python3 measure.py hd_de_celltype Rscript "$M/spatial_condition_de.1.3.R" input_dir="$W/out/hd_rctd" sample_data="$S" \
+python3 measure.py hd_de_celltype Rscript "$M/spatial_condition_de.1.4.R" input_dir="$W/out/hd_rctd" sample_data="$S" \
     output_dir="$W/out/de_celltype" reference=left group_by=rctd_first_type spatial_genes=0 \
     > out/de.stdout 2> out/de.stderr
 echo "condition_de (cell types) exit=$?"
