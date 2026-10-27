@@ -32,11 +32,11 @@ Visium HD (bin 8·16µm):
 | spatial_labelTransfer | `spatial_labelTransfer.1.1.R` | 1.1 | 규칙 적용. Seurat 5에서 참조 SCT 모델로 다시 정규화가 멈추던 문제와 작은 참조의 k.weight 오류 수정 |
 | spatial_rctd | `spatial_rctd.1.1.R` | 1.1 | 규칙 적용, max_cores 기본값 auto. 그려지지 않던 dominant 세포 유형 그림 수정 |
 | check_reference | `check_reference.1.1.R` | 1.1 | output_dir(로그, reference_columns.tsv) 추가 |
-| spatial_condition_de | `spatial_condition_de.1.2.R` | 1.0 | 새 모듈. Visium과 Visium HD 입력 |
+| spatial_condition_de | `spatial_condition_de.1.3.R` | 1.0 | 새 모듈. Visium과 Visium HD 입력 |
 | spatial_hd_prep | `spatial_hd_prep.1.1.R` | 1.0 | 새 모듈 |
 | spatial_hd_cluster | `spatial_hd_cluster.1.1.R` | 1.0 | 새 모듈 |
 | spatial_hd_svf | `spatial_hd_svf.1.0.R` | 1.0 | 새 모듈 |
-| spatial_hd_rctd | `spatial_hd_rctd.1.0.R` | 1.0 | 새 모듈 |
+| spatial_hd_rctd | `spatial_hd_rctd.1.1.R` | 1.0 | 새 모듈 |
 
 실행 명령은 모두 `Rscript <스크립트> key=value ...`이다.
 

@@ -115,7 +115,7 @@ python3 measure.py hd_prep Rscript "$M/spatial_hd_prep.1.1.R" input_dir="$W/slid
     bin_size=16 sketch_cells=5000 > out/prep.stdout 2> out/prep.stderr || { echo "hd_prep failed" >&2; exit 1; }
 python3 measure.py hd_cluster Rscript "$M/spatial_hd_cluster.1.1.R" input_dir="$W/out/prep" output_dir="$W/out/cluster" \
     features=Prox1,Mbp > out/cluster.stdout 2> out/cluster.stderr || { echo "hd_cluster failed" >&2; exit 1; }
-python3 measure.py hd_de Rscript "$M/spatial_condition_de.1.2.R" input_dir="$W/out/cluster" sample_data="$W/slides.csv" \
+python3 measure.py hd_de Rscript "$M/spatial_condition_de.1.3.R" input_dir="$W/out/cluster" sample_data="$W/slides.csv" \
     output_dir="$W/out/de" reference=left spatial_genes=0 > out/de.stdout 2> out/de.stderr
 echo "condition_de exit=$?"
 grep -h measure out/*.stderr

@@ -510,7 +510,7 @@ Rscript spatial_merge.1.1.R \
 | 실행 스크립트 파일 | spatial_condition_de.1.0.R | |
 | Processor Core (제안) | 4코어, 메모리 16GB(Visium), 16~32GB(Visium HD 16µm), 32~64GB(8µm) | 4 cores, 16 GB of memory (Visium), 16-32 GB (Visium HD 16 um), 32-64 GB (8 um) |
 
-등록 메모: 작업 파일 `spatial_condition_de.1.2.R`을 배포 번호 1.0으로 올립니다.
+등록 메모: 작업 파일 `spatial_condition_de.1.3.R`을 배포 번호 1.0으로 올립니다.
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -1391,6 +1391,8 @@ Rscript spatial_hd_svf.1.0.R \
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_hd_rctd.1.0.R | |
 | Processor Core (제안) | 8코어, 메모리 64GB(16µm), 128GB(8µm) | 8 cores, 64 GB of memory (16 um), 128 GB (8 um) |
+
+등록 메모: 작업 파일 `spatial_hd_rctd.1.1.R`을 배포 번호 1.0으로 올립니다.
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
