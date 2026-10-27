@@ -578,16 +578,27 @@ Compares the spot composition of clusters and the gene expression within cluster
 ### 샘플시트
 | 열 | 필수 | 설명 | 예시 |
 |---|---|---|---|
-| SliceID | 필수 | 슬라이스 이름(spatial_prep 또는 spatial_hd_prep에 준 슬라이스 폴더 이름) | ctrl_1 |
-| Condition | 필수 | 조건 이름 | control |
+| SliceID | 필수 | 슬라이스 이름(spatial_prep 또는 spatial_hd_prep에 준 슬라이스 폴더 이름) | crc_p1 |
+| Condition | 필수 | 조건 이름 | tumor |
 | Patient | 선택 | 짝 설계의 개체 ID(같은 개체가 각 조건에 있을 때) | P1 |
 
+예제 데이터(Visium HD 사람 대장암, 종양 3장과 정상 인접 조직 2장)의 샘플시트입니다. `reference=normal`로 실행합니다.
+```
+SliceID,Condition
+crc_p1,tumor
+crc_p2,tumor
+crc_p5,tumor
+normal_p3,normal
+normal_p5,normal
+```
+
+같은 개체가 각 조건에 있으면 Patient 열을 더해 짝 설계로 검정합니다(예: 같은 환자의 종양과 정상).
 ```
 SliceID,Condition,Patient
-ctrl_1,control,P1
-ctrl_2,control,P2
-trt_1,treated,P1
-trt_2,treated,P2
+tumor_1,tumor,P1
+tumor_2,tumor,P2
+normal_1,normal,P1
+normal_2,normal,P2
 ```
 
 ### 주요 사항
