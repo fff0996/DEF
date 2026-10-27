@@ -115,7 +115,8 @@ KOBIC 포탈의 파이프라인 페이지와 모듈 등록 화면에 넣을 원�
 | Utility | Genomic_data_Utility | — |
 
 - 기존 목록에 맞는 것이 있으면 쓰고, 억지로 끼워 넣지 않는다. 맞는 중분류가 없으면 중분류를, 맞는 대분류가 없으면 대분류도 새로 만든다(사용자 결정, 2026-10-27). 이름은 특정 분석(예: ATAC)이 아니라 일반 이름으로 짓는다(예: Differential_Analysis는 RNA-seq 차등 발현도 담을 수 있다).
-- 예: 공간 전사체 모듈은 대분류 `Single_Cell_and_Spatial`(신규) 아래 Preprocessing, Clustering, Spatial_Statistics, Differential_Expression, Cell_Type_Annotation, Reference_Check로 나눴다. 단일세포 RNA-seq 모듈도 같은 대분류에 넣는다.
+- 대분류도 기능 기준으로 짓는다. 데이터 종류(예: 단일세포, 공간)로 묶지 않는다. 같은 기능의 모듈이 다른 파이프라인에서 와도 같은 칸에 들어가야 한다.
+- 예: 공간 전사체 모듈의 발현 분석은 대분류 `Gene_Expression`(신규) 아래 Normalization, Clustering, Spatial_Statistics, Differential_Expression으로 나눴다. 세포 유형 모듈은 기존 `Annotation` 아래 Cell_Type_Annotation(신규)에 둔다.
 - 목록에 보여도 개인 폴더(공개 아이콘이 아닌 사람 아이콘, 예: `BAM_processing`)는 정식 카테고리가 아니므로 쓰지 않는다. 그래서 GATK_MarkDuplicates, organellar_filter는 Mapping / Short_Read_Alignment에 둔다.
 - 기존 이름의 오타는 카테고리를 추가할 때 함께 고친다: `Statisitcs_and_Visualization` → `Statistics_and_Visualization`, `Methmatical_based_Tool` → `Mathematical_based_Tool`.
 - 파이프라인 등록 화면의 대분류·중분류는 별도 목록이다(4절 표).
