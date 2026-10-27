@@ -9,7 +9,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 Visium HD �
 - 스크립트 사용 예제는 등록하는 인자를 모두 적었고, 기본값이 있는 옵션은 기본값으로 적었습니다. 예시 값은 Visium HD 기준입니다.
 - 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`입니다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다릅니다. 기반 이미지(From)는 모든 모듈이 Rocky Linux 9.8(`rockylinux/rockylinux:9.8.20260525.0`)입니다.
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류·경고 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지웁니다.
-- 카테고리는 기능(분석 단계) 기준으로 정했습니다(사용자 결정, 2026-10-27). 발현 데이터를 다루는 모듈은 기존 Omics 대신 대분류 Gene_Expression(신규)을 만들어 Normalization(불러오기·정규화), Clustering(군집·통합), Spatial_Statistics(공간 가변 유전자), Differential_Expression(조건 비교) 중분류로 나눴습니다. RNA-seq, 단일세포, 공간 전사체 모듈을 함께 담을 수 있는 이름입니다. 세포 유형 모듈은 기존 대분류 Annotation 아래 Cell_Type_Annotation(신규), check_reference는 기존 Utility / Genomic_data_Utility입니다.
+- 카테고리는 대분류를 데이터 분야, 중분류를 작업으로 정했습니다(사용자 결정, 2026-10-27). Galaxy(usegalaxy.eu 도구 메뉴: Single-cell, Spatial Omics, RNA Analysis 등 분야 메뉴)와 bio.tools/EDAM(Topic = 분야, Operation = 작업)을 참고했고, 사용자가 "내 데이터로 무엇을 할 수 있나"로 찾는 순서에 맞췄습니다. 모든 공간 전사체 모듈은 대분류 Transcriptomics(신규) 아래 Normalization, Clustering, Spatial_Statistics, Differential_Expression, Cell_Type_Annotation(모두 신규)에 둡니다. check_reference는 세포 유형 모듈에 넣을 참조를 확인하는 도구라 Cell_Type_Annotation에 함께 둡니다. 단일세포·bulk RNA-seq 모듈도 같은 중분류에 넣고 모듈 이름으로 구분합니다.
 - 버전은 배포 번호입니다. CLOSHA 2.0 모듈은 2.0 번호 + 1(이번에 모두 스크립트 규칙에 맞춰 고쳐 1.1)이고, 3.0에서 새로 만든 모듈은 1.0입니다.
 
 ---
@@ -22,7 +22,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 Visium HD �
 | 모듈명 | spatial_hd_prep | spatial_hd_prep |
 | 서브 타이틀 | Visium HD 불러오기와 정규화 | Loading and normalisation of Visium HD |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Gene_Expression (신규) | Gene_Expression (new) |
+| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
 | 카테고리 중분류 | Normalization (신규) | Normalization (new) |
 | 태그 | spatial transcriptomics, Visium HD, Seurat, sketch, QC | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
@@ -148,7 +148,7 @@ Rscript spatial_hd_prep.1.0.R \
 | 모듈명 | spatial_hd_cluster | spatial_hd_cluster |
 | 서브 타이틀 | Visium HD 통합 군집 | Joint clustering of Visium HD slides |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Gene_Expression (신규) | Gene_Expression (new) |
+| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
 | 카테고리 중분류 | Clustering (신규) | Clustering (new) |
 | 태그 | spatial transcriptomics, Visium HD, clustering, Harmony, sketch, marker genes | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
@@ -305,7 +305,7 @@ Rscript spatial_hd_cluster.1.0.R \
 | 모듈명 | spatial_hd_svf | spatial_hd_svf |
 | 서브 타이틀 | Visium HD 공간 가변 유전자 | Spatially variable genes of Visium HD slides |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Gene_Expression (신규) | Gene_Expression (new) |
+| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
 | 카테고리 중분류 | Spatial_Statistics (신규) | Spatial_Statistics (new) |
 | 태그 | spatial transcriptomics, Visium HD, spatially variable genes, Moran's I | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
@@ -410,7 +410,7 @@ Rscript spatial_hd_svf.1.0.R \
 | 모듈명 | spatial_condition_de | spatial_condition_de |
 | 서브 타이틀 | 조건 간 공간 발현 비교 | Spatial expression comparison between conditions |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Gene_Expression (신규) | Gene_Expression (new) |
+| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
 | 카테고리 중분류 | Differential_Expression (신규) | Differential_Expression (new) |
 | 태그 | spatial transcriptomics, Visium, Visium HD, differential expression, pseudobulk, DESeq2 | |
 | 레퍼런스 URL | https://bioconductor.org/packages/DESeq2/ | |
@@ -564,7 +564,7 @@ Rscript spatial_condition_de.1.0.R \
 | 모듈명 | spatial_hd_rctd | spatial_hd_rctd |
 | 서브 타이틀 | HD bin 세포 유형 추정 | Cell types of Visium HD bins with RCTD |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Annotation | Annotation |
+| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
 | 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |
 | 태그 | spatial transcriptomics, Visium HD, RCTD, deconvolution, cell type | |
 | 레퍼런스 URL | https://github.com/dmcable/spacexr | |
@@ -678,8 +678,8 @@ Rscript spatial_hd_rctd.1.0.R \
 | 모듈명 | check_reference | check_reference |
 | 서브 타이틀 | 단일세포 참조 자료 열 확인 | Column check of a single-cell reference |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | Utility | Utility |
-| 카테고리 중분류 | Genomic_data_Utility | Genomic_data_Utility |
+| 카테고리 대분류 | Transcriptomics (신규) | Transcriptomics (new) |
+| 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |
 | 태그 | single-cell reference, Seurat, metadata, cell type | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
