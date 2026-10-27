@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Spatial transcriptomics concept figure (SVG): spots and bins, clusters as tissue
-regions, and condition comparison with slice-level pseudobulk.
+regions, condition comparison with slice-level pseudobulk, and cell types from a
+single-cell reference.
 
 Drawn from scratch (no published figure used); the tissue and counts are schematic.
 Run: python3 docs/Spatial_Transcriptomics_Analysis_Pipeline/pipeline/figures/make_concept.py, then
@@ -11,12 +12,13 @@ import math
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parent / "concept.svg"
-W, H = 1800, 880
+W, H = 1800, 1220
 FONT = "Pretendard, 'Noto Sans KR', sans-serif"
 TXT, TXT2, POINT = "#222222", "#3A3A3A", "#32549C"
 TISSUE, EDGE = "#F3E6EC", "#B98AA0"
 REG = ["#4E79A7", "#F28E2B", "#59A14F", "#E15759"]   # four tissue regions
 COND = {"control": "#7F7F7F", "treated": "#C0504D"}
+CT = {"type A": "#9C6ADE", "type B": "#2CA6A4", "type C": "#E8A33D"}   # reference cell types
 g = []
 
 
@@ -137,6 +139,53 @@ text(1660, yC + 105, "~ Condition", 19, 600, "middle", TXT2)
 text(1660, yC + 150, "Gene A up", 18, 700, "middle", COND["treated"])
 text(1660, yC + 180, "Gene C down", 18, 700, "middle", POINT)
 text(1180, yC + 245, "One slice per condition: spot-level test only (exploratory)", 18, 600, "middle", TXT2)
+
+# (D) cell types from a single-cell reference
+yD = 930
+panel_label(40, yD - 40, "D", "With a single-cell reference, cell types are assigned to spots and bins")
+# reference: cells grouped by type, with a mean expression profile per type
+g.append(f'<rect x="60" y="{yD}" width="330" height="230" rx="14" fill="#F7F7FA" stroke="#D5D8DE" stroke-width="2"/>')
+text(225, yD + 28, "single-cell reference", 19, 700)
+profiles = {"type A": [0.9, 0.2, 0.1], "type B": [0.1, 0.8, 0.3], "type C": [0.2, 0.1, 0.9]}
+for i, (ct, prof) in enumerate(profiles.items()):
+    yy = yD + 75 + i * 55
+    for j in range(5):
+        g.append(f'<circle cx="{95 + j * 16}" cy="{yy}" r="7" fill="{CT[ct]}"/>')
+    text(200, yy, ct, 17, 700, "middle", CT[ct])
+    for k, v in enumerate(prof):
+        g.append(f'<rect x="{255 + k * 38}" y="{yy + 14 - 30 * v:.1f}" width="26" height="{30 * v:.1f}" fill="{CT[ct]}" opacity="0.8"/>')
+text(312, yD + 215, "genes 1  2  3", 14, 600, "middle", TXT2)
+g.append(f'<path d="M410,{yD + 115} L490,{yD + 115}" stroke="{TXT2}" stroke-width="3" marker-end="url(#ar)"/>')
+# Visium: proportions per spot (pies)
+def pie(cx, cy, r, parts):
+    a0 = -math.pi / 2
+    for ct, f in parts:
+        a1 = a0 + 2 * math.pi * f
+        large = 1 if f > 0.5 else 0
+        x0, y0 = cx + r * math.cos(a0), cy + r * math.sin(a0)
+        x1, y1 = cx + r * math.cos(a1), cy + r * math.sin(a1)
+        g.append(f'<path d="M{cx},{cy} L{x0:.1f},{y0:.1f} A{r},{r} 0 {large} 1 {x1:.1f},{y1:.1f} z" fill="{CT[ct]}"/>')
+        a0 = a1
+spots = [[("type A", 0.6), ("type B", 0.3), ("type C", 0.1)], [("type A", 0.2), ("type B", 0.7), ("type C", 0.1)],
+         [("type A", 0.1), ("type B", 0.2), ("type C", 0.7)], [("type A", 0.4), ("type B", 0.4), ("type C", 0.2)],
+         [("type A", 0.8), ("type B", 0.1), ("type C", 0.1)], [("type A", 0.1), ("type B", 0.5), ("type C", 0.4)]]
+for i, parts in enumerate(spots):
+    pie(560 + (i % 3) * 85, yD + 70 + (i // 3) * 85, 34, parts)
+text(645, yD + 205, "Visium: cell-type proportions per spot", 18, 700)
+# Visium HD: one type per bin
+types = list(CT)
+for i in range(10):
+    for j in range(8):
+        k = 0 if (i + j) < 6 else 1 if (i - j) > 2 else 2
+        if (i * 7 + j * 3) % 11 == 0:
+            k = (k + 1) % 3
+        g.append(f'<rect x="{900 + i * 22}" y="{yD + 15 + j * 22}" width="20" height="20" fill="{CT[types[k]]}"/>')
+text(1010, yD + 205, "Visium HD: a cell type per bin", 18, 700)
+g.append(f'<path d="M1150,{yD + 100} L1230,{yD + 100}" stroke="{TXT2}" stroke-width="3" marker-end="url(#ar)"/>')
+text(1480, yD + 75, "Conditions can then be compared", 19, 700)
+text(1480, yD + 105, "within each cell type (group_by)", 19, 700)
+text(1480, yD + 150, "Without a reference this step is skipped;", 17, 600, "middle", TXT2)
+text(1480, yD + 178, "clusters are read through their marker genes.", 17, 600, "middle", TXT2)
 
 svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">'
        f'<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">'

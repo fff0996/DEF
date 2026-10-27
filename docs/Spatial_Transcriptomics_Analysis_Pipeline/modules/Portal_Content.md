@@ -251,7 +251,7 @@ Rscript spatial_cluster.1.1.R \
 | 항목 | 국문 | 영문 |
 |---|---|---|
 | 모듈명 | spatial_svf | spatial_svf |
-| 서브 타이틀 | 공간 가변 유전자 | Spatially variable genes |
+| 서브 타이틀 | 공간 가변 유전자 탐색 | Spatially variable genes |
 | 버전 | 1.1 | |
 | 카테고리 대분류 | Omics | Omics |
 | 카테고리 중분류 | Expression_Quantification | Expression_Quantification |
@@ -1070,7 +1070,7 @@ Rscript check_reference.1.1.R \
 | 항목 | 국문 | 영문 |
 |---|---|---|
 | 모듈명 | spatial_labelTransfer | spatial_labelTransfer |
-| 서브 타이틀 | 단일세포 참조로 spot 세포 유형 예측 | Cell-type prediction of spots from a single-cell reference |
+| 서브 타이틀 | 참조 기반 spot 세포 유형 예측 | Cell-type prediction of spots from a single-cell reference |
 | 버전 | 1.1 | |
 | 카테고리 대분류 | Annotation | Annotation |
 | 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |
@@ -1179,7 +1179,7 @@ Rscript spatial_labelTransfer.1.1.R \
 | 항목 | 국문 | 영문 |
 |---|---|---|
 | 모듈명 | spatial_rctd | spatial_rctd |
-| 서브 타이틀 | RCTD로 spot 세포 유형 비율 추정 | Cell-type proportions of spots with RCTD |
+| 서브 타이틀 | spot 세포 유형 비율 추정 | Cell-type proportions of spots with RCTD |
 | 버전 | 1.1 | |
 | 카테고리 대분류 | Annotation | Annotation |
 | 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |
@@ -1397,7 +1397,7 @@ Rscript spatial_hd_svf.1.0.R \
 | 항목 | 국문 | 영문 |
 |---|---|---|
 | 모듈명 | spatial_hd_rctd | spatial_hd_rctd |
-| 서브 타이틀 | Visium HD bin 세포 유형(RCTD) | Cell types of Visium HD bins with RCTD |
+| 서브 타이틀 | HD bin 세포 유형 추정 | Cell types of Visium HD bins with RCTD |
 | 버전 | 1.0 | |
 | 카테고리 대분류 | Annotation | Annotation |
 | 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |

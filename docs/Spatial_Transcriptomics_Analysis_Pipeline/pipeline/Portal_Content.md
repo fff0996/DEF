@@ -15,29 +15,31 @@ KOBIC 포탈의 공간 전사체 파이프라인 상세 페이지에 들어갈 �
 | 항목 | 값 |
 |---|---|
 | Pipeline Name | `Spatial_Transcriptomics_Visium_Pipeline` |
+| 서브 타이틀(국문) | Visium 공간 발현 영역 분석 |
+| 서브 타이틀(영문) | Spatial expression regions with Visium |
 | 구성 모듈 | spatial_prep, spatial_cluster, spatial_svf, spatial_merge, spatial_condition_de, spatial_labelTransfer, spatial_rctd (세포 유형 2개는 참조를 줄 때 실행) |
 | 파이프라인 입력 | Space Ranger 슬라이스 폴더(필수), 슬라이스 정보 CSV(필수), 단일세포 참조 RDS `reference_rds`와 세포 유형 열 `reference_label_col`(선택) |
 | Version | 1.1 (CLOSHA 2.0 파이프라인 버전 + 1. 등록 메모: 2.0 파이프라인 버전이 1.0이라는 전제이며, 다르면 그 번호 + 1로 고칩니다) |
 | Reference | https://satijalab.org/seurat/articles/spatial_vignette |
-| Keyword(태그) | spatial transcriptomics, Visium, clustering, spatially variable genes, multi-slice integration, differential expression |
+| Keyword(태그) | spatial transcriptomics, Visium, clustering, spatially variable genes, multi-slice integration, differential expression, cell type deconvolution, label transfer |
 | 대분류 / 중분류 | 등록 메모: 포탈 파이프라인 목록에서 가장 가까운 것을 고릅니다(후보: Transcriptomics / Spatial transcriptomics). |
 | 대표 이미지 | 등록 메모: 결과 그림을 본 뒤 고릅니다(후보: spatial_merge 조직 위 통합 군집). |
 
 ## A1. 파이프라인 소개 / Introduction
 
 ### 국문
-Visium 공간 전사체 파이프라인은 10x Genomics Visium으로 얻은 조직 절편의 spot별 유전자 발현을 분석하여, 조직 안의 영역 구성과 공간적인 발현 패턴, 조건에 따른 변화를 확인하는 분석 도구입니다. 슬라이스별 Space Ranger 결과와 슬라이스 정보를 입력하면, Seurat으로 spot을 거르고 SCTransform으로 정규화한 뒤, 슬라이스별 군집과 마커, 공간 가변 유전자를 찾고, 여러 슬라이스를 합쳐(Harmony 선택) 같은 기준의 군집을 만들고, 조건 사이에서 군집 조성과 군집별 발현을 pseudobulk DESeq2로 비교합니다.
+Visium 공간 전사체 파이프라인은 10x Genomics Visium으로 얻은 조직 절편의 spot별 유전자 발현을 분석하여, 조직 안의 영역 구성과 공간적인 발현 패턴, 조건에 따른 변화를 확인하는 분석 도구입니다. 슬라이스별 Space Ranger 결과와 슬라이스 정보를 입력하면, Seurat으로 spot을 거르고 SCTransform으로 정규화한 뒤, 슬라이스별 군집과 마커, 공간 가변 유전자를 찾고, 여러 슬라이스를 합쳐(Harmony 선택) 같은 기준의 군집을 만들고, 조건 사이에서 군집 조성과 군집별 발현을 pseudobulk DESeq2로 비교합니다. 같은 조직의 단일세포 참조 자료를 함께 주면 spot마다 세포 유형 예측 점수(Seurat label transfer)와 세포 유형 비율(RCTD)도 계산합니다.
 
 ### English
-The Visium spatial transcriptomics pipeline analyses per-spot gene expression of tissue sections from 10x Genomics Visium to reveal how the tissue is organised into regions, which genes follow spatial patterns, and what changes between conditions. From the Space Ranger output of each slice and a slice sheet, it filters spots and normalises them with SCTransform in Seurat, finds clusters, markers and spatially variable genes per slice, merges the slices (optionally with Harmony) into common clusters, and compares cluster composition and per-cluster expression between conditions with pseudobulk DESeq2.
+The Visium spatial transcriptomics pipeline analyses per-spot gene expression of tissue sections from 10x Genomics Visium to reveal how the tissue is organised into regions, which genes follow spatial patterns, and what changes between conditions. From the Space Ranger output of each slice and a slice sheet, it filters spots and normalises them with SCTransform in Seurat, finds clusters, markers and spatially variable genes per slice, merges the slices (optionally with Harmony) into common clusters, and compares cluster composition and per-cluster expression between conditions with pseudobulk DESeq2. Given a single-cell reference of the same tissue, it also computes cell-type prediction scores (Seurat label transfer) and cell-type proportions (RCTD) for every spot.
 
 ## A2. 분석 목표 / Analysis goals
 
 ### 국문
-**Visium 공간 전사체 분석으로 확인할 수 있는 네 가지 분석 목표**
+**Visium 공간 전사체 분석으로 확인할 수 있는 다섯 가지 분석 목표**
 
 **01 조직은 어떤 발현 영역으로 나뉘는가**
-spot을 발현이 비슷한 군집으로 나누고 조직 위에 그려, 피질 층이나 해마처럼 해부학적 영역과 그 경계를 확인합니다.
+spot을 발현이 비슷한 군집으로 나누고 조직 위에 그려, 심근, 섬유화 부위, 혈관 주변처럼 조직 영역과 그 경계를 확인합니다.
 
 **02 각 영역을 특징짓는 유전자는 무엇인가**
 군집마다 다른 군집보다 높게 발현하는 마커 유전자를 찾아 영역의 정체를 해석합니다.
@@ -48,11 +50,14 @@ spot을 발현이 비슷한 군집으로 나누고 조직 위에 그려, 피질 
 **04 조건에 따라 영역 구성과 영역 안 발현이 어떻게 달라지는가**
 여러 슬라이스를 같은 기준으로 군집한 뒤, 조건 사이에서 군집 비율과 군집별 유전자 발현을 비교합니다. 조건마다 슬라이스가 2장 이상이면 통계 검정을 합니다.
 
+**05 각 위치에는 어떤 세포가 있는가**
+같은 조직의 단일세포 참조 자료가 있으면, spot마다 세포 유형 예측 점수와 spot 안의 세포 유형 비율을 계산합니다. spot 하나에 세포가 여러 개 들어 있어 비율로 봅니다. 참조가 없으면 이 단계는 건너뛰고 군집 마커로 해석합니다.
+
 ### English
-**Four questions Visium spatial transcriptomics analysis can answer**
+**Five questions Visium spatial transcriptomics analysis can answer**
 
 **01 Which expression regions make up the tissue?**
-Spots are clustered by similar expression and drawn on the tissue, revealing anatomical regions such as cortical layers and the hippocampus and their borders.
+Spots are clustered by similar expression and drawn on the tissue, revealing tissue regions such as myocardium, fibrotic areas and perivascular zones and their borders.
 
 **02 Which genes characterise each region?**
 Marker genes expressed more highly in each cluster than in the others are found to interpret the identity of the regions.
@@ -62,6 +67,9 @@ Genes concentrated in particular places of the tissue, regardless of clusters (s
 
 **04 How do region composition and expression within regions change between conditions?**
 After all slices are clustered on a common basis, cluster proportions and per-cluster gene expression are compared between conditions, with statistical testing when each condition has two or more slices.
+
+**05 Which cells are at each position?**
+With a single-cell reference of the same tissue, cell-type prediction scores and cell-type proportions within each spot are computed; a spot holds several cells, so types are read as proportions. Without a reference this step is skipped and clusters are read through their marker genes.
 
 ## A3. 분석 흐름 / Analysis workflow
 
@@ -76,14 +84,14 @@ After all slices are clustered on a common basis, cluster proportions and per-cl
 그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/pipeline/figures/concept.png` (원본 `concept.svg`)
 
 ### 국문 (그림 설명)
-**그림. 공간 전사체 분석의 원리.** (A) 조직 절편 위의 격자에서 위치마다 유전자 발현을 셉니다. Visium은 지름 55µm spot(spot마다 세포 1~10개)이고, Visium HD는 2µm 사각형을 8µm 또는 16µm bin으로 묶어 세포 크기에 가까운 해상도로 봅니다. 이 파이프라인은 Visium spot을 분석합니다. (B) 발현이 비슷한 spot을 군집으로 묶어 조직 위에 칠하면 층 구조나 핵 같은 조직 영역이 드러나고, UMAP에서는 군집이 서로 떨어진 점 무리로 보입니다. (C) 조건 비교는 같은 군집(같은 영역) 안에서 합니다. 슬라이스마다 그 군집 spot의 count를 합친 pseudobulk를 만들고, 슬라이스를 반복으로 삼아 DESeq2로 조건 간 차이를 검정합니다. 조건마다 슬라이스가 한 장뿐이면 spot 단위 검정만 할 수 있으며 탐색용입니다. 조직 모양, 군집, count 값은 모식적인 값입니다.
+**그림. 공간 전사체 분석의 원리.** (A) 조직 절편 위의 격자에서 위치마다 유전자 발현을 셉니다. Visium은 지름 55µm spot(spot마다 세포 1~10개)이고, Visium HD는 2µm 사각형을 8µm 또는 16µm bin으로 묶어 세포 크기에 가까운 해상도로 봅니다. 이 파이프라인은 Visium spot을 분석합니다. (B) 발현이 비슷한 spot을 군집으로 묶어 조직 위에 칠하면 층 구조나 핵 같은 조직 영역이 드러나고, UMAP에서는 군집이 서로 떨어진 점 무리로 보입니다. (C) 조건 비교는 같은 군집(같은 영역) 안에서 합니다. 슬라이스마다 그 군집 spot의 count를 합친 pseudobulk를 만들고, 슬라이스를 반복으로 삼아 DESeq2로 조건 간 차이를 검정합니다. 조건마다 슬라이스가 한 장뿐이면 spot 단위 검정만 할 수 있으며 탐색용입니다. (D) 같은 조직의 단일세포 참조 자료가 있으면, 참조의 세포 유형별 발현 특징으로 위치마다 세포 유형을 추정합니다. Visium spot은 세포가 섞여 있어 비율로, Visium HD bin은 세포 하나 크기라 유형으로 붙이고, 그 결과로 세포 유형별 조건 비교도 할 수 있습니다. 참조가 없으면 이 단계는 건너뜁니다. 조직 모양, 군집, count 값은 모식적인 값입니다.
 
 ### English (figure legend)
-**Figure. Principle of spatial transcriptomics analysis.** (A) Gene expression is counted at each position of a grid over the tissue section: Visium uses 55 um spots (1-10 cells each), and Visium HD groups 2 um squares into 8 or 16 um bins, close to cellular resolution. This pipeline analyses Visium spots. (B) Spots with similar expression are grouped into clusters; painted on the tissue they reveal regions such as layers and nuclei, and in the UMAP they form separate groups of points. (C) Conditions are compared within one cluster (one region). For each slice the counts of that cluster's spots are summed into a pseudobulk sample, and DESeq2 tests the condition with slices as replicates. With one slice per condition only a spot-level test is possible, which is exploratory. Tissue shape, clusters and counts are schematic.
+**Figure. Principle of spatial transcriptomics analysis.** (A) Gene expression is counted at each position of a grid over the tissue section: Visium uses 55 um spots (1-10 cells each), and Visium HD groups 2 um squares into 8 or 16 um bins, close to cellular resolution. This pipeline analyses Visium spots. (B) Spots with similar expression are grouped into clusters; painted on the tissue they reveal regions such as layers and nuclei, and in the UMAP they form separate groups of points. (C) Conditions are compared within one cluster (one region). For each slice the counts of that cluster's spots are summed into a pseudobulk sample, and DESeq2 tests the condition with slices as replicates. With one slice per condition only a spot-level test is possible, which is exploratory. (D) With a single-cell reference of the same tissue, cell types are estimated at each position from the reference's per-type expression profiles: as proportions in Visium spots, which hold several cells, and as one type per Visium HD bin, which is about one cell; conditions can then also be compared per cell type. Without a reference this step is skipped. Tissue shape, clusters and counts are schematic.
 
 ### 대체 텍스트 (alt)
-- 국문: 공간 전사체 개념도. 조직 위 Visium spot과 Visium HD bin 격자, 조직 영역을 나타내는 군집과 UMAP, 슬라이스별 pseudobulk count를 DESeq2로 비교하는 과정을 보여 줌.
-- English: Concept of spatial transcriptomics: Visium spots and Visium HD bins on a tissue, clusters as tissue regions with a UMAP, and slice-level pseudobulk counts compared with DESeq2.
+- 국문: 공간 전사체 개념도. 조직 위 Visium spot과 Visium HD bin 격자, 조직 영역을 나타내는 군집과 UMAP, 슬라이스별 pseudobulk count를 DESeq2로 비교하는 과정, 단일세포 참조로 spot의 세포 유형 비율과 bin의 세포 유형을 붙이는 과정을 보여 줌.
+- English: Concept of spatial transcriptomics: Visium spots and Visium HD bins on a tissue, clusters as tissue regions with a UMAP, slice-level pseudobulk counts compared with DESeq2, and cell types assigned from a single-cell reference as proportions per spot and one type per bin.
 
 ### 출처 / Reference
 직접 작성한 모식도(외부 그림 사용 안 함)
@@ -119,29 +127,31 @@ After all slices are clustered on a common basis, cluster proportions and per-cl
 | 항목 | 값 |
 |---|---|
 | Pipeline Name | `Spatial_Transcriptomics_Visium_HD_Pipeline` |
+| 서브 타이틀(국문) | Visium HD 고해상도 공간 분석 |
+| 서브 타이틀(영문) | High-resolution spatial analysis with Visium HD |
 | 구성 모듈 | spatial_hd_prep, spatial_hd_cluster, spatial_hd_svf, spatial_condition_de(군집 기준), spatial_hd_rctd, spatial_condition_de(세포 유형 기준) (마지막 2개는 참조를 줄 때 실행) |
 | 파이프라인 입력 | Space Ranger HD 슬라이드 폴더(필수), 슬라이드 정보 CSV(필수), 단일세포 참조 RDS `reference_rds`와 세포 유형 열 `reference_label_col`(선택) |
 | Version | 1.0 (CLOSHA 3.0 첫 배포) |
 | Reference | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette |
-| Keyword(태그) | spatial transcriptomics, Visium HD, high-resolution spatial, clustering, sketch, spatially variable genes, differential expression |
+| Keyword(태그) | spatial transcriptomics, Visium HD, high-resolution spatial, clustering, sketch, spatially variable genes, differential expression, cell type annotation, RCTD |
 | 대분류 / 중분류 | 등록 메모: 포탈 파이프라인 목록에서 가장 가까운 것을 고릅니다(후보: Transcriptomics / Spatial transcriptomics). |
 | 대표 이미지 | 등록 메모: 결과 그림을 본 뒤 고릅니다(후보: spatial_hd_cluster 조직 위 군집). |
 
 ## B1. 파이프라인 소개 / Introduction
 
 ### 국문
-Visium HD 공간 전사체 파이프라인은 10x Genomics Visium HD의 세포 크기에 가까운 bin(8·16µm) 단위 발현을 분석하여, 조직 안의 영역 구성과 조건에 따른 변화를 높은 해상도로 확인하는 분석 도구입니다. 슬라이드별 Space Ranger binned_outputs와 슬라이드 정보를 입력하면, bin을 거르고 정규화한 뒤 정보가 많은 bin을 뽑은 sketch로 모든 슬라이드를 함께 군집하고, 그 군집을 모든 bin에 옮겨 붙입니다. 슬라이드마다 공간 가변 유전자를 Moran's I로 찾고, 조건 사이에서 군집 조성과 군집별 발현을 슬라이드 단위 pseudobulk DESeq2로 비교합니다. bin이 수십만 개라도 메모리에 맞게 처리하도록 sketch와 슬라이드별 처리를 씁니다.
+Visium HD 공간 전사체 파이프라인은 10x Genomics Visium HD의 세포 크기에 가까운 bin(8·16µm) 단위 발현을 분석하여, 조직 안의 영역 구성과 조건에 따른 변화를 높은 해상도로 확인하는 분석 도구입니다. 슬라이드별 Space Ranger binned_outputs와 슬라이드 정보를 입력하면, bin을 거르고 정규화한 뒤 정보가 많은 bin을 뽑은 sketch로 모든 슬라이드를 함께 군집하고, 그 군집을 모든 bin에 옮겨 붙입니다. 슬라이드마다 공간 가변 유전자를 Moran's I로 찾고, 조건 사이에서 군집 조성과 군집별 발현을 슬라이드 단위 pseudobulk DESeq2로 비교합니다. 같은 조직의 단일세포 참조 자료를 함께 주면 모든 bin에 세포 유형을 붙이고(RCTD), 세포 유형별로도 조건을 비교합니다. bin이 수십만 개라도 메모리에 맞게 처리하도록 sketch와 슬라이드별 처리를 씁니다.
 
 ### English
-The Visium HD spatial transcriptomics pipeline analyses expression in near-cellular bins (8 or 16 um) from 10x Genomics Visium HD to reveal tissue regions and their changes between conditions at high resolution. From the Space Ranger binned_outputs of each slide and a slide sheet, it filters and normalises the bins, clusters all slides together on a sketch of informative bins, and transfers the clusters to every bin. Spatially variable genes are found per slide with Moran's I, and cluster composition and per-cluster expression are compared between conditions with slide-level pseudobulk DESeq2. Sketching and slide-by-slide processing keep hundreds of thousands of bins within memory.
+The Visium HD spatial transcriptomics pipeline analyses expression in near-cellular bins (8 or 16 um) from 10x Genomics Visium HD to reveal tissue regions and their changes between conditions at high resolution. From the Space Ranger binned_outputs of each slide and a slide sheet, it filters and normalises the bins, clusters all slides together on a sketch of informative bins, and transfers the clusters to every bin. Spatially variable genes are found per slide with Moran's I, and cluster composition and per-cluster expression are compared between conditions with slide-level pseudobulk DESeq2. Given a single-cell reference of the same tissue, every bin also gets a cell type (RCTD) and conditions are compared per cell type. Sketching and slide-by-slide processing keep hundreds of thousands of bins within memory.
 
 ## B2. 분석 목표 / Analysis goals
 
 ### 국문
-**Visium HD 공간 전사체 분석으로 확인할 수 있는 네 가지 분석 목표**
+**Visium HD 공간 전사체 분석으로 확인할 수 있는 다섯 가지 분석 목표**
 
 **01 조직은 어떤 발현 영역으로 나뉘는가**
-bin을 발현이 비슷한 군집으로 나누고 조직 위에 그려, 피질 층이나 해마처럼 해부학적 영역과 그 경계를 세포 크기에 가까운 해상도로 확인합니다.
+bin을 발현이 비슷한 군집으로 나누고 조직 위에 그려, 종양, 정상 점막, 근육층, 기질처럼 조직 영역과 그 경계를 세포 크기에 가까운 해상도로 확인합니다.
 
 **02 각 영역을 특징짓는 유전자는 무엇인가**
 군집마다 다른 군집보다 높게 발현하는 마커 유전자를 찾아 영역의 정체를 해석합니다.
@@ -152,11 +162,14 @@ bin을 발현이 비슷한 군집으로 나누고 조직 위에 그려, 피질 �
 **04 조건에 따라 영역 구성과 영역 안 발현이 어떻게 달라지는가**
 모든 슬라이드를 같은 기준으로 군집한 뒤, 조건 사이에서 군집 비율과 군집별 유전자 발현을 비교합니다. 조건마다 슬라이드가 2장 이상이면 통계 검정을 합니다.
 
+**05 각 위치에는 어떤 세포가 있는가**
+같은 조직의 단일세포 참조 자료가 있으면, 세포 크기에 가까운 bin마다 세포 유형을 붙이고 세포 유형별로도 조건을 비교합니다. 참조가 없으면 이 단계는 건너뛰고 군집 마커로 해석합니다.
+
 ### English
-**Four questions Visium HD spatial transcriptomics analysis can answer**
+**Five questions Visium HD spatial transcriptomics analysis can answer**
 
 **01 Which expression regions make up the tissue?**
-Bins are clustered by similar expression and drawn on the tissue, revealing anatomical regions such as cortical layers and the hippocampus and their borders at near-cellular resolution.
+Bins are clustered by similar expression and drawn on the tissue, revealing tissue regions such as tumour, normal mucosa, muscle layers and stroma and their borders at near-cellular resolution.
 
 **02 Which genes characterise each region?**
 Marker genes expressed more highly in each cluster than in the others are found to interpret the identity of the regions.
@@ -166,6 +179,9 @@ Genes concentrated in particular places of the tissue, regardless of clusters (s
 
 **04 How do region composition and expression within regions change between conditions?**
 After all slides are clustered on a common basis, cluster proportions and per-cluster gene expression are compared between conditions, with statistical testing when each condition has two or more slides.
+
+**05 Which cells are at each position?**
+With a single-cell reference of the same tissue, every near-cellular bin gets a cell type, and conditions are also compared per cell type. Without a reference this step is skipped and clusters are read through their marker genes.
 
 ## B3. 분석 흐름 / Analysis workflow
 
@@ -180,14 +196,14 @@ After all slides are clustered on a common basis, cluster proportions and per-cl
 그림: `docs/Spatial_Transcriptomics_Analysis_Pipeline/pipeline/figures/concept.png` (원본 `concept.svg`)
 
 ### 국문 (그림 설명)
-**그림. 공간 전사체 분석의 원리.** (A) 조직 절편 위의 격자에서 위치마다 유전자 발현을 셉니다. Visium은 지름 55µm spot(spot마다 세포 1~10개)이고, Visium HD는 2µm 사각형을 8µm 또는 16µm bin으로 묶어 세포 크기에 가까운 해상도로 봅니다. 이 파이프라인은 Visium HD bin을 분석합니다. (B) 발현이 비슷한 bin을 군집으로 묶어 조직 위에 칠하면 층 구조나 핵 같은 조직 영역이 드러나고, UMAP에서는 군집이 서로 떨어진 점 무리로 보입니다. (C) 조건 비교는 같은 군집(같은 영역) 안에서 합니다. 슬라이드마다 그 군집 bin의 count를 합친 pseudobulk를 만들고, 슬라이드를 반복으로 삼아 DESeq2로 조건 간 차이를 검정합니다. 조건마다 슬라이드가 한 장뿐이면 bin 단위 검정만 할 수 있으며 탐색용입니다. 조직 모양, 군집, count 값은 모식적인 값입니다.
+**그림. 공간 전사체 분석의 원리.** (A) 조직 절편 위의 격자에서 위치마다 유전자 발현을 셉니다. Visium은 지름 55µm spot(spot마다 세포 1~10개)이고, Visium HD는 2µm 사각형을 8µm 또는 16µm bin으로 묶어 세포 크기에 가까운 해상도로 봅니다. 이 파이프라인은 Visium HD bin을 분석합니다. (B) 발현이 비슷한 bin을 군집으로 묶어 조직 위에 칠하면 층 구조나 핵 같은 조직 영역이 드러나고, UMAP에서는 군집이 서로 떨어진 점 무리로 보입니다. (C) 조건 비교는 같은 군집(같은 영역) 안에서 합니다. 슬라이드마다 그 군집 bin의 count를 합친 pseudobulk를 만들고, 슬라이드를 반복으로 삼아 DESeq2로 조건 간 차이를 검정합니다. 조건마다 슬라이드가 한 장뿐이면 bin 단위 검정만 할 수 있으며 탐색용입니다. (D) 같은 조직의 단일세포 참조 자료가 있으면, 참조의 세포 유형별 발현 특징으로 위치마다 세포 유형을 추정합니다. Visium spot은 세포가 섞여 있어 비율로, Visium HD bin은 세포 하나 크기라 유형으로 붙이고, 그 결과로 세포 유형별 조건 비교도 할 수 있습니다. 참조가 없으면 이 단계는 건너뜁니다. 조직 모양, 군집, count 값은 모식적인 값입니다.
 
 ### English (figure legend)
-**Figure. Principle of spatial transcriptomics analysis.** (A) Gene expression is counted at each position of a grid over the tissue section: Visium uses 55 um spots (1-10 cells each), and Visium HD groups 2 um squares into 8 or 16 um bins, close to cellular resolution. This pipeline analyses Visium HD bins. (B) Bins with similar expression are grouped into clusters; painted on the tissue they reveal regions such as layers and nuclei, and in the UMAP they form separate groups of points. (C) Conditions are compared within one cluster (one region). For each slide the counts of that cluster's bins are summed into a pseudobulk sample, and DESeq2 tests the condition with slides as replicates. With one slide per condition only a bin-level test is possible, which is exploratory. Tissue shape, clusters and counts are schematic.
+**Figure. Principle of spatial transcriptomics analysis.** (A) Gene expression is counted at each position of a grid over the tissue section: Visium uses 55 um spots (1-10 cells each), and Visium HD groups 2 um squares into 8 or 16 um bins, close to cellular resolution. This pipeline analyses Visium HD bins. (B) Bins with similar expression are grouped into clusters; painted on the tissue they reveal regions such as layers and nuclei, and in the UMAP they form separate groups of points. (C) Conditions are compared within one cluster (one region). For each slide the counts of that cluster's bins are summed into a pseudobulk sample, and DESeq2 tests the condition with slides as replicates. With one slide per condition only a bin-level test is possible, which is exploratory. (D) With a single-cell reference of the same tissue, cell types are estimated at each position from the reference's per-type expression profiles: as proportions in Visium spots, which hold several cells, and as one type per Visium HD bin, which is about one cell; conditions can then also be compared per cell type. Without a reference this step is skipped. Tissue shape, clusters and counts are schematic.
 
 ### 대체 텍스트 (alt)
-- 국문: 공간 전사체 개념도. 조직 위 Visium spot과 Visium HD bin 격자, 조직 영역을 나타내는 군집과 UMAP, 슬라이드별 pseudobulk count를 DESeq2로 비교하는 과정을 보여 줌.
-- English: Concept of spatial transcriptomics: Visium spots and Visium HD bins on a tissue, clusters as tissue regions with a UMAP, and slide-level pseudobulk counts compared with DESeq2.
+- 국문: 공간 전사체 개념도. 조직 위 Visium spot과 Visium HD bin 격자, 조직 영역을 나타내는 군집과 UMAP, 슬라이드별 pseudobulk count를 DESeq2로 비교하는 과정, 단일세포 참조로 spot의 세포 유형 비율과 bin의 세포 유형을 붙이는 과정을 보여 줌.
+- English: Concept of spatial transcriptomics: Visium spots and Visium HD bins on a tissue, clusters as tissue regions with a UMAP, slide-level pseudobulk counts compared with DESeq2, and cell types assigned from a single-cell reference as proportions per spot and one type per bin.
 
 ### 출처 / Reference
 직접 작성한 모식도(외부 그림 사용 안 함)
