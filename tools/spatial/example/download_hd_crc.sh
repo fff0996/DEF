@@ -9,8 +9,9 @@
 #         normal_p3, normal_p5 (spatial_hd_prep input_dir = <out_dir>).
 #
 # Each archive (10-17 GB) is streamed through tar, so only the kept folders reach the disk.
-# The 8 and 16 um tissue images are hard links to the 2 um ones in the archives, so the
-# 2 um images are extracted too and copied where a link was not made.
+# The 8 and 16 um tissue images (png, jpg, and in the CRC set cytassist_image.tiff) are
+# hard links to the 2 um ones in the archives, so the 2 um images are extracted too and
+# copied where a link was not made. Without the tiff, tar stops with "Cannot hard link".
 set -euo pipefail
 out=${1:?usage: bash download_hd_crc.sh <out_dir> [bins]}
 bins=${2:-016}
@@ -21,14 +22,17 @@ for pair in crc_p1:Visium_HD_Human_Colon_Cancer_P1 crc_p2:Visium_HD_Human_Colon_
             normal_p5:Visium_HD_Human_Colon_Normal_P5; do
     slide=${pair%%:*}; name=${pair#*:}
     mkdir -p "$out/$slide"
-    pats=("binned_outputs/square_002um/spatial/*.png" "binned_outputs/square_002um/spatial/*.jpg")
+    pats=("binned_outputs/square_002um/spatial/*.png" "binned_outputs/square_002um/spatial/*.jpg"
+          "binned_outputs/square_002um/spatial/*.tiff")
     for b in $bins; do pats+=("binned_outputs/square_${b}um/*"); done
     echo "== $slide ($name)"
     wget -q -O - "$base/$name/${name}_binned_outputs.tar.gz" |
         tar -xz -C "$out/$slide" --no-same-owner --wildcards "${pats[@]}"
     for b in $bins; do
         d=$out/$slide/binned_outputs/square_${b}um/spatial
-        for f in "$out/$slide"/binned_outputs/square_002um/spatial/*.png "$out/$slide"/binned_outputs/square_002um/spatial/*.jpg; do
+        for f in "$out/$slide"/binned_outputs/square_002um/spatial/*.png "$out/$slide"/binned_outputs/square_002um/spatial/*.jpg \
+                 "$out/$slide"/binned_outputs/square_002um/spatial/*.tiff; do
+            [ -e "$f" ] || continue
             [ -e "$d/$(basename "$f")" ] || cp "$f" "$d/"
         done
         [ -f "$d/tissue_lowres_image.png" ] && [ -f "$out/$slide/binned_outputs/square_${b}um/filtered_feature_bc_matrix.h5" ] ||
