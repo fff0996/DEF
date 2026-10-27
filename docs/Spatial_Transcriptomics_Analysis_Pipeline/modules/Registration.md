@@ -270,19 +270,23 @@ Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형
 예제 데이터와 받는 법은 `tools/spatial/example/README.md`에 있다(사용자 결정, 2026-10-27: HD 예제를 쥐 뇌 1장에서 사람 대장암 5장으로 바꿈).
 | 용도 | 데이터 | 폴더 구조 |
 |---|---|---|
-| Visium | 10x 쥐 뇌 시상 절편 4장(Anterior, Posterior × Section 1, 2) | `$BASE/visium/<slice>/filtered_feature_bc_matrix.h5`, `spatial/` |
+| Visium | 사람 심장 8장(Kuppe 2022, CC BY 4.0): 정상 4장 vs 심근경색 허혈 구역 4장. `tools/spatial/example/download_visium_mi.sh`로 받는다 | `$BASE/visium_mi/<slice>/filtered_feature_bc_matrix.h5`, `spatial/` |
 | Visium HD | 10x 사람 대장암 FFPE 5장: 종양 P1, P2, P5, 정상 인접 P3, P5. `tools/spatial/example/download_hd_crc.sh`로 받는다 | `$BASE/hd_crc/<slide>/binned_outputs/square_016um/...` |
-| 참조(Visium) | `tools/spatial/reference/reference.rds`: 쥐 해마 510세포, 열 `celltype` | |
+| 참조(Visium) | 심장 참조는 아직 없다(같은 연구 단일핵 RNA-seq 7.9GB h5ad를 변환해야 함). 그 전에는 참조 없이 돌린다. 쥐 해마 참조 `tools/spatial/reference/reference.rds`는 동작 확인용 | |
 | 참조(HD) | `human_colon_crc_flex_300pertype.rds`: 같은 연구 단일세포 10,333개, 열 `Level1`(9종), `Level2`(38종). `tools/spatial/reference/human/colon_crc_flex/`의 명령으로 만든다 | |
 
 슬라이스 정보 CSV(`tools/spatial/example/`):
 ```
 # visium_slices.csv
 SliceID,Condition
-sec1_anterior,section1
-sec1_posterior,section1
-sec2_anterior,section2
-sec2_posterior,section2
+ctrl_p1,control
+ctrl_p7,control
+ctrl_p8,control
+ctrl_p17,control
+iz_p3,ischemic
+iz_p10,ischemic
+iz_p15,ischemic
+iz_p16,ischemic
 
 # hd_slides.csv
 SliceID,Condition
@@ -296,15 +300,14 @@ normal_p5,normal
 실행 예:
 ```bash
 # Visium
-Rscript spatial_prep.1.1.R    input_dir=$BASE/visium output_dir=$BASE/out/prep
+Rscript spatial_prep.1.1.R    input_dir=$BASE/visium_mi output_dir=$BASE/out/prep
 Rscript spatial_cluster.1.1.R input_dir=$BASE/out/prep    output_dir=$BASE/out/cluster
 Rscript spatial_svf.1.1.R     input_dir=$BASE/out/cluster output_dir=$BASE/out/svf
 Rscript spatial_merge.1.2.R   input_dir=$BASE/out/cluster output_dir=$BASE/out/merge integration=harmony
-Rscript spatial_condition_de.1.4.R input_dir=$BASE/out/merge sample_data=$BASE/visium_slices.csv output_dir=$BASE/out/de reference=section1
-Rscript spatial_labelTransfer.1.2.R input_dir=$BASE/out/cluster output_dir=$BASE/out/labeltransfer \
-        reference_rds=$BASE/reference.rds reference_label_col=celltype min_shared_features=100
-Rscript spatial_rctd.1.2.R input_dir=$BASE/out/cluster output_dir=$BASE/out/rctd \
-        reference_rds=$BASE/reference.rds reference_label_col=celltype min_shared_features=100
+Rscript spatial_condition_de.1.4.R input_dir=$BASE/out/merge sample_data=$BASE/visium_slices.csv output_dir=$BASE/out/de reference=control
+# 심장 참조가 생기기 전: 참조 없이 실행 -> 건너뜀(skipped.txt) 확인
+Rscript spatial_labelTransfer.1.2.R input_dir=$BASE/out/cluster output_dir=$BASE/out/labeltransfer
+Rscript spatial_rctd.1.2.R input_dir=$BASE/out/cluster output_dir=$BASE/out/rctd
 
 # Visium HD (사람 대장암)
 Rscript spatial_hd_prep.1.1.R    input_dir=$BASE/hd_crc output_dir=$BASE/out/hd_prep bin_size=16

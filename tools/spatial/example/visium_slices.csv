@@ -1,5 +1,9 @@
 SliceID,Condition
-sec1_anterior,section1
-sec1_posterior,section1
-sec2_anterior,section2
-sec2_posterior,section2
+ctrl_p1,control
+ctrl_p7,control
+ctrl_p8,control
+ctrl_p17,control
+iz_p3,ischemic
+iz_p10,ischemic
+iz_p15,ischemic
+iz_p16,ischemic
