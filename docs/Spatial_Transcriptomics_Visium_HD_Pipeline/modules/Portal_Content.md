@@ -229,6 +229,12 @@ Clusters the sketched bins of all Visium HD slides together and labels every bin
 | 입력은 모두 같은 bin 크기로 전처리한 슬라이드여야 합니다. | All input slides must be prepared with the same bin size. |
 
 ### 분석 개념 이미지
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/clustering_traag2019_fig1.png`
+
+- 레전드(국문): **그림. 군집에 쓰는 Louvain 알고리즘.** (a) 처음에는 이웃 그래프의 점(spot·bin)이 각자 하나의 군집입니다. (b) 군집 안 연결이 촘촘해지도록 점을 이웃 군집으로 옮깁니다. (c) 만든 군집을 점 하나로 합쳐 작은 그래프를 만들고 (d) 다시 옮기기를 반복합니다. Seurat FindClusters의 기본 방법이며, resolution이 클수록 군집이 잘게 나뉩니다. Traag VA et al., Sci Rep 9, 5233 (2019), Fig. 1(CC BY 4.0).
+- 레전드(영문): **Figure. The Louvain algorithm used for clustering.** (a) Each point (spot or bin) of the neighbour graph starts as its own community. (b) Points are moved to neighbouring communities to make communities densely connected. (c) Communities are aggregated into single points and (d) moving is repeated. This is the default method of Seurat FindClusters; a larger resolution gives finer clusters. Fig. 1 of Traag VA et al., Sci Rep 9, 5233 (2019) (CC BY 4.0).
+- 출처: Traag VA, Waltman L, van Eck NJ. From Louvain to Leiden: guaranteeing well-connected communities. *Scientific Reports* 9, 5233 (2019). https://doi.org/10.1038/s41598-019-41695-z, Fig. 1을 그대로 씀. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
 그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/spatial_hd_cluster_concept.png`
 
 - 레전드(국문): **그림. Visium HD 통합 군집과 모든 bin 배정.** (A) 모든 슬라이드의 sketch bin을 합쳐 Harmony로 슬라이드 차이를 보정하고 군집, UMAP, 마커를 계산합니다. (B) 각 bin(흰 사각형)을 같은 PCA에 투영하고, 같은 슬라이드에서 가장 가까운 sketch bin k_transfer개의 다수결로 군집을 붙입니다. 같은 군집인 이웃의 비율이 Cluster_score입니다. (C) 모든 bin에 군집이 붙은 슬라이드 객체와 hd_slides.tsv를 만들며, 조건 비교, 공간 가변 유전자, RCTD 모듈의 입력이 됩니다. 값과 조직 모양은 모식적인 값입니다.
@@ -526,6 +532,12 @@ normal_2,normal,P2
 | 같은 조직의 연속 절편처럼 실제 차이가 없는 비교에서도 spot 단위 검정은 미토콘드리아·리보솜 유전자 같은 기술적 차이를 유의하게 낼 수 있습니다. | Even without real differences (for example serial sections of one tissue), spot-level tests can flag technical differences such as mitochondrial and ribosomal genes. |
 
 ### 분석 개념 이미지
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/condition_de_squair2021_fig2a.png`
+
+- 레전드(국문): **그림. pseudobulk 만들기.** 조건(대조·처리)마다 반복 시료의 세포 발현을 반복별로 합쳐 pseudobulk 열을 만듭니다(오른쪽, 열 = 반복). 이 모듈에서는 세포 대신 한 군집의 spot(bin)을, 반복 대신 슬라이스를 씁니다. 세포를 반복으로 삼으면 거짓 양성이 많아지므로 슬라이스를 단위로 검정합니다. Squair JW et al., Nat Commun 12, 5692 (2021), Fig. 2a(CC BY 4.0).
+- 레전드(영문): **Figure. Building pseudobulks.** For each condition (control, treatment), cell expression is summed per replicate into pseudobulk columns (right, one column per replicate). In this module the spots (bins) of one cluster take the place of cells and slices that of replicates; testing with slices as units avoids the false discoveries that treating cells as replicates produces. Fig. 2a of Squair JW et al., Nat Commun 12, 5692 (2021) (CC BY 4.0).
+- 출처: Squair JW, Gautier M, Kathe C, Anderson MA, James ND, Hutson TH, Hudelle R, Qaiser T, Matson KJE, Barraud Q, Levine AJ, La Manno G, Skinnider MA, Courtine G. Confronting false discoveries in single-cell differential expression. *Nature Communications* 12, 5692 (2021). https://doi.org/10.1038/s41467-021-25960-2, Fig. 2a 부분만 잘라 씀. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
 그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/spatial_condition_de_concept.png`
 
 - 레전드(국문): **그림. 조건 간 군집별 비교.** (A) 슬라이스마다 한 군집 spot의 count를 합친 pseudobulk를 만들고, 슬라이스를 반복으로 삼아 DESeq2(~ Condition, 짝 설계면 ~ Patient + Condition)로 검정합니다. 조건마다 슬라이스가 한 장뿐이면 spot 단위 Wilcoxon(탐색용)으로 비교합니다. (B) 군집마다 volcano를 그립니다(x축 log2 fold change, y축 -log10 adjusted p, 빨강 기준보다 높음, 파랑 낮음, 점선은 lfc_cutoff와 padj_cutoff). (C) de_summary.tsv에 군집별 검정 방법과 상태(ok, ok_exploratory, insufficient_slices)를 남깁니다. Visium merge 결과와 Visium HD 결과(hd_slides.tsv)를 모두 받으며, group_by로 세포 유형 열을 쓸 수도 있습니다. 값과 조직 모양은 모식적인 값입니다.

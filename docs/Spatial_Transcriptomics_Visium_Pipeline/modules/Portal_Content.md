@@ -204,6 +204,12 @@ Splits the spots of each slice into clusters of similar expression and finds mar
 | 입력 객체에 SCT assay가 있어야 합니다(spatial_prep 결과 구조). | The input objects need an SCT assay (the structure written by spatial_prep). |
 
 ### 분석 개념 이미지
+그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/clustering_traag2019_fig1.png`
+
+- 레전드(국문): **그림. 군집에 쓰는 Louvain 알고리즘.** (a) 처음에는 이웃 그래프의 점(spot·bin)이 각자 하나의 군집입니다. (b) 군집 안 연결이 촘촘해지도록 점을 이웃 군집으로 옮깁니다. (c) 만든 군집을 점 하나로 합쳐 작은 그래프를 만들고 (d) 다시 옮기기를 반복합니다. Seurat FindClusters의 기본 방법이며, resolution이 클수록 군집이 잘게 나뉩니다. Traag VA et al., Sci Rep 9, 5233 (2019), Fig. 1(CC BY 4.0).
+- 레전드(영문): **Figure. The Louvain algorithm used for clustering.** (a) Each point (spot or bin) of the neighbour graph starts as its own community. (b) Points are moved to neighbouring communities to make communities densely connected. (c) Communities are aggregated into single points and (d) moving is repeated. This is the default method of Seurat FindClusters; a larger resolution gives finer clusters. Fig. 1 of Traag VA et al., Sci Rep 9, 5233 (2019) (CC BY 4.0).
+- 출처: Traag VA, Waltman L, van Eck NJ. From Louvain to Leiden: guaranteeing well-connected communities. *Scientific Reports* 9, 5233 (2019). https://doi.org/10.1038/s41598-019-41695-z, Fig. 1을 그대로 씀. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/spatial_cluster_concept.png`
 
 - 레전드(국문): **그림. 슬라이스별 군집과 마커.** (A) SCT 값으로 PCA(npcs), 이웃 그래프, Louvain 군집(resolution), UMAP을 차례로 계산합니다. (B) 군집은 UMAP에서 점 무리로, 조직 위에서 해부학적 영역으로 나타납니다. 군집 번호는 슬라이스마다 따로 매겨집니다. (C) 군집마다 presto로 마커를 찾아 dot plot(점 크기: 발현 spot 비율, 색: 평균 발현)과 표로 남깁니다. 값과 조직 모양은 모식적인 값입니다.
@@ -440,6 +446,12 @@ Merges several slices into one object and recomputes the dimensional reduction a
 | 실행할 때마다 output_dir에서 logs/를 뺀 나머지를 지웁니다. 입력(군집 결과 폴더)을 output_dir 안에 두지 마세요. | output_dir except logs/ is cleared on every run; do not keep the input (cluster folder) inside it. |
 
 ### 분석 개념 이미지
+그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/clustering_traag2019_fig1.png`
+
+- 레전드(국문): **그림. 군집에 쓰는 Louvain 알고리즘.** (a) 처음에는 이웃 그래프의 점(spot·bin)이 각자 하나의 군집입니다. (b) 군집 안 연결이 촘촘해지도록 점을 이웃 군집으로 옮깁니다. (c) 만든 군집을 점 하나로 합쳐 작은 그래프를 만들고 (d) 다시 옮기기를 반복합니다. Seurat FindClusters의 기본 방법이며, resolution이 클수록 군집이 잘게 나뉩니다. Traag VA et al., Sci Rep 9, 5233 (2019), Fig. 1(CC BY 4.0).
+- 레전드(영문): **Figure. The Louvain algorithm used for clustering.** (a) Each point (spot or bin) of the neighbour graph starts as its own community. (b) Points are moved to neighbouring communities to make communities densely connected. (c) Communities are aggregated into single points and (d) moving is repeated. This is the default method of Seurat FindClusters; a larger resolution gives finer clusters. Fig. 1 of Traag VA et al., Sci Rep 9, 5233 (2019) (CC BY 4.0).
+- 출처: Traag VA, Waltman L, van Eck NJ. From Louvain to Leiden: guaranteeing well-connected communities. *Scientific Reports* 9, 5233 (2019). https://doi.org/10.1038/s41598-019-41695-z, Fig. 1을 그대로 씀. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/spatial_merge_concept.png`
 
 - 레전드(국문): **그림. 여러 슬라이스 통합 군집.** (A) 슬라이스마다 따로 군집하면 같은 영역도 슬라이스마다 번호(색)가 다릅니다. (B) 슬라이스 객체를 합쳐 다시 군집하면(integration=harmony이면 Harmony로 슬라이스 차이 보정) 같은 번호가 모든 슬라이스에서 같은 영역을 뜻합니다. (C) 슬라이스별 군집 조성을 표와 누적 막대·heatmap으로 남기고, merged_clustered.rds는 조건 비교의 입력이 됩니다. 값과 조직 모양은 모식적인 값입니다.
@@ -610,6 +622,12 @@ normal_2,normal,P2
 | 같은 조직의 연속 절편처럼 실제 차이가 없는 비교에서도 spot 단위 검정은 미토콘드리아·리보솜 유전자 같은 기술적 차이를 유의하게 낼 수 있습니다. | Even without real differences (for example serial sections of one tissue), spot-level tests can flag technical differences such as mitochondrial and ribosomal genes. |
 
 ### 분석 개념 이미지
+그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/condition_de_squair2021_fig2a.png`
+
+- 레전드(국문): **그림. pseudobulk 만들기.** 조건(대조·처리)마다 반복 시료의 세포 발현을 반복별로 합쳐 pseudobulk 열을 만듭니다(오른쪽, 열 = 반복). 이 모듈에서는 세포 대신 한 군집의 spot(bin)을, 반복 대신 슬라이스를 씁니다. 세포를 반복으로 삼으면 거짓 양성이 많아지므로 슬라이스를 단위로 검정합니다. Squair JW et al., Nat Commun 12, 5692 (2021), Fig. 2a(CC BY 4.0).
+- 레전드(영문): **Figure. Building pseudobulks.** For each condition (control, treatment), cell expression is summed per replicate into pseudobulk columns (right, one column per replicate). In this module the spots (bins) of one cluster take the place of cells and slices that of replicates; testing with slices as units avoids the false discoveries that treating cells as replicates produces. Fig. 2a of Squair JW et al., Nat Commun 12, 5692 (2021) (CC BY 4.0).
+- 출처: Squair JW, Gautier M, Kathe C, Anderson MA, James ND, Hutson TH, Hudelle R, Qaiser T, Matson KJE, Barraud Q, Levine AJ, La Manno G, Skinnider MA, Courtine G. Confronting false discoveries in single-cell differential expression. *Nature Communications* 12, 5692 (2021). https://doi.org/10.1038/s41467-021-25960-2, Fig. 2a 부분만 잘라 씀. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/modules/figures/module_concepts/spatial_condition_de_concept.png`
 
 - 레전드(국문): **그림. 조건 간 군집별 비교.** (A) 슬라이스마다 한 군집 spot의 count를 합친 pseudobulk를 만들고, 슬라이스를 반복으로 삼아 DESeq2(~ Condition, 짝 설계면 ~ Patient + Condition)로 검정합니다. 조건마다 슬라이스가 한 장뿐이면 spot 단위 Wilcoxon(탐색용)으로 비교합니다. (B) 군집마다 volcano를 그립니다(x축 log2 fold change, y축 -log10 adjusted p, 빨강 기준보다 높음, 파랑 낮음, 점선은 lfc_cutoff와 padj_cutoff). (C) de_summary.tsv에 군집별 검정 방법과 상태(ok, ok_exploratory, insufficient_slices)를 남깁니다. Visium merge 결과와 Visium HD 결과(hd_slides.tsv)를 모두 받으며, group_by로 세포 유형 열을 쓸 수도 있습니다. 값과 조직 모양은 모식적인 값입니다.

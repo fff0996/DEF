@@ -79,19 +79,51 @@ With a single-cell reference of the same tissue, cell-type prediction scores and
 
 ## 4. 분석 개념 / Analysis concept
 
+그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/pipeline/figures/concept_williams2022_fig1_arrays.png`
+
+등록 메모: 논문 그림(CC BY 4.0)을 먼저 씁니다. 그림 1은 Fig. 1에서 시퀀싱 기반(Arrays) 부분만 잘랐고, 그림 2는 Fig. 3 그대로입니다. 논문 그림에 없는 내용(군집, 조건 비교, 세포 유형)은 직접 그린 그림 3으로 보탭니다.
+
+### 국문 (그림 1 설명)
+**그림 1. 공간 전사체가 위치를 기록하는 원리(시퀀싱 기반).** 1. 슬라이드에 위치마다 다른 바코드를 붙인 포획 탐침이 깔려 있습니다. 2. 바코드 위치를 이미지로 확인합니다(Visium과 Visium HD는 바코드 위치가 슬라이드를 만들 때 정해져 있어 이 단계가 없습니다). 3. 조직 절편을 올리면 세포의 mRNA가 바로 아래 탐침에 붙고 그 자리의 바코드가 함께 기록됩니다. 4. 붙잡힌 분자를 시퀀싱해 유전자와 바코드(위치)를 함께 읽어 위치별 발현 표를 만듭니다. Visium은 지름 55µm spot, Visium HD는 2µm 사각형 칸(8·16µm로 묶어 씀)입니다. Williams CG et al., Genome Med 14, 68 (2022), Fig. 1 일부(CC BY 4.0).
+
+### English (Figure 1 legend)
+**Figure 1. How spatial transcriptomics records location (sequencing-based).** 1. Capture probes carrying a different barcode at each position cover the slide. 2. Barcode positions are imaged (Visium and Visium HD fix them when the slide is made, so this step is not needed). 3. A tissue section is placed on top; the mRNA of each cell binds the probes directly beneath and is tagged with that position's barcode. 4. Sequencing the captured molecules reads gene and barcode (position) together, giving an expression table per position. Visium uses 55 um spots and Visium HD 2 um squares (grouped into 8 or 16 um bins). Part of Fig. 1 of Williams CG et al., Genome Med 14, 68 (2022) (CC BY 4.0).
+
+### 대체 텍스트 (그림 1)
+- 국문: 바코드 탐침 배열 위에 조직 절편을 올려 mRNA를 포획하고 시퀀싱하는 과정 그림.
+- English: A barcoded probe array, a tissue section placed on it to capture mRNA, and sequencing of the captured probes.
+
+### 출처 (그림 1)
+Williams CG, Lee HJ, Asatsuma T, Vento-Tormo R, Haque A. An introduction to spatial transcriptomics for biomedical research. *Genome Medicine* 14, 68 (2022). https://doi.org/10.1186/s13073-022-01075-1, Fig. 1의 Sequencing methods(Arrays) 부분을 잘라 씀. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). 원 그림은 BioRender.com으로 작성됨.
+
+그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/pipeline/figures/concept_williams2022_fig3.png`
+
+### 국문 (그림 2 설명)
+**그림 2. 공간 전사체 분석의 일반적인 흐름.** 시퀀싱 기반 자료(오른쪽: Visium, Visium HD)는 정렬과 위치 매핑(Space Ranger, 이 파이프라인의 앞 단계)을 거친 뒤 정규화하고, 군집, 공간 분석, 세포 유형 추정(deconvolution) 같은 하류 분석을 거쳐 차등 발현 같은 생물학적 해석으로 이어집니다. 이 파이프라인은 정규화부터 차등 발현까지를 맡습니다. 이미징 기반 자료(왼쪽)는 이 파이프라인의 입력이 아닙니다. Williams CG et al., Genome Med 14, 68 (2022), Fig. 3(CC BY 4.0).
+
+### English (Figure 2 legend)
+**Figure 2. The usual course of a spatial transcriptomics analysis.** Sequencing-based data (right: Visium, Visium HD) are aligned and mapped to positions (Space Ranger, before this pipeline), normalised, and passed to downstream analyses such as clustering, spatial analysis and cell-type deconvolution, leading to biological inference such as differential expression. This pipeline covers normalisation through differential expression; imaging-based data (left) are not its input. Fig. 3 of Williams CG et al., Genome Med 14, 68 (2022) (CC BY 4.0).
+
+### 대체 텍스트 (그림 2)
+- 국문: 이미징·시퀀싱 자료가 정규화, 하류 분석, 생물학적 해석으로 이어지는 흐름도.
+- English: Flow chart from imaging and sequencing data through normalisation and downstream analysis to biological inference.
+
+### 출처 (그림 2)
+Williams CG, Lee HJ, Asatsuma T, Vento-Tormo R, Haque A. An introduction to spatial transcriptomics for biomedical research. *Genome Medicine* 14, 68 (2022). https://doi.org/10.1186/s13073-022-01075-1, Fig. 3을 그대로 씀. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). 원 그림은 BioRender.com으로 작성됨.
+
 그림: `docs/Spatial_Transcriptomics_Visium_Pipeline/pipeline/figures/concept.png` (원본 `concept.svg`)
 
-### 국문 (그림 설명)
-**그림. 공간 전사체 분석의 원리.** (A) 조직 절편 위의 격자에서 위치마다 유전자 발현을 셉니다. Visium은 지름 55µm spot(spot마다 세포 1~10개)이고, Visium HD는 2µm 사각형을 8µm 또는 16µm bin으로 묶어 세포 크기에 가까운 해상도로 봅니다. 이 파이프라인은 Visium spot을 분석합니다. (B) 발현이 비슷한 spot을 군집으로 묶어 조직 위에 칠하면 층 구조나 핵 같은 조직 영역이 드러나고, UMAP에서는 군집이 서로 떨어진 점 무리로 보입니다. (C) 조건 비교는 같은 군집(같은 영역) 안에서 합니다. 슬라이스마다 그 군집 spot의 count를 합친 pseudobulk를 만들고, 슬라이스를 반복으로 삼아 DESeq2로 조건 간 차이를 검정합니다. 조건마다 슬라이스가 한 장뿐이면 spot 단위 검정만 할 수 있으며 탐색용입니다. (D) 같은 조직의 단일세포 참조 자료가 있으면, 참조의 세포 유형별 발현 특징으로 위치마다 세포 유형을 추정합니다. Visium spot은 세포가 섞여 있어 비율로, Visium HD bin은 세포 하나 크기라 유형으로 붙이고, 그 결과로 세포 유형별 조건 비교도 할 수 있습니다. 참조가 없으면 이 단계는 건너뜁니다. 조직 모양, 군집, count 값은 모식적인 값입니다.
+### 국문 (그림 3 설명)
+**그림 3. 이 파이프라인의 분석 원리.** (A) 조직 절편 위의 격자에서 위치마다 유전자 발현을 셉니다. Visium은 지름 55µm spot(spot마다 세포 1~10개)이고, Visium HD는 2µm 사각형을 8µm 또는 16µm bin으로 묶어 세포 크기에 가까운 해상도로 봅니다. 이 파이프라인은 Visium spot을 분석합니다. (B) 발현이 비슷한 spot을 군집으로 묶어 조직 위에 칠하면 층 구조나 핵 같은 조직 영역이 드러나고, UMAP에서는 군집이 서로 떨어진 점 무리로 보입니다. (C) 조건 비교는 같은 군집(같은 영역) 안에서 합니다. 슬라이스마다 그 군집 spot의 count를 합친 pseudobulk를 만들고, 슬라이스를 반복으로 삼아 DESeq2로 조건 간 차이를 검정합니다. 조건마다 슬라이스가 한 장뿐이면 spot 단위 검정만 할 수 있으며 탐색용입니다. (D) 같은 조직의 단일세포 참조 자료가 있으면, 참조의 세포 유형별 발현 특징으로 위치마다 세포 유형을 추정합니다. Visium spot은 세포가 섞여 있어 비율로, Visium HD bin은 세포 하나 크기라 유형으로 붙이고, 그 결과로 세포 유형별 조건 비교도 할 수 있습니다. 참조가 없으면 이 단계는 건너뜁니다. 조직 모양, 군집, count 값은 모식적인 값입니다.
 
-### English (figure legend)
-**Figure. Principle of spatial transcriptomics analysis.** (A) Gene expression is counted at each position of a grid over the tissue section: Visium uses 55 um spots (1-10 cells each), and Visium HD groups 2 um squares into 8 or 16 um bins, close to cellular resolution. This pipeline analyses Visium spots. (B) Spots with similar expression are grouped into clusters; painted on the tissue they reveal regions such as layers and nuclei, and in the UMAP they form separate groups of points. (C) Conditions are compared within one cluster (one region). For each slice the counts of that cluster's spots are summed into a pseudobulk sample, and DESeq2 tests the condition with slices as replicates. With one slice per condition only a spot-level test is possible, which is exploratory. (D) With a single-cell reference of the same tissue, cell types are estimated at each position from the reference's per-type expression profiles: as proportions in Visium spots, which hold several cells, and as one type per Visium HD bin, which is about one cell; conditions can then also be compared per cell type. Without a reference this step is skipped. Tissue shape, clusters and counts are schematic.
+### English (Figure 3 legend)
+**Figure 3. Analysis principle of this pipeline.** (A) Gene expression is counted at each position of a grid over the tissue section: Visium uses 55 um spots (1-10 cells each), and Visium HD groups 2 um squares into 8 or 16 um bins, close to cellular resolution. This pipeline analyses Visium spots. (B) Spots with similar expression are grouped into clusters; painted on the tissue they reveal regions such as layers and nuclei, and in the UMAP they form separate groups of points. (C) Conditions are compared within one cluster (one region). For each slice the counts of that cluster's spots are summed into a pseudobulk sample, and DESeq2 tests the condition with slices as replicates. With one slice per condition only a spot-level test is possible, which is exploratory. (D) With a single-cell reference of the same tissue, cell types are estimated at each position from the reference's per-type expression profiles: as proportions in Visium spots, which hold several cells, and as one type per Visium HD bin, which is about one cell; conditions can then also be compared per cell type. Without a reference this step is skipped. Tissue shape, clusters and counts are schematic.
 
-### 대체 텍스트 (alt)
+### 대체 텍스트 (그림 3)
 - 국문: 공간 전사체 개념도. 조직 위 Visium spot과 Visium HD bin 격자, 조직 영역을 나타내는 군집과 UMAP, 슬라이스별 pseudobulk count를 DESeq2로 비교하는 과정, 단일세포 참조로 spot의 세포 유형 비율과 bin의 세포 유형을 붙이는 과정을 보여 줌.
 - English: Concept of spatial transcriptomics: Visium spots and Visium HD bins on a tissue, clusters as tissue regions with a UMAP, slice-level pseudobulk counts compared with DESeq2, and cell types assigned from a single-cell reference as proportions per spot and one type per bin.
 
-### 출처 / Reference
+### 출처 (그림 3)
 직접 작성한 모식도(외부 그림 사용 안 함)
 
 ## 5. 주요 사항 (파이프라인) / Key notes (pipeline)
