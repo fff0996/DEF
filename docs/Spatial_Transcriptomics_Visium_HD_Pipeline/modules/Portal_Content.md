@@ -95,7 +95,7 @@ Loads 10x Visium HD slides at a chosen bin size (8 or 16 um), filters and normal
 |---|---|
 | Space Ranger 결과에서 binned_outputs 폴더를 통째로 올려 주세요. 8·16µm 폴더의 조직 이미지는 2µm 폴더 이미지의 하드링크라, 일부 폴더만 압축을 풀거나 복사하면 이미지가 빠질 수 있습니다. | Upload the whole binned_outputs folder of Space Ranger. The tissue images of the 8 and 16 um folders are hard links to those of the 2 um folder, so extracting or copying only some folders can lose the images. |
 | 8µm가 세포 크기에 가까워 권장 크기입니다. 16µm는 메모리와 시간이 4분의 1 정도로 줄어 큰 슬라이드나 빠른 확인에 씁니다. | 8 um is close to cell size and recommended; 16 um needs about a quarter of the memory and time, for large slides or quick checks. |
-| 메모리는 bin 수에 비례합니다. 8µm는 슬라이드당 32~64GB를 권장합니다. 메모리가 부족하면 bin_size=16이나 min_counts를 올려 다시 실행합니다. | Memory grows with the number of bins; 32-64 GB per slide is recommended for 8 um. When memory runs out, rerun with bin_size=16 or a higher min_counts. |
+| 메모리는 bin 수에 비례하며 슬라이드를 하나씩 처리합니다. 기본 설정(64GB)으로 예시 데이터(16µm 5장)는 최대 12GB를 썼습니다. 8µm는 bin이 약 4배라 큰 슬라이드에서 메모리가 모자라면 128GB로 올리거나, bin_size=16 또는 min_counts를 올려 다시 실행합니다. | Memory grows with the number of bins, and slides are processed one at a time. With the default setting (64 GB) the example data (five slides, 16 um) used at most 12 GB. 8 um bins are about four times as many; if a large slide runs out of memory, raise it to 128 GB or rerun with bin_size=16 or a higher min_counts. |
 | 한 슬라이드가 실패해도 나머지는 계속 처리하며, hd_prep_summary.tsv에 상태로 남습니다. 모든 슬라이드가 실패할 때만 종료 코드 1입니다. | A failed slide does not stop the others and is listed with its status in hd_prep_summary.tsv; the exit code is 1 only when every slide fails. |
 
 ### 분석 개념 이미지
@@ -225,7 +225,7 @@ Clusters the sketched bins of all Visium HD slides together and labels every bin
 | 국문 | 영문 |
 |---|---|
 | 모든 bin의 군집은 sketch bin에서 옮겨 붙인 것입니다. Cluster_score가 낮은(예: 0.5 미만) bin은 군집 경계에 있어 배정이 불확실합니다. | Clusters of all bins are transferred from the sketched bins; bins with a low Cluster_score (for example below 0.5) lie at cluster borders and their labels are uncertain. |
-| 메모리는 슬라이드 수와 bin 수에 비례합니다. 8µm 슬라이드 여러 장은 64~128GB를 권장합니다. | Memory grows with the number of slides and bins; 64-128 GB is recommended for several 8 um slides. |
+| 메모리는 슬라이드 수와 bin 수에 비례합니다. 기본 설정(64GB)으로 예시 데이터(16µm 5장, sketch 25만 bin)는 최대 31GB를 썼습니다. 슬라이드가 많거나 8µm bin이라 메모리가 모자라면 128GB로 올려 주세요. | Memory grows with the number of slides and bins. With the default setting (64 GB) the example data (five slides, 16 um, 250,000 sketched bins) used at most 31 GB; with many slides or 8 um bins, raise it to 128 GB if memory runs out. |
 | 슬라이드가 한 장이면 integration=auto는 보정을 하지 않습니다. | With one slide, integration=auto applies no correction. |
 | 입력은 모두 같은 bin 크기로 전처리한 슬라이드여야 합니다. | All input slides must be prepared with the same bin size. |
 
