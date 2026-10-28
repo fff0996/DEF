@@ -95,7 +95,7 @@ Loads 10x Visium HD slides at a chosen bin size (8 or 16 um), filters and normal
 |---|---|
 | Space Ranger 결과에서 binned_outputs 폴더를 통째로 올려 주세요. 8·16µm 폴더의 조직 이미지는 2µm 폴더 이미지의 하드링크라, 일부 폴더만 압축을 풀거나 복사하면 이미지가 빠질 수 있습니다. | Upload the whole binned_outputs folder of Space Ranger. The tissue images of the 8 and 16 um folders are hard links to those of the 2 um folder, so extracting or copying only some folders can lose the images. |
 | 8µm가 세포 크기에 가까워 권장 크기입니다. 16µm는 메모리와 시간이 4분의 1 정도로 줄어 큰 슬라이드나 빠른 확인에 씁니다. | 8 um is close to cell size and recommended; 16 um needs about a quarter of the memory and time, for large slides or quick checks. |
-| 메모리는 bin 수에 비례합니다. 8µm는 슬라이드당 32~64GB를 권장합니다. 메모리가 부족하면 bin_size=16이나 min_counts를 올려 다시 실행합니다. | Memory grows with the number of bins; 32-64 GB per slide is recommended for 8 um. When memory runs out, rerun with bin_size=16 or a higher min_counts. |
+| 메모리는 bin 수에 비례하며 슬라이드를 하나씩 처리합니다. 기본 설정(64GB)으로 예시 데이터(16µm 5장)는 최대 12GB를 썼습니다. 8µm는 bin이 약 4배입니다. 메모리가 모자라 멈추면 bin_size=16으로 바꾸거나 min_counts를 올려 다시 실행합니다. | Memory grows with the number of bins, and slides are processed one at a time. With the default setting (64 GB) the example data (five slides, 16 um) used at most 12 GB. 8 um bins are about four times as many; if the run stops for lack of memory, rerun with bin_size=16 or a higher min_counts. |
 | 한 슬라이드가 실패해도 나머지는 계속 처리하며, hd_prep_summary.tsv에 상태로 남습니다. 모든 슬라이드가 실패할 때만 종료 코드 1입니다. | A failed slide does not stop the others and is listed with its status in hd_prep_summary.tsv; the exit code is 1 only when every slide fails. |
 
 ### 분석 개념 이미지
@@ -225,7 +225,7 @@ Clusters the sketched bins of all Visium HD slides together and labels every bin
 | 국문 | 영문 |
 |---|---|
 | 모든 bin의 군집은 sketch bin에서 옮겨 붙인 것입니다. Cluster_score가 낮은(예: 0.5 미만) bin은 군집 경계에 있어 배정이 불확실합니다. | Clusters of all bins are transferred from the sketched bins; bins with a low Cluster_score (for example below 0.5) lie at cluster borders and their labels are uncertain. |
-| 메모리는 슬라이드 수와 bin 수에 비례합니다. 8µm 슬라이드 여러 장은 64~128GB를 권장합니다. | Memory grows with the number of slides and bins; 64-128 GB is recommended for several 8 um slides. |
+| 메모리는 슬라이드 수와 bin 수에 비례합니다. 기본 설정(64GB)으로 예시 데이터(16µm 5장, sketch 25만 bin)는 최대 31GB를 썼습니다. 슬라이드가 많거나 8µm bin이라 메모리가 모자라 멈추면, spatial_hd_prep을 bin_size=16으로 다시 돌리거나 슬라이드를 나눠 분석해 주세요. | Memory grows with the number of slides and bins. With the default setting (64 GB) the example data (five slides, 16 um, 250,000 sketched bins) used at most 31 GB; if many slides or 8 um bins make the run stop for lack of memory, rerun spatial_hd_prep with bin_size=16 or analyse the slides in smaller sets. |
 | 슬라이드가 한 장이면 integration=auto는 보정을 하지 않습니다. | With one slide, integration=auto applies no correction. |
 | 입력은 모두 같은 bin 크기로 전처리한 슬라이드여야 합니다. | All input slides must be prepared with the same bin size. |
 
@@ -504,13 +504,37 @@ Compares the spot composition of clusters and the gene expression within cluster
 | Option | Optional | Integer | seed | 1234 | 난수 시드 | Random seed |
 
 ### 샘플시트
-| 열 | 필수 | 설명 | 예시 |
-|---|---|---|---|
-| SliceID | 필수 | 슬라이스 이름(spatial_prep 또는 spatial_hd_prep에 준 슬라이스 폴더 이름) | crc_p1 |
-| Condition | 필수 | 조건 이름 | tumor |
-| Patient | 선택 | 짝 설계의 개체 ID(같은 개체가 각 조건에 있을 때) | P1 |
+등록 메모: 포탈의 샘플시트 칸 여섯 개에 아래 값을 그대로 넣습니다. 예시 본문에는 실제로 쓸 수 있는 파일 하나만 넣습니다. spatial_condition_de는 Visium과 Visium HD 파이프라인이 같이 쓰는 모듈이라 두 원고의 내용이 같습니다.
 
-예제 데이터(Visium HD 사람 대장암, 종양 3장과 정상 인접 조직 2장)의 샘플시트입니다. `reference=normal`로 실행합니다.
+| 칸 | 값 |
+|---|---|
+| 샘플시트 제목(국문) | 조건 비교 샘플시트 |
+| 샘플시트 제목(영문) | Sample sheet for condition comparison |
+| 샘플시트 예시 제목 | hd_slides.csv |
+
+샘플시트 본문(국문):
+```
+슬라이드마다 조건을 적은 CSV 파일(쉼표 구분)입니다. 첫 줄은 열 이름이고, 한 줄에 슬라이드 하나를 적습니다.
+
+- SliceID (필수): 슬라이드 이름. 앞 단계(spatial_prep 또는 spatial_hd_prep)의 입력 폴더에 있는 슬라이드 폴더 이름과 같아야 합니다.
+- Condition (필수): 조건 이름(예: tumor, normal). 비교의 기준 조건은 reference 옵션으로 정하며, 비워 두면 파일에 처음 나온 조건이 기준이 됩니다.
+- Patient (선택): 같은 환자(개체)의 슬라이드가 여러 조건에 있을 때 환자 ID(예: P1). 모든 줄에 채우면 환자를 짝으로 묶어 검정합니다.
+
+조건마다 슬라이드 2장 이상(생물학적 반복)을 넣어 주세요. 1장뿐인 조건은 spot 단위 검정만 할 수 있고, 그 결과는 탐색용입니다.
+```
+
+샘플시트 본문(영문):
+```
+A comma-separated (CSV) file with the condition of each slide. The first line holds the column names; write one slide per line.
+
+- SliceID (required): slide name. It must match the slide folder name in the input folder of the previous step (spatial_prep or spatial_hd_prep).
+- Condition (required): condition name (for example tumor, normal). The reference condition is set with the reference option; when empty, the first condition in the file is the reference.
+- Patient (optional): patient (individual) ID when the same patient has slides in several conditions (for example P1). When filled on every line, slides are paired by patient in the test.
+
+Give at least two slides (biological replicates) per condition. A condition with one slide can only be tested spot by spot, and that result is exploratory.
+```
+
+샘플시트 예시 본문 (예제 데이터: 사람 대장암 Visium HD, 종양 3장과 정상 인접 조직 2장, `reference=normal`로 실행):
 ```
 SliceID,Condition
 crc_p1,tumor
@@ -518,15 +542,6 @@ crc_p2,tumor
 crc_p5,tumor
 normal_p3,normal
 normal_p5,normal
-```
-
-같은 개체가 각 조건에 있으면 Patient 열을 더해 짝 설계로 검정합니다(예: 같은 환자의 종양과 정상).
-```
-SliceID,Condition,Patient
-tumor_1,tumor,P1
-tumor_2,tumor,P2
-normal_1,normal,P1
-normal_2,normal,P2
 ```
 
 ### 주요 사항
@@ -686,7 +701,7 @@ Labels every bin of Visium HD slides with the cell types of a single-cell refere
 | bin 크기에 맞춰 rctd_mode를 고르세요. 기본값 doublet은 8µm용이고, 16µm는 full을 권장합니다. | Choose rctd_mode by bin size: the default doublet is for 8 um, and full is recommended for 16 um. |
 | 16µm bin은 UMI가 많아 umi_min=100에서 대부분 계산되지만, 8µm bin은 UMI가 적어 not_scored가 많을 수 있습니다. rctd_summary.tsv의 Bins_scored를 확인하세요. | 16 um bins have many UMIs and are mostly scored at umi_min=100, but 8 um bins have fewer and many may be not_scored; check Bins_scored in rctd_summary.tsv. |
 | 참조에 없는 조직은 가장 비슷한 세포 유형으로 칠해집니다. 슬라이드 조직 전체를 담은 참조를 권장합니다. | Tissue missing from the reference is painted with the most similar cell types; a reference covering the whole tissue is recommended. |
-| 코어 수에 따라 메모리가 늘어납니다(작업자마다 자료를 복사). 병렬 작업자 수는 할당한 코어 수를 따르므로, 메모리가 모자라면 코어 수나 chunk_bins를 낮춰 주세요. | Memory grows with the cores (each worker copies the data); the number of workers follows the allocated cores, so lower the cores or chunk_bins if memory runs short. |
+| 할당된 코어마다 병렬 작업자를 하나씩 띄우고, 작업자마다 자료를 복사해 메모리가 코어 수만큼 늘어납니다. 예시 데이터(16µm 5장)는 최대 18GB를 썼습니다. 메모리가 모자라 멈추면 chunk_bins를 낮춰 다시 실행해 주세요. | One parallel worker runs per allocated core and each copies the data, so memory grows with the cores. The example data (five slides, 16 um) used at most 18 GB. If the run stops for lack of memory, rerun with a smaller chunk_bins. |
 
 ### 분석 개념 이미지
 그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/spatial_hd_rctd_concept.png`
