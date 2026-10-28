@@ -21,7 +21,7 @@ KOBIC 포탈의 Visium HD 공간 전사체 파이프라인 상세 페이지에 �
 | Reference | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette |
 | Keyword(태그) | spatial transcriptomics, Visium HD, high-resolution spatial, clustering, sketch, spatially variable genes, differential expression, cell type annotation, RCTD |
 | 대분류 / 중분류 | Transcriptomics / Spatial_Transcriptomics (포탈 파이프라인 목록에 없으면 신규로 제안) |
-| 대표 이미지 | 등록 메모: 결과 그림을 본 뒤 고릅니다(후보: spatial_hd_cluster 조직 위 군집). |
+| 대표 이미지 | `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/pipeline/figures/representative.png` (spatial_hd_rctd 결과 1: 대장암 crc_p1의 bin별 세포 유형. 종양·기질·정상 점막·근육층이 한눈에 나뉨) |
 
 ## 1. 파이프라인 소개 / Introduction
 

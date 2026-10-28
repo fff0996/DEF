@@ -402,21 +402,23 @@ Rscript spatial_hd_svf.1.1.R \
 ### 주요 결과 이미지
 예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다.
 
-등록 메모: CLOSHA 실행 결과로 그림과 레전드의 수치를 넣습니다. 그림 파일 이름은 아래 경로로 둡니다.
+CLOSHA에서 max_bins=500(기본값 4000)으로 실행했고 5장에 약 4분 걸렸습니다.
 
 **결과 1. 상위 공간 가변 유전자(대표 그림)**
 - 결과 파일: `<slide>/plots/<slide>_top_svf.png` (PDF도 있음), 표 `<slide>/<slide>_hd_svf.tsv`
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_svf_result_1.png`
 
-- 레전드(국문): **Moran's I 상위 유전자의 조직 위 발현.** 공간적으로 몰려 발현하는 유전자가 점막층, 종양 경계, 근육층 같은 구조를 따라 띠나 덩어리 모양으로 나타납니다.
-- 레전드(영문): **Tissue expression of the top genes by Moran's I.** Spatially concentrated genes follow structures such as the mucosal layer, tumour borders and muscle layers as bands or patches.
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_svf_result_1.png`
+
+- 레전드(국문): **Moran's I 상위 유전자의 조직 위 발현(crc_p1).** 공간적으로 몰려 발현하는 유전자가 조직 구조를 따라 띠나 덩어리 모양으로 나타납니다. 예시 데이터에서 crc_p1의 상위 6개는 DES, PIGR, ACTG2, MUC12, FCGBP, MYH11이었습니다. DES·ACTG2·MYH11(평활근)은 오른쪽 위 근육층과 조직 안의 가는 띠에, PIGR·MUC12·FCGBP(정상 대장 상피)는 왼쪽 정상 점막에 모였습니다. MUC12는 아래쪽 종양에서도 약하게 보입니다.
+- 레전드(영문): **Tissue expression of the top genes by Moran's I (crc_p1).** Spatially concentrated genes follow tissue structures as bands or patches. In the example data the top six genes of crc_p1 were DES, PIGR, ACTG2, MUC12, FCGBP and MYH11. DES, ACTG2 and MYH11 (smooth muscle) gather in the muscle layer at the upper right and thin bands within the tissue, and PIGR, MUC12 and FCGBP (normal colonic epithelium) in the normal mucosa on the left; MUC12 is also weakly seen in the tumour below.
 
 **결과 2. 슬라이드별 요약**
-- 결과 파일: `svf_summary.tsv`
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_svf_result_2.png`
+- 결과 파일: `svf_summary.tsv` (표를 그림으로 만들었습니다)
 
-- 레전드(국문): **슬라이드별 검정 bin 수, 검정 유전자 수, 유의 유전자 수(BH 보정 p < padj_cutoff), 상위 유전자.**
-- 레전드(영문): **Bins and genes tested, significant genes (BH-adjusted p < padj_cutoff) and top genes per slide.**
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_svf_result_2.png`
+
+- 레전드(국문): **슬라이드별 검정 bin 수, 검정 유전자 수, 유의 유전자 수(BH 보정 p < padj_cutoff), 상위 유전자와 걸린 시간(초).** 예시 데이터에서는 슬라이드마다 500 bin과 가변 유전자 438~473개를 검정해 170~234개가 유의했습니다. 근육 유전자(DES, MYH11)는 근육층이 넓은 슬라이드에서, 상피 유전자(PIGR, FCGBP, ELF3)는 정상 점막이 있는 슬라이드에서 위로 올라옵니다. 작은 구조를 놓치지 않으려면 max_bins를 올립니다.
+- 레전드(영문): **Bins and genes tested, significant genes (BH-adjusted p < padj_cutoff), top genes and seconds per slide.** In the example data 500 bins and 438-473 variable genes were tested per slide and 170-234 were significant. Muscle genes (DES, MYH11) rank high in slides with wide muscle layers and epithelial genes (PIGR, FCGBP, ELF3) in slides with normal mucosa. Raise max_bins to avoid missing small structures.
 
 ---
 
@@ -570,28 +572,31 @@ Rscript spatial_condition_de.1.0.R \
 ### 주요 결과 이미지
 예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다.
 
-등록 메모: CLOSHA 실행 결과로 그림과 레전드의 수치를 넣습니다. 그림 파일 이름은 아래 경로로 둡니다.
+CLOSHA에서 hd_cluster 결과(group_by=seurat_clusters)를 reference=normal로 실행했고 약 5분 걸렸습니다.
 
 **결과 1. 슬라이드별 군집 조성**
 - 결과 파일: `03_plots/composition_stacked.png`, 표 `01_composition/`
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_1.png`
 
-- 레전드(국문): **슬라이드마다 군집 비율을 쌓은 막대.** 종양 3장과 정상 2장의 구성이 다릅니다. 조건 간 비율 검정은 `01_composition/composition_test.tsv`에 있습니다.
-- 레전드(영문): **Stacked cluster fractions per slide.** The three tumour and two normal slides differ in composition; tests between conditions are in `01_composition/composition_test.tsv`.
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_1.png`
+
+- 레전드(국문): **슬라이드마다 군집 비율을 쌓은 막대.** 조건별로 나누어 기준 조건(normal)을 왼쪽에 둡니다. 예시 데이터에서 종양 상피 군집 0은 정상 평균 0.8%에서 종양 평균 20.2%로 늘었고, 기질 군집 3은 26.0%에서 3.6%로 줄었습니다. 조건 간 비율 검정(`01_composition/composition_test.tsv`)은 조건마다 2~3장뿐이라 보정 p가 0.05를 넘었으며(군집 0: 0.27), 로그에도 탐색적 결과로 보라는 경고가 남습니다.
+- 레전드(영문): **Stacked cluster fractions per slide.** Slides are split by condition with the reference condition (normal) on the left. In the example data tumour epithelium cluster 0 rose from 0.8% in normal to 20.2% in tumour on average, and stromal cluster 3 fell from 26.0% to 3.6%. With only two or three slides per condition, the composition tests (`01_composition/composition_test.tsv`) stayed above 0.05 after adjustment (cluster 0: 0.27), and the log warns to treat them as exploratory.
 
 **결과 2. 군집별 volcano(대표 그림)**
 - 결과 파일: `03_plots/volcano_tumor_vs_normal.png`, 표 `02_de/de_tumor_vs_normal.tsv`
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_2.png`
 
-- 레전드(국문): **군집마다 종양과 정상 사이의 유전자 발현 차이.** x축은 log2 fold change(정상 대비), y축은 -log10 보정 p입니다. 조건마다 슬라이드가 2장 이상이라 슬라이드를 반복으로 삼은 pseudobulk DESeq2로 검정합니다.
-- 레전드(영문): **Expression differences between tumour and normal per cluster.** The x axis is log2 fold change (against normal) and the y axis -log10 adjusted p. With two or more slides per condition, pseudobulk DESeq2 tests with slides as replicates.
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_2.png`
+
+- 레전드(국문): **군집마다 종양과 정상 사이의 유전자 발현 차이.** x축은 log2 fold change(정상 대비, 양수면 종양에서 높음), y축은 -log10 보정 p이며, 점선은 lfc_cutoff(0.5)와 padj_cutoff(0.05)입니다. 조건마다 슬라이드가 2장 이상인 군집은 슬라이드를 반복으로 삼은 pseudobulk DESeq2로 검정합니다. 예시 데이터에서 섬유모세포 군집 1은 종양에서 COL1A1, COL3A1, BGN 같은 기질 유전자가 높았고, 종양 상피 군집 0은 CEACAM6, KRT23, LY6G6D가 높고 PYY, SLC4A4 같은 정상 상피 유전자가 낮았습니다.
+- 레전드(영문): **Expression differences between tumour and normal per cluster.** The x axis is log2 fold change against normal (positive means higher in tumour) and the y axis -log10 adjusted p; dashed lines mark lfc_cutoff (0.5) and padj_cutoff (0.05). Clusters with two or more slides per condition are tested by pseudobulk DESeq2 with slides as replicates. In the example data fibroblast cluster 1 had higher stromal genes such as COL1A1, COL3A1 and BGN in tumour, and tumour epithelium cluster 0 had higher CEACAM6, KRT23 and LY6G6D and lower normal epithelial genes such as PYY and SLC4A4.
 
 **결과 3. 군집별 유의 유전자 수**
 - 결과 파일: `03_plots/de_counts.png`, 표 `04_summary/de_summary.tsv`
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_3.png`
 
-- 레전드(국문): **군집마다 유의하게 높아진(up)·낮아진(down) 유전자 수.** 검정 방법이 pseudobulk_DESeq2인지 de_summary.tsv에서 확인합니다.
-- 레전드(영문): **Significantly increased (up) and decreased (down) genes per cluster.** Check in de_summary.tsv that the method is pseudobulk_DESeq2.
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_3.png`
+
+- 레전드(국문): **군집마다 유의하게 높아진(up)·낮아진(down) 유전자 수.** 검정 방법은 de_summary.tsv의 Method 열에서 확인합니다. 예시 데이터에서는 25개 군집 중 21개가 pseudobulk_DESeq2, 2개(14, 23)가 spot_level_wilcoxon으로 검정됐고, 2개(19, 24)는 한쪽 조건에 충분한 슬라이드가 없어 검정하지 않았습니다. 종양에서 높아진 유전자가 모두 5,318개, 낮아진 유전자가 3,903개였고, 군집 1(섬유모세포, up 1,134·down 980)과 0, 2, 6에 몰렸습니다. spot_level_wilcoxon 군집(14는 정상 슬라이드 1장에만 spot이 충분)은 spot을 반복으로 보아 p값이 지나치게 작으므로 탐색적 결과로만 봅니다.
+- 레전드(영문): **Significantly increased (up) and decreased (down) genes per cluster.** The test is given in the Method column of de_summary.tsv. In the example data 21 of 25 clusters were tested by pseudobulk_DESeq2, two (14, 23) by spot_level_wilcoxon, and two (19, 24) were not tested because one condition lacked enough slides. In total 5,318 genes were higher and 3,903 lower in tumour, concentrated in cluster 1 (fibroblasts, 1,134 up and 980 down) and clusters 0, 2 and 6. spot_level_wilcoxon clusters (cluster 14 had enough spots in only one normal slide) treat spots as replicates and give too small p-values; read them as exploratory.
 
 ---
 
