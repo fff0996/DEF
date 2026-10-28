@@ -587,13 +587,37 @@ Compares the spot composition of clusters and the gene expression within cluster
 | Option | Optional | Integer | seed | 1234 | 난수 시드 | Random seed |
 
 ### 샘플시트
-| 열 | 필수 | 설명 | 예시 |
-|---|---|---|---|
-| SliceID | 필수 | 슬라이스 이름(spatial_prep 또는 spatial_hd_prep에 준 슬라이스 폴더 이름) | crc_p1 |
-| Condition | 필수 | 조건 이름 | tumor |
-| Patient | 선택 | 짝 설계의 개체 ID(같은 개체가 각 조건에 있을 때) | P1 |
+등록 메모: 포탈의 샘플시트 칸 여섯 개에 아래 값을 그대로 넣습니다. 예시 본문에는 실제로 쓸 수 있는 파일 하나만 넣습니다. spatial_condition_de는 Visium과 Visium HD 파이프라인이 같이 쓰는 모듈이라 두 원고의 내용이 같습니다.
 
-예제 데이터(Visium HD 사람 대장암, 종양 3장과 정상 인접 조직 2장)의 샘플시트입니다. `reference=normal`로 실행합니다.
+| 칸 | 값 |
+|---|---|
+| 샘플시트 제목(국문) | 조건 비교 샘플시트 |
+| 샘플시트 제목(영문) | Sample sheet for condition comparison |
+| 샘플시트 예시 제목 | hd_slides.csv |
+
+샘플시트 본문(국문):
+```
+슬라이드마다 조건을 적은 CSV 파일(쉼표 구분)입니다. 첫 줄은 열 이름이고, 한 줄에 슬라이드 하나를 적습니다.
+
+- SliceID (필수): 슬라이드 이름. 앞 단계(spatial_prep 또는 spatial_hd_prep)의 입력 폴더에 있는 슬라이드 폴더 이름과 같아야 합니다.
+- Condition (필수): 조건 이름(예: tumor, normal). 비교의 기준 조건은 reference 옵션으로 정하며, 비워 두면 파일에 처음 나온 조건이 기준이 됩니다.
+- Patient (선택): 같은 환자(개체)의 슬라이드가 여러 조건에 있을 때 환자 ID(예: P1). 모든 줄에 채우면 환자를 짝으로 묶어 검정합니다.
+
+조건마다 슬라이드 2장 이상(생물학적 반복)을 넣어 주세요. 1장뿐인 조건은 spot 단위 검정만 할 수 있고, 그 결과는 탐색용입니다.
+```
+
+샘플시트 본문(영문):
+```
+A comma-separated (CSV) file with the condition of each slide. The first line holds the column names; write one slide per line.
+
+- SliceID (required): slide name. It must match the slide folder name in the input folder of the previous step (spatial_prep or spatial_hd_prep).
+- Condition (required): condition name (for example tumor, normal). The reference condition is set with the reference option; when empty, the first condition in the file is the reference.
+- Patient (optional): patient (individual) ID when the same patient has slides in several conditions (for example P1). When filled on every line, slides are paired by patient in the test.
+
+Give at least two slides (biological replicates) per condition. A condition with one slide can only be tested spot by spot, and that result is exploratory.
+```
+
+샘플시트 예시 본문 (예제 데이터: 사람 대장암 Visium HD, 종양 3장과 정상 인접 조직 2장, `reference=normal`로 실행):
 ```
 SliceID,Condition
 crc_p1,tumor
@@ -601,15 +625,6 @@ crc_p2,tumor
 crc_p5,tumor
 normal_p3,normal
 normal_p5,normal
-```
-
-같은 개체가 각 조건에 있으면 Patient 열을 더해 짝 설계로 검정합니다(예: 같은 환자의 종양과 정상).
-```
-SliceID,Condition,Patient
-tumor_1,tumor,P1
-tumor_2,tumor,P2
-normal_1,normal,P1
-normal_2,normal,P2
 ```
 
 ### 주요 사항
