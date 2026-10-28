@@ -261,37 +261,39 @@ Rscript spatial_hd_cluster.1.0.R \
 ```
 
 ### 주요 결과 이미지
-예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다.
-
-등록 메모: CLOSHA 실행 결과로 그림과 레전드의 수치를 넣습니다. 그림 파일 이름은 아래 경로로 둡니다.
+예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다. CLOSHA에서 기본값(dims 30, resolution 0.8, integration auto → harmony)으로 실행했고, 5장 25만 sketch bin의 통합 군집과 62만 bin 전체의 라벨 전달까지 약 36분 걸렸습니다.
 
 **결과 1. 모든 bin의 조직 위 군집(대표 그림)**
 - 결과 파일: `<slide>/plots/<slide>_clusters_spatial.png` (PDF도 있음)
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_1.png`
 
-- 레전드(국문): **슬라이드의 모든 bin에 붙인 통합 군집.** sketch에서 만든 군집을 가까운 sketch bin의 다수결로 모든 bin에 옮겨 조직 위에 칠했습니다. 예시 데이터에서는 종양 덩어리, 정상 점막, 근육층, 기질(섬유모세포·면역세포 영역)이 다른 군집으로 나뉩니다(CLOSHA 결과로 확인).
-- 레전드(영문): **Joint clusters on every bin of a slide.** Clusters made on the sketch are transferred to every bin by majority vote of the nearest sketch bins and drawn on the tissue. In the example data tumour masses, normal mucosa, muscle layers and stroma (fibroblast and immune areas) fall into different clusters (to be confirmed with the CLOSHA result).
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_1.png`
 
-**결과 2. 유전자의 조직 위 발현**
-- 결과 파일: `<slide>/plots/<slide>_feature_<gene>.png` (features=EPCAM,PTPRC,COL1A1)
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_2.png`
+- 레전드(국문): **슬라이드의 모든 bin에 붙인 통합 군집(crc_p1).** sketch에서 만든 군집을 가까운 sketch bin의 다수결로 모든 bin에 옮겨 조직 위에 칠했습니다. 예시 데이터에서는 25개 군집이 나왔고, crc_p1의 12만 6,144 bin 중 1.4%만 전달 점수(Cluster_score)가 0.5 미만이었습니다. 아래쪽 종양 샘은 군집 0(종양 상피)으로 칠해지고, 샘 사이 기질과 위쪽 점막·근육 영역은 다른 군집으로 나뉩니다. 조직 가장자리의 군집 19는 미토콘드리아 유전자만 표지로 나오는 품질 낮은 bin입니다.
+- 레전드(영문): **Joint clusters on every bin of a slide (crc_p1).** Clusters made on the sketch are transferred to every bin by majority vote of the nearest sketch bins and drawn on the tissue. The example data gave 25 clusters, and only 1.4% of the 126,144 bins of crc_p1 had a transfer score (Cluster_score) below 0.5. The tumour glands at the bottom are cluster 0 (tumour epithelium), and the stroma between them and the mucosa and muscle areas at the top fall into other clusters. Cluster 19 at the tissue edges has only mitochondrial genes as markers and marks low-quality bins.
 
-- 레전드(국문): **features로 지정한 유전자의 bin별 발현.** EPCAM은 상피와 종양, PTPRC는 면역세포, COL1A1은 섬유모세포(기질)의 표지 유전자입니다. 군집 영역과 표지 유전자 위치가 맞는지 확인합니다.
-- 레전드(영문): **Bin expression of genes given in features.** EPCAM marks epithelium and tumour, PTPRC immune cells and COL1A1 fibroblasts (stroma); check that cluster regions match the marker locations.
+**결과 2. 군집별 표지 유전자**
+- 결과 파일: `joint/plots/marker_dotplot.png`, 표 `joint/top_markers.tsv`, `joint/cluster_markers.tsv`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_2.png`
+
+- 레전드(국문): **군집마다 상위 표지 유전자 5개의 발현.** 점 크기는 발현하는 bin 비율, 색은 평균 발현입니다. 표지 유전자로 군집에 이름을 붙입니다. 예시 데이터에서 군집 0은 LGR5·ETV4(종양 상피), 1은 SFRP4·THBS2·CTHRC1(암 관련 섬유모세포), 5는 DES·MYH11(평활근), 4는 ITLN1·CLCA1(술잔세포), 10·12·13은 CA1·SLC26A3·GUCA2A(정상 대장 상피), 8·9는 JCHAIN·IGHA1(형질세포), 7은 MS4A1·CCL19(B세포·림프 여포)이었습니다. 군집 17·19처럼 미토콘드리아 유전자만 나오는 군집은 세포 유형이 아니라 품질 낮은 bin으로 봅니다.
+- 레전드(영문): **Expression of the top five markers of each cluster.** Dot size is the fraction of expressing bins and colour the mean expression; markers are used to name the clusters. In the example data cluster 0 had LGR5 and ETV4 (tumour epithelium), 1 SFRP4, THBS2 and CTHRC1 (cancer-associated fibroblasts), 5 DES and MYH11 (smooth muscle), 4 ITLN1 and CLCA1 (goblet cells), 10, 12 and 13 CA1, SLC26A3 and GUCA2A (normal colonic epithelium), 8 and 9 JCHAIN and IGHA1 (plasma cells), and 7 MS4A1 and CCL19 (B cells, lymphoid follicles). Clusters such as 17 and 19 with only mitochondrial genes are low-quality bins, not cell types.
 
 **결과 3. 슬라이드로 칠한 UMAP**
-- 결과 파일: `joint/plots/umap_slides.png`
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_3.png`
+- 결과 파일: `joint/plots/umap_slides.png` (군집으로 칠한 `umap_clusters.png`도 있음)
 
-- 레전드(국문): **통합 sketch UMAP을 슬라이드로 칠한 그림.** 같은 조직 유형이 여러 슬라이드에 있으면 색이 섞여야 합니다(harmony 보정). 종양에만 있는 군집은 종양 슬라이드 색으로만 모입니다.
-- 레전드(영문): **The joint sketch UMAP coloured by slide.** Shared tissue types should mix colours across slides (harmony correction); clusters present only in tumours gather in the tumour slides' colours.
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_3.png`
+
+- 레전드(국문): **통합 sketch UMAP을 슬라이드로 칠한 그림.** 같은 조직 유형이 여러 슬라이드에 있으면 색이 섞여야 합니다(harmony 보정). 예시 데이터에서 근육, 형질세포, 정상 상피 영역은 다섯 슬라이드 색이 고루 섞였고, 왼쪽 위 종양 상피(군집 0) 영역은 종양 슬라이드(crc_p1, crc_p2, crc_p5) 색으로만 모였습니다.
+- 레전드(영문): **The joint sketch UMAP coloured by slide.** Shared tissue types should mix colours across slides (harmony correction). In the example data the muscle, plasma cell and normal epithelium regions mix all five slides, while the tumour epithelium region (cluster 0) at the upper left holds only the tumour slides (crc_p1, crc_p2, crc_p5).
 
 **결과 4. 슬라이드별 군집 조성**
 - 결과 파일: `joint/plots/cluster_by_slide.png`, 표 `joint/cluster_by_slide.tsv`
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_4.png`
 
-- 레전드(국문): **슬라이드마다 군집이 차지하는 bin 비율.** 종양 군집은 crc_* 슬라이드에, 정상 상피 군집은 normal_* 슬라이드에 몰려야 합니다.
-- 레전드(영문): **Fraction of bins per cluster in each slide.** Tumour clusters should concentrate in the crc_* slides and normal epithelium clusters in the normal_* slides.
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_cluster_result_4.png`
+
+- 레전드(국문): **슬라이드마다 군집이 차지하는 bin 비율.** 종양 군집은 종양 슬라이드에, 정상 상피 군집은 정상 슬라이드에 몰려야 합니다. 예시 데이터에서 종양 상피 군집 0은 종양 슬라이드 bin의 13~29%였지만 정상 슬라이드에서는 0.3~1.2%였습니다. 반대로 기질 군집 3(DCN, NR4A1)은 normal_p3의 37%를 차지했는데, UMI가 낮은 점막 아래 넓은 영역(spatial_hd_prep 결과 2)과 맞습니다. 군집 비율의 조건 간 검정은 spatial_condition_de가 합니다.
+- 레전드(영문): **Fraction of bins per cluster in each slide.** Tumour clusters should concentrate in the tumour slides and normal epithelium clusters in the normal slides. In the example data the tumour epithelium cluster 0 made up 13-29% of the bins of the tumour slides but 0.3-1.2% of the normal slides. Stromal cluster 3 (DCN, NR4A1) made up 37% of normal_p3, matching its large low-UMI area below the mucosa (spatial_hd_prep result 2). spatial_condition_de tests composition between conditions.
 
 ---
 
