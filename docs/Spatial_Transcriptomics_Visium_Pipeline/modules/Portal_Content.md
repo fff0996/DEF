@@ -442,7 +442,7 @@ Merges several slices into one object and recomputes the dimensional reduction a
 | 국문 | 영문 |
 |---|---|
 | 슬라이스 사이에 배치 차이(다른 날 실험, 다른 조직 처리)가 크면 integration=harmony를 권장합니다. 보정하지 않으면 군집이 슬라이스별로 나뉠 수 있습니다. | With strong batch differences between slices (different days or tissue handling), integration=harmony is recommended; without it clusters may split by slice. |
-| 슬라이스 수에 따라 메모리가 늘어납니다. 64GB를 권장하며, 슬라이스가 아주 많으면 128GB로 올려 주세요. | Memory grows with the number of slices: 64 GB is recommended, and 128 GB for very many slices. |
+| 슬라이스 수에 따라 메모리가 늘어납니다. 슬라이스가 아주 많아 메모리가 모자라 멈추면 슬라이스를 나눠 통합해 주세요. | Memory grows with the number of slices: with very many slices, if the run stops for lack of memory, integrate the slices in smaller sets. |
 | 실행할 때마다 output_dir에서 logs/를 뺀 나머지를 지웁니다. 입력(군집 결과 폴더)을 output_dir 안에 두지 마세요. | output_dir except logs/ is cleared on every run; do not keep the input (cluster folder) inside it. |
 
 ### 분석 개념 이미지
@@ -889,7 +889,7 @@ A Visium spot holds several cells. RCTD (spacexr) uses the per-cell-type express
 | 참조 자료(reference_rds)를 주지 않으면 이 모듈은 건너뛰고(결과 폴더에 skipped.txt) 정상 종료하므로, 참조가 없어도 파이프라인은 끝까지 실행됩니다. 참조를 주면 세포 유형 열 이름(reference_label_col)도 넣어 주세요. 열 이름을 모르면 비워 두고 한 번 실행하면, 분석 전에 멈추고 오류 로그에 세포 유형 후보 열과 그 값들을 보여 줍니다. 확인한 열 이름을 넣어 다시 실행하세요. | Without a reference (reference_rds) the module is skipped (skipped.txt in the output folder) and ends without error, so the pipeline still runs to the end. With a reference, also give its cell-type column (reference_label_col). If the column name is unknown, leave it empty and run once: the run stops before the analysis and the error log lists the cell-type column candidates with their values. Run again with the chosen column. |
 | RCTD는 raw count가 필요합니다. 참조의 정규화 값(SCT, log)만 있으면 실행되지 않습니다. | RCTD needs raw counts; a reference with only normalised values (SCT, log) cannot be used. |
 | weight는 참조에 있는 세포 유형 사이의 비율입니다. 참조에 없는 조직은 가장 비슷한 유형의 weight로 나타납니다. 조직 전체를 담은 참조를 권장합니다. | Weights are proportions among the reference cell types; tissue missing from the reference shows up as the most similar types, so a reference covering the whole tissue is recommended. |
-| 코어 수에 따라 메모리가 늘어납니다(작업자마다 자료를 복사). 병렬 작업자 수는 할당한 코어 수를 따르므로, 메모리가 모자라면 코어 수를 낮춰 주세요. | Memory grows with the cores, since each worker copies the data; the number of workers follows the allocated cores, so lower the cores if memory runs short. |
+| 할당된 코어마다 병렬 작업자를 하나씩 띄우고, 작업자마다 자료를 복사해 메모리가 코어 수만큼 늘어납니다. 메모리가 모자라 멈추면 세포 유형별로 세포 수를 줄인 참조를 써 주세요. | One parallel worker runs per allocated core and each copies the data, so memory grows with the cores. If the run stops for lack of memory, use a reference subsampled per cell type. |
 | UMI 수가 매우 적은 spot(RCTD 기본 100 미만)은 계산에서 빠져 dominant 그림에서 NA로 나옵니다. | Spots with very few UMIs (below the RCTD default of 100) are not scored and appear as NA in the dominant map. |
 
 ### 분석 개념 이미지

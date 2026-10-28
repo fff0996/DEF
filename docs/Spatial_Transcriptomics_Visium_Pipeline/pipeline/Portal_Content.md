@@ -134,7 +134,7 @@ Williams CG, Lee HJ, Asatsuma T, Vento-Tormo R, Haque A. An introduction to spat
 3. **슬라이스 정보 파일(CSV)에 `SliceID`, `Condition`을 적어 주세요.** `SliceID`는 슬라이스 폴더 이름과 같아야 합니다. 같은 개체가 각 조건에 있으면 `Patient` 열로 짝 설계를 씁니다.
 4. **같은 종, 같은 참조로 만든 Space Ranger 결과만 함께 분석해 주세요.** 슬라이스마다 유전자 목록이 다르면 합칠 때 일부 유전자가 0이 되어 가짜 차이가 생길 수 있습니다.
 5. **결과 해석 전에 QC 그림을 확인해 주세요.** spot별 UMI 수 분포와 조직 위 분포에서 조직 밖이나 UMI가 매우 낮은 spot이 많으면 거르는 기준(`min_counts`)을 올려 다시 실행합니다.
-6. **슬라이스가 많을수록 통합 단계의 메모리가 늘어납니다.** 통합 단계(spatial_merge)는 64GB를 권장하며, 슬라이스가 아주 많으면 128GB로 올려 주세요. 단일세포 참조가 크면(수만 세포 이상) spatial_labelTransfer에 128GB를 권장합니다.
+6. **슬라이스가 많을수록 통합 단계의 메모리가 늘어납니다.** 슬라이스가 아주 많아 통합 단계(spatial_merge)가 메모리 부족으로 멈추면 슬라이스를 나눠 통합해 주세요. 단일세포 참조가 크면(수만 세포 이상) 세포 유형별로 세포 수를 줄인 참조를 쓰면 메모리가 줄어듭니다.
 7. **세포 유형은 같은 종, 같은 조직의 단일세포 참조 자료(Seurat RDS)로 붙입니다.** 참조(reference_rds)와 세포 유형 열 이름(reference_label_col)을 주면 spatial_labelTransfer(세포 유형 예측 점수)와 spatial_rctd(spot 안의 세포 유형 비율)가 실행됩니다. 참조를 주지 않으면 두 모듈은 건너뛰고 나머지 분석은 그대로 끝나며, 군집은 마커 유전자와 조직 위치로 해석합니다. 공개 단일세포 아틀라스(예: CELLxGENE, Allen Brain Cell Atlas)를 참조로 쓸 수 있습니다. 열 이름을 모르면 비워 두고 실행하면 분석 전에 멈추고 오류 로그에 후보 열을 보여 줍니다.
 8. **모든 분석은 인터넷 연결 없이 수행됩니다.**
 
@@ -144,6 +144,6 @@ Williams CG, Lee HJ, Asatsuma T, Vento-Tormo R, Haque A. An introduction to spat
 3. **List `SliceID` and `Condition` in the slice sheet (CSV).** `SliceID` must equal the slice folder name. When the same individual appears in each condition, add a `Patient` column for a paired design.
 4. **Analyse together only Space Ranger outputs made for the same species and reference.** Different gene lists between slices zero some genes when merging and can create false differences.
 5. **Check the QC plots before interpreting results.** If the UMI counts per spot and their distribution on the tissue show many spots outside the tissue or with very low counts, raise the filter (`min_counts`) and rerun.
-6. **Memory of the integration step grows with the number of slices.** 64 GB is recommended for the integration step (spatial_merge), and 128 GB for very many slices. With a large single-cell reference (tens of thousands of cells or more), 128 GB is recommended for spatial_labelTransfer.
+6. **Memory of the integration step grows with the number of slices.** If the integration step (spatial_merge) stops for lack of memory with very many slices, integrate the slices in smaller sets. With a large single-cell reference (tens of thousands of cells or more), a reference subsampled per cell type uses less memory.
 7. **Cell types come from a single-cell reference (Seurat RDS) of the same species and tissue.** Given a reference (reference_rds) and its cell-type column (reference_label_col), spatial_labelTransfer (cell-type prediction scores) and spatial_rctd (cell-type proportions within spots) run. Without a reference both are skipped and the rest of the analysis finishes as usual; clusters are then interpreted by their marker genes and tissue location. Public single-cell atlases (for example CELLxGENE, Allen Brain Cell Atlas) can serve as references. If the column name is unknown, leave it empty: the run stops before the analysis and the error log lists the candidate columns.
 8. **All analyses run without internet access.**
