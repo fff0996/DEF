@@ -120,25 +120,26 @@ Rscript spatial_hd_prep.1.0.R \
 ```
 
 ### 주요 결과 이미지
-예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다.
-
-등록 메모: CLOSHA 실행 결과로 그림과 레전드의 수치를 넣습니다. 그림 파일 이름은 아래 경로로 둡니다.
+예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다. CLOSHA에서 8코어로 실행했고 5장에 약 17분 걸렸습니다.
 
 **결과 1. bin별 UMI·유전자 수 QC(대표 그림)**
 - 결과 파일: `<slide>/plots/<slide>_qc.png` (PDF도 있음)
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_prep_result_1.png`
 
-- 레전드(국문): **bin별 UMI 수와 검출 유전자 수.** 왼쪽 두 violin은 bin별 UMI 수와 검출 유전자 수 분포이고, 오른쪽은 UMI 수를 조직 위에 칠한 것입니다. 조직 밖이나 UMI가 매우 낮은 bin이 많으면 min_counts, min_features를 올립니다. 예시 데이터에서는 (CLOSHA 결과: bin당 UMI·유전자 중앙값, 종양과 점막·근육층의 차이).
-- 레전드(영문): **UMI counts and detected genes per bin.** The violins show UMI counts and detected genes per bin; the right panel shows UMI counts on the tissue. With many bins outside the tissue or with very low counts, raise min_counts or min_features. In the example data (CLOSHA result: median UMIs and genes per bin, tumour versus mucosa and muscle).
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_prep_result_1.png`
+
+- 레전드(국문): **bin별 UMI 수와 검출 유전자 수(crc_p1).** 왼쪽 두 violin은 bin별 UMI 수(nCount_Spatial.016um)와 검출 유전자 수(nFeature_Spatial.016um) 분포이고, 오른쪽은 UMI 수를 조직 사진 위에 칠한 것입니다. 조직 밖이나 UMI가 매우 낮은 bin이 많으면 min_counts, min_features를 올립니다. 예시 데이터에서 crc_p1은 bin당 UMI 중앙값이 626, 유전자 중앙값이 465였고, 아래쪽 근육층과 점막 일부에서 UMI가 높아 조직 구조가 그대로 드러납니다.
+- 레전드(영문): **UMI counts and detected genes per bin (crc_p1).** The two violins show UMI counts (nCount_Spatial.016um) and detected genes (nFeature_Spatial.016um) per bin; the right panel shows UMI counts on the tissue image. With many bins outside the tissue or with very low counts, raise min_counts or min_features. In the example data crc_p1 had a median of 626 UMIs and 465 genes per bin, and higher counts in the muscle layer below and parts of the mucosa follow the tissue structure.
 
 **결과 2. 슬라이드별 요약표**
-- 결과 파일: `hd_prep_summary.tsv` (표를 그림으로 만듦)
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_prep_result_2.png`
+- 결과 파일: `hd_prep_summary.tsv` (표를 그림으로 만들었습니다)
 
-- 레전드(국문): **슬라이드별 bin 수와 sketch.** 거르기 전·후 bin 수, bin당 UMI·유전자 중앙값, sketch에 남긴 bin 수, 상태와 걸린 시간입니다. 예시 데이터에서는 (CLOSHA 결과: 슬라이드 5장의 bin 수 범위, 걸러진 bin 수).
-- 레전드(영문): **Bins and sketch per slide.** Bins before and after filtering, median UMIs and genes per bin, sketched bins, status and seconds. In the example data (CLOSHA result: range of bins over the five slides, bins removed).
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_prep_result_2.png`
+
+- 레전드(국문): **슬라이드별 bin 수와 sketch.** 거르기 전·후 bin 수(Bins_raw, Bins), bin당 UMI·유전자 중앙값, sketch에 남긴 bin 수, 상태와 걸린 시간(초)입니다. 예시 데이터에서는 슬라이드 5장이 거른 뒤 10만 8,003~13만 6,994 bin이었고, 슬라이드마다 5만 bin을 sketch로 뽑았습니다. normal_p3는 UMI 중앙값이 130으로 다른 슬라이드보다 낮았는데, 점막 띠를 뺀 넓은 영역의 count가 낮기 때문입니다. 이런 슬라이드는 군집과 조건 비교 결과에서 따로 떨어지지 않는지 확인합니다.
+- 레전드(영문): **Bins and sketch per slide.** Bins before and after filtering (Bins_raw, Bins), median UMIs and genes per bin, sketched bins, status and seconds. In the example data the five slides kept 108,003-136,994 bins after filtering, and 50,000 bins per slide were sketched. normal_p3 had a lower median of 130 UMIs because the large area outside the mucosal band has low counts; check that such a slide does not stand apart in the clustering and condition comparison.
 
 ---
+
 
 ## 2. spatial_hd_cluster
 
