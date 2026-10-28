@@ -74,8 +74,8 @@ With a single-cell reference of the same tissue, every near-cellular bin gets a 
 그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/pipeline/figures/pipeline_visium_hd.png` (원본 `pipeline_visium_hd.svg`)
 
 ### 대체 텍스트 (alt)
-- 국문: Visium HD 공간 전사체 파이프라인 흐름도. bin 불러오기·정규화·sketch(spatial_hd_prep), 슬라이드 통합 군집과 모든 bin 배정(spatial_hd_cluster) 뒤 조건 간 비교(spatial_condition_de), 공간 가변 유전자(spatial_hd_svf), 단일세포 참조로 모든 bin에 세포 유형을 붙이는 분석(spatial_hd_rctd)으로 갈라지고, 세포 유형 결과가 세포 유형별 조건 간 비교(spatial_condition_de)로 이어짐. 세포 유형 분석은 참조를 줄 때만 실행됨.
-- English: Visium HD spatial transcriptomics workflow: bin loading, normalisation and sketching (spatial_hd_prep), joint clustering of slides with labels for every bin (spatial_hd_cluster), then condition comparison (spatial_condition_de), spatially variable genes (spatial_hd_svf), and cell types for every bin from a single-cell reference (spatial_hd_rctd) followed by condition comparison per cell type (spatial_condition_de); the cell-type branch runs only when a reference is given.
+- 국문: Visium HD 공간 전사체 파이프라인 흐름도. bin 불러오기·정규화·sketch(spatial_hd_prep), 슬라이드 통합 군집과 모든 bin 배정(spatial_hd_cluster) 뒤 조건 간 비교(spatial_condition_de), 공간 가변 유전자(spatial_hd_svf), 단일세포 참조로 모든 bin에 세포 유형을 붙이는 분석(spatial_hd_rctd)으로 갈라지고, 세포 유형 결과가 세포 유형별 조건 간 비교(spatial_condition_de)로 이어짐. 세포 유형 분석은 참조를 줄 때만 실행됨. 참조의 세포 유형 열 이름은 파이프라인 밖의 check_reference(점선)로 미리 확인할 수 있음.
+- English: Visium HD spatial transcriptomics workflow: bin loading, normalisation and sketching (spatial_hd_prep), joint clustering of slides with labels for every bin (spatial_hd_cluster), then condition comparison (spatial_condition_de), spatially variable genes (spatial_hd_svf), and cell types for every bin from a single-cell reference (spatial_hd_rctd) followed by condition comparison per cell type (spatial_condition_de); the cell-type branch runs only when a reference is given. The cell-type column of the reference can be checked beforehand with check_reference, outside the pipeline (dashed).
 
 ## 4. 분석 개념 / Analysis concept
 

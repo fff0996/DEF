@@ -83,7 +83,17 @@ m.node(2320, yC, "spatial_\ncondition_de")
 m.tag(140, y, "H5 + Parquet", "in", gap=50, icon="folder")
 m.tag(950, y, "RDS", "in", gap=50, icon="table")
 m.tag(1750, y, "RDS + TSV", "in", gap=50, icon="table")
-m.tag(1650, yC, "Reference RDS\n(optional)", "in", above=False, gap=50, icon="table")
+m.tag(1650, yC, "Reference RDS\n(optional)", "in", above=True, gap=50, icon="table")
+# check_reference is a separate pre-check of the reference, not on the pipeline line: a dashed
+# side link from the reference label to it, and its column report below
+yK, xK = yC - 86, 1170
+m.node(xK, yK, "check_reference")
+m.overlay.append(f'<path d="M{xK + 184},{yK} H{1650 - m.label_width("Reference RDS") / 2 - 6}" fill="none" '
+                 f'stroke="{TEAL}" stroke-width="6" stroke-dasharray="14,10"/>'
+                 f'<text x="{(xK + 184 + 1544) / 2}" y="{yK - 18}" text-anchor="middle" font-family="{m.FONT}" '
+                 f'font-size="19" font-weight="500" fill="{m.TEXT}">pre-check (optional)</text>')
+m.route([(xK, yK), (xK, yK + 150)], YELLOW)
+m.outputs(xK, yK + 150, ["TSV"], above=False, gap=30)
 
 m.outputs(550, y + 150, ["RDS", "TSV", "PNG", "PDF"], above=False, gap=30)
 m.outputs(1350, y + 150, ["RDS", "TSV", "PNG", "PDF"], above=False, gap=30)
