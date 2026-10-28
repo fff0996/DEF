@@ -942,8 +942,8 @@ Rscript spatial_rctd.1.1.R \
 | 모듈명 | check_reference | check_reference |
 | 서브 타이틀 | 단일세포 참조 자료 열 확인 | Column check of a single-cell reference |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | Annotation | Annotation |
-| 카테고리 중분류 | Cell_Type_Annotation (신규) | Cell_Type_Annotation (new) |
+| 카테고리 대분류 | Utility | Utility |
+| 카테고리 중분류 | Data_Inspection (신규) | Data_Inspection (new) |
 | 태그 | single-cell reference, Seurat, metadata, cell type | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/spatial_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
