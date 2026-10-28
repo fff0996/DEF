@@ -28,7 +28,7 @@ Visium HD (bin 8·16µm):
 | spatial_condition_de | `spatial_condition_de.1.4.R` | 1.0 | 새 모듈. Visium과 Visium HD 입력. 앞 모듈이 건너뛰면 같이 건너뜀 |
 | spatial_hd_prep | `spatial_hd_prep.1.1.R` | 1.0 | 새 모듈 |
 | spatial_hd_cluster | `spatial_hd_cluster.1.1.R` | 1.0 | 새 모듈 |
-| spatial_hd_svf | `spatial_hd_svf.1.0.R` | 1.0 | 새 모듈 |
+| spatial_hd_svf | `spatial_hd_svf.1.1.R` | 1.0 | 새 모듈. 1.1: 그림·요약표의 상위 유전자를 Moran's I 순으로 고름(1.0은 정렬 전 유의 표시로 골라 상위가 아니었음) |
 | spatial_hd_rctd | `spatial_hd_rctd.1.2.R` | 1.0 | 새 모듈. 참조가 없으면 건너뜀 |
 
 실행 명령은 모두 `Rscript <스크립트> key=value ...`이다.
@@ -180,7 +180,7 @@ normal_p5,normal
 Rscript spatial_hd_prep.1.1.R    input_dir=$BASE/hd_crc output_dir=$BASE/out/hd_prep bin_size=16
 Rscript spatial_hd_cluster.1.1.R input_dir=$BASE/out/hd_prep output_dir=$BASE/out/hd_cluster features=EPCAM,PTPRC,COL1A1
 Rscript spatial_condition_de.1.4.R input_dir=$BASE/out/hd_cluster sample_data=$BASE/hd_slides.csv output_dir=$BASE/out/hd_de reference=normal
-Rscript spatial_hd_svf.1.0.R  input_dir=$BASE/out/hd_cluster output_dir=$BASE/out/hd_svf
+Rscript spatial_hd_svf.1.1.R  input_dir=$BASE/out/hd_cluster output_dir=$BASE/out/hd_svf
 Rscript spatial_hd_rctd.1.2.R input_dir=$BASE/out/hd_cluster output_dir=$BASE/out/hd_rctd \
         reference_rds=$BASE/human_colon_crc_flex_300pertype.rds reference_label_col=Level1
 Rscript spatial_condition_de.1.4.R input_dir=$BASE/out/hd_rctd sample_data=$BASE/hd_slides.csv \

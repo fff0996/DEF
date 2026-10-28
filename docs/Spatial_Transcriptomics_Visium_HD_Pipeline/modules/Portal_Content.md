@@ -310,8 +310,10 @@ Rscript spatial_hd_cluster.1.0.R \
 | 태그 | spatial transcriptomics, Visium HD, spatially variable genes, Moran's I | |
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
-| 실행 스크립트 파일 | spatial_hd_svf.1.0.R | |
+| 실행 스크립트 파일 | spatial_hd_svf.1.1.R | |
 | Processor Core (제안) | 8코어, 메모리 64GB | 8 cores, 64 GB of memory |
+
+등록 메모: 작업 파일 `spatial_hd_svf.1.1.R`을 배포 번호 1.0으로 올립니다.
 
 ### 실행 이미지
 이미지: bx_spatial 1.1
@@ -386,7 +388,7 @@ Finds genes expressed in spatial patches on each Visium HD slide (spatially vari
 
 ### 스크립트 사용 예제
 ```
-Rscript spatial_hd_svf.1.0.R \
+Rscript spatial_hd_svf.1.1.R \
   input_dir=/data/spatial_hd_cluster \
   output_dir=/data/spatial_hd_svf \
   svf_topn=500 \
@@ -708,21 +710,23 @@ Rscript spatial_hd_rctd.1.0.R \
 ### 주요 결과 이미지
 예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다.
 
-등록 메모: CLOSHA 실행 결과로 그림과 레전드의 수치를 넣습니다. 그림 파일 이름은 아래 경로로 둡니다.
+CLOSHA에서 같은 연구의 단일세포 참조(`human_colon_crc_flex_300pertype.rds`, reference_label_col=Level1, 9종)와 8코어로 실행했고, 5장에 약 4시간 10분(슬라이드당 33~60분) 걸렸습니다.
 
 **결과 1. 조직 위 세포 유형(대표 그림)**
-- 결과 파일: `<slide>/plots/<slide>_rctd_first_type.png` (PDF도 있음)
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_rctd_result_1.png`
+- 결과 파일: `<slide>/plots/<slide>_rctd_first_type.png` (PDF도 있음), 가중치 표 `<slide>/<slide>_rctd_weights.tsv.gz`
 
-- 레전드(국문): **bin마다 가장 비중이 큰 세포 유형(Level1).** 참조는 같은 연구의 단일세포 자료입니다. 종양 영역은 Tumor, 근육층은 Smooth Muscle, 그 사이에 Fibroblast와 면역세포(T cells, B cells, Myeloid)가 칠해집니다. UMI가 umi_min보다 적은 bin은 NA입니다.
-- 레전드(영문): **The cell type with the largest weight in each bin (Level1).** The reference is single-cell data from the same study. Tumour areas show Tumor, muscle layers Smooth Muscle, with Fibroblast and immune cells (T cells, B cells, Myeloid) between them. Bins below umi_min are NA.
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_rctd_result_1.png`
+
+- 레전드(국문): **bin마다 가장 비중이 큰 세포 유형(crc_p1, Level1).** 참조는 같은 연구의 단일세포 자료입니다. 예시 데이터에서 crc_p1의 12만 6,144 bin 중 10만 7,470개(85%)가 점수를 받았습니다. 아래쪽 종양 덩어리는 Tumor, 그 사이를 가르는 기질은 Fibroblast, 왼쪽 정상 점막은 Intestinal Epithelial, 오른쪽 위 근육층은 Smooth Muscle로 칠해지고, 가운데에 T cells와 B cells가 모인 면역 영역이 보입니다. UMI가 umi_min보다 적어 점수를 매기지 않은 bin은 NA(회색)입니다.
+- 레전드(영문): **The cell type with the largest weight in each bin (crc_p1, Level1).** The reference is single-cell data from the same study. In the example data 107,470 of the 126,144 bins of crc_p1 (85%) were scored. The tumour masses at the bottom show Tumor, the stroma dividing them Fibroblast, the normal mucosa on the left Intestinal Epithelial and the muscle layer at the upper right Smooth Muscle, with an immune area of T cells and B cells in the middle. Bins below umi_min are not scored and shown as NA (grey).
 
 **결과 2. 슬라이드별 세포 유형 구성**
 - 결과 파일: `plots/celltype_by_slide.png`, 표 `celltype_by_slide.tsv`, `rctd_summary.tsv`
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_rctd_result_2.png`
 
-- 레전드(국문): **슬라이드마다 세포 유형이 차지하는 bin 비율.** 종양 슬라이드는 Tumor, 정상 슬라이드는 Intestinal Epithelial 비율이 높아야 합니다. 이 결과를 spatial_condition_de(group_by=rctd_first_type)에 넣으면 세포 유형별로 종양과 정상을 비교합니다.
-- 레전드(영문): **Fraction of bins per cell type in each slide.** Tumour slides should be rich in Tumor and normal slides in Intestinal Epithelial. Given to spatial_condition_de (group_by=rctd_first_type), this output compares tumour and normal per cell type.
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_hd_rctd_result_2.png`
+
+- 레전드(국문): **슬라이드마다 세포 유형이 차지하는 bin 비율(점수 받은 bin 기준).** 종양 슬라이드는 Tumor, 정상 슬라이드는 Intestinal Epithelial 비율이 높아야 합니다. 예시 데이터에서 Tumor는 종양 슬라이드 bin의 26~50%였고 정상 슬라이드에서는 0.6~1.5%였습니다. normal_p5는 Intestinal Epithelial이 49%, normal_p3는 Smooth Muscle이 37%로 가장 많았습니다. normal_p3는 UMI가 낮아(spatial_hd_prep 결과 2) 점수 받은 bin이 54%에 그쳤습니다. 이 결과를 spatial_condition_de(group_by=rctd_first_type)에 넣으면 세포 유형별로 종양과 정상을 비교합니다.
+- 레전드(영문): **Fraction of bins per cell type in each slide (scored bins).** Tumour slides should be rich in Tumor and normal slides in Intestinal Epithelial. In the example data Tumor made up 26-50% of the bins of the tumour slides and 0.6-1.5% of the normal slides; Intestinal Epithelial was the largest type in normal_p5 (49%) and Smooth Muscle in normal_p3 (37%). normal_p3 had low UMI counts (spatial_hd_prep result 2), so only 54% of its bins were scored. Given to spatial_condition_de (group_by=rctd_first_type), this output compares tumour and normal per cell type.
 
 ## 6. check_reference
 

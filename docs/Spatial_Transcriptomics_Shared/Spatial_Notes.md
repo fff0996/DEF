@@ -17,7 +17,7 @@ Spatial transcriptomics pipeline: 작업 기록
 | spatial_condition_de | `spatial_condition_de.1.4.R` | 1.0 | 1.0, 1.1, 1.2, 1.3 |
 | spatial_hd_prep | `spatial_hd_prep.1.1.R` | 1.0 | 1.0 |
 | spatial_hd_cluster | `spatial_hd_cluster.1.1.R` | 1.0 | 1.0 |
-| spatial_hd_svf | `spatial_hd_svf.1.0.R` | 1.0 | - |
+| spatial_hd_svf | `spatial_hd_svf.1.1.R` | 1.0 | 1.0 |
 | spatial_hd_rctd | `spatial_hd_rctd.1.2.R` | 1.0 | 1.0, 1.1 |
 
 실행 이미지: `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.0.def`(2026-10-22 Codespace 검증 빌드 성공, 8분, 1.29GB, 호스트 변화 없음), `bx_spatial.1.1.def`(r-ape 5.8-1 추가, svf용).
