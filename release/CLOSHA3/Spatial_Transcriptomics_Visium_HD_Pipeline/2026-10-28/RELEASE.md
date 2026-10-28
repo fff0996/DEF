@@ -15,7 +15,7 @@ Visium HD 공간 전사체 파이프라인(`Spatial_Transcriptomics_Visium_HD_Pi
 | spatial_hd_rctd | `spatial_hd_rctd.1.0.R` | (3.0 신규) | `scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_hd_rctd.1.2.R` | bx_spatial 1.1 |
 | check_reference | `check_reference.1.1.R` | 1.0 | `scripts/Spatial_Transcriptomics_Analysis_Pipeline/check_reference.1.1.R` | bx_spatial 1.1 |
 
-- 작업 파일 기준 커밋: `ce6ccbf` (스크립트). 원고와 포탈 이미지는 포탈 등록 전 같은 날 `2878ffd` 기준으로 다시 복사했습니다(샘플시트를 포탈 칸 여섯 개 형식으로, 자원 안내를 사용자가 바꿀 수 있는 옵션으로 고침, 참조 열 이름은 파이프라인 전에 check_reference로 확인하도록 안내). 스크립트는 바뀌지 않았습니다.
+- 작업 파일 기준 커밋: `ce6ccbf` (스크립트). 원고와 포탈 이미지는 포탈 등록 전 같은 날 `4704db3` 기준으로 다시 복사했습니다(샘플시트를 포탈 칸 여섯 개 형식으로, 자원 안내를 사용자가 바꿀 수 있는 옵션으로 고침, 참조 열 이름은 파이프라인 전에 check_reference로 확인하도록 안내, 파이프라인 모식도에 check_reference를 점선 사전 확인으로 추가). 스크립트는 바뀌지 않았습니다.
 - 실행 이미지: 모든 모듈이 `bx_spatial 1.1` 하나를 씁니다(`defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def`). spatial_hd_prep과 spatial_hd_cluster 사용 예제 주석에는 `bx_spatial.1.0.sif`로 적혀 있지만, 1.1은 1.0에 ape만 더한 이미지라 그대로 실행됩니다.
 - spatial_condition_de와 check_reference는 Visium 파이프라인(`Spatial_Transcriptomics_Visium_Pipeline`, 별도 배포 예정)도 같이 쓰는 모듈입니다. 이 배포로 등록한 모듈을 그대로 씁니다.
 - 실행 순서: spatial_hd_prep → spatial_hd_cluster → (spatial_hd_svf, spatial_condition_de[군집 기준], spatial_hd_rctd) → spatial_condition_de[세포 유형 기준, `group_by=rctd_first_type`]. 단일세포 참조(`reference_rds`)를 주지 않으면 spatial_hd_rctd와 세포 유형 기준 비교는 `skipped.txt`를 남기고 건너뜁니다. check_reference는 참조의 세포 유형 열을 미리 확인하는 보조 모듈입니다.
