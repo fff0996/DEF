@@ -819,11 +819,8 @@ Rscript check_reference.1.1.R \
 ### 주요 결과 이미지
 예시 참조는 사람 대장암 단일세포 자료(10x Chromium Flex, Oliveira et al., Nat Genet 2025)를 세포 유형마다 최대 300세포씩 뽑은 Seurat 객체입니다(세포 10,333개).
 
-등록 메모: CLOSHA 실행 결과로 그림을 넣습니다.
-
 **결과 1. 참조 열 보고서**
-- 결과 파일: `reference_columns.tsv`, `logs/<stamp>.log`
-- 그림 자리: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/check_reference_result_1.png`
+- 결과 파일: `reference_columns.tsv`, `logs/<stamp>.log` (이 모듈은 그림을 만들지 않습니다)
 
 - 레전드(국문): **참조 메타데이터 열의 형식과 범주.** 범주가 2~100개인 범주형 열에 [CELLTYPE?]가 붙습니다. 예시 참조에서는 Level1(9종: Tumor, Fibroblast, T cells 등)과 Level2(38종)가 세포 유형 열이고, Patient(8종)도 후보로 잡히지만 세포 유형이 아니므로 고르지 않습니다.
 - 레전드(영문): **Type and categories of the reference metadata columns.** Categorical columns with 2-100 categories are tagged [CELLTYPE?]. In the example reference Level1 (9 types: Tumor, Fibroblast, T cells and others) and Level2 (38 types) are the cell-type columns; Patient (8 values) is also tagged but is not a cell type.
