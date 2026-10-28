@@ -1,0 +1,7 @@
+# Seurat objects, PDFs and large tables are not kept in git
+*.rds
+*.pdf
+*.tsv.gz
+*.h5
+*.zip
+02_de/

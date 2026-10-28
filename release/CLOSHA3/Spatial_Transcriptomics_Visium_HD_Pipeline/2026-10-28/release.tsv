@@ -1,0 +1,7 @@
+module	release_file	closha2_file	work_file	image
+spatial_hd_prep	spatial_hd_prep.1.0.R	(new in 3.0)	scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_hd_prep.1.1.R	bx_spatial 1.1 (defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def)
+spatial_hd_cluster	spatial_hd_cluster.1.0.R	(new in 3.0)	scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_hd_cluster.1.1.R	bx_spatial 1.1 (defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def)
+spatial_hd_svf	spatial_hd_svf.1.0.R	(new in 3.0)	scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_hd_svf.1.1.R	bx_spatial 1.1 (defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def)
+spatial_condition_de	spatial_condition_de.1.0.R	(new in 3.0)	scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_condition_de.1.4.R	bx_spatial 1.1 (defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def)
+spatial_hd_rctd	spatial_hd_rctd.1.0.R	(new in 3.0)	scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_hd_rctd.1.2.R	bx_spatial 1.1 (defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def)
+check_reference	check_reference.1.1.R	check_reference.1.0.R	scripts/Spatial_Transcriptomics_Analysis_Pipeline/check_reference.1.1.R	bx_spatial 1.1 (defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def)

@@ -33,6 +33,8 @@ Visium HD (bin 8·16µm):
 
 실행 명령은 모두 `Rscript <스크립트> key=value ...`이다.
 
+배포: 2026-10-28 위 배포 번호로 배포했다(`release/CLOSHA3/Spatial_Transcriptomics_Visium_HD_Pipeline/2026-10-28/`). 이후 작업 파일을 고치면 다음 배포에서 번호를 올린다.
+
 ## 1. spatial_hd_prep
 Visium HD 슬라이드를 bin 크기(8·16µm)로 불러와 거르고 정규화한 뒤 sketch(대표 bin 표본)를 만든다.
 자원(코어, 메모리): 4코어, 64GB
