@@ -837,13 +837,15 @@ Rscript check_reference.1.1.R \
 ```
 
 ### 주요 결과 이미지
-예시 참조는 사람 대장암 단일세포 자료(10x Chromium Flex, Oliveira et al., Nat Genet 2025)를 세포 유형마다 최대 300세포씩 뽑은 Seurat 객체입니다(세포 10,333개).
+예시 참조는 사람 대장암 단일세포 자료(10x Chromium Flex, Oliveira et al., Nat Genet 2025)를 세포 유형마다 최대 300세포씩 뽑은 Seurat 객체입니다(세포 10,333개). CLOSHA에서 실행했고 약 6초 걸렸습니다.
 
 **결과 1. 참조 열 보고서**
-- 결과 파일: `reference_columns.tsv`, `logs/<stamp>.log` (이 모듈은 그림을 만들지 않습니다)
+- 결과 파일: `reference_columns.tsv` (표를 그림으로 만들었습니다), `logs/<stamp>.log`에도 같은 내용이 나옵니다
 
-- 레전드(국문): **참조 메타데이터 열의 형식과 범주.** 범주가 2~100개인 범주형 열에 [CELLTYPE?]가 붙습니다. 예시 참조에서는 Level1(9종: Tumor, Fibroblast, T cells 등)과 Level2(38종)가 세포 유형 열이고, Patient(8종)도 후보로 잡히지만 세포 유형이 아니므로 고르지 않습니다.
-- 레전드(영문): **Type and categories of the reference metadata columns.** Categorical columns with 2-100 categories are tagged [CELLTYPE?]. In the example reference Level1 (9 types: Tumor, Fibroblast, T cells and others) and Level2 (38 types) are the cell-type columns; Patient (8 values) is also tagged but is not a cell type.
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/check_reference_result_1.png`
+
+- 레전드(국문): **참조 메타데이터 열마다 형식, 범주 수, 세포 유형 후보 여부와 값.** 숫자 열은 값 범위를, 범주(글자) 열은 많은 순으로 앞 10개 값과 세포 수를 보여 줍니다. 범주가 2~100개인 범주 열이 세포 유형 열 후보(Candidate = yes, 로그의 [CELLTYPE?])입니다. 범주가 1개인 열(모두 같은 값)과 100개가 넘는 열(세포 바코드 같은 ID)은 후보에서 뺍니다. 예시 참조는 열 6개 중 Patient, Level1, Level2가 후보였습니다. Level1(9종: Myeloid, Tumor, Fibroblast 등)은 큰 단위, Level2(38종: CAF, CD4 T cell 등)는 세부 세포 유형이고, Patient(8종: P5NAT, P2CRC 등)는 시료 ID라 세포 유형 열이 아닙니다. 이 기준은 범주 수만 보므로, 값을 보고 세포 유형 열을 골라 reference_label_col에 넣습니다(예시 분석은 Level1).
+- 레전드(영문): **Type, number of categories, cell-type candidacy and values of each reference metadata column.** Numeric columns show their range and categorical (text) columns their ten most frequent values with cell counts. Categorical columns with 2-100 categories are cell-type column candidates (Candidate = yes, [CELLTYPE?] in the log); columns with one category (all the same) or more than 100 (IDs such as cell barcodes) are left out. In the example reference Patient, Level1 and Level2 of the six columns were candidates. Level1 (9 types: Myeloid, Tumor, Fibroblast and others) holds broad and Level2 (38 types: CAF, CD4 T cell and others) fine cell types, while Patient (8 values: P5NAT, P2CRC and others) is a sample ID, not a cell type. The rule only counts categories, so choose the cell-type column from the values and give it as reference_label_col (Level1 in the example analysis).
 
 ---
 
