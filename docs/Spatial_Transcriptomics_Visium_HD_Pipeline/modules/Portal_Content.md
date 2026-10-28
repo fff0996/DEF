@@ -28,7 +28,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 Visium HD �
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_hd_prep.1.0.R | |
-| Processor Core (제안) | 8코어, 메모리 64GB | 8 cores, 64 GB of memory |
+| Processor Core (제안) | 4코어, 메모리 64GB | 4 cores, 64 GB of memory |
 
 등록 메모: 작업 파일 `spatial_hd_prep.1.1.R`을 배포 번호 1.0으로 올립니다.
 
@@ -155,7 +155,7 @@ Rscript spatial_hd_prep.1.0.R \
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_hd_cluster.1.0.R | |
-| Processor Core (제안) | 8코어, 메모리 128GB | 8 cores, 128 GB of memory |
+| Processor Core (제안) | 4코어, 메모리 64GB | 4 cores, 64 GB of memory |
 
 등록 메모: 작업 파일 `spatial_hd_cluster.1.1.R`을 배포 번호 1.0으로 올립니다.
 
@@ -311,7 +311,7 @@ Rscript spatial_hd_cluster.1.0.R \
 | 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_hd_svf.1.1.R | |
-| Processor Core (제안) | 8코어, 메모리 64GB | 8 cores, 64 GB of memory |
+| Processor Core (제안) | 4코어, 메모리 64GB | 4 cores, 64 GB of memory |
 
 등록 메모: 작업 파일 `spatial_hd_svf.1.1.R`을 배포 번호 1.0으로 올립니다.
 
@@ -436,7 +436,7 @@ CLOSHA에서 max_bins=500(기본값 4000)으로 실행했고 5장에 약 4분 �
 | 레퍼런스 URL | https://bioconductor.org/packages/DESeq2/ | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_condition_de.1.0.R | |
-| Processor Core (제안) | 8코어, 메모리 64GB | 8 cores, 64 GB of memory |
+| Processor Core (제안) | 4코어, 메모리 64GB | 4 cores, 64 GB of memory |
 
 등록 메모: 작업 파일 `spatial_condition_de.1.4.R`을 배포 번호 1.0으로 올립니다.
 
@@ -614,7 +614,7 @@ CLOSHA에서 hd_cluster 결과(group_by=seurat_clusters)를 reference=normal로 
 | 레퍼런스 URL | https://github.com/dmcable/spacexr | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_hd_rctd.1.0.R | |
-| Processor Core (제안) | 8코어, 메모리 128GB | 8 cores, 128 GB of memory |
+| Processor Core (제안) | 8코어, 메모리 64GB | 8 cores, 64 GB of memory |
 
 등록 메모: 작업 파일 `spatial_hd_rctd.1.2.R`을 배포 번호 1.0으로 올립니다.
 

@@ -100,7 +100,7 @@ Visium (spot 55µm):
 
 ## 5. spatial_condition_de
 조건(예: control, treated) 사이에서 군집 조성과 군집별 유전자 발현을 비교한다. Visium(spatial_merge 결과)과 Visium HD(spatial_hd_cluster 결과)를 모두 받는다.
-자원(코어, 메모리): 8코어, 64GB
+자원(코어, 메모리): 4코어, 64GB
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -171,7 +171,7 @@ RCTD(spacexr, full 모드)로 Visium spot마다 세포 유형 비율(weight)을 
 | spatial_cluster | 8 | 32GB |  |
 | spatial_svf | 8 | 32GB |  |
 | spatial_merge | 8 | 64GB |  |
-| spatial_condition_de | 8 | 64GB |  |
+| spatial_condition_de | 4 | 64GB | 2026-10-28 Visium HD 실측으로 4코어로 내림(두 파이프라인이 같은 모듈) |
 | spatial_labelTransfer | 8 | 128GB | 참조 전체로 anchor를 찾아 큰 참조에서 메모리가 가장 많이 든다 |
 | spatial_rctd | 8 | 64GB | 코어마다 자료를 복사해 코어 수만큼 메모리가 는다 |
 | check_reference | 4 | 64GB | 큰 참조 RDS를 통째로 읽는다 |

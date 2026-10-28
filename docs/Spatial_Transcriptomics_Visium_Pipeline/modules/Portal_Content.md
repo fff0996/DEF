@@ -519,7 +519,7 @@ Rscript spatial_merge.1.1.R \
 | 레퍼런스 URL | https://bioconductor.org/packages/DESeq2/ | |
 | 컨테이너 이미지 | bx_spatial.1.1 | |
 | 실행 스크립트 파일 | spatial_condition_de.1.0.R | |
-| Processor Core (제안) | 8코어, 메모리 64GB | 8 cores, 64 GB of memory |
+| Processor Core (제안) | 4코어, 메모리 64GB | 4 cores, 64 GB of memory |
 
 등록 메모: 작업 파일 `spatial_condition_de.1.4.R`을 배포 번호 1.0으로 올립니다.
 

@@ -134,7 +134,7 @@ Williams CG, Lee HJ, Asatsuma T, Vento-Tormo R, Haque A. An introduction to spat
 3. **조건 비교에는 조건마다 슬라이드 2장 이상(생물학적 반복)을 준비해 주세요.** 슬라이드가 1장뿐인 조건은 bin 단위 검정만 할 수 있고, 이 결과는 탐색용입니다. 한 슬라이드 안의 bin은 독립 반복이 아니기 때문입니다.
 4. **슬라이드 정보 파일(CSV)에 `SliceID`, `Condition`을 적어 주세요.** `SliceID`는 슬라이드 폴더 이름과 같아야 합니다. 같은 개체가 각 조건에 있으면 `Patient` 열로 짝 설계를 씁니다.
 5. **같은 종, 같은 참조로 만든 Space Ranger 결과만 함께 분석해 주세요.** 슬라이드마다 유전자 목록이 다르면 합칠 때 일부 유전자가 0이 되어 가짜 차이가 생길 수 있습니다.
-6. **메모리를 많이 씁니다.** spatial_hd_prep과 spatial_hd_svf는 64GB, 통합 군집(spatial_hd_cluster)과 세포 유형(spatial_hd_rctd)은 128GB를 권장합니다. 메모리가 부족하면 bin 크기 16µm를 쓰거나 `min_counts`를 올려 주세요.
+6. **메모리를 많이 씁니다.** 모든 모듈에 64GB를 권장합니다. 예시 데이터(대장암 5장, 16µm)에서 가장 많이 쓴 모듈은 통합 군집(spatial_hd_cluster)으로 약 31GB였습니다. 슬라이드가 많거나 8µm bin을 쓰면 메모리가 늘어나므로, 부족하면 bin 크기 16µm를 쓰거나 `min_counts`를 올려 주세요.
 7. **세포 유형은 같은 종, 같은 조직의 단일세포 참조 자료(Seurat RDS)로 붙입니다.** 참조(reference_rds)와 세포 유형 열 이름(reference_label_col)을 주면 spatial_hd_rctd가 모든 bin에 세포 유형을 붙이고, 그 결과로 spatial_condition_de가 세포 유형별로(`group_by=rctd_first_type`) 조건을 비교합니다. 참조를 주지 않으면 이 두 단계는 건너뛰고 나머지 분석은 그대로 끝나며, 군집은 마커 유전자와 조직 위치로 해석합니다. 공개 단일세포 아틀라스(예: CELLxGENE, Allen Brain Cell Atlas)를 참조로 쓸 수 있습니다. 열 이름을 모르면 비워 두고 실행하면 분석 전에 멈추고 오류 로그에 후보 열을 보여 줍니다.
 8. **모든 분석은 인터넷 연결 없이 수행됩니다.**
 
@@ -144,6 +144,6 @@ Williams CG, Lee HJ, Asatsuma T, Vento-Tormo R, Haque A. An introduction to spat
 3. **For condition comparison prepare two or more slides (biological replicates) per condition.** A condition with one slide allows only bin-level tests, which are exploratory because bins of one slide are not independent replicates.
 4. **List `SliceID` and `Condition` in the slide sheet (CSV).** `SliceID` must equal the slide folder name. When the same individual appears in each condition, add a `Patient` column for a paired design.
 5. **Analyse together only Space Ranger outputs made for the same species and reference.** Different gene lists between slides zero some genes when merging and can create false differences.
-6. **Memory use is high.** 64 GB is recommended for spatial_hd_prep and spatial_hd_svf, and 128 GB for joint clustering (spatial_hd_cluster) and cell types (spatial_hd_rctd). When memory runs out, use 16 um bins or a higher `min_counts`.
+6. **Memory use is high.** 64 GB is recommended for every module. In the example data (five colorectal slides, 16 um) joint clustering (spatial_hd_cluster) used the most, about 31 GB. More slides or 8 um bins need more memory; when it runs out, use 16 um bins or a higher `min_counts`.
 7. **Cell types come from a single-cell reference (Seurat RDS) of the same species and tissue.** Given a reference (reference_rds) and its cell-type column (reference_label_col), spatial_hd_rctd gives every bin a cell type and spatial_condition_de then compares conditions per cell type (`group_by=rctd_first_type`). Without a reference these two steps are skipped and the rest of the analysis finishes as usual; clusters are then interpreted by their marker genes and tissue location. Public single-cell atlases (for example CELLxGENE, Allen Brain Cell Atlas) can serve as references. If the column name is unknown, leave it empty: the run stops before the analysis and the error log lists the candidate columns.
 8. **All analyses run without internet access.**
