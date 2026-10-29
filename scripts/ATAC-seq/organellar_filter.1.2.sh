@@ -94,7 +94,8 @@ organellar_pattern="${organellar_pattern:-(^chrM$|^MT$|^Mt$|mitochond|mitochondr
 # ------------------------------------------------------------
 # Threads: the CPU cores allocated to this job. nproc counts the affinity
 # mask and cgroup cpuset; OMP_NUM_THREADS is removed for it, because public
-# CLOSHA modules always set it to 1 and nproc would return that instead. A larger number is capped with a
+# CLOSHA modules always set it to 1 and nproc would return that instead.
+# A larger number is capped with a
 # warning, because the thread count changes speed only, not results.
 # ------------------------------------------------------------
 threads_requested="$threads"

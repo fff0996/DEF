@@ -124,7 +124,8 @@ alignment_suffix="${alignment_suffix:-.shifted.bam}"
 
 # ------------------------------------------------------------
 # Threads for samtools: the CPU cores allocated to this job, read with nproc
-# with OMP_NUM_THREADS removed (public CLOSHA modules always set it to 1). MACS3 callpeak itself runs run on one core. threads is not registered on the
+# with OMP_NUM_THREADS removed (public CLOSHA modules always set it to 1).
+# MACS3 callpeak itself runs run on one core. threads is not registered on the
 # portal; a larger requested number is capped with a warning.
 # ------------------------------------------------------------
 threads="${threads:-auto}"
