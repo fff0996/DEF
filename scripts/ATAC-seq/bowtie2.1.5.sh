@@ -107,14 +107,14 @@ fi
 set -euo pipefail
 
 # =============================================================================
-# Threads: the CPU cores allocated to this job, read with nproc (nproc returns
-# OMP_NUM_THREADS when set, which follows the portal's core selection). The
+# Threads: the CPU cores allocated to this job, read with nproc with
+# OMP_NUM_THREADS removed (public CLOSHA modules always set it to 1). The
 # threads argument is not registered on the portal; a larger requested number
 # is capped and reported as a warning.
 # =============================================================================
 threads="${threads:-auto}"
 threads_requested="$threads"
-allocated_threads="$(nproc 2>/dev/null || echo 1)"
+allocated_threads="$(env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc 2>/dev/null || echo 1)"
 threads_capped=0
 if [ -z "$threads" ] || [ "$threads" = "auto" ]; then
     threads="$allocated_threads"

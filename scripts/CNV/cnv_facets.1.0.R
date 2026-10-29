@@ -134,7 +134,7 @@ min_purity <- as_num("min_purity", 0, 1)
 seed <- as_num("seed", 0, integer = TRUE)
 
 allocated_cores <- function() {
-	n <- suppressWarnings(as.integer(tryCatch(system2("nproc", stdout = TRUE, stderr = FALSE),
+	n <- suppressWarnings(as.integer(tryCatch(system2("env", c("-u", "OMP_NUM_THREADS", "-u", "OMP_THREAD_LIMIT", "nproc"), stdout = TRUE, stderr = FALSE),
 							error = function(e) NA)))
 	if (length(n) != 1 || is.na(n) || n < 1) n <- max(1L, length(parallel::mcaffinity()))
 	n

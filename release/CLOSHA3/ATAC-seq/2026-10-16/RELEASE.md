@@ -35,3 +35,9 @@ CLOSHA 2.0의 ATAC-seq 파이프라인을 CLOSHA 3.0으로 옮긴 첫 배포입�
 - `docs/pipeline/`: 파이프라인 페이지 원고(`Portal_Content.md`, `.docx`)와 대표 이미지(분석 흐름 `pipeline.png`, 분석 개념 `concept.png`, 원본 SVG)
 - `docs/`: 배포 시점의 모듈 원고(`Portal_Content.md`, `.docx`), 등록 정보(`Registration.md`), 실행 이미지 안내(`Container_Manual.md`)
 - `results/`: 배포본으로 실행한 결과를 올리는 곳(올릴 파일 목록은 `results/README.md`)
+
+## 2026-10-29 수정 (번호는 그대로)
+
+공개(배포) 모듈의 실행 명령에는 CLOSHA가 항상 `--env OMP_NUM_THREADS=1`을 붙인다. 코어 수를 `nproc`으로 읽던 스크립트는 이 값을 따라 등록 코어 수와 상관없이 1코어로 돌았다(예: 2026-10-21 bowtie2 로그 `Threads: 1 (requested auto, allocated 1)`, 2026-10-28 spatial_hd_rctd `max_cores used = 1 (allocated 1)`). 코어 수를 읽는 줄만 `env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc`(Slurm이 묶어 준 CPU 수)으로 바꾸고, 그 줄을 설명하는 주석을 고쳤다. 사용자 결정으로 배포 번호는 올리지 않고 이 폴더의 파일과 작업 파일을 같은 내용으로 고쳤다(`tools/check_release.py` 일치 확인). 분석 결과는 바뀌지 않고 속도만 바뀐다. 근거는 `docs/CLOSHA_Script_Rules_v1.md` 2.1절과 11절.
+
+고친 파일: bowtie2.1.1.sh, organellar_filter.1.1.sh, MACS3_callpeak_ATAC.1.1.sh, atac_motif.1.2.R, tf_footprinting.1.1.sh, replicate_consistency.1.0.sh.

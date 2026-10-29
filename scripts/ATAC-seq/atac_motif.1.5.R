@@ -209,10 +209,10 @@ min_motif_score <- as.numeric(min_motif_score)
 stabsel_cutoff <- as.numeric(stabsel_cutoff)
 seed <- as.integer(seed)
 # threads: the CPU cores allocated to this job, read with nproc as in the
-# Bash modules (nproc returns OMP_NUM_THREADS when set, which follows the
-# portal's core selection); parallel::mcaffinity() is the fallback. A larger
+# Bash modules, with OMP_NUM_THREADS removed (public CLOSHA modules always
+# set it to 1); parallel::mcaffinity() is the fallback. A larger
 # requested number is capped with a warning.
-allocated_threads <- suppressWarnings(as.integer(tryCatch(system("nproc", intern = TRUE), error = function(e) NA)))
+allocated_threads <- suppressWarnings(as.integer(tryCatch(system("env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc", intern = TRUE), error = function(e) NA)))
 if (length(allocated_threads) != 1 || is.na(allocated_threads) || allocated_threads < 1) {
 	allocated_threads <- tryCatch(length(parallel::mcaffinity()), error = function(e) NA_integer_)
 }

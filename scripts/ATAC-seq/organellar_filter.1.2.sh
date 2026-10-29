@@ -92,14 +92,13 @@ threads="${threads:-auto}"
 organellar_pattern="${organellar_pattern:-(^chrM$|^MT$|^Mt$|mitochond|mitochondrion|mitochondrial|chloroplast|plastid|^Pt$|^PT$|^chrC$)}"
 
 # ------------------------------------------------------------
-# Threads: the CPU cores allocated to this job. nproc follows the affinity
-# mask and cgroup cpuset, and it also returns OMP_NUM_THREADS when that is
-# set; the portal sets OMP_NUM_THREADS to the selected core count (1 or 4),
-# so nproc gives the portal's choice. A larger number is capped with a
+# Threads: the CPU cores allocated to this job. nproc counts the affinity
+# mask and cgroup cpuset; OMP_NUM_THREADS is removed for it, because public
+# CLOSHA modules always set it to 1 and nproc would return that instead. A larger number is capped with a
 # warning, because the thread count changes speed only, not results.
 # ------------------------------------------------------------
 threads_requested="$threads"
-allocated_threads="$(nproc 2>/dev/null || echo 1)"
+allocated_threads="$(env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc 2>/dev/null || echo 1)"
 if [ -z "$threads" ] || [ "$threads" = "auto" ]; then
 	threads="$allocated_threads"
 elif ! [[ "$threads" =~ ^[0-9]+$ ]] || [ "$threads" -lt 1 ]; then

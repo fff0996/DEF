@@ -151,7 +151,7 @@ output_dir            <- get_chr("output_dir", { message("[FATAL] output_dir is 
 spatial_assay         <- get_chr("spatial_assay", "Spatial")
 reference_assay_param <- get_chr("reference_assay", "RNA")
 # max_cores: auto (default) = cores allocated to the job (nproc); a number is capped by them.
-allocated_cores <- tryCatch(as.integer(system("nproc", intern = TRUE)), error = function(e) NA_integer_)
+allocated_cores <- tryCatch(as.integer(system("env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc", intern = TRUE)), error = function(e) NA_integer_)
 if (is.na(allocated_cores) || allocated_cores < 1) allocated_cores <- length(parallel::mcaffinity())
 max_cores_arg <- tolower(get_chr("max_cores", "auto"))
 max_cores <- if (max_cores_arg == "auto") allocated_cores else suppressWarnings(as.integer(max_cores_arg))

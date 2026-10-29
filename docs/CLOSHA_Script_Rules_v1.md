@@ -284,12 +284,12 @@ msg      <- function(...) { cat(..., "\n") }
   - 확인 방법(할당 범위를 반영하는 값):
     | 언어 | 방법 | 쓰지 않는 것 |
     |---|---|---|
-    | Bash | `nproc` | `/proc/cpuinfo` 줄 수 |
-    | R | `as.integer(system("nproc", intern = TRUE))` (실패하면 `length(parallel::mcaffinity())`) | `parallel::detectCores()` (서버 전체 코어 수) |
-    | Python | `int(subprocess.check_output(["nproc"]))` (실패하면 `len(os.sched_getaffinity(0))`) | `os.cpu_count()` (서버 전체 코어 수) |
+    | Bash | `env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc` | `nproc`만 단독으로(공개 모듈에서 1), `/proc/cpuinfo` 줄 수 |
+    | R | `as.integer(system("env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc", intern = TRUE))` (실패하면 `length(parallel::mcaffinity())`) | `parallel::detectCores()` (서버 전체 코어 수) |
+    | Python | `len(os.sched_getaffinity(0))` 또는 `env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc` | `os.cpu_count()` (서버 전체 코어 수) |
     - 세 언어 모두 `nproc`을 먼저 쓴다. 포탈 선택과 맞는 것이 운영에서 확인된 값이 `nproc`이기 때문이다(아래).
   - `nproc`은 `OMP_NUM_THREADS`가 있으면 그 값을 돌려준다. 싱글 코어 작업의 실행 명령에는 `--env OMP_NUM_THREADS=1`이 들어간다. 2026-10-14 운영 로그에서 Bash 스크립트의 `nproc`은 포탈 선택과 같았다(싱글 `allocated 1`, 최대 4코어 `allocated 4`). 그래서 `env -u OMP_NUM_THREADS nproc`처럼 이 값을 빼지 않는다.
-  - **2026-10-29 원인 확인:** 공개 모듈 명령에는 항상 `OMP_NUM_THREADS=1`이 붙는다(2.1절 주의). 개인 모듈 실행(`OMP_NUM_THREADS` 없음)에서 `nproc`이 36코어 노드에서 8을 돌려줬으므로 CPU 묶음은 할당 코어로 묶여 있다. 그래서 코어 수는 `env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc`(CPU 묶음 수)으로 읽고, 계산 라이브러리 스레드는 포탈 값(1)을 그대로 둔다. 위의 "`env -u OMP_NUM_THREADS nproc`처럼 빼지 않는다"는 이 결정으로 바뀐다. 바꾸면 `nproc`을 쓰는 멀티코어 스크립트(공간 rctd·hd_rctd, ATAC bowtie2·organellar_filter·MACS3·GATK_MarkDuplicates·tf_footprinting·atac_motif·replicate_consistency, CNV)를 모두 새 버전으로 만든다.
+  - **2026-10-29 원인 확인:** 공개 모듈 명령에는 항상 `OMP_NUM_THREADS=1`이 붙는다(2.1절 주의). 개인 모듈 실행(`OMP_NUM_THREADS` 없음)에서 `nproc`이 36코어 노드에서 8을 돌려줬으므로 CPU 묶음은 할당 코어로 묶여 있다. 그래서 코어 수는 `env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc`(CPU 묶음 수)으로 읽고, 계산 라이브러리 스레드는 포탈 값(1)을 그대로 둔다. 위의 "`env -u OMP_NUM_THREADS nproc`처럼 빼지 않는다"는 이 결정으로 바뀐다. 2026-10-29에 nproc을 쓰던 스크립트(ATAC bowtie2·organellar_filter·MACS3_callpeak_ATAC·atac_motif·tf_footprinting·replicate_consistency, 공간 hd_rctd·rctd, CNV)를 번호를 올리지 않고 고쳤다(사용자 결정; 배포 폴더도 같이 고침). RTpred는 처음부터 `os.sched_getaffinity(0)`을 써서 해당 없음. 공개 모듈 테스트에서는 로그의 allocated 값이 등록 코어 수와 같은지 꼭 확인한다. 바꾸면 `nproc`을 쓰는 멀티코어 스크립트(공간 rctd·hd_rctd, ATAC bowtie2·organellar_filter·MACS3·GATK_MarkDuplicates·tf_footprinting·atac_motif·replicate_consistency, CNV)를 모두 새 버전으로 만든다.
   - 최대 4코어 작업에서 이 4가 `OMP_NUM_THREADS`에서 왔는지 CPU 묶음(affinity)에서 왔는지는 아직 확인하지 않았다. `mcaffinity()`, `sched_getaffinity()`는 `OMP_NUM_THREADS`를 보지 않고 CPU 묶음만 세므로, CPU를 묶지 않는 환경이면 노드 전체 코어 수가 나올 수 있다. 그래서 대체 수단으로만 쓴다. 확인은 `tools/diag/core_check.sh`를 최대 4코어로 실행해서 한다.
   - 도구가 1코어로만 계산하는 모듈(MACS3, idr, ChIPseeker, edgeR, clusterProfiler 등이 중심)도 같은 방식으로 코어 수를 읽어, 스레드를 받는 보조 도구(`samtools -@` 등)에 넘긴다. 포탈 원고에는 모듈마다 권장 Processor Core(1, 4, 8, 16)를 적는다. 1코어로만 계산하는 도구는 코어를 늘려도 빨라지지 않으므로 많은 코어를 권장하지 않는다.
   - 결정한 값을 외부 도구에 넘기고(`samtools -@ "$threads"`, `TOBIAS ... --cores "$threads"`), 계산 라이브러리 스레드(`OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS`)도 같은 값으로 맞춘다.

@@ -115,7 +115,7 @@ min_cells_per_type <- as_num("min_cells_per_type", 1, integer = TRUE)
 min_shared_features <- as_num("min_shared_features", 1, integer = TRUE)
 pt_size <- as_num("pt_size", 0.1, 50)
 seed <- as_num("seed", 0, integer = TRUE)
-allocated <- tryCatch(as.integer(system("nproc", intern = TRUE)), error = function(e) NA_integer_)
+allocated <- tryCatch(as.integer(system("env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc", intern = TRUE)), error = function(e) NA_integer_)
 if (is.na(allocated) || allocated < 1) allocated <- length(parallel::mcaffinity())
 max_cores <- if (tolower(params$max_cores) == "auto") allocated else as_num("max_cores", 1, integer = TRUE)
 cores_capped <- max_cores > allocated

@@ -142,14 +142,13 @@ if [ -z "$macs_dir" ]; then
 fi
 
 # ------------------------------------------------------------
-# Cores: the CPU cores allocated to this job. nproc follows the affinity
-# mask and cgroup cpuset, and it also returns OMP_NUM_THREADS when that is
-# set; the portal sets OMP_NUM_THREADS to the selected core count (1 or 4),
-# so nproc gives the portal's choice. A larger number is capped with a
+# Cores: the CPU cores allocated to this job. nproc counts the affinity
+# mask and cgroup cpuset; OMP_NUM_THREADS is removed for it, because public
+# CLOSHA modules always set it to 1 and nproc would return that instead. A larger number is capped with a
 # warning, because the thread count changes speed only, not results.
 # ------------------------------------------------------------
 cores_requested="$cores"
-allocated_cores="$(nproc 2>/dev/null || echo 1)"
+allocated_cores="$(env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc 2>/dev/null || echo 1)"
 if [ -z "$cores" ] || [ "$cores" = "auto" ]; then
 	cores="$allocated_cores"
 elif ! [[ "$cores" =~ ^[0-9]+$ ]] || [ "$cores" -lt 1 ]; then

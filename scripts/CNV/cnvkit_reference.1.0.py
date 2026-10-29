@@ -172,9 +172,9 @@ def parse_args(argv):
 
 
 def allocated_cores():
-    """Cores allocated to the job: nproc (follows OMP_NUM_THREADS and the CPU set)."""
+    """Cores allocated to the job: nproc on the CPU set (OMP_NUM_THREADS removed; public CLOSHA modules set it to 1)."""
     try:
-        return max(1, int(subprocess.check_output(["nproc"], text=True).strip()))
+        return max(1, int(subprocess.check_output(["env", "-u", "OMP_NUM_THREADS", "-u", "OMP_THREAD_LIMIT", "nproc"], text=True).strip()))
     except (OSError, ValueError, subprocess.CalledProcessError):
         return max(1, len(os.sched_getaffinity(0)))
 
