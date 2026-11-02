@@ -19,8 +19,11 @@ Spatial transcriptomics pipeline: 작업 기록
 | spatial_hd_cluster | `spatial_hd_cluster.1.1.R` | 1.0 | 1.0 |
 | spatial_hd_svf | `spatial_hd_svf.1.1.R` | 1.0 | 1.0 |
 | spatial_hd_rctd | `spatial_hd_rctd.1.2.R` | 1.0 | 1.0, 1.1 |
+| spatial_niche | `spatial_niche.1.0.R` | 1.0 | - |
+| spatial_signature_score | `spatial_signature_score.1.0.R` | 1.0 | - |
+| spatial_de_enrichment | `spatial_de_enrichment.1.0.R` | 1.0 | - |
 
-실행 이미지: `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.0.def`(2026-10-22 Codespace 검증 빌드 성공, 8분, 1.29GB, 호스트 변화 없음), `bx_spatial.1.1.def`(r-ape 5.8-1 추가, svf용).
+실행 이미지: `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.0.def`(2026-10-22 Codespace 검증 빌드 성공, 8분, 1.29GB, 호스트 변화 없음), `bx_spatial.1.1.def`(r-ape 5.8-1 추가, svf용). `bx_spatial.1.2.def`(2026-11-02, r-msigdbr 7.5.1과 bioconductor-fgsea 1.28.0 추가; signature_score, de_enrichment용. 나머지 패키지는 1.1과 같음).
 
 ## 2. 실행 이미지 패키지 결정
 - 대상 버전: R 4.3.3, Seurat 5.3.0, SeuratObject 5.2.0, presto 1.0.0, spacexr 2.2.1, DESeq2 1.42.0, harmony 1.2.3, glmGamPoi 1.14.0, hdf5r 1.3.12, ggplot2 3.5.2, patchwork 1.3.2, Matrix 1.6-5. 모두 conda-forge 또는 bioconda에서 받는다.

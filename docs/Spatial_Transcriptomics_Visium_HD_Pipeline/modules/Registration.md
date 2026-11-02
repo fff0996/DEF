@@ -1,6 +1,6 @@
 Visium HD 공간 전사체 모듈 등록 정보 (스크립트 최신 버전 기준)
 
-작성일: 2026-10-22, 갱신: 2026-10-27 (세포 유형 가지, 자원, CLOSHA 테스트 예제)
+작성일: 2026-10-22, 갱신: 2026-10-27 (세포 유형 가지, 자원, CLOSHA 테스트 예제), 2026-11-02 (뒷단 모듈 3개: niche, signature_score, de_enrichment; bx_spatial 1.2)
 
 CLOSHA에 Visium HD 파이프라인 모듈을 등록할 때 쓰는 Input / Output / Option 정리다. 기준은 `scripts/Spatial_Transcriptomics_Analysis_Pipeline/`의 모듈별 최신 버전(아래 표)이고, 모든 스크립트는 `key=value` 인자를 받는다. 실행 이미지는 모두 `bx_spatial.1.1`(`defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def`)이다. 1.0에는 svf의 Moran's I에 필요한 ape가 없어 1.1에서 더했다.
 
@@ -12,8 +12,11 @@ CLOSHA에 Visium HD 파이프라인 모듈을 등록할 때 쓰는 Input / Outpu
 ```
 Visium HD (bin 8·16µm):
   Space Ranger HD 슬라이드 폴더들 ─> [spatial_hd_prep] ─output_dir─> [spatial_hd_cluster] ─output_dir─┬─> [spatial_condition_de]
+                                                                                                    │                          └─> [spatial_de_enrichment]
                                                                                                     ├─> [spatial_hd_svf]
-                                                                                                    └─> [spatial_hd_rctd] (참조가 있을 때) ─output_dir─> [spatial_condition_de] (group_by=rctd_first_type)
+                                                                                                    ├─> [spatial_signature_score]
+                                                                                                    └─> [spatial_hd_rctd] (참조가 있을 때) ─┬─> [spatial_condition_de] (group_by=rctd_first_type) ─> [spatial_de_enrichment]
+                                                                                                                                          └─> [spatial_niche]
 
 참조 확인(보조): 단일세포 참조 RDS ─> [check_reference] (reference_label_col로 쓸 열 확인)
 ```
@@ -30,6 +33,9 @@ Visium HD (bin 8·16µm):
 | spatial_hd_cluster | `spatial_hd_cluster.1.1.R` | 1.0 | 새 모듈 |
 | spatial_hd_svf | `spatial_hd_svf.1.1.R` | 1.0 | 새 모듈. 1.1: 그림·요약표의 상위 유전자를 Moran's I 순으로 고름(1.0은 정렬 전 유의 표시로 골라 상위가 아니었음) |
 | spatial_hd_rctd | `spatial_hd_rctd.1.2.R` | 1.0 | 새 모듈. 참조가 없으면 건너뜀 |
+| spatial_niche | `spatial_niche.1.0.R` | 1.0 | 새 모듈(2026-11-02, 9절). 참조가 없으면 건너뜀. bx_spatial 1.2 |
+| spatial_signature_score | `spatial_signature_score.1.0.R` | 1.0 | 새 모듈(2026-11-02, 10절). bx_spatial 1.2(msigdbr) |
+| spatial_de_enrichment | `spatial_de_enrichment.1.0.R` | 1.0 | 새 모듈(2026-11-02, 11절). 앞 비교가 건너뛰면 같이 건너뜀. bx_spatial 1.2(fgsea, msigdbr) |
 
 실행 명령은 모두 `Rscript <스크립트> key=value ...`이다.
 
@@ -150,6 +156,9 @@ Visium HD의 모든 bin에 RCTD(spacexr)로 단일세포 참조의 세포 유형
 | spatial_hd_svf | 4 | 64GB |  | 4분 0초 / 11.0GB (job 31262, 1.0, max_bins=500); 1.1은 3분 42초 / 15.1GB (job 31303) |
 | spatial_hd_rctd | 8 | 64GB | 코어마다 자료를 복사해 코어 수만큼 메모리가 는다 | 4시간 9분 57초 / 17.5GB (job 31263, 작업자 8개) |
 | check_reference | 4 | 64GB | 큰 참조 RDS를 통째로 읽는다 | 6초 (2026-10-28 로그; 참조 1만 세포), 메모리 미측정 |
+| spatial_niche | 1 | 64GB | 2026-11-02 새 모듈. 병렬 없음. CLOSHA 실측 전 | (실측 전) |
+| spatial_signature_score | 1 | 64GB | 2026-11-02 새 모듈. 병렬 없음. CLOSHA 실측 전 | (실측 전) |
+| spatial_de_enrichment | 1 | 32GB | 2026-11-02 새 모듈. 결과 표만 읽음. CLOSHA 실측 전 | (실측 전) |
 
 근거와 한계:
 - 여러 코어를 실제로 쓰는 모듈은 spatial_rctd, spatial_hd_rctd뿐이다. 두 스크립트의 `max_cores`는 CLOSHA에 등록하지 않는다(사용자 결정, 2026-10-27): 기본값 `auto`가 할당된 코어 수(`nproc`)만큼 작업자를 만들고, 코어 수는 자원 선택 하나로 정한다. 메모리가 모자라면 코어 수를 낮춘다(작업자마다 자료를 복사). 나머지는 병렬 설정이 없어 사실상 1코어다(실측 CPU 시간 ÷ 경과 시간이 0.99~1.07). 여유를 두어 4코어로 했다. 결과에는 영향이 없다. hd_rctd의 sacct TotalCPU(2시간 1분)는 경과 시간(4시간 10분)보다 작아, 따로 띄운 작업자 프로세스의 CPU가 집계되지 않은 것으로 보인다. 병렬 여부는 실행 중 `top`으로 확인한다. rctd 두 모듈은 코어마다 자료를 복사하므로 16코어로 올리지 않았다(128GB를 넘길 수 있음).
@@ -201,3 +210,62 @@ HD 예제를 바꿨으므로 모듈 원고의 HD 결과 그림(hd_prep, hd_clust
 4. 원본 크기 데이터의 시간과 메모리(`sacct -j <작업번호> --format=JobName,AllocCPUS,Elapsed,TotalCPU,MaxRSS`). 7절 값을 이것으로 고친다.
 5. 로그 첫머리의 코어 수가 할당 코어 수와 같은지 본다: hd_rctd `max_cores used = N (allocated N)`. 노드 전체 코어 수가 나오면 `SLURM_CPUS_PER_TASK`를 먼저 보도록 스크립트를 고친다.
 6. 규모 확인: 510세포 예제 참조는 동작 확인용이다. 실제 규모 참조로 한 번 더 돌린다(중간 규모: Seurat 공간 안내의 Allen 피질 참조 `allen_cortex.rds`, 약 1만 4천 세포, 세포 유형 열 `subclass`. 큰 규모: 쥐 뇌 10만 세포 이상 참조).
+
+## 9. spatial_niche
+bin(spot)마다 가까운 이웃 `neighbors`개의 세포 유형(없으면 군집)을 세어, 이웃 구성이 비슷한 bin끼리 니치로 묶는다(모든 슬라이드를 함께 k-means, 니치 번호는 슬라이드 공통). 파이프라인에서는 spatial_hd_rctd 뒤에 붙인다.
+자원(코어, 메모리): 싱글 코어, 64GB (병렬 없음). 실행 이미지: bx_spatial 1.2
+
+| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|---|
+| Input | `input_dir` | Directory | 필수 | | `hd_slides.tsv`와 슬라이드별 객체(spatial_hd_rctd 결과: 세포 유형, spatial_hd_cluster 결과: 군집). Visium은 `merged/merged_clustered.rds`. `skipped.txt`가 있으면 건너뜀 |
+| Input | `sample_data` | File (CSV) | 선택 | | 슬라이스 시트(`SliceID`, `Condition`). 주면 조건별 니치 비율을 비교 |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
+| Option | `reference` | String | 선택 | | 기준 조건. 비우면 sample_data의 첫 Condition |
+| Option | `group_by` | String | 선택 | `auto` | 이웃에서 셀 라벨. auto = `rctd_first_type`이 있으면 그것, 없으면 `seurat_clusters` |
+| Option | `neighbors` | Integer | 선택 | `30` | bin마다 세는 가까운 이웃 수(자기 포함) |
+| Option | `niches` | Integer | 선택 | `6` | 니치 수(k-means 중심 수) |
+| Option | `kmeans_max` | Integer | 선택 | `200000` | 니치 중심을 찾을 때 쓰는 최대 bin 수(넘으면 표본). 모든 bin은 가장 가까운 중심으로 배정 |
+| Option | `pt_size` | String | 선택 | `auto` | 조직 그림 점 크기. auto = HD 4, Visium 1.6 |
+| Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
+
+결과: `<slide>/<slide>_niches.tsv.gz`(bin, 라벨, 니치), `<slide>/plots/<slide>_niches`(조직 위 니치), `niche_composition.tsv`와 `plots/niche_composition`(니치 × 세포 유형 평균 비율 heatmap), `niche_by_slide.tsv`와 `plots/niche_by_slide`, sample_data가 있으면 `niche_test.tsv`와 `plots/niche_by_condition`, `logs/`.
+
+## 10. spatial_signature_score
+유전자 세트(사용자 파일 또는 MSigDB Hallmark)의 점수를 bin(spot)마다 매겨(Seurat AddModuleScore) 조직 위에 그리고, 군집·세포 유형별, 조건별로 요약한다. 파이프라인에서는 spatial_hd_cluster 뒤에 붙인다(spatial_hd_rctd 결과를 주면 세포 유형별로 요약).
+자원(코어, 메모리): 싱글 코어, 64GB (병렬 없음). 실행 이미지: bx_spatial 1.2
+
+| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|---|
+| Input | `input_dir` | Directory | 필수 | | `hd_slides.tsv`와 슬라이드별 객체(spatial_hd_cluster 또는 spatial_hd_rctd 결과). Visium은 `merged/merged_clustered.rds` |
+| Input | `gene_sets` | File (GMT, TSV, CSV) | 선택 | | 사용자 유전자 세트. `.gmt`(이름, 설명, 유전자; 탭 구분) 또는 2열 표(세트 이름, 유전자 기호) |
+| Input | `sample_data` | File (CSV) | 선택 | | 슬라이스 시트(`SliceID`, `Condition`). 주면 슬라이드 평균 점수를 조건별로 비교 |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
+| Option | `builtin_sets` | String | 선택 | `HALLMARK_HYPOXIA,HALLMARK_EPITHELIAL_MESENCHYMAL_TRANSITION,HALLMARK_INTERFERON_GAMMA_RESPONSE` | MSigDB Hallmark 7.5.1 세트 이름(쉼표 구분). `all_hallmark` = 50개 전부, `none` = 쓰지 않음 |
+| Option | `species` | List (`auto`, `human`, `mouse`) | 선택 | `auto` | 기본 제공 세트의 종. auto = 유전자 기호 대소문자로 판정 |
+| Option | `group_by` | String | 선택 | `auto` | 요약 묶음. auto = `rctd_first_type`이 있으면 그것, 없으면 `seurat_clusters` |
+| Option | `reference` | String | 선택 | | 기준 조건 |
+| Option | `min_genes` | Integer | 선택 | `5` | 데이터에 있는 유전자가 이보다 적은 세트는 점수를 매기지 않음 |
+| Option | `pt_size` | String | 선택 | `auto` | 조직 그림 점 크기 |
+| Option | `seed` | Integer | 선택 | `1234` | 난수 시드(대조 유전자 선택) |
+
+결과: `gene_sets_used.tsv`, `<slide>/<slide>_signature_scores.tsv.gz`, `signature_by_group.tsv`, `signature_by_slide.tsv`, sample_data가 있으면 `signature_test.tsv`, `plots/spatial_<set>`(모든 슬라이드, 같은 색 범위; 앞 12개 세트), `plots/signature_by_group`(군집·세포 유형별 heatmap), `plots/signature_by_condition`, `logs/`. 기본 제공 세트는 이미지 안의 msigdbr 7.5.1 데이터라 실행 중 인터넷이 필요 없다.
+
+## 11. spatial_de_enrichment
+spatial_condition_de 결과로 군집(또는 세포 유형)마다 유전자를 검정 통계량 순으로 줄 세워 GSEA(fgsea)를 한다. 경로가 조건 사이에서 어느 쪽으로 움직였는지(NES) 보여 준다. 파이프라인에서는 spatial_condition_de 두 개 뒤에 각각 붙인다.
+자원(코어, 메모리): 싱글 코어, 32GB. 실행 이미지: bx_spatial 1.2
+
+| 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|---|
+| Input | `input_dir` | Directory | 필수 | | spatial_condition_de 결과 폴더(`02_de/de_<test>_vs_<reference>.tsv`). `skipped.txt`가 있으면 건너뜀 |
+| Input | `gene_sets` | File (GMT, TSV, CSV) | 선택 | | 사용자 유전자 세트(주면 collection 대신 씀) |
+| Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
+| Option | `collection` | List (`H`, `C2:CP:KEGG`, `C2:CP:REACTOME`, `C5:GO:BP`) | 선택 | `H` | MSigDB 7.5.1 기본 제공 세트 |
+| Option | `species` | List (`auto`, `human`, `mouse`) | 선택 | `auto` | 기본 제공 세트의 종 |
+| Option | `min_size` | Integer | 선택 | `10` | 검정할 최소 세트 크기 |
+| Option | `max_size` | Integer | 선택 | `500` | 검정할 최대 세트 크기 |
+| Option | `padj_cutoff` | Float | 선택 | `0.05` | 유의 세트 보정 p값 기준 |
+| Option | `top_sets` | Integer | 선택 | `20` | NES heatmap에 보일 세트 수 |
+| Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
+
+결과: `01_gsea/gsea_<test>_vs_<reference>.tsv`(군집별 세트, NES, p, padj, leading edge), `02_summary/enrichment_summary.tsv`, `03_plots/gsea_nes_<…>`(세트 × 군집 NES heatmap), `03_plots/gsea_top_<…>`(유의 세트가 가장 많은 군집의 막대그림), `gene_sets_used.tsv`, `logs/`. spot 단위 탐색 검정으로 비교한 군집은 Status가 `ok_exploratory`다.
+
