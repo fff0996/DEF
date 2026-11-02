@@ -873,3 +873,498 @@ Rscript check_reference.1.1.R \
 
 ---
 
+---
+
+## 7. spatial_niche
+
+### 기본 정보
+| 항목 | 국문 | 영문 |
+|---|---|---|
+| 모듈명 | spatial_niche | spatial_niche |
+| 서브 타이틀 | 세포 유형 공간 니치 분석 | Cell-type niches on tissue |
+| 버전 | 1.0 | |
+| 카테고리 대분류 | Clustering | Clustering |
+| 카테고리 중분류 | Spatial_Clustering | Spatial_Clustering |
+| 태그 | spatial transcriptomics, Visium HD, niche, cellular neighbourhood, tissue architecture | |
+| 레퍼런스 URL | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette | |
+| 컨테이너 이미지 | bx_spatial.1.2 | |
+| 실행 스크립트 파일 | spatial_niche.1.0.R | |
+| Processor Core (제안) | 싱글 코어, 메모리 64GB | Single core, 64 GB of memory |
+
+등록 메모: 2026-11-02에 만든 새 모듈입니다(작업 파일 `spatial_niche.1.0.R`, 배포 번호 1.0). 파이프라인에서는 spatial_hd_rctd 뒤에 붙이며, 참조가 없어 spatial_hd_rctd가 건너뛰면 이 모듈도 건너뜁니다.
+
+### 실행 이미지
+이미지: bx_spatial 1.2 (bx_spatial 1.1에 msigdbr, fgsea를 더한 이미지. 기존 모듈은 1.1을 그대로 씁니다)
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.2.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.3.3 | https://www.r-project.org/ |
+| Seurat | 5.3.0 | https://satijalab.org/seurat/ |
+| SeuratObject | 5.2.0 | https://cran.r-project.org/package=SeuratObject |
+| RANN | 2.6.2 | https://cran.r-project.org/package=RANN |
+| fgsea | 1.28.0 | https://bioconductor.org/packages/fgsea/ |
+| msigdbr | 7.5.1 | https://igordot.github.io/msigdbr/ |
+| presto | 1.0.0 | https://github.com/immunogenomics/presto |
+| spacexr | 2.2.1 | https://github.com/dmcable/spacexr |
+| DESeq2 | 1.42.0 | https://bioconductor.org/packages/DESeq2/ |
+| harmony | 1.2.3 | https://cran.r-project.org/package=harmony |
+| glmGamPoi | 1.14.0 | https://bioconductor.org/packages/glmGamPoi/ |
+| hdf5r | 1.3.12 | https://cran.r-project.org/package=hdf5r |
+| arrow | 21.0.0 | https://arrow.apache.org/docs/r/ |
+| ape | 5.8-1 | https://cran.r-project.org/package=ape |
+| ggplot2 | 3.5.2 | https://ggplot2.tidyverse.org/ |
+| patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
+| Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
+
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat, gene set enrichment, MSigDB
+- **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. bx_spatial 1.1의 도구(정규화, 군집, 공간 가변 유전자, 슬라이스 통합, 세포 유형 분해, 조건 간 비교)에 유전자 세트 분석 도구(fgsea)와 MSigDB 유전자 세트(msigdbr 7.5.1, 이미지 안에 포함)를 더했습니다. 실행 중 인터넷 연결이 필요 없습니다.
+- **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It adds gene set analysis (fgsea) and the MSigDB gene sets (msigdbr 7.5.1, bundled in the image) to the tools of bx_spatial 1.1 (normalisation, clustering, spatially variable genes, slice integration, cell-type deconvolution, condition comparison). No network access is needed at run time.
+
+### 내용(국문)
+bin마다 주변 이웃의 세포 유형 구성을 세어, 이웃 구성이 비슷한 bin끼리 니치(niche)로 묶습니다. 같은 세포 유형이라도 어떤 세포들 사이에 있는지(예: 종양과 섬유모세포 경계, 면역세포 집결 구역)를 구분하는 공간 전사체만의 분석입니다.
+- bin마다 가까운 bin neighbors개(기본 30)의 세포 유형(group_by; 기본은 spatial_hd_rctd의 rctd_first_type, 없으면 군집)을 세어 비율로 만듭니다.
+- 모든 슬라이드의 이웃 비율을 함께 k-means로 묶어 niches개(기본 6)의 니치를 만들므로, 니치 번호는 슬라이드 공통입니다.
+- 니치를 조직 위에 칠하고, 니치마다 세포 유형 구성(heatmap)과 슬라이드별 니치 비율을 만듭니다.
+- 샘플시트를 주면 조건(예: 종양과 정상) 사이에서 니치 비율을 비교합니다.
+
+### 내용(영문)
+Counts the cell types around every bin and groups bins with similar neighbourhoods into niches. It tells apart the same cell type in different surroundings (for example a tumour-fibroblast border or an immune aggregate), an analysis only spatial data allow.
+- For each bin the cell types (group_by; by default rctd_first_type from spatial_hd_rctd, otherwise clusters) of its neighbors nearest bins (default 30) are counted as fractions.
+- The neighbourhood fractions of all slides are clustered together with k-means into niches niches (default 6), so niche numbers are shared by all slides.
+- Niches are drawn on the tissue, with the cell-type composition of each niche (heatmap) and the niche fractions per slide.
+- With a slice sheet, niche fractions are compared between conditions (for example tumour and normal).
+
+### 입출력 / 파라미터
+| 탭 | 필수 | 형식 | Name | Value | Description | English Description |
+|---|---|---|---|---|---|---|
+| Input | Required | Directory | input_dir | /data/spatial_hd_rctd | 세포 유형 결과 폴더(또는 군집 결과 폴더). hd_slides.tsv와 슬라이드별 객체가 있어야 함. skipped.txt만 있으면 건너뜀 | Cell-type (or cluster) result folder with hd_slides.tsv and the per-slide objects; skipped when it holds skipped.txt |
+| Input | Optional | File | sample_data | | 슬라이스 시트(CSV: SliceID, Condition). 주면 조건별 니치 비율을 비교 | Slice sheet (CSV: SliceID, Condition); with it niche fractions are compared between conditions |
+| Output | Required | Directory | output_dir | /data/spatial_niche | 결과 폴더. 슬라이드별 니치 표·지도, niche_composition.tsv, niche_by_slide.tsv, niche_test.tsv, plots/ | Output folder: per-slide niche tables and maps, niche_composition.tsv, niche_by_slide.tsv, niche_test.tsv, plots/ |
+| Option | Optional | String | reference | | 기준 조건. 비우면 sample_data의 첫 Condition | Reference condition; empty: the first Condition in sample_data |
+| Option | Optional | String | group_by | auto | 이웃에서 셀 라벨 열. auto는 rctd_first_type이 있으면 그것, 없으면 seurat_clusters | Label column counted around each bin; auto: rctd_first_type when present, otherwise seurat_clusters |
+| Option | Optional | Integer | neighbors | 30 | bin마다 세는 가까운 bin 수(자기 포함) | Nearest bins counted around each bin (itself included) |
+| Option | Optional | Integer | niches | 6 | 니치 수 | Number of niches |
+| Option | Optional | Integer | kmeans_max | 200000 | 니치 중심을 찾을 때 쓰는 최대 bin 수(넘으면 무작위 표본). 모든 bin은 가장 가까운 중심에 배정 | Bins used to find the niche centres (sampled when more); every bin is then given the nearest centre |
+| Option | Optional | String | pt_size | auto | 조직 그림의 점 크기. auto는 Visium HD 4, Visium 1.6 | Point size on the tissue plots; auto: 4 for Visium HD, 1.6 for Visium |
+| Option | Optional | Integer | seed | 1234 | 난수 시드 | Random seed |
+
+### 샘플시트
+등록 메모: 포탈의 샘플시트 칸 여섯 개에 아래 값을 그대로 넣습니다. sample_data는 선택 입력이며, spatial_condition_de와 같은 파일을 씁니다.
+
+| 칸 | 값 |
+|---|---|
+| 샘플시트 제목(국문) | 조건 비교 샘플시트 |
+| 샘플시트 제목(영문) | Sample sheet for condition comparison |
+| 샘플시트 예시 제목 | hd_slides.csv |
+
+샘플시트 본문(국문):
+```
+슬라이드마다 조건을 적은 CSV 파일(쉼표 구분)입니다. 첫 줄은 열 이름이고, 한 줄에 슬라이드 하나를 적습니다. 넣지 않으면 조건 비교 없이 슬라이드별 결과만 만듭니다.
+
+- SliceID (필수): 슬라이드 이름. 입력 폴더(hd_slides.tsv)의 슬라이드 이름과 같아야 합니다.
+- Condition (필수): 조건 이름(예: tumor, normal). 비교의 기준 조건은 reference 옵션으로 정하며, 비워 두면 파일에 처음 나온 조건이 기준이 됩니다.
+
+조건마다 슬라이드 3장 이상이면 비교 결과를 더 믿을 수 있습니다. 2장 이하이면 p값은 탐색용입니다.
+```
+
+샘플시트 본문(영문):
+```
+A comma-separated (CSV) file with the condition of each slide. The first line holds the column names; write one slide per line. Without it, only per-slide results are made, with no condition comparison.
+
+- SliceID (required): slide name. It must match a slide name in the input folder (hd_slides.tsv).
+- Condition (required): condition name (for example tumor, normal). The reference condition is set with the reference option; when empty, the first condition in the file is the reference.
+
+Three or more slides per condition make the comparison more reliable; with two or fewer the p-values are exploratory.
+```
+
+샘플시트 예시 본문 (예제 데이터: 사람 대장암 Visium HD, 종양 3장과 정상 인접 조직 2장, `reference=normal`로 실행):
+```
+SliceID,Condition
+crc_p1,tumor
+crc_p2,tumor
+crc_p5,tumor
+normal_p3,normal
+normal_p5,normal
+```
+
+### 주요 사항
+| 국문 | 영문 |
+|---|---|
+| 세포 유형이 없는 bin(spatial_hd_rctd에서 UMI가 umi_min보다 적은 bin)은 이웃 세기와 니치에서 빠지고 지도에 NA(회색)로 보입니다. | Bins without a cell type (below umi_min in spatial_hd_rctd) are left out of the counts and niches and shown as NA (grey) on the maps. |
+| 니치 수(niches)는 자료에 맞춰 정합니다. 너무 적으면 다른 구역이 합쳐지고, 너무 많으면 같은 구역이 쪼개집니다. niche_composition의 heatmap에서 니치마다 구성이 뚜렷이 다른지 보고 조정합니다. | Choose niches for the data: too few merge distinct areas, too many split one area; adjust after checking that the niches differ clearly in the niche_composition heatmap. |
+| 니치 이름은 가장 많은 세포 유형(두 번째 유형이 20% 이상이면 함께)으로 붙습니다. 이름이 같아도 구성 비율이 다른 니치일 수 있으니 heatmap을 함께 봅니다. | Niches are named after their most frequent cell type (with the second when it is at least 20%); niches with the same name can still differ in composition, so read the heatmap as well. |
+| 조건 비교는 슬라이드를 반복으로 삼습니다. 조건마다 2장 이하이면 p값은 탐색용입니다. | The condition comparison uses slides as replicates; with two or fewer slides per condition the p-values are exploratory. |
+
+### 분석 개념 이미지
+등록 메모: CC BY 논문 그림을 먼저 찾아 넣고, 맞는 그림이 없으면 직접 그립니다(작업 예정).
+
+### 스크립트 사용 예제
+```
+Rscript spatial_niche.1.0.R \
+  input_dir=/data/spatial_hd_rctd \
+  output_dir=/data/spatial_niche \
+  sample_data=/data/hd_slides.csv \
+  reference=normal \
+  group_by=auto \
+  neighbors=30 \
+  niches=6 \
+  kmeans_max=200000 \
+  pt_size=auto \
+  seed=1234
+```
+
+### 주요 결과 이미지
+예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다. spatial_hd_rctd의 세포 유형(같은 연구 단일세포 참조, Level1 9종)으로 CLOSHA에서 실행했고, 5장 bin 51만 7천 개(세포 유형이 있는 bin)에 약 2분 걸렸습니다.
+
+**결과 1. 조직 위 니치(대표 그림)**
+- 결과 파일: `<slide>/plots/<slide>_niches.png` (PDF도 있음), 표 `<slide>/<slide>_niches.tsv.gz`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_niche_result_1.png`
+
+- 레전드(국문): **bin마다 배정된 니치(crc_p1).** 색이 같은 bin은 주변 세포 유형 구성이 비슷합니다. 예시 데이터에서 아래쪽 종양 덩어리는 니치 1(Tumor 90%), 그 사이를 가르는 기질은 니치 4(Fibroblast 75%), 왼쪽 정상 점막은 니치 2(장 상피 81%), 오른쪽 위 근육층은 니치 3(평활근 85%)이었고, 가운데에 T·B·골수계 세포가 섞인 면역 니치 6이 뭉쳐 있었습니다. 회색(NA)은 세포 유형이 없는 bin입니다.
+- 레전드(영문): **Niche of every bin (crc_p1).** Bins of one colour have similar cell-type surroundings. In the example data the tumour masses at the bottom are niche 1 (Tumor 90%), the stroma dividing them niche 4 (Fibroblast 75%), the normal mucosa on the left niche 2 (intestinal epithelium 81%) and the muscle layer at the upper right niche 3 (smooth muscle 85%), with immune niche 6 (T, B and myeloid cells) gathered in the middle. Grey (NA) bins have no cell type.
+
+**결과 2. 니치별 세포 유형 구성**
+- 결과 파일: `plots/niche_composition.png`, 표 `niche_composition.tsv`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_niche_result_2.png`
+
+- 레전드(국문): **니치(세로)마다 이웃 30개 bin의 세포 유형(가로) 평균 비율.** 0.1 이상인 칸에 값을 적었습니다. 니치 이름과 해석은 이 표로 정합니다. 예시 데이터에서 니치 1~4는 한 세포 유형이 75% 이상인 구역(종양, 정상 점막, 근육층, 섬유모세포 기질)이었고, 니치 5는 섬유모세포 37%와 내피 29%가 섞인 혈관이 많은 기질, 니치 6은 T세포 29%, B세포 15%, 골수계 15%가 섞인 면역 구역이었습니다.
+- 레전드(영문): **Mean fraction of each cell type (columns) among the 30 neighbouring bins, per niche (rows).** Values of 0.1 or more are printed; niche names and interpretation come from this table. In the example data niches 1-4 were areas dominated (75% or more) by one cell type (tumour, normal mucosa, muscle layer, fibroblast stroma), niche 5 a vessel-rich stroma of fibroblasts (37%) and endothelium (29%), and niche 6 an immune area of T cells (29%), B cells (15%) and myeloid cells (15%).
+
+**결과 3. 슬라이드별 니치 비율**
+- 결과 파일: `plots/niche_by_slide.png`, 표 `niche_by_slide.tsv`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_niche_result_3.png`
+
+- 레전드(국문): **슬라이드마다 니치가 차지하는 bin 비율.** 샘플시트를 주면 조건별로 나눠 그립니다. 예시 데이터에서 종양 니치 1은 종양 슬라이드의 26~52%를 차지했고 정상 슬라이드에는 거의 없었으며, 정상 슬라이드는 정상 점막(니치 2)과 근육층(니치 3) 비율이 높았습니다.
+- 레전드(영문): **Fraction of bins of each niche per slide.** With a slice sheet, slides are split by condition. In the example data tumour niche 1 took 26-52% of the tumour slides and almost none of the normal slides, which were rich in normal mucosa (niche 2) and muscle layer (niche 3).
+
+**결과 4. 조건별 니치 비율**
+- 결과 파일: `plots/niche_by_condition.png`, 표 `niche_test.tsv`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_niche_result_4.png`
+
+- 레전드(국문): **니치마다 슬라이드별 비율(점)과 조건 평균(막대).** 빨간 점은 정상, 파란 점은 종양 슬라이드입니다. 예시 데이터에서 면역 니치 6은 정상 평균 4.4%에서 종양 8.3%로 약 2배였고, 혈관이 많은 기질 니치 5는 18.9%에서 11.2%로 줄었습니다. 조건마다 2~3장이라 보정 p는 모두 0.05를 넘었고(가장 낮은 니치 1: 0.10), 로그에 탐색적 결과로 보라는 경고가 남습니다.
+- 레전드(영문): **Per-slide fraction (points) and condition mean (bar) of each niche.** Red points are normal and blue points tumour slides. In the example data immune niche 6 about doubled from 4.4% in normal to 8.3% in tumour, while vessel-rich stromal niche 5 fell from 18.9% to 11.2%. With two or three slides per condition no adjusted p-value fell below 0.05 (lowest, niche 1: 0.10), and the log warns to treat them as exploratory.
+
+---
+
+## 8. spatial_signature_score
+
+### 기본 정보
+| 항목 | 국문 | 영문 |
+|---|---|---|
+| 모듈명 | spatial_signature_score | spatial_signature_score |
+| 서브 타이틀 | 유전자 세트 공간 점수 | Gene set scores on tissue |
+| 버전 | 1.0 | |
+| 카테고리 대분류 | Statistics_and_Visualization | Statistics_and_Visualization |
+| 카테고리 중분류 | Spatial_Omics | Spatial_Omics |
+| 태그 | spatial transcriptomics, Visium HD, gene signature, module score, MSigDB Hallmark | |
+| 레퍼런스 URL | https://satijalab.org/seurat/reference/addmodulescore | |
+| 컨테이너 이미지 | bx_spatial.1.2 | |
+| 실행 스크립트 파일 | spatial_signature_score.1.0.R | |
+| Processor Core (제안) | 싱글 코어, 메모리 64GB | Single core, 64 GB of memory |
+
+등록 메모: 2026-11-02에 만든 새 모듈입니다(작업 파일 `spatial_signature_score.1.0.R`, 배포 번호 1.0). 파이프라인에서는 spatial_hd_cluster 뒤에 붙입니다(spatial_hd_rctd 결과를 주면 세포 유형별로 요약).
+
+### 실행 이미지
+이미지: bx_spatial 1.2 (bx_spatial 1.1에 msigdbr, fgsea를 더한 이미지. 기존 모듈은 1.1을 그대로 씁니다)
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.2.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.3.3 | https://www.r-project.org/ |
+| Seurat | 5.3.0 | https://satijalab.org/seurat/ |
+| SeuratObject | 5.2.0 | https://cran.r-project.org/package=SeuratObject |
+| RANN | 2.6.2 | https://cran.r-project.org/package=RANN |
+| fgsea | 1.28.0 | https://bioconductor.org/packages/fgsea/ |
+| msigdbr | 7.5.1 | https://igordot.github.io/msigdbr/ |
+| presto | 1.0.0 | https://github.com/immunogenomics/presto |
+| spacexr | 2.2.1 | https://github.com/dmcable/spacexr |
+| DESeq2 | 1.42.0 | https://bioconductor.org/packages/DESeq2/ |
+| harmony | 1.2.3 | https://cran.r-project.org/package=harmony |
+| glmGamPoi | 1.14.0 | https://bioconductor.org/packages/glmGamPoi/ |
+| hdf5r | 1.3.12 | https://cran.r-project.org/package=hdf5r |
+| arrow | 21.0.0 | https://arrow.apache.org/docs/r/ |
+| ape | 5.8-1 | https://cran.r-project.org/package=ape |
+| ggplot2 | 3.5.2 | https://ggplot2.tidyverse.org/ |
+| patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
+| Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
+
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat, gene set enrichment, MSigDB
+- **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. bx_spatial 1.1의 도구(정규화, 군집, 공간 가변 유전자, 슬라이스 통합, 세포 유형 분해, 조건 간 비교)에 유전자 세트 분석 도구(fgsea)와 MSigDB 유전자 세트(msigdbr 7.5.1, 이미지 안에 포함)를 더했습니다. 실행 중 인터넷 연결이 필요 없습니다.
+- **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It adds gene set analysis (fgsea) and the MSigDB gene sets (msigdbr 7.5.1, bundled in the image) to the tools of bx_spatial 1.1 (normalisation, clustering, spatially variable genes, slice integration, cell-type deconvolution, condition comparison). No network access is needed at run time.
+
+### 내용(국문)
+유전자 세트(경로나 세포 표지 유전자 묶음)의 점수를 bin마다 매겨 조직 위에 그립니다. "관심 있는 경로나 세포가 조직의 어디에서 켜지는가"를 봅니다.
+- 사용자 유전자 세트(gene_sets: GMT 또는 2열 표)와 이미지 안의 MSigDB Hallmark 세트(builtin_sets; 기본 저산소, 상피-중간엽 전이, 인터페론 감마 반응)를 함께 씁니다. 사람·쥐는 유전자 기호로 자동 판정합니다.
+- 점수는 Seurat AddModuleScore로 계산합니다. 세트 유전자의 평균 발현에서 발현량이 비슷한 대조 유전자의 평균을 뺀 값입니다.
+- 세트마다 모든 슬라이드를 같은 색 범위로 그리고, 군집(또는 세포 유형)별 평균 점수 heatmap을 만듭니다.
+- 샘플시트를 주면 슬라이드 평균 점수를 조건 사이에서 비교합니다.
+
+### 내용(영문)
+Scores gene sets (pathways or cell marker sets) on every bin and draws them on the tissue, to show where a pathway or cell type of interest is active.
+- Own gene sets (gene_sets: GMT or a two-column table) and MSigDB Hallmark sets bundled in the image (builtin_sets; by default hypoxia, epithelial-mesenchymal transition and interferon gamma response) are used together. Human or mouse is decided from the gene symbols.
+- Scores come from Seurat AddModuleScore: the mean expression of the set minus that of control genes with similar expression.
+- Each set is drawn on all slides with one colour scale, and a heatmap shows the mean score per cluster (or cell type).
+- With a slice sheet, slide mean scores are compared between conditions.
+
+### 입출력 / 파라미터
+| 탭 | 필수 | 형식 | Name | Value | Description | English Description |
+|---|---|---|---|---|---|---|
+| Input | Required | Directory | input_dir | /data/spatial_hd_cluster | 군집 또는 세포 유형 결과 폴더. hd_slides.tsv와 슬라이드별 객체가 있어야 함 | Cluster or cell-type result folder with hd_slides.tsv and the per-slide objects |
+| Input | Optional | File | gene_sets | | 사용자 유전자 세트. .gmt(이름, 설명, 유전자; 탭 구분) 또는 2열 표(.tsv, .csv: 세트 이름, 유전자 기호) | Own gene sets: .gmt (name, description, genes; tab separated) or a two-column table (.tsv, .csv: set name, gene symbol) |
+| Input | Optional | File | sample_data | | 슬라이스 시트(CSV: SliceID, Condition). 주면 조건별로 비교 | Slice sheet (CSV: SliceID, Condition); with it scores are compared between conditions |
+| Output | Required | Directory | output_dir | /data/spatial_signature_score | 결과 폴더. 슬라이드별 점수 표, signature_by_group.tsv, signature_by_slide.tsv, signature_test.tsv, gene_sets_used.tsv, plots/ | Output folder: per-slide score tables, signature_by_group.tsv, signature_by_slide.tsv, signature_test.tsv, gene_sets_used.tsv, plots/ |
+| Option | Optional | String | builtin_sets | HALLMARK_HYPOXIA,HALLMARK_EPITHELIAL_MESENCHYMAL_TRANSITION,HALLMARK_INTERFERON_GAMMA_RESPONSE | MSigDB Hallmark 7.5.1 세트 이름(쉼표 구분). all_hallmark는 50개 전부, none은 쓰지 않음 | MSigDB Hallmark 7.5.1 set names (comma separated); all_hallmark for all 50, none for none |
+| Option | Optional | List | species | auto | 기본 제공 세트의 종: auto, human, mouse | Species of the built-in sets: auto, human, mouse |
+| Option | Optional | String | group_by | auto | 요약 묶음 열. auto는 rctd_first_type이 있으면 그것, 없으면 seurat_clusters | Grouping column of the summary; auto: rctd_first_type when present, otherwise seurat_clusters |
+| Option | Optional | String | reference | | 기준 조건. 비우면 sample_data의 첫 Condition | Reference condition; empty: the first Condition in sample_data |
+| Option | Optional | Integer | min_genes | 5 | 데이터에 있는 유전자가 이보다 적은 세트는 점수를 매기지 않음 | Sets with fewer genes found in the data are not scored |
+| Option | Optional | String | pt_size | auto | 조직 그림의 점 크기. auto는 Visium HD 4, Visium 1.6 | Point size on the tissue plots; auto: 4 for Visium HD, 1.6 for Visium |
+| Option | Optional | Integer | seed | 1234 | 대조 유전자 선택 난수 시드 | Random seed for the control genes |
+
+### 샘플시트
+등록 메모: 포탈의 샘플시트 칸 여섯 개에 아래 값을 그대로 넣습니다. sample_data는 선택 입력이며, spatial_condition_de와 같은 파일을 씁니다.
+
+| 칸 | 값 |
+|---|---|
+| 샘플시트 제목(국문) | 조건 비교 샘플시트 |
+| 샘플시트 제목(영문) | Sample sheet for condition comparison |
+| 샘플시트 예시 제목 | hd_slides.csv |
+
+샘플시트 본문(국문):
+```
+슬라이드마다 조건을 적은 CSV 파일(쉼표 구분)입니다. 첫 줄은 열 이름이고, 한 줄에 슬라이드 하나를 적습니다. 넣지 않으면 조건 비교 없이 슬라이드별 결과만 만듭니다.
+
+- SliceID (필수): 슬라이드 이름. 입력 폴더(hd_slides.tsv)의 슬라이드 이름과 같아야 합니다.
+- Condition (필수): 조건 이름(예: tumor, normal). 비교의 기준 조건은 reference 옵션으로 정하며, 비워 두면 파일에 처음 나온 조건이 기준이 됩니다.
+
+조건마다 슬라이드 3장 이상이면 비교 결과를 더 믿을 수 있습니다. 2장 이하이면 p값은 탐색용입니다.
+```
+
+샘플시트 본문(영문):
+```
+A comma-separated (CSV) file with the condition of each slide. The first line holds the column names; write one slide per line. Without it, only per-slide results are made, with no condition comparison.
+
+- SliceID (required): slide name. It must match a slide name in the input folder (hd_slides.tsv).
+- Condition (required): condition name (for example tumor, normal). The reference condition is set with the reference option; when empty, the first condition in the file is the reference.
+
+Three or more slides per condition make the comparison more reliable; with two or fewer the p-values are exploratory.
+```
+
+샘플시트 예시 본문 (예제 데이터: 사람 대장암 Visium HD, 종양 3장과 정상 인접 조직 2장, `reference=normal`로 실행):
+```
+SliceID,Condition
+crc_p1,tumor
+crc_p2,tumor
+crc_p5,tumor
+normal_p3,normal
+normal_p5,normal
+```
+
+### 주요 사항
+| 국문 | 영문 |
+|---|---|
+| 점수는 대조 유전자 대비 상대값입니다. 같은 실행 안에서 군집·슬라이드끼리 비교하는 데 쓰고, 다른 실행의 값과 직접 비교하지 않습니다. | Scores are relative to control genes; compare groups and slides of the same run, not values from other runs. |
+| 세트 유전자가 데이터에 min_genes개보다 적으면 그 세트는 빠집니다. 데이터에 있는 유전자 수는 gene_sets_used.tsv에서 확인합니다. | A set with fewer than min_genes genes in the data is left out; gene_sets_used.tsv lists the genes found. |
+| 조직 그림은 앞의 12개 세트까지만 그립니다(all_hallmark처럼 세트가 많으면 표에만 남음). | Tissue plots are drawn for the first 12 sets (with many sets, such as all_hallmark, the rest are in the tables only). |
+| bin 하나하나의 점수라 조직 지도가 얼룩져 보일 수 있습니다. 군집·세포 유형별 heatmap과 슬라이드 평균으로 함께 해석합니다. | Single-bin scores can look speckled on the tissue; read them together with the group heatmap and slide means. |
+
+### 분석 개념 이미지
+등록 메모: CC BY 논문 그림을 먼저 찾아 넣고, 맞는 그림이 없으면 직접 그립니다(작업 예정).
+
+### 스크립트 사용 예제
+```
+Rscript spatial_signature_score.1.0.R \
+  input_dir=/data/spatial_hd_cluster \
+  output_dir=/data/spatial_signature_score \
+  gene_sets=/data/crc_gene_sets.gmt \
+  sample_data=/data/hd_slides.csv \
+  builtin_sets=HALLMARK_HYPOXIA,HALLMARK_EPITHELIAL_MESENCHYMAL_TRANSITION,HALLMARK_INTERFERON_GAMMA_RESPONSE \
+  species=auto \
+  group_by=auto \
+  reference=normal \
+  min_genes=5 \
+  pt_size=auto \
+  seed=1234
+```
+
+### 주요 결과 이미지
+예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다. spatial_hd_cluster 결과(군집 25개)로 CLOSHA에서 실행했고, 5장에 약 5분 걸렸습니다. 사용자 세트는 예제 파일 `crc_gene_sets.gmt`의 5개(CAF, 세포독성 T, T 소진, 장 줄기세포, 형질세포; 세트당 10~12개 표지 유전자)이고, 기본 Hallmark 3세트와 함께 8세트를 계산했습니다(Hallmark는 세트당 190~198개 유전자 사용).
+
+**결과 1. 사용자 세트 점수의 조직 지도(대표 그림)**
+- 결과 파일: `plots/spatial_<set>.png` (PDF도 있음), 표 `<slide>/<slide>_signature_scores.tsv.gz`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_signature_score_result_1.png`
+
+- 레전드(국문): **사용자 세트 CRC_CAF_MARKERS(암 관련 섬유모세포 표지 12개)의 bin별 점수.** 모든 슬라이드를 같은 색 범위로 그렸습니다. 예시 데이터에서 정상 두 장은 거의 전부 낮았고, 종양 세 장은 종양 덩어리 사이의 기질에서만 높았습니다(슬라이드 평균: 정상 0.03~0.04, 종양 0.19~0.32).
+- 레전드(영문): **Bin scores of the own set CRC_CAF_MARKERS (12 cancer-associated fibroblast markers).** All slides share one colour scale. In the example data both normal slides were low almost everywhere, while the three tumour slides were high only in the stroma between tumour masses (slide means: normal 0.03-0.04, tumour 0.19-0.32).
+
+**결과 2. 기본 Hallmark 세트의 조직 지도**
+- 결과 파일: `plots/spatial_<set>.png`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_signature_score_result_2.png`
+
+- 레전드(국문): **MSigDB Hallmark 상피-중간엽 전이(EMT) 세트의 bin별 점수.** gene_sets 없이도 builtin_sets로 이런 지도를 얻습니다. 예시 데이터에서 EMT 점수는 CAF 점수와 같은 종양 기질에서 높았고, 정상 슬라이드에서는 대부분 낮았습니다.
+- 레전드(영문): **Bin scores of the MSigDB Hallmark epithelial-mesenchymal transition (EMT) set.** builtin_sets give such maps without gene_sets. In the example data EMT scores were high in the same tumour stroma as the CAF scores and mostly low in the normal slides.
+
+**결과 3. 군집별 평균 점수**
+- 결과 파일: `plots/signature_by_group.png`, 표 `signature_by_group.tsv`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_signature_score_result_3.png`
+
+- 레전드(국문): **세트(세로)마다 군집(가로)의 평균 점수를 세트 안에서 표준화한 값(z).** 빨강은 그 세트가 상대적으로 높은 군집입니다. 예시 데이터에서 CAF 세트는 군집 1(섬유모세포), 세포독성 T 세트는 군집 7(림프 여포), 형질세포 세트는 군집 9(형질세포), 장 줄기세포 세트는 군집 0(종양 상피)에서 가장 높아 spatial_hd_cluster의 표지 유전자 해석과 맞았습니다.
+- 레전드(영문): **Mean score of each cluster (columns) per set (rows), standardised within the set (z).** Red marks clusters where the set is relatively high. In the example data the CAF set was highest in cluster 1 (fibroblasts), cytotoxic T in cluster 7 (lymphoid follicles), plasma cell in cluster 9 (plasma cells) and intestinal stem in cluster 0 (tumour epithelium), matching the marker-based reading of spatial_hd_cluster.
+
+**결과 4. 조건별 슬라이드 평균 점수**
+- 결과 파일: `plots/signature_by_condition.png`, 표 `signature_by_slide.tsv`, `signature_test.tsv`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_signature_score_result_4.png`
+
+- 레전드(국문): **세트마다 슬라이드 평균 점수(점)와 조건 평균(막대).** 예시 데이터에서 CAF 점수는 정상 평균 0.04에서 종양 0.24로, EMT 점수는 0.10에서 0.14로 높아졌습니다. 조건마다 2~3장이라 보정 p는 모두 0.05를 넘었습니다(CAF, EMT: 0.14).
+- 레전드(영문): **Slide mean score (points) and condition mean (bar) per set.** In the example data the CAF score rose from 0.04 in normal to 0.24 in tumour and the EMT score from 0.10 to 0.14; with two or three slides per condition no adjusted p-value fell below 0.05 (CAF, EMT: 0.14).
+
+---
+
+## 9. spatial_de_enrichment
+
+### 기본 정보
+| 항목 | 국문 | 영문 |
+|---|---|---|
+| 모듈명 | spatial_de_enrichment | spatial_de_enrichment |
+| 서브 타이틀 | 조건 비교 경로 농축 분석 | Pathway enrichment of comparisons |
+| 버전 | 1.0 | |
+| 카테고리 대분류 | Statistics_and_Visualization | Statistics_and_Visualization |
+| 카테고리 중분류 | Functional_Analysis | Functional_Analysis |
+| 태그 | spatial transcriptomics, Visium HD, GSEA, fgsea, pathway enrichment, MSigDB | |
+| 레퍼런스 URL | https://bioconductor.org/packages/fgsea/ | |
+| 컨테이너 이미지 | bx_spatial.1.2 | |
+| 실행 스크립트 파일 | spatial_de_enrichment.1.0.R | |
+| Processor Core (제안) | 싱글 코어, 메모리 32GB | Single core, 32 GB of memory |
+
+등록 메모: 2026-11-02에 만든 새 모듈입니다(작업 파일 `spatial_de_enrichment.1.0.R`, 배포 번호 1.0). 파이프라인에서는 spatial_condition_de 두 개(군집 기준, 세포 유형 기준) 뒤에 각각 붙입니다. 앞 비교가 건너뛰면 이 모듈도 건너뜁니다.
+
+### 실행 이미지
+이미지: bx_spatial 1.2 (bx_spatial 1.1에 msigdbr, fgsea를 더한 이미지. 기존 모듈은 1.1을 그대로 씁니다)
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.2.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | Rocky Linux 9.8 (`rockylinux/rockylinux:9.8.20260525.0`) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| R | 4.3.3 | https://www.r-project.org/ |
+| Seurat | 5.3.0 | https://satijalab.org/seurat/ |
+| SeuratObject | 5.2.0 | https://cran.r-project.org/package=SeuratObject |
+| RANN | 2.6.2 | https://cran.r-project.org/package=RANN |
+| fgsea | 1.28.0 | https://bioconductor.org/packages/fgsea/ |
+| msigdbr | 7.5.1 | https://igordot.github.io/msigdbr/ |
+| presto | 1.0.0 | https://github.com/immunogenomics/presto |
+| spacexr | 2.2.1 | https://github.com/dmcable/spacexr |
+| DESeq2 | 1.42.0 | https://bioconductor.org/packages/DESeq2/ |
+| harmony | 1.2.3 | https://cran.r-project.org/package=harmony |
+| glmGamPoi | 1.14.0 | https://bioconductor.org/packages/glmGamPoi/ |
+| hdf5r | 1.3.12 | https://cran.r-project.org/package=hdf5r |
+| arrow | 21.0.0 | https://arrow.apache.org/docs/r/ |
+| ape | 5.8-1 | https://cran.r-project.org/package=ape |
+| ggplot2 | 3.5.2 | https://ggplot2.tidyverse.org/ |
+| patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
+| Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
+
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat, gene set enrichment, MSigDB
+- **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. bx_spatial 1.1의 도구(정규화, 군집, 공간 가변 유전자, 슬라이스 통합, 세포 유형 분해, 조건 간 비교)에 유전자 세트 분석 도구(fgsea)와 MSigDB 유전자 세트(msigdbr 7.5.1, 이미지 안에 포함)를 더했습니다. 실행 중 인터넷 연결이 필요 없습니다.
+- **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It adds gene set analysis (fgsea) and the MSigDB gene sets (msigdbr 7.5.1, bundled in the image) to the tools of bx_spatial 1.1 (normalisation, clustering, spatially variable genes, slice integration, cell-type deconvolution, condition comparison). No network access is needed at run time.
+
+### 내용(국문)
+spatial_condition_de의 조건 비교 결과로 군집(또는 세포 유형)마다 유전자 세트 농축 분석(GSEA)을 합니다. 유전자 하나하나보다 "어떤 경로가 조건 사이에서 올라가고 내려갔나"를 군집별로 봅니다.
+- 군집마다 유전자를 DESeq2 검정 통계량 순으로 줄 세웁니다(spot 단위로 검정한 군집은 log2FC 부호 × -log10 p).
+- 이미지 안의 MSigDB 7.5.1 세트(collection: Hallmark 기본, KEGG, Reactome, GO BP) 또는 사용자 세트(gene_sets)로 fgsea를 돌려 정규화 농축 점수(NES; 양수는 비교 조건에서 높음)와 BH 보정 p를 구합니다.
+- 세트 × 군집 NES heatmap과, 유의한 세트가 가장 많은 군집의 막대그림을 만듭니다.
+- spot 단위 탐색 검정으로 비교한 군집은 결과 표에 그 방법이 남아 탐색 결과로 구분됩니다.
+
+### 내용(영문)
+Runs gene set enrichment analysis (GSEA) per cluster (or cell type) on the condition comparisons of spatial_condition_de, to see which pathways go up or down between conditions in each cluster rather than single genes.
+- Within each cluster, genes are ranked by the DESeq2 statistic (sign of log2FC × -log10 p for clusters tested spot by spot).
+- fgsea tests the MSigDB 7.5.1 sets bundled in the image (collection: Hallmark by default, KEGG, Reactome, GO BP) or own sets (gene_sets), giving the normalised enrichment score (NES; positive means higher in the test condition) and BH-adjusted p.
+- A heatmap of sets × clusters (NES) and a bar plot of the cluster with the most significant sets are drawn.
+- Clusters compared spot by spot keep that method in the tables, so they can be read as exploratory.
+
+### 입출력 / 파라미터
+| 탭 | 필수 | 형식 | Name | Value | Description | English Description |
+|---|---|---|---|---|---|---|
+| Input | Required | Directory | input_dir | /data/spatial_condition_de | 조건 비교 결과 폴더. 02_de/de_<test>_vs_<reference>.tsv(Comparison, Group, Method, Gene, Log2FC, Stat, PValue, Padj 열)가 있어야 함. skipped.txt만 있으면 건너뜀 | Condition comparison folder with 02_de/de_<test>_vs_<reference>.tsv (Comparison, Group, Method, Gene, Log2FC, Stat, PValue, Padj); skipped when it holds skipped.txt |
+| Input | Optional | File | gene_sets | | 사용자 유전자 세트(.gmt 또는 2열 .tsv, .csv). 주면 collection 대신 이 세트만 검정 | Own gene sets (.gmt or a two-column .tsv, .csv); used instead of the collection |
+| Output | Required | Directory | output_dir | /data/spatial_de_enrichment | 결과 폴더. 01_gsea/gsea_<test>_vs_<reference>.tsv, 02_summary/enrichment_summary.tsv, 03_plots/, gene_sets_used.tsv | Output folder: 01_gsea/gsea_<test>_vs_<reference>.tsv, 02_summary/enrichment_summary.tsv, 03_plots/, gene_sets_used.tsv |
+| Option | Optional | List | collection | H | 기본 제공 세트: H(Hallmark), C2:CP:KEGG, C2:CP:REACTOME, C5:GO:BP | Built-in sets: H (Hallmark), C2:CP:KEGG, C2:CP:REACTOME, C5:GO:BP |
+| Option | Optional | List | species | auto | 기본 제공 세트의 종: auto, human, mouse | Species of the built-in sets: auto, human, mouse |
+| Option | Optional | Integer | min_size | 10 | 검정할 최소 세트 크기(결과에 있는 유전자 수). 작은 사용자 세트는 5로 낮춤 | Smallest set tested (genes found in the results); lower it to 5 for small own sets |
+| Option | Optional | Integer | max_size | 500 | 검정할 최대 세트 크기 | Largest set tested |
+| Option | Optional | Float | padj_cutoff | 0.05 | 유의 세트 보정 p 기준 | Adjusted p cutoff for significant sets |
+| Option | Optional | Integer | top_sets | 20 | NES heatmap에 보일 세트 수 | Sets shown in the NES heatmap |
+| Option | Optional | Integer | seed | 1234 | 난수 시드 | Random seed |
+
+### 주요 사항
+| 국문 | 영문 |
+|---|---|
+| gene_sets를 주면 collection 대신 그 세트만 검정합니다. 둘 다 보려면 모듈을 두 번 실행합니다. | With gene_sets only those sets are tested instead of the collection; run the module twice to have both. |
+| 세트 크기는 결과 표에 있는 유전자로 셉니다. 10개 안팎의 작은 사용자 세트는 min_size를 5로 낮춰야 검정됩니다. | Set sizes count the genes in the result tables; small own sets of about 10 genes need min_size=5. |
+| 조건 비교에서 spot 단위로 검정한 군집(Method spot_level_wilcoxon)은 Status가 ok_exploratory입니다. p값이 지나치게 작을 수 있으니 탐색용으로 봅니다. | Clusters tested spot by spot in the comparison (Method spot_level_wilcoxon) get the status ok_exploratory; their p-values can be too small, so read them as exploratory. |
+| 기본 제공 세트는 이미지 안의 msigdbr 7.5.1(MSigDB 7.5.1)이라 실행 중 인터넷이 필요 없습니다. | The built-in sets come from msigdbr 7.5.1 (MSigDB 7.5.1) in the image, so no network access is needed. |
+
+### 분석 개념 이미지
+등록 메모: CC BY 논문 그림을 먼저 찾아 넣고, 맞는 그림이 없으면 직접 그립니다(작업 예정).
+
+### 스크립트 사용 예제
+```
+Rscript spatial_de_enrichment.1.0.R \
+  input_dir=/data/spatial_condition_de \
+  output_dir=/data/spatial_de_enrichment \
+  gene_sets=/data/crc_gene_sets.gmt \
+  collection=H \
+  species=auto \
+  min_size=5 \
+  max_size=500 \
+  padj_cutoff=0.05 \
+  top_sets=20 \
+  seed=1234
+```
+gene_sets를 비우고 min_size=10(기본값)으로 실행하면 Hallmark 50세트로 검정합니다.
+
+### 주요 결과 이미지
+예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다. 군집 기준 조건 비교(spatial_condition_de, tumor_vs_normal, 군집 23개 검정)를 입력으로 CLOSHA에서 실행했고 약 10초 걸렸습니다.
+
+등록 메모: 결과 1~2는 사용자 세트(`crc_gene_sets.gmt`, min_size=5) 결과입니다. 세포 유형 기준 비교(group_by=rctd_first_type)에 기본 Hallmark 세트로 실행한 결과를 결과 3~4로 넣습니다(실행 예정).
+
+**결과 1. 세트 × 군집 NES heatmap(대표 그림)**
+- 결과 파일: `03_plots/gsea_nes_tumor_vs_normal.png`, 표 `01_gsea/gsea_tumor_vs_normal.tsv`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_de_enrichment_result_1.png`
+
+- 레전드(국문): **군집(가로)마다 유전자 세트(세로)의 정규화 농축 점수(NES).** 빨강은 종양에서 높아진 세트, 파랑은 낮아진 세트이고, 점은 보정 p < 0.05입니다. 빈칸은 그 군집에서 세트 크기가 min_size에 못 미쳐 검정하지 않은 칸입니다. 예시 데이터에서 CAF 세트는 검정한 21개 군집 중 20개에서 종양 쪽으로 유의하게 높았고(군집 1: NES 2.38), 형질세포 세트는 종양 상피 군집 0과 군집 12, 20에서는 낮고 다른 군집에서는 높았습니다.
+- 레전드(영문): **Normalised enrichment score (NES) of gene sets (rows) in each cluster (columns).** Red sets are higher and blue sets lower in tumour; dots mark adjusted p < 0.05; blanks were not tested because the set had fewer genes than min_size in that cluster. In the example data the CAF set was significantly higher in tumour in 20 of 21 clusters tested (cluster 1: NES 2.38), and the plasma cell set was lower in tumour epithelium cluster 0 and clusters 12 and 20 but higher in the others.
+
+**결과 2. 유의한 세트가 가장 많은 군집의 막대그림**
+- 결과 파일: `03_plots/gsea_top_tumor_vs_normal.png`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_de_enrichment_result_2.png`
+
+- 레전드(국문): **유의한 세트가 가장 많은 군집의 NES 막대.** 오른쪽(빨강)은 종양에서 높아진 세트이고 *는 보정 p < 0.05입니다. 예시 데이터에서는 림프 여포 군집 7이 뽑혔고, 다섯 세트가 모두 종양 쪽으로 유의하게 높았습니다(CAF NES 2.50, 세포독성 T 2.07).
+- 레전드(영문): **NES bars of the cluster with the most significant sets.** Bars to the right (red) are higher in tumour; * marks adjusted p < 0.05. In the example data lymphoid follicle cluster 7 was chosen, with all five sets significantly higher in tumour (CAF NES 2.50, cytotoxic T 2.07).
