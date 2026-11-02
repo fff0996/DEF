@@ -2,7 +2,7 @@ Visium HD 공간 전사체 모듈 등록 정보 (스크립트 최신 버전 기�
 
 작성일: 2026-10-22, 갱신: 2026-10-27 (세포 유형 가지, 자원, CLOSHA 테스트 예제), 2026-11-02 (뒷단 모듈 3개: niche, signature_score, de_enrichment; bx_spatial 1.2)
 
-CLOSHA에 Visium HD 파이프라인 모듈을 등록할 때 쓰는 Input / Output / Option 정리다. 기준은 `scripts/Spatial_Transcriptomics_Analysis_Pipeline/`의 모듈별 최신 버전(아래 표)이고, 모든 스크립트는 `key=value` 인자를 받는다. 실행 이미지는 모두 `bx_spatial.1.1`(`defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def`)이다. 1.0에는 svf의 Moran's I에 필요한 ape가 없어 1.1에서 더했다.
+CLOSHA에 Visium HD 파이프라인 모듈을 등록할 때 쓰는 Input / Output / Option 정리다. 기준은 `scripts/Spatial_Transcriptomics_Analysis_Pipeline/`의 모듈별 최신 버전(아래 표)이고, 모든 스크립트는 `key=value` 인자를 받는다. 실행 이미지는 기존 모듈 모두 `bx_spatial.1.1`(`defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def`)이다. 1.0에는 svf의 Moran's I에 필요한 ape가 없어 1.1에서 더했다. 2026-11-02에 추가한 모듈 3개(spatial_niche, spatial_signature_score, spatial_de_enrichment)는 `bx_spatial.1.2`(1.1 + msigdbr 7.5.1, fgsea 1.28.0)를 쓴다. 기존 모듈은 1.1에서 CLOSHA 테스트와 배포를 마쳤으므로 1.1에 그대로 둔다(1.2는 하위 의존 패키지 버전이 조금 다를 수 있음). 다음 공간 배포 때 기존 모듈을 1.2에서 확인한 뒤 하나로 합친다(2026-11-02 결정).
 
 등록 메모:
 - 받은 스크립트(prep, cluster, svf, merge, labelTransfer, rctd, check_reference)는 CLOSHA 2.0에 배포된 것이다. 배포 번호는 고친 스크립트만 2.0 번호 + 1이고, 이번에 모두 스크립트 규칙에 맞춰 고쳐 1.1이다. 새 모듈은 1.0이다(아래 표).
@@ -214,6 +214,7 @@ HD 예제를 바꿨으므로 모듈 원고의 HD 결과 그림(hd_prep, hd_clust
 ## 9. spatial_niche
 bin(spot)마다 가까운 이웃 `neighbors`개의 세포 유형(없으면 군집)을 세어, 이웃 구성이 비슷한 bin끼리 니치로 묶는다(모든 슬라이드를 함께 k-means, 니치 번호는 슬라이드 공통). 파이프라인에서는 spatial_hd_rctd 뒤에 붙인다.
 자원(코어, 메모리): 싱글 코어, 64GB (병렬 없음). 실행 이미지: bx_spatial 1.2
+등록: 스크립트 `scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_niche.1.0.R`(언어 R), 배포 번호 1.0(새 모듈), 카테고리(제안) Clustering / Spatial_Clustering. 선택 입력(sample_data, gene_sets)의 Value는 비워 둔다.
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -233,6 +234,7 @@ bin(spot)마다 가까운 이웃 `neighbors`개의 세포 유형(없으면 군�
 ## 10. spatial_signature_score
 유전자 세트(사용자 파일 또는 MSigDB Hallmark)의 점수를 bin(spot)마다 매겨(Seurat AddModuleScore) 조직 위에 그리고, 군집·세포 유형별, 조건별로 요약한다. 파이프라인에서는 spatial_hd_cluster 뒤에 붙인다(spatial_hd_rctd 결과를 주면 세포 유형별로 요약).
 자원(코어, 메모리): 싱글 코어, 64GB (병렬 없음). 실행 이미지: bx_spatial 1.2
+등록: 스크립트 `scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_signature_score.1.0.R`(언어 R), 배포 번호 1.0(새 모듈), 카테고리(제안) Statistics_and_Visualization / Spatial_Omics. 선택 입력(sample_data, gene_sets)의 Value는 비워 둔다.
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
@@ -253,6 +255,7 @@ bin(spot)마다 가까운 이웃 `neighbors`개의 세포 유형(없으면 군�
 ## 11. spatial_de_enrichment
 spatial_condition_de 결과로 군집(또는 세포 유형)마다 유전자를 검정 통계량 순으로 줄 세워 GSEA(fgsea)를 한다. 경로가 조건 사이에서 어느 쪽으로 움직였는지(NES) 보여 준다. 파이프라인에서는 spatial_condition_de 두 개 뒤에 각각 붙인다.
 자원(코어, 메모리): 싱글 코어, 32GB. 실행 이미지: bx_spatial 1.2
+등록: 스크립트 `scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_de_enrichment.1.0.R`(언어 R), 배포 번호 1.0(새 모듈), 카테고리(제안) Statistics_and_Visualization / Functional_Analysis. 선택 입력(sample_data, gene_sets)의 Value는 비워 둔다.
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
