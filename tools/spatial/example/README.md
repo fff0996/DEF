@@ -16,6 +16,7 @@ CLOSHA 테스트와 포탈 예제에 쓰는 입력 정리. 모듈별 입력값�
 | `visium_slices.csv` | Visium spatial_condition_de `sample_data` (`reference=control`) |
 | `download_visium_mi.sh` | Visium 심장 8장 받기(wget, tar, unzip; 지정 폴더에만 씀) |
 | `hd_slides.csv` | Visium HD spatial_condition_de `sample_data` (`reference=normal`) |
+| `crc_gene_sets.gmt` | 대장암 예제의 사용자 유전자 세트 5개(CAF, 세포독성 T, T 소진, 장 줄기세포, 형질세포; 세트당 10~12개, 사람 유전자 기호). spatial_signature_score와 spatial_de_enrichment의 `gene_sets` 예시. 표지 유전자 목록이며 특정 논문의 세트를 옮긴 것은 아님 |
 | `download_hd_crc.sh` | HD 대장암 5장 받기(wget + tar, 지정 폴더에만 씀) |
 | `split_hd_slide.R` | (예전 HD 예제용) 쥐 뇌 HD 1장을 4등분. 대장암 예제에는 필요 없다 |
 

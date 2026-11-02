@@ -287,4 +287,5 @@ bx_spatial 1.2 SIF(Codespace fakeroot 빌드, 8분, 1.3GB, `%test` 통과)에서
 | niche, de_enrichment 건너뛰기 | `skipped.txt`만 있는 폴더 | `skipped.txt`를 남기고 정상 종료 | 1초 |
 
 - 세포 유형 입력은 Codespace 메모리(7GB) 때문에 실제 RCTD 대신 군집 객체에 가짜 세포 유형 이름 6종을 붙여 만들었다(spatial_hd_rctd는 이 Codespace에서 메모리 부족으로 강제 종료됨). 실제 세포 유형 결과는 CLOSHA 대장암 실행으로 확인한다.
+- 대장암 CLOSHA 예제의 `gene_sets`: `tools/spatial/example/crc_gene_sets.gmt`(사용자 세트 5개). signature_score에 넣으면 기본 Hallmark 3세트와 함께 8세트를 매긴다. de_enrichment에 넣으면 Hallmark 대신 이 5세트만 검정하므로, 예제에서는 `min_size=5`로 둔다.
 - bin 단위 점수 지도(signature_score)는 16µm bin 하나하나의 점수라 얼룩져 보인다. 필요하면 이웃 평균으로 부드럽게 그리는 옵션을 나중에 더한다.
