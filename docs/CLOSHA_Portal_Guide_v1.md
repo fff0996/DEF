@@ -112,6 +112,7 @@ KOBIC 포탈의 파이프라인 페이지와 모듈 등록 화면에 넣을 원�
 | Quality_Control | **Alignment_QC** (신규) | ATAC_QC, ATAC_QC_plot |
 | | Assembly_QC, Raw_Data_QC | — |
 | Statistics_and_Visualization | Genomic_Visualization, Mathematical_based_Tool | — |
+| | **Functional_Analysis** (신규, 2026-11-02) | — (공간 전사체 spatial_de_enrichment: 조건 비교 결과의 경로 농축 GSEA. ATAC functional_enrichment도 여기로 옮기길 제안) |
 | Utility | Genomic_data_Utility | — |
 | | **Data_Inspection** (신규) | — (공간 전사체 check_reference. 입력 파일을 열어 구조·내용만 확인하는 모듈) |
 
@@ -119,8 +120,8 @@ KOBIC 포탈의 파이프라인 페이지와 모듈 등록 화면에 넣을 원�
 - 새로 정하는 분류는 **대분류 = 분석 단계, 중분류 = 구체적 작업(또는 작업 대상)**으로 짓는다(사용자 결정, 2026-10-27). 데이터 종류는 모듈 이름이 보여 주므로 분류에 다시 넣지 않는다. 기존 목록에 맞는 칸이 없으면 대분류도 새로 만든다.
 - 단계 대분류 예: Quality_Control(품질 확인) → Preprocessing(정규화·필터링·배치 보정, 데이터를 바꿔 다음 단계로 넘김) → Mapping / Assembly → Clustering(묶기, 중분류는 묶는 대상: Spatial_Clustering, Cell_Clustering, Sample_Clustering, Sequence_Clustering) → Statistics_and_Visualization(통계량 계산과 검정: Differential_Analysis, Spatial_Omics) → Annotation(이름 붙이기, 중분류는 대상: Peak, Variants, Metabolite, Cell_Type) → Utility(보조 도구: 형식 변환, 입력 확인 Data_Inspection 등). 만든 주체(in-house 등)로는 나누지 않는다.
 - 군집은 통계 검정이 아니라 그래프 기반 묶기(비지도 학습)라 Statistics에 넣지 않고, 이름만 붙지 않은 번호를 내므로 Annotation에도 넣지 않는다.
-- 현재 포탈 목록은 업체 임시안이다. 차등 분석이 Omics_Data_Analysis / Differential_Analysis(ATAC)와 Statistics… / Mathematical_based_Tool(DESeq2)로 흩어져 있어 Statistics_and_Visualization / Differential_Analysis로 모으길 제안한다. 이름 오타(Statisitcs, Methmatical)도 고친다.
-- 예: 공간 전사체 모듈은 Preprocessing / Normalization(prep, hd_prep), Clustering / Spatial_Clustering(cluster, merge, hd_cluster), Statistics_and_Visualization / Spatial_Omics(svf, hd_svf)와 Differential_Analysis(condition_de), Annotation / Cell_Type_Annotation(labelTransfer, rctd, hd_rctd), Utility / Data_Inspection(check_reference: 참조 파일의 열만 보여 주는 확인용 모듈이라 Annotation이 아님).
+- 현재 포탈 목록은 업체 임시안이다. 차등 분석이 Omics_Data_Analysis / Differential_Analysis(ATAC)와 Statistics… / Mathematical_based_Tool(DESeq2)로 흩어져 있어 Statistics_and_Visualization / Differential_Analysis로 모으길 제안한다. 같은 이유로 농축 분석(ATAC functional_enrichment, 공간 spatial_de_enrichment)은 Statistics_and_Visualization / Functional_Analysis로 모은다. 이름 오타(Statisitcs, Methmatical)도 고친다.
+- 예: 공간 전사체 모듈은 Preprocessing / Normalization(prep, hd_prep), Clustering / Spatial_Clustering(cluster, merge, hd_cluster), Statistics_and_Visualization / Spatial_Omics(svf, hd_svf)와 Differential_Analysis(condition_de), Annotation / Cell_Type_Annotation(labelTransfer, rctd, hd_rctd), Utility / Data_Inspection(check_reference: 참조 파일의 열만 보여 주는 확인용 모듈이라 Annotation이 아님). 2026-11-02 추가: spatial_niche는 이웃 세포 유형 구성으로 bin을 묶으므로 Clustering / Spatial_Clustering, spatial_signature_score는 유전자 세트 점수(통계량)를 조직 위에 그리므로 Statistics_and_Visualization / Spatial_Omics, spatial_de_enrichment는 경로 농축 검정(GSEA, p값)이므로 Statistics_and_Visualization / Functional_Analysis(신규).
 - 목록에 보여도 개인 폴더(공개 아이콘이 아닌 사람 아이콘, 예: `BAM_processing`)는 정식 카테고리가 아니므로 쓰지 않는다. 그래서 GATK_MarkDuplicates, organellar_filter는 Mapping / Short_Read_Alignment에 둔다.
 - 기존 이름의 오타는 카테고리를 추가할 때 함께 고친다: `Statisitcs_and_Visualization` → `Statistics_and_Visualization`, `Methmatical_based_Tool` → `Mathematical_based_Tool`.
 - 파이프라인 등록 화면의 대분류·중분류는 별도 목록이다(4절 표).
