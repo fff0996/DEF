@@ -1056,8 +1056,8 @@ Rscript spatial_niche.1.0.R \
 
 그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_niche_result_4.png`
 
-- 레전드(국문): **니치마다 슬라이드별 비율(점)과 조건 평균(막대).** 빨간 점은 정상, 파란 점은 종양 슬라이드입니다. 예시 데이터에서 면역 니치 6은 정상 평균 4.4%에서 종양 8.3%로 약 2배였고, 혈관이 많은 기질 니치 5는 18.9%에서 11.2%로 줄었습니다. 조건마다 2~3장이라 보정 p는 모두 0.05를 넘었고(가장 낮은 니치 1: 0.10), 로그에 탐색적 결과로 보라는 경고가 남습니다.
-- 레전드(영문): **Per-slide fraction (points) and condition mean (bar) of each niche.** Red points are normal and blue points tumour slides. In the example data immune niche 6 about doubled from 4.4% in normal to 8.3% in tumour, while vessel-rich stromal niche 5 fell from 18.9% to 11.2%. With two or three slides per condition no adjusted p-value fell below 0.05 (lowest, niche 1: 0.10), and the log warns to treat them as exploratory.
+- 레전드(국문): **니치마다 슬라이드별 비율(점)과 조건 평균(막대).** 칸 제목은 니치 번호와 주 세포 유형(두 번째 유형이 20% 이상이면 함께)입니다. 빨간 점은 정상, 파란 점은 종양 슬라이드입니다. 예시 데이터에서 면역 니치 6은 정상 평균 4.4%에서 종양 8.3%로 약 2배였고, 혈관이 많은 기질 니치 5는 18.9%에서 11.2%로 줄었습니다. 조건마다 2~3장이라 보정 p는 모두 0.05를 넘었고(가장 낮은 니치 1: 0.10), 로그에 탐색적 결과로 보라는 경고가 남습니다.
+- 레전드(영문): **Per-slide fraction (points) and condition mean (bar) of each niche.** Panel titles give the niche number and its main cell type (with the second when it is at least 20%). Red points are normal and blue points tumour slides. In the example data immune niche 6 about doubled from 4.4% in normal to 8.3% in tumour, while vessel-rich stromal niche 5 fell from 18.9% to 11.2%. With two or three slides per condition no adjusted p-value fell below 0.05 (lowest, niche 1: 0.10), and the log warns to treat them as exploratory.
 
 ---
 
