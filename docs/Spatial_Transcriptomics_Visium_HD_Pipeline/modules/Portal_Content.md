@@ -1363,7 +1363,7 @@ gene_sets를 비우고 min_size=10(기본값)으로 실행하면 Hallmark 50세�
 ### 주요 결과 이미지
 예시 데이터는 사람 대장암 Visium HD(FFPE, Oliveira et al., Nat Genet 2025, 10x Genomics 공개 자료) 5장의 16µm bin입니다. 종양 3장(crc_p1, crc_p2, crc_p5)과 정상 인접 조직 2장(normal_p3, normal_p5)이고, 대표 슬라이드는 crc_p1입니다. 군집 기준 조건 비교(spatial_condition_de, tumor_vs_normal, 군집 23개 검정)를 입력으로 CLOSHA에서 실행했고 약 10초 걸렸습니다.
 
-등록 메모: 결과 1~2는 사용자 세트(`crc_gene_sets.gmt`, min_size=5) 결과입니다. 세포 유형 기준 비교(group_by=rctd_first_type)에 기본 Hallmark 세트로 실행한 결과를 결과 3~4로 넣습니다(실행 예정).
+결과 1~2는 사용자 세트(`crc_gene_sets.gmt`, min_size=5)로 군집 기준 비교를 검정한 결과이고, 결과 3~4는 gene_sets를 비우고 기본 Hallmark 50세트로 세포 유형 기준 비교(spatial_condition_de, group_by=rctd_first_type; 세포 유형 9종 모두 pseudobulk DESeq2)를 검정한 결과입니다(약 30초).
 
 **결과 1. 세트 × 군집 NES heatmap(대표 그림)**
 - 결과 파일: `03_plots/gsea_nes_tumor_vs_normal.png`, 표 `01_gsea/gsea_tumor_vs_normal.tsv`
@@ -1380,3 +1380,19 @@ gene_sets를 비우고 min_size=10(기본값)으로 실행하면 Hallmark 50세�
 
 - 레전드(국문): **유의한 세트가 가장 많은 군집의 NES 막대.** 오른쪽(빨강)은 종양에서 높아진 세트이고 *는 보정 p < 0.05입니다. 예시 데이터에서는 림프 여포 군집 7이 뽑혔고, 다섯 세트가 모두 종양 쪽으로 유의하게 높았습니다(CAF NES 2.50, 세포독성 T 2.07).
 - 레전드(영문): **NES bars of the cluster with the most significant sets.** Bars to the right (red) are higher in tumour; * marks adjusted p < 0.05. In the example data lymphoid follicle cluster 7 was chosen, with all five sets significantly higher in tumour (CAF NES 2.50, cytotoxic T 2.07).
+
+**결과 3. 세포 유형별 Hallmark NES heatmap**
+- 결과 파일: `03_plots/gsea_nes_tumor_vs_normal.png`, 표 `01_gsea/gsea_tumor_vs_normal.tsv` (gene_sets 비움, collection=H)
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_de_enrichment_result_3.png`
+
+- 레전드(국문): **세포 유형(가로)마다 Hallmark 세트(세로, 보정 p가 가장 작은 20개)의 NES.** 세포 유형 기준 비교를 넣으면 경로 변화를 세포 유형 이름으로 바로 읽을 수 있습니다. 예시 데이터에서 상피-중간엽 전이(EMT)는 종양 세포를 뺀 8개 세포 유형에서 종양 쪽으로 높았고(Fibroblast NES 3.13, T cells 3.34), 인터페론 감마 반응은 T세포(2.43)와 골수계 세포(2.31)에서 높았습니다. 종양 세포는 MYC 표적(3.45), E2F 표적(2.89), G2M 검문점처럼 증식 경로가 높았고 EMT(-1.78)와 염증 반응은 낮았습니다.
+- 레전드(영문): **NES of Hallmark sets (rows; the 20 with the smallest adjusted p) per cell type (columns).** With the cell-type comparison as input, pathway changes read directly by cell-type name. In the example data epithelial-mesenchymal transition (EMT) was higher in tumour in the 8 cell types other than tumour cells (Fibroblast NES 3.13, T cells 3.34), and interferon gamma response in T cells (2.43) and myeloid cells (2.31). Tumour cells had higher proliferation pathways such as MYC targets (3.45), E2F targets (2.89) and G2M checkpoint, and lower EMT (-1.78) and inflammatory response.
+
+**결과 4. 종양 세포의 Hallmark 막대그림**
+- 결과 파일: `03_plots/gsea_top_tumor_vs_normal.png`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_de_enrichment_result_4.png`
+
+- 레전드(국문): **유의한 세트가 가장 많은 세포 유형(Tumor)의 NES 막대(보정 p 순 상위 20개).** 예시 데이터에서는 종양 세포에서 MYC 표적, E2F 표적, G2M 검문점, 산화적 인산화, mTORC1, DNA 수선이 높아졌고, 동종이식 거부, 근육 형성, 염증 반응, EMT, KRAS 신호가 낮아졌습니다. 정상 슬라이드의 Tumor bin은 0.6~1.5%로 적어서(spatial_hd_rctd 결과 2), 이 비교는 정상 쪽 bin 수가 적은 상태의 결과임을 함께 봅니다.
+- 레전드(영문): **NES bars of the cell type with the most significant sets (Tumor; top 20 by adjusted p).** In the example data tumour cells had higher MYC targets, E2F targets, G2M checkpoint, oxidative phosphorylation, mTORC1 and DNA repair, and lower allograft rejection, myogenesis, inflammatory response, EMT and KRAS signalling. Tumor bins are rare in the normal slides (0.6-1.5%, spatial_hd_rctd result 2), so this comparison rests on few normal bins.
