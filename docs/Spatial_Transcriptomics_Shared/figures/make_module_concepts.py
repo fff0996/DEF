@@ -421,18 +421,111 @@ def spatial_hd_rctd():
     return svg("".join(g))
 
 
+# ---------------------------------------------------------------- downstream modules (2026-11-02)
+def spatial_niche():
+    g = [panel(40, "A", "Cell types among the nearest bins")]
+    random.seed(5)
+    cx, cy = 230, 250
+    for i in range(-5, 6):
+        for j in range(-5, 6):
+            x, y = cx + i * 22, cy + j * 22
+            if (i * i + j * j) > 30:
+                continue
+            c = CT[0] if i < -1 else CT[2] if j > 2 else CT[1] if random.random() < 0.7 else CT[3]
+            g.append(rect(x - 9, y - 9, 18, 18, c, 2))
+    g.append(f'<circle cx="{cx}" cy="{cy}" r="62" fill="none" stroke="{MAIN}" stroke-width="3" stroke-dasharray="7,5"/>')
+    g.append(rect(cx - 10, cy - 10, 20, 20, "none", 2, MAIN, 3))
+    g.append(heat_note(70, 410, "neighbors nearest bins (itself included)"))
+    g.append(heat_note(70, 436, "→ fraction of each cell type around the bin"))
+    g.append(stacked(440, 180, 140, [0.25, 0.55, 0.05, 0.15], CT[:4]))
+    g.append(t(460, 340, "fractions", 13, 600, SUB))
+
+    g.append(panel(560, "B", "Similar neighbourhoods → one niche"))
+    fr = [[0.8, 0.1, 0.05, 0.05], [0.75, 0.15, 0.05, 0.05], [0.1, 0.2, 0.6, 0.1], [0.05, 0.25, 0.65, 0.05],
+          [0.35, 0.3, 0.05, 0.3], [0.3, 0.35, 0.05, 0.3]]
+    lab = [1, 1, 2, 2, 3, 3]
+    for i, f in enumerate(fr):
+        g.append(stacked(600 + i * 52, 120, 160, f, CT[:4], w=36))
+    g.append(t(745, 305, "all bins of all slides", 14, 600, SUB))
+    g.append(arrow(745, 325, 745, 370, SUB, 3))
+    g.append(box(600, 380, 300, 90, "k-means (niches)", ["shared niche numbers"]))
+    for i, k in enumerate(lab):
+        g.append(t(618 + i * 52, 110 - 8, f"N{k}", 14, 800, REG[k - 1]))
+    g.append(heat_note(600, 500, "niche_composition: mean fraction per niche"))
+    g.append(heat_note(600, 526, "niche fractions per slide and condition"))
+
+    g.append(panel(1100, "C", "Niches on the tissue"))
+    g.append(tissue(1290, 240, 160, 110, by_region(1290, 240, 160, 110, REG), step=10, r=5, square=True))
+    return svg("".join(g))
+
+
+def spatial_signature_score():
+    g = [panel(40, "A", "Score = set genes − control genes")]
+    g.append(box(70, 90, 420, 120, "gene set (gene_sets / Hallmark)", ["e.g. CAF: COL1A1, FAP, POSTN, SFRP2 …",
+                                                                         "mean expression in each bin"], POINT))
+    g.append(box(70, 240, 420, 120, "control genes", ["random genes with similar expression",
+                                                      "(same expression bins as the set)"], GRAY))
+    g.append(arrow(280, 370, 280, 410, SUB, 3))
+    g.append(t(280, 440, "score = mean(set) − mean(control)", 17, 800, MAIN))
+    g.append(heat_note(70, 480, "Seurat AddModuleScore, every bin of every slide"))
+
+    g.append(panel(560, "B", "Score on every bin"))
+    g.append(tissue(780, 240, 170, 115, lambda x, y, k: RED if region(x, y, 780, 240, 170, 115) == 1 else
+                    "#F4A582" if region(x, y, 780, 240, 170, 115) == 3 else "#ABD9E9", step=10, r=5, square=True))
+    g.append(heat_note(600, 400, "one colour scale for all slides"))
+    g.append(heat_note(600, 426, "means per cluster / cell type and per slide"))
+    g.append(heat_note(600, 452, "slide means compared between conditions"))
+
+    g.append(panel(1100, "C", "Summary"))
+    return svg("".join(g))
+
+
+def spatial_de_enrichment():
+    g = [panel(40, "A", "Genes ranked per cluster")]
+    vals = [3.2, 2.6, 2.1, 1.6, 1.1, 0.6, 0.2, -0.3, -0.8, -1.4, -2.0, -2.7]
+    inset = {0, 1, 3, 5, 9}
+    for i, v in enumerate(vals):
+        y = 90 + i * 28
+        c = RED if v > 0 else BLUE
+        x0 = 260
+        g.append(rect(x0 if v > 0 else x0 + v * 50, y, abs(v) * 50, 20, c, 2, op=0.85))
+        g.append(rect(90, y + 2, 16, 16, POINT if i in inset else "#FFFFFF", 2, POINT, 2))
+    g.append(line(260, 84, 260, 430, SUB, 2))
+    g.append(heat_note(70, 452, "DESeq2 statistic (tumour vs normal)"))
+    g.append(heat_note(70, 478, "■ gene in the set"))
+
+    g.append(panel(560, "B", "Running enrichment score (GSEA)"))
+    g.append(axes(620, 100, 400, 260, "", "enrichment score"))
+    g.append(t(820, 400, "gene rank (higher in test → lower)", 15, 600, SUB))
+    pts, es = [], 0.0
+    for i in range(41):
+        es += 0.09 if i in (1, 3, 5, 8, 10, 14) else -0.012
+        pts.append((620 + i * 10, 330 - es * 300))
+    g.append('<polyline points="' + " ".join(f"{x:.1f},{y:.1f}" for x, y in pts) + f'" fill="none" stroke="{RED}" stroke-width="3"/>')
+    for i in (1, 3, 5, 8, 10, 14):
+        g.append(line(620 + i * 10, 362, 620 + i * 10, 378, POINT, 2))
+    g.append(heat_note(620, 440, "NES > 0: set higher in the test condition"))
+    g.append(heat_note(620, 466, "fgsea per cluster, BH-adjusted p"))
+    g.append(heat_note(620, 492, "MSigDB 7.5.1 (msigdbr) or own gene_sets"))
+
+    g.append(panel(1100, "C", "NES heatmap"))
+    return svg("".join(g))
+
+
 FIGS = {"spatial_prep": spatial_prep, "spatial_cluster": spatial_cluster, "spatial_svf": spatial_svf,
         "spatial_merge": spatial_merge, "spatial_condition_de": spatial_condition_de,
         "spatial_labelTransfer": spatial_labelTransfer, "spatial_rctd": spatial_rctd, "check_reference": check_reference,
         "spatial_hd_prep": spatial_hd_prep, "spatial_hd_cluster": spatial_hd_cluster, "spatial_hd_svf": spatial_hd_svf,
-        "spatial_hd_rctd": spatial_hd_rctd}
+        "spatial_hd_rctd": spatial_hd_rctd, "spatial_niche": spatial_niche,
+        "spatial_signature_score": spatial_signature_score, "spatial_de_enrichment": spatial_de_enrichment}
 
 # Panels kept per figure. Panels that repeat the paper figure placed before the drawing, that
 # list inputs already in the parameter table, or that show outputs instead of the principle
 # are dropped; the kept panels are relettered A, B, ... (a single panel has no letter).
 KEEP = {"spatial_prep": "BC", "spatial_cluster": "BC", "spatial_svf": "AB", "spatial_merge": "AB",
         "spatial_condition_de": "BC", "spatial_labelTransfer": "AB", "spatial_rctd": "AB", "check_reference": "BC",
-        "spatial_hd_prep": "ABC", "spatial_hd_cluster": "AB", "spatial_hd_svf": "AB", "spatial_hd_rctd": "AB"}
+        "spatial_hd_prep": "ABC", "spatial_hd_cluster": "AB", "spatial_hd_svf": "AB", "spatial_hd_rctd": "AB",
+        "spatial_niche": "AB", "spatial_signature_score": "AB", "spatial_de_enrichment": "AB"}
 REGION_X = {"A": 0, "B": 540, "C": 1080}   # each drawing has three 540-px-wide panel regions
 PANEL_X = {"A": 40, "B": 560, "C": 1100}   # x of the panel letter
 
@@ -455,7 +548,9 @@ def keep_panels(drawing, keep):
 
 if __name__ == "__main__":
     for name, fn in FIGS.items():
-        dirs = [HD] if name.startswith("spatial_hd_") else \
+        # The 2026-11-02 modules take both inputs but are documented in the Visium HD pages first.
+        dirs = [HD] if name.startswith("spatial_hd_") or name in ("spatial_niche", "spatial_signature_score",
+                                                                  "spatial_de_enrichment") else \
             [VIS, HD] if name in ("spatial_condition_de", "check_reference") else [VIS]
         drawing = keep_panels(fn(), KEEP[name])
         for d in dirs:

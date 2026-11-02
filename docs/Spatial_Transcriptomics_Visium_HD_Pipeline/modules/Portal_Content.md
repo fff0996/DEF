@@ -1003,7 +1003,11 @@ normal_p5,normal
 | 조건 비교는 슬라이드를 반복으로 삼습니다. 조건마다 2장 이하이면 p값은 탐색용입니다. | The condition comparison uses slides as replicates; with two or fewer slides per condition the p-values are exploratory. |
 
 ### 분석 개념 이미지
-등록 메모: CC BY 논문 그림을 먼저 찾아 넣고, 맞는 그림이 없으면 직접 그립니다(작업 예정).
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/spatial_niche_concept.png`
+
+- 레전드(국문): **그림. 세포 유형 이웃으로 니치 찾기.** (A) bin마다 가장 가까운 bin neighbors개(점선 원, 자기 포함)의 세포 유형을 세어 비율(오른쪽 막대)로 만듭니다. (B) 모든 슬라이드의 bin 비율을 함께 k-means로 묶어, 이웃 구성이 비슷한 bin에 같은 니치 번호(N1, N2, N3)를 붙입니다. 니치마다 평균 비율(niche_composition)과 슬라이드·조건별 니치 비율을 계산합니다. 색과 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. Finding niches from cell-type neighbourhoods.** (A) For each bin the cell types of its neighbors nearest bins (dashed circle, itself included) are counted as fractions (bar on the right). (B) The fractions of all bins of all slides are clustered together with k-means, so bins with similar surroundings get the same niche number (N1, N2, N3); the mean fractions per niche (niche_composition) and the niche fractions per slide and condition are then computed. Colours and values are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함). CC BY 논문 그림을 먼저 찾아봤지만(BANKSY, Singhal et al., Nat Genet 2024, CC BY: 이웃 평균 발현을 더해 군집하는 방식; 세포 이웃 리뷰, J Cancer 2026, CC BY: 생물학 그림) 이 모듈의 계산 방식과 맞지 않아 쓰지 않았습니다(2026-11-02).
 
 ### 스크립트 사용 예제
 ```
@@ -1186,7 +1190,11 @@ normal_p5,normal
 | bin 하나하나의 점수라 조직 지도가 얼룩져 보일 수 있습니다. 군집·세포 유형별 heatmap과 슬라이드 평균으로 함께 해석합니다. | Single-bin scores can look speckled on the tissue; read them together with the group heatmap and slide means. |
 
 ### 분석 개념 이미지
-등록 메모: CC BY 논문 그림을 먼저 찾아 넣고, 맞는 그림이 없으면 직접 그립니다(작업 예정).
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/spatial_signature_score_concept.png`
+
+- 레전드(국문): **그림. 유전자 세트 점수.** (A) bin마다 세트 유전자의 평균 발현에서, 발현량이 비슷한 무작위 대조 유전자의 평균을 뺀 값이 점수입니다(Seurat AddModuleScore). 세트는 사용자 파일(gene_sets)이나 MSigDB Hallmark(builtin_sets)에서 옵니다. (B) 점수를 모든 bin 위에 같은 색 범위로 칠하고, 군집·세포 유형별과 슬라이드별 평균을 내어 조건 사이에서 비교합니다. 조직 모양과 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. Gene set scores.** (A) The score of a bin is the mean expression of the set genes minus that of random control genes with similar expression (Seurat AddModuleScore); sets come from an own file (gene_sets) or MSigDB Hallmark (builtin_sets). (B) Scores are drawn on every bin with one colour scale, and means per cluster or cell type and per slide are compared between conditions. Tissue shapes and values are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함). CC BY 논문 그림을 먼저 찾아봤지만(AddModuleScore의 원 방법 논문 Tirosh et al., Science 2016은 CC BY가 아님) 이 모듈의 계산 방식과 맞지 않아 쓰지 않았습니다(2026-11-02).
 
 ### 스크립트 사용 예제
 ```
@@ -1330,7 +1338,11 @@ Runs gene set enrichment analysis (GSEA) per cluster (or cell type) on the condi
 | 기본 제공 세트는 이미지 안의 msigdbr 7.5.1(MSigDB 7.5.1)이라 실행 중 인터넷이 필요 없습니다. | The built-in sets come from msigdbr 7.5.1 (MSigDB 7.5.1) in the image, so no network access is needed. |
 
 ### 분석 개념 이미지
-등록 메모: CC BY 논문 그림을 먼저 찾아 넣고, 맞는 그림이 없으면 직접 그립니다(작업 예정).
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/module_concepts/spatial_de_enrichment_concept.png`
+
+- 레전드(국문): **그림. 군집별 유전자 세트 농축 분석(GSEA).** (A) 군집마다 조건 비교의 검정 통계량(DESeq2, 양수는 비교 조건에서 높음)으로 유전자를 줄 세웁니다. 채운 칸은 한 세트에 속한 유전자입니다. (B) 순위를 따라가며 세트 유전자를 만나면 점수를 올리고 아니면 내린 누적 점수(running enrichment score)의 최댓값으로 농축을 판단합니다. 세트 유전자가 위쪽(비교 조건에서 높은 쪽)에 몰리면 NES가 양수입니다. fgsea가 군집마다 NES와 BH 보정 p를 계산합니다. 값은 모식적인 값입니다.
+- 레전드(영문): **Figure. Gene set enrichment analysis (GSEA) per cluster.** (A) Within each cluster, genes are ranked by the comparison statistic (DESeq2; positive means higher in the test condition); filled boxes are genes of one set. (B) Walking down the ranking, the running enrichment score rises at set genes and falls otherwise; its maximum measures enrichment, and set genes gathered at the top (higher in the test condition) give a positive NES. fgsea gives the NES and BH-adjusted p per cluster. Values are schematic.
+- 출처: 직접 작성한 모식도(외부 그림 사용 안 함). CC BY 논문 그림을 먼저 찾아봤지만(fgsea, Korotkevich et al., bioRxiv 2016, CC BY: 계산 속도 비교 그림 위주) 이 모듈의 계산 방식과 맞지 않아 쓰지 않았습니다(2026-11-02).
 
 ### 스크립트 사용 예제
 ```

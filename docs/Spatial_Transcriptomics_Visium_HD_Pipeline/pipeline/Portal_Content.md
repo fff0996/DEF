@@ -15,26 +15,26 @@ KOBIC 포탈의 Visium HD 공간 전사체 파이프라인 상세 페이지에 �
 | Pipeline Name | `Spatial_Transcriptomics_Visium_HD_Pipeline` |
 | 서브 타이틀(국문) | Visium HD 고해상도 공간 분석 |
 | 서브 타이틀(영문) | High-resolution spatial analysis with Visium HD |
-| 구성 모듈 | spatial_hd_prep, spatial_hd_cluster, spatial_hd_svf, spatial_condition_de(군집 기준), spatial_hd_rctd, spatial_condition_de(세포 유형 기준) (마지막 2개는 참조를 줄 때 실행) |
+| 구성 모듈 | spatial_hd_prep, spatial_hd_cluster, spatial_hd_svf, spatial_signature_score, spatial_condition_de(군집 기준), spatial_de_enrichment(군집 기준), spatial_hd_rctd, spatial_niche, spatial_condition_de(세포 유형 기준), spatial_de_enrichment(세포 유형 기준) (hd_rctd 뒤의 4개는 참조를 줄 때 실행). 2026-11-02에 signature_score, niche, de_enrichment를 더함(실행 이미지 bx_spatial 1.2) |
 | 파이프라인 입력 | Space Ranger HD 슬라이드 폴더(필수), 슬라이드 정보 CSV(필수), 단일세포 참조 RDS `reference_rds`와 세포 유형 열 `reference_label_col`(선택) |
 | Version | 1.0 (CLOSHA 3.0 첫 배포) |
 | Reference | https://satijalab.org/seurat/articles/visiumhd_analysis_vignette |
-| Keyword(태그) | spatial transcriptomics, Visium HD, high-resolution spatial, clustering, sketch, spatially variable genes, differential expression, cell type annotation, RCTD |
+| Keyword(태그) | spatial transcriptomics, Visium HD, high-resolution spatial, clustering, sketch, spatially variable genes, differential expression, cell type annotation, RCTD, niche, gene signature, GSEA |
 | 대분류 / 중분류 | Transcriptomics / Spatial_Transcriptomics (포탈 파이프라인 목록에 없으면 신규로 제안) |
 | 대표 이미지 | `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/pipeline/figures/representative.png` (spatial_hd_rctd 결과 1: 대장암 crc_p1의 bin별 세포 유형. 종양·기질·정상 점막·근육층이 한눈에 나뉨) |
 
 ## 1. 파이프라인 소개 / Introduction
 
 ### 국문
-Visium HD 공간 전사체 파이프라인은 10x Genomics Visium HD의 세포 크기에 가까운 bin(8·16µm) 단위 발현을 분석하여, 조직 안의 영역 구성과 조건에 따른 변화를 높은 해상도로 확인하는 분석 도구입니다. 슬라이드별 Space Ranger binned_outputs와 슬라이드 정보를 입력하면, bin을 거르고 정규화한 뒤 정보가 많은 bin을 뽑은 sketch로 모든 슬라이드를 함께 군집하고, 그 군집을 모든 bin에 옮겨 붙입니다. 슬라이드마다 공간 가변 유전자를 Moran's I로 찾고, 조건 사이에서 군집 조성과 군집별 발현을 슬라이드 단위 pseudobulk DESeq2로 비교합니다. 같은 조직의 단일세포 참조 자료를 함께 주면 모든 bin에 세포 유형을 붙이고(RCTD), 세포 유형별로도 조건을 비교합니다. bin이 수십만 개라도 메모리에 맞게 처리하도록 sketch와 슬라이드별 처리를 씁니다.
+Visium HD 공간 전사체 파이프라인은 10x Genomics Visium HD의 세포 크기에 가까운 bin(8·16µm) 단위 발현을 분석하여, 조직 안의 영역 구성과 조건에 따른 변화를 높은 해상도로 확인하는 분석 도구입니다. 슬라이드별 Space Ranger binned_outputs와 슬라이드 정보를 입력하면, bin을 거르고 정규화한 뒤 정보가 많은 bin을 뽑은 sketch로 모든 슬라이드를 함께 군집하고, 그 군집을 모든 bin에 옮겨 붙입니다. 슬라이드마다 공간 가변 유전자를 Moran's I로 찾고, 조건 사이에서 군집 조성과 군집별 발현을 슬라이드 단위 pseudobulk DESeq2로 비교합니다. 유전자 세트(경로·세포 표지) 점수를 조직 위에 그리고, 조건 비교 결과로 군집별 경로 농축 분석(GSEA)을 합니다. 같은 조직의 단일세포 참조 자료를 함께 주면 모든 bin에 세포 유형을 붙이고(RCTD), 세포 유형별로도 조건을 비교하며, 이웃 세포 유형 구성으로 니치(예: 종양-기질 경계, 면역 집결 구역)를 찾습니다. bin이 수십만 개라도 메모리에 맞게 처리하도록 sketch와 슬라이드별 처리를 씁니다.
 
 ### English
-The Visium HD spatial transcriptomics pipeline analyses expression in near-cellular bins (8 or 16 um) from 10x Genomics Visium HD to reveal tissue regions and their changes between conditions at high resolution. From the Space Ranger binned_outputs of each slide and a slide sheet, it filters and normalises the bins, clusters all slides together on a sketch of informative bins, and transfers the clusters to every bin. Spatially variable genes are found per slide with Moran's I, and cluster composition and per-cluster expression are compared between conditions with slide-level pseudobulk DESeq2. Given a single-cell reference of the same tissue, every bin also gets a cell type (RCTD) and conditions are compared per cell type. Sketching and slide-by-slide processing keep hundreds of thousands of bins within memory.
+The Visium HD spatial transcriptomics pipeline analyses expression in near-cellular bins (8 or 16 um) from 10x Genomics Visium HD to reveal tissue regions and their changes between conditions at high resolution. From the Space Ranger binned_outputs of each slide and a slide sheet, it filters and normalises the bins, clusters all slides together on a sketch of informative bins, and transfers the clusters to every bin. Spatially variable genes are found per slide with Moran's I, and cluster composition and per-cluster expression are compared between conditions with slide-level pseudobulk DESeq2. Gene set (pathway or cell marker) scores are drawn on the tissue, and gene set enrichment (GSEA) is run per cluster on the condition comparisons. Given a single-cell reference of the same tissue, every bin also gets a cell type (RCTD), conditions are compared per cell type, and niches (for example tumour-stroma borders or immune aggregates) are found from the cell types around each bin. Sketching and slide-by-slide processing keep hundreds of thousands of bins within memory.
 
 ## 2. 분석 목표 / Analysis goals
 
 ### 국문
-**Visium HD 공간 전사체 분석으로 확인할 수 있는 다섯 가지 분석 목표**
+**Visium HD 공간 전사체 분석으로 확인할 수 있는 일곱 가지 분석 목표**
 
 **01 조직은 어떤 발현 영역으로 나뉘는가**
 bin을 발현이 비슷한 군집으로 나누고 조직 위에 그려, 종양, 정상 점막, 근육층, 기질처럼 조직 영역과 그 경계를 세포 크기에 가까운 해상도로 확인합니다.
@@ -51,8 +51,14 @@ bin을 발현이 비슷한 군집으로 나누고 조직 위에 그려, 종양, 
 **05 각 위치에는 어떤 세포가 있는가**
 같은 조직의 단일세포 참조 자료가 있으면, 세포 크기에 가까운 bin마다 세포 유형을 붙이고 세포 유형별로도 조건을 비교합니다. 참조가 없으면 이 단계는 건너뛰고 군집 마커로 해석합니다.
 
+**06 어떤 세포들이 이웃해 있는가**
+bin마다 주변 세포 유형 구성을 세어, 구성이 비슷한 구역을 니치로 묶습니다. 종양과 섬유모세포의 경계나 면역세포 집결 구역처럼, 세포 유형 하나만으로는 보이지 않는 조직 구조와 그 조건별 변화를 봅니다.
+
+**07 관심 있는 경로나 세포는 어디서, 어떻게 달라지는가**
+사용자 유전자 세트나 MSigDB Hallmark 세트의 점수를 조직 위에 그리고, 조건 비교 결과로 군집(세포 유형)별 경로 농축(GSEA)을 계산해 어떤 경로가 어느 영역에서 오르내리는지 봅니다.
+
 ### English
-**Five questions Visium HD spatial transcriptomics analysis can answer**
+**Seven questions Visium HD spatial transcriptomics analysis can answer**
 
 **01 Which expression regions make up the tissue?**
 Bins are clustered by similar expression and drawn on the tissue, revealing tissue regions such as tumour, normal mucosa, muscle layers and stroma and their borders at near-cellular resolution.
@@ -69,13 +75,19 @@ After all slides are clustered on a common basis, cluster proportions and per-cl
 **05 Which cells are at each position?**
 With a single-cell reference of the same tissue, every near-cellular bin gets a cell type, and conditions are also compared per cell type. Without a reference this step is skipped and clusters are read through their marker genes.
 
+**06 Which cells neighbour each other?**
+The cell types around every bin are counted and areas with similar surroundings are grouped into niches, revealing structures that single cell types do not show, such as tumour-fibroblast borders or immune aggregates, and how they change between conditions.
+
+**07 Where and how do pathways or cells of interest change?**
+Scores of own gene sets or MSigDB Hallmark sets are drawn on the tissue, and gene set enrichment (GSEA) per cluster (or cell type) on the condition comparisons shows which pathways go up or down in which region.
+
 ## 3. 분석 흐름 / Analysis workflow
 
 그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/pipeline/figures/pipeline_visium_hd.png` (원본 `pipeline_visium_hd.svg`)
 
 ### 대체 텍스트 (alt)
-- 국문: Visium HD 공간 전사체 파이프라인 흐름도. bin 불러오기·정규화·sketch(spatial_hd_prep), 슬라이드 통합 군집과 모든 bin 배정(spatial_hd_cluster) 뒤 조건 간 비교(spatial_condition_de), 공간 가변 유전자(spatial_hd_svf), 단일세포 참조로 모든 bin에 세포 유형을 붙이는 분석(spatial_hd_rctd)으로 갈라지고, 세포 유형 결과가 세포 유형별 조건 간 비교(spatial_condition_de)로 이어짐. 세포 유형 분석은 참조를 줄 때만 실행됨. 참조의 세포 유형 열 이름은 파이프라인 밖의 check_reference(점선)로 미리 확인할 수 있음.
-- English: Visium HD spatial transcriptomics workflow: bin loading, normalisation and sketching (spatial_hd_prep), joint clustering of slides with labels for every bin (spatial_hd_cluster), then condition comparison (spatial_condition_de), spatially variable genes (spatial_hd_svf), and cell types for every bin from a single-cell reference (spatial_hd_rctd) followed by condition comparison per cell type (spatial_condition_de); the cell-type branch runs only when a reference is given. The cell-type column of the reference can be checked beforehand with check_reference, outside the pipeline (dashed).
+- 국문: Visium HD 공간 전사체 파이프라인 흐름도. bin 불러오기·정규화·sketch(spatial_hd_prep), 슬라이드 통합 군집과 모든 bin 배정(spatial_hd_cluster) 뒤 조건 간 비교(spatial_condition_de), 공간 가변 유전자(spatial_hd_svf), 단일세포 참조로 모든 bin에 세포 유형을 붙이는 분석(spatial_hd_rctd)으로 갈라지고, 세포 유형 결과가 세포 유형별 조건 간 비교(spatial_condition_de)로 이어짐. 군집 결과에서 유전자 세트 점수(spatial_signature_score)도 갈라지고, 두 조건 비교 뒤에는 각각 경로 농축 분석(spatial_de_enrichment)이 이어지며, 세포 유형 결과에서 니치 분석(spatial_niche)이 갈라짐. 세포 유형 분석과 그 뒤의 니치, 세포 유형 기준 비교·경로 분석은 참조를 줄 때만 실행됨. 참조의 세포 유형 열 이름은 파이프라인 밖의 check_reference(점선)로 미리 확인할 수 있음.
+- English: Visium HD spatial transcriptomics workflow: bin loading, normalisation and sketching (spatial_hd_prep), joint clustering of slides with labels for every bin (spatial_hd_cluster), then condition comparison (spatial_condition_de), spatially variable genes (spatial_hd_svf), and cell types for every bin from a single-cell reference (spatial_hd_rctd) followed by condition comparison per cell type (spatial_condition_de); gene set scores (spatial_signature_score) also branch from the clusters, each condition comparison is followed by gene set enrichment (spatial_de_enrichment), and niches (spatial_niche) branch from the cell types. The cell-type branch, with its niches and cell-type comparison and enrichment, runs only when a reference is given. The cell-type column of the reference can be checked beforehand with check_reference, outside the pipeline (dashed).
 
 ## 4. 분석 개념 / Analysis concept
 
@@ -136,7 +148,7 @@ Williams CG, Lee HJ, Asatsuma T, Vento-Tormo R, Haque A. An introduction to spat
 5. **같은 종, 같은 참조로 만든 Space Ranger 결과만 함께 분석해 주세요.** 슬라이드마다 유전자 목록이 다르면 합칠 때 일부 유전자가 0이 되어 가짜 차이가 생길 수 있습니다.
 6. **메모리를 많이 씁니다.** 모든 모듈에 64GB를 권장합니다. 예시 데이터(대장암 5장, 16µm)에서 가장 많이 쓴 모듈은 통합 군집(spatial_hd_cluster)으로 약 31GB였습니다. 슬라이드가 많거나 8µm bin을 쓰면 메모리가 늘어나므로, 부족하면 bin 크기 16µm를 쓰거나 `min_counts`를 올려 주세요.
 7. **세포 유형은 같은 종, 같은 조직의 단일세포 참조 자료(Seurat RDS)로 붙입니다.** 참조(reference_rds)와 세포 유형 열 이름(reference_label_col)을 주면 spatial_hd_rctd가 모든 bin에 세포 유형을 붙이고, 그 결과로 spatial_condition_de가 세포 유형별로(`group_by=rctd_first_type`) 조건을 비교합니다. 참조를 주지 않으면 이 두 단계는 건너뛰고 나머지 분석은 그대로 끝나며, 군집은 마커 유전자와 조직 위치로 해석합니다. 공개 단일세포 아틀라스(예: CELLxGENE, Allen Brain Cell Atlas)를 참조로 쓸 수 있습니다. 열 이름을 모르면 파이프라인을 돌리기 전에 check_reference 모듈에 참조 자료만 넣어 실행해 후보 열을 확인해 주세요. 파이프라인 안에서는 spatial_hd_rctd가 앞 단계(정규화, 군집)가 끝난 뒤에 실행되므로, 열 이름을 비워 두면 그때 멈추고 오류 로그에 후보 열을 보여 줍니다.
-8. **모든 분석은 인터넷 연결 없이 수행됩니다.**
+8. **모든 분석은 인터넷 연결 없이 수행됩니다.** 유전자 세트 분석의 MSigDB 세트(msigdbr 7.5.1)도 실행 이미지 안에 들어 있습니다.
 
 ### English
 1. **The input is Visium HD Space Ranger output.** Each slide needs its whole `binned_outputs/` folder. The tissue images of the 8 and 16 um folders are hard links to those of the 2 um folder, so copying only some folders can lose the images. Put one subfolder per slide; the folder name becomes the slide name. Use the Visium pipeline for Visium data.
@@ -146,4 +158,4 @@ Williams CG, Lee HJ, Asatsuma T, Vento-Tormo R, Haque A. An introduction to spat
 5. **Analyse together only Space Ranger outputs made for the same species and reference.** Different gene lists between slides zero some genes when merging and can create false differences.
 6. **Memory use is high.** 64 GB is recommended for every module. In the example data (five colorectal slides, 16 um) joint clustering (spatial_hd_cluster) used the most, about 31 GB. More slides or 8 um bins need more memory; when it runs out, use 16 um bins or a higher `min_counts`.
 7. **Cell types come from a single-cell reference (Seurat RDS) of the same species and tissue.** Given a reference (reference_rds) and its cell-type column (reference_label_col), spatial_hd_rctd gives every bin a cell type and spatial_condition_de then compares conditions per cell type (`group_by=rctd_first_type`). Without a reference these two steps are skipped and the rest of the analysis finishes as usual; clusters are then interpreted by their marker genes and tissue location. Public single-cell atlases (for example CELLxGENE, Allen Brain Cell Atlas) can serve as references. If the column name is unknown, run the check_reference module with the reference alone before the pipeline to see the candidate columns. In the pipeline spatial_hd_rctd runs after the earlier steps (normalisation, clustering), so with the column left empty the run stops only then, listing the candidate columns in the error log.
-8. **All analyses run without internet access.**
+8. **All analyses run without internet access.** The MSigDB sets of the gene set analyses (msigdbr 7.5.1) are in the runtime image.
