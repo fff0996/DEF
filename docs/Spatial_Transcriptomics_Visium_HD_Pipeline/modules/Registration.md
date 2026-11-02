@@ -272,3 +272,19 @@ spatial_condition_de 결과로 군집(또는 세포 유형)마다 유전자를 �
 
 결과: `01_gsea/gsea_<test>_vs_<reference>.tsv`(군집별 세트, NES, p, padj, leading edge), `02_summary/enrichment_summary.tsv`, `03_plots/gsea_nes_<…>`(세트 × 군집 NES heatmap), `03_plots/gsea_top_<…>`(유의 세트가 가장 많은 군집의 막대그림), `gene_sets_used.tsv`, `logs/`. spot 단위 탐색 검정으로 비교한 군집은 Status가 `ok_exploratory`다.
 
+
+## 12. 새 모듈 Codespace 테스트 (2026-11-02)
+bx_spatial 1.2 SIF(Codespace fakeroot 빌드, 8분, 1.3GB, `%test` 통과)에서 공개 모듈과 같은 환경(`--cleanenv`, `OMP_NUM_THREADS=1` 등)으로 실행했다. 데이터는 10x 쥐 뇌 Visium HD 16µm를 4등분한 슬라이드(유전자 6,000개, 슬라이드당 약 2만 5천 bin; `tools/spatial/run_spatial_hd_test.sh`), 조건은 left/right 2장씩이다. 실행 스크립트: `/workspaces/.closha_build_test/newmods/run_tests.sh`, `run_fakect.sh`.
+
+| 실행 | 입력 | 결과 | 시간 / 최대 메모리 |
+|---|---|---|---|
+| spatial_niche | hd_cluster 결과(군집) | 6 니치, 피질층·해마·백질이 나뉨 | 36초 / 1.4GB |
+| spatial_niche | 세포 유형 입력(`rctd_first_type`, bin 5%는 비움) | auto로 rctd_first_type 선택, 빈 bin 제외, 5 니치 | 33초 / 1.3GB |
+| spatial_signature_score | hd_cluster 결과 | 쥐로 자동 판정, Hallmark 3세트(유전자 37~82개 사용) | 55초 / 2.7GB |
+| spatial_signature_score | 세포 유형 입력 | auto로 rctd_first_type 요약 | 31초 / 2.7GB |
+| spatial_de_enrichment | condition_de(군집, 15군집, spot 단위 3군집 포함) | Hallmark 50세트, 유의 up 8 / down 13, spot 단위 군집은 ok_exploratory | 11초 / 0.5GB |
+| spatial_de_enrichment | condition_de(세포 유형 6종, group_by=rctd_first_type) | 이름 그룹 정상 정렬, Endothelial에서 up 16 | 9초 / 0.5GB |
+| niche, de_enrichment 건너뛰기 | `skipped.txt`만 있는 폴더 | `skipped.txt`를 남기고 정상 종료 | 1초 |
+
+- 세포 유형 입력은 Codespace 메모리(7GB) 때문에 실제 RCTD 대신 군집 객체에 가짜 세포 유형 이름 6종을 붙여 만들었다(spatial_hd_rctd는 이 Codespace에서 메모리 부족으로 강제 종료됨). 실제 세포 유형 결과는 CLOSHA 대장암 실행으로 확인한다.
+- bin 단위 점수 지도(signature_score)는 16µm bin 하나하나의 점수라 얼룩져 보인다. 필요하면 이웃 평균으로 부드럽게 그리는 옵션을 나중에 더한다.
