@@ -40,7 +40,7 @@
 # Outputs (output_dir):
 #   <slide>/<slide>_niches.tsv.gz      spot/bin, label, niche
 #   <slide>/plots/<slide>_niches       niches on the tissue (.png and .pdf)
-#   niche_composition.tsv              per niche: spots/bins, dominant label, mean fraction of
+#   niche_composition.tsv              per niche: spots/bins, dominant label, short name, mean fraction of
 #                                      each label in the neighbourhoods
 #   niche_by_slide.tsv                 spots/bins and fraction of each niche per slide
 #   niche_test.tsv                     with sample_data: niche fractions between conditions
@@ -343,7 +343,12 @@ mean_comp <- t(sapply(seq_len(n_niches), function(k) colMeans(all_comp[niche_all
 if (is.null(dim(mean_comp))) mean_comp <- matrix(mean_comp, nrow = n_niches)
 colnames(mean_comp) <- labels
 dominant <- labels[apply(mean_comp, 1, which.max)]
-comp_tab <- data.frame(Niche = niche_levels, Spots = tabulate(niche_all, nbins = n_niches), Dominant = dominant,
+# Short niche names for plots: the top label, plus the second when it is at least 0.2.
+niche_name <- vapply(seq_len(n_niches), function(k) {
+	o <- order(-mean_comp[k, ])
+	if (length(o) > 1 && mean_comp[k, o[2]] >= 0.2) paste(labels[o[1]], "+", labels[o[2]]) else labels[o[1]]
+}, character(1))
+comp_tab <- data.frame(Niche = niche_levels, Spots = tabulate(niche_all, nbins = n_niches), Dominant = dominant, Name = niche_name,
 		round(mean_comp, 4), check.names = FALSE)
 utils::write.table(comp_tab, file.path(output_dir, "niche_composition.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 for (k in seq_len(n_niches)) {
@@ -439,8 +444,8 @@ if (!is.null(sheet)) {
 						nt$Dominant[i], nt$Mean_reference[i], nt$Mean_test[i], format(signif(nt$Padj[i], 3))))
 	bc <- by_slide
 	bc$Condition <- factor(bc$Condition, levels = c(reference, tests))
-	bc$Panel <- factor(paste0("niche ", bc$Niche, " (", dominant[as.integer(bc$Niche)], ")"),
-			levels = paste0("niche ", niche_levels, " (", dominant, ")"))
+	bc$Panel <- factor(paste0("niche ", bc$Niche, " (", niche_name[as.integer(bc$Niche)], ")"),
+			levels = paste0("niche ", niche_levels, " (", niche_name, ")"))
 	p <- ggplot(bc, aes(Condition, Fraction, colour = Condition)) +
 			stat_summary(fun = mean, geom = "crossbar", width = 0.6, colour = "#555555", linewidth = 0.3) +
 			geom_point(size = 2, position = position_jitter(width = 0.08, height = 0, seed = 1)) +
