@@ -613,6 +613,30 @@ CLOSHA에서 hd_cluster 결과(group_by=seurat_clusters)를 reference=normal로 
 - 레전드(국문): **군집마다 유의하게 높아진(up)·낮아진(down) 유전자 수.** 검정 방법은 de_summary.tsv의 Method 열에서 확인합니다. 예시 데이터에서는 25개 군집 중 21개가 pseudobulk_DESeq2, 2개(14, 23)가 spot_level_wilcoxon으로 검정됐고, 2개(19, 24)는 한쪽 조건에 충분한 슬라이드가 없어 검정하지 않았습니다. 종양에서 높아진 유전자가 모두 5,318개, 낮아진 유전자가 3,903개였고, 군집 1(섬유모세포, up 1,134·down 980)과 0, 2, 6에 몰렸습니다. spot_level_wilcoxon 군집(14는 정상 슬라이드 1장에만 spot이 충분)은 spot을 반복으로 보아 p값이 지나치게 작으므로 탐색적 결과로만 봅니다.
 - 레전드(영문): **Significantly increased (up) and decreased (down) genes per cluster.** The test is given in the Method column of de_summary.tsv. In the example data 21 of 25 clusters were tested by pseudobulk_DESeq2, two (14, 23) by spot_level_wilcoxon, and two (19, 24) were not tested because one condition lacked enough slides. In total 5,318 genes were higher and 3,903 lower in tumour, concentrated in cluster 1 (fibroblasts, 1,134 up and 980 down) and clusters 0, 2 and 6. spot_level_wilcoxon clusters (cluster 14 had enough spots in only one normal slide) treat spots as replicates and give too small p-values; read them as exploratory.
 
+**결과 4. 조건별 군집 비율**
+- 결과 파일: `03_plots/composition_by_condition.png`, 표 `01_composition/composition_test.tsv`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_4.png`
+
+- 레전드(국문): **군집마다 슬라이드별 비율(점)과 조건 평균(막대).** 칸 하나가 군집 하나이고, 빨간 점은 정상, 파란 점은 종양 슬라이드입니다. 같은 조건의 점이 모여 있고 두 조건의 막대가 멀수록 조성 차이가 뚜렷합니다. 예시 데이터에서 종양 상피 군집 0은 정상 두 장이 모두 0 근처, 종양 세 장이 13~29%로 갈렸고, 기질 군집 3은 반대로 정상에서 높았습니다(정상 15~37%, 종양 1~6%). 군집 19(품질 낮은 bin)는 종양에만 있었습니다. 다만 조건마다 2~3장이라 보정 p는 모두 0.05를 넘었습니다(가장 낮은 군집 19: 0.12).
+- 레전드(영문): **Per-slide fraction (points) and condition mean (bar) of each cluster.** Each panel is one cluster; red points are normal and blue points tumour slides. Points of one condition close together and bars far apart mean a clear difference in composition. In the example data tumour epithelium cluster 0 was near 0 in both normal slides and 13-29% in the three tumour slides, while stromal cluster 3 was the opposite, higher in normal (15-37% against 1-6%). Cluster 19 (low-quality bins) appeared only in tumours. With two or three slides per condition, no adjusted p-value fell below 0.05 (lowest, cluster 19: 0.12).
+
+**결과 5. 군집별 상위 유전자의 log2FC 히트맵**
+- 결과 파일: `03_plots/lfc_heatmap_tumor_vs_normal.png`, 표 `02_de/de_tumor_vs_normal.tsv`
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_5.png`
+
+- 레전드(국문): **군집(가로)마다 유전자(세로)의 종양 대비 정상 log2 fold change.** 빨강은 종양에서 높고 파랑은 낮으며(±3에서 잘라 칠함), 점은 유의한 칸(보정 p < padj_cutoff, |log2FC| ≥ lfc_cutoff), 빈칸은 그 군집에서 검정하지 않은 유전자입니다. 유전자는 군집마다 유의한 상위 top_genes개를 모은 것(최대 60개)입니다. 한 유전자가 여러 군집에서 같은 방향으로 변하는지 한눈에 봅니다. 예시 데이터에서 COL1A1, COL3A1, BGN 같은 기질 유전자는 대부분의 군집에서 종양 쪽으로 높았고(COL1A1은 16개 군집에서 유의), IgG 유전자 IGHG1도 14개 군집에서 높았습니다. 반대로 종양 상피 군집 0에서는 SLC4A4, PYY 같은 정상 대장 상피 유전자가 낮았습니다.
+- 레전드(영문): **log2 fold change (tumour against normal) of genes (rows) in each cluster (columns).** Red is higher and blue lower in tumour (colours capped at ±3); dots mark significant cells (adjusted p < padj_cutoff, |log2FC| ≥ lfc_cutoff) and blanks genes not tested in that cluster. Rows are the top_genes significant genes of each cluster, pooled (at most 60). The plot shows whether a gene changes in the same direction across clusters. In the example data stromal genes such as COL1A1, COL3A1 and BGN were higher in tumour in most clusters (COL1A1 significant in 16 clusters), and the IgG gene IGHG1 in 14 clusters, while normal colonic epithelial genes such as SLC4A4 and PYY were lower in tumour epithelium cluster 0.
+
+**결과 6. 차등 발현 유전자의 조직 위 발현**
+- 결과 파일: `03_plots/spatial_<gene>.png` (spatial_genes개, 보정 p가 가장 작은 유전자부터)
+
+그림: `docs/Spatial_Transcriptomics_Visium_HD_Pipeline/modules/figures/results/spatial_condition_de_result_6.png`
+
+- 레전드(국문): **차등 발현 유전자 하나를 모든 슬라이드의 조직 위에 칠한 그림(SFRP2).** 슬라이드 제목에 조건이 붙습니다. 조건에 따른 차이가 조직의 어느 영역에서 생기는지 확인합니다. 예시 데이터에서 SFRP2(암 관련 섬유모세포 표지)는 종양 세 장의 기질에서 뚜렷하게 높았고 정상 두 장에서는 낮았으며, 11개 군집에서 종양 쪽으로 유의하게 높았습니다(군집 9에서 log2FC 7.1). 유전자는 모든 군집을 합쳐 보정 p가 작은 순으로 고르므로, spot 단위 탐색 검정(spot_level_wilcoxon) 군집이 있으면 그 군집의 유전자가 먼저 뽑힐 수 있습니다(예시 데이터의 OR51E1, INHBB, SPIB, CLDN10, KIF12는 군집 14에서 뽑힘). 이런 유전자는 de_summary.tsv의 Method를 확인한 뒤 해석합니다.
+- 레전드(영문): **One differentially expressed gene drawn on the tissue of every slide (SFRP2).** Slide titles carry the condition. The plot shows where in the tissue a difference between conditions arises. In the example data SFRP2 (a cancer-associated fibroblast marker) was clearly higher in the stroma of the three tumour slides than in the two normal slides, and significantly higher in tumour in 11 clusters (log2FC 7.1 in cluster 9). Genes are chosen by adjusted p over all clusters, so clusters tested spot by spot (spot_level_wilcoxon) can supply the first genes (in the example data OR51E1, INHBB, SPIB, CLDN10 and KIF12 came from cluster 14); check the Method in de_summary.tsv before interpreting them.
+
 ---
 
 ## 5. spatial_hd_rctd
