@@ -12,7 +12,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`입니다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다릅니다. 기반 이미지(From)는 Rocky Linux 9.8(`rockylinux/rockylinux:9.8.20260525.0`)이며 bowtie2와 GATK_MarkDuplicates를 뺀 모든 모듈이 같습니다. 이 두 모듈은 WGS 파이프라인과 같이 쓰는 이미지라 Rocky Linux 9(`rockylinux/rockylinux:9`)와 Miniforge3 26.5.3-0을 씁니다.
 - 버전은 각 실행 스크립트 파일 이름에 적힌 버전을 씁니다(예: organellar_filter.1.1.sh → 1.1).
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지웁니다.
-- 카테고리는 기능(분석 단계) 기준의 대분류·중분류로 정했습니다(`docs/CLOSHA_Portal_Guide_v1.md` 5.2). 아이콘은 대분류마다 하나입니다.
+- 카테고리는 대분류 = 분석 단계, 중분류 = 구체적 작업으로 정했습니다(`docs/CLOSHA_Portal_Guide_v1.md` 5.2). 맞는 기존 칸이 있으면 쓰고, 없으면 새로 만듭니다(신규 표시). 2026-11-03에 업체 임시 대분류 Omics_Data_Analysis 아래에 두었던 모듈을 단계별로 옮겼습니다: MACS3_callpeak_ATAC·replicate_consistency는 Calling / Peak_Calling, atac_motif·tf_footprinting은 Annotation / Regulatory_Annotation, functional_enrichment는 Statistics_and_Visualization / Functional_Analysis, differential_accessibility는 Statistics_and_Visualization / Differential_Analysis. 아이콘은 대분류마다 하나입니다.
 - 주요 결과 이미지는 모듈 결과 중 등록할 파일 이름만 적습니다(`output_dir` 기준). 그림은 등록할 때 실제 결과를 캡처해 올립니다.
 
 ---
@@ -25,9 +25,9 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 | 모듈명 | bowtie2 | bowtie2 |
 | 서브 타이틀 | 참조 유전체 정렬 | Read alignment to the reference genome |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | 정렬 | Alignment |
+| 카테고리 대분류 | Mapping | Mapping |
 | 카테고리 아이콘 | 선택 예정(Alignment 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
-| 카테고리 중분류 | read 정렬 | Read Alignment |
+| 카테고리 중분류 | Short_Read_Alignment | Short_Read_Alignment |
 | 태그 | ATAC-seq, bowtie2, alignment, SAM, BAM, samtools | |
 | 레퍼런스 URL | https://bowtie-bio.sourceforge.net/bowtie2/ | |
 | 컨테이너 이미지 | bowtie2.1.0 | |
@@ -121,9 +121,9 @@ bash bowtie2.1.1.sh \
 | 모듈명 | GATK_MarkDuplicates | GATK_MarkDuplicates |
 | 서브 타이틀 | 중복 read 표시 | Duplicate read marking |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | 정렬 | Alignment |
+| 카테고리 대분류 | Mapping | Mapping |
 | 카테고리 아이콘 | 선택 예정(Alignment 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
-| 카테고리 중분류 | 정렬 결과 처리 | Alignment Processing |
+| 카테고리 중분류 | Short_Read_Alignment | Short_Read_Alignment |
 | 태그 | ATAC-seq, GATK, Picard, MarkDuplicates, PCR duplicates, BAM | |
 | 레퍼런스 URL | https://gatk.broadinstitute.org/ | |
 | 컨테이너 이미지 | gatk.1.0 | |
@@ -215,9 +215,9 @@ bash GATK_MarkDuplicates_1.0.sh \
 | 모듈명 | organellar_filter | organellar_filter |
 | 서브 타이틀 | 세포소기관 read 제거 | Organellar read removal |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | 정렬 | Alignment |
+| 카테고리 대분류 | Mapping | Mapping |
 | 카테고리 아이콘 | 선택 예정(Alignment 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
-| 카테고리 중분류 | 정렬 결과 처리 | Alignment Processing |
+| 카테고리 중분류 | Short_Read_Alignment | Short_Read_Alignment |
 | 태그 | ATAC-seq, mitochondria, chloroplast, samtools, BAM filtering | |
 | 레퍼런스 URL | https://www.htslib.org/ | |
 | 컨테이너 이미지 | bx_organellar_filter.1.0 | |
@@ -304,9 +304,9 @@ bash organellar_filter.1.1.sh \
 | 모듈명 | ATAC_QC | ATAC_QC |
 | 서브 타이틀 | ATAC-seq 품질 평가와 Tn5 보정 | ATAC-seq QC and Tn5 shift |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | 품질 관리 | Quality Control |
+| 카테고리 대분류 | Quality_Control | Quality_Control |
 | 카테고리 아이콘 | 선택 예정(Quality Control 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
-| 카테고리 중분류 | 정렬 품질 평가 | Alignment QC |
+| 카테고리 중분류 | Alignment_QC | Alignment_QC |
 | 태그 | ATAC-seq, ATACseqQC, fragment size, TSS enrichment, Tn5 shift, bigWig | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ATACseqQC/ | |
 | 컨테이너 이미지 | bx_atac_qc.1.0 | |
@@ -443,9 +443,9 @@ Rscript ATAC_QC.1.1.R \
 | 모듈명 | ATAC_QC_plot | ATAC_QC_plot |
 | 서브 타이틀 | TSS 주변 신호 시각화 | TSS signal visualization |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | 품질 관리 | Quality Control |
+| 카테고리 대분류 | Quality_Control | Quality_Control |
 | 카테고리 아이콘 | 선택 예정(Quality Control 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
-| 카테고리 중분류 | 정렬 품질 평가 | Alignment QC |
+| 카테고리 중분류 | Alignment_QC | Alignment_QC |
 | 태그 | ATAC-seq, ATACseqQC, TSS, heatmap, nucleosome | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ATACseqQC/ | |
 | 컨테이너 이미지 | bx_atac_qc.1.0 | |
@@ -550,9 +550,9 @@ Rscript ATAC_QC_plot.1.1.R \
 | 모듈명 | MACS3_callpeak_ATAC | MACS3_callpeak_ATAC |
 | 서브 타이틀 | ATAC-seq peak 검출 | ATAC-seq peak calling |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | 특징 검출 | Feature Detection |
+| 카테고리 대분류 | Calling (신규) | Calling (new) |
 | 카테고리 아이콘 | 선택 예정(Feature Detection 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
-| 카테고리 중분류 | peak 검출 | Peak Calling |
+| 카테고리 중분류 | Peak_Calling (신규) | Peak_Calling (new) |
 | 태그 | ATAC-seq, MACS3, peak calling, narrowPeak, FRiP | |
 | 레퍼런스 URL | https://github.com/macs3-project/MACS | |
 | 컨테이너 이미지 | bx_macs3_callpeak_atac.1.0 | |
@@ -650,9 +650,9 @@ bash MACS3_callpeak_ATAC.1.1.sh \
 | 모듈명 | peak_annotation | peak_annotation |
 | 서브 타이틀 | Peak 유전체 주석 | Peak annotation |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | 주석 | Annotation |
+| 카테고리 대분류 | Annotation | Annotation |
 | 카테고리 아이콘 | 선택 예정(Annotation 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
-| 카테고리 중분류 | 유전체 영역 주석 | Genomic Feature Annotation |
+| 카테고리 중분류 | Peak_Annotation (신규) | Peak_Annotation (new) |
 | 태그 | ATAC-seq, ChIPseeker, peak annotation, promoter, TSS | |
 | 레퍼런스 URL | https://bioconductor.org/packages/ChIPseeker/ | |
 | 컨테이너 이미지 | bx_peak_annotation.1.0 | |
@@ -798,9 +798,9 @@ Rscript peak_annotation.1.1.R \
 | 모듈명 | differential_accessibility | differential_accessibility |
 | 서브 타이틀 | 조건 간 차등 접근성 분석 | Differential accessibility |
 | 버전 | 1.3 | |
-| 카테고리 대분류 | 통계 분석 | Statistical Analysis |
+| 카테고리 대분류 | Statistics_and_Visualization | Statistics_and_Visualization |
 | 카테고리 아이콘 | 선택 예정(Statistical Analysis 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
-| 카테고리 중분류 | 차등 분석 | Differential Analysis |
+| 카테고리 중분류 | Differential_Analysis (신규) | Differential_Analysis (new) |
 | 태그 | ATAC-seq, edgeR, differential accessibility, GC bias, PCA | |
 | 레퍼런스 URL | https://bioconductor.org/packages/edgeR/ | |
 | 컨테이너 이미지 | bx_differential_accessibility.1.0 | |
@@ -952,9 +952,9 @@ Rscript differential_accessibility.1.3.R \
 | 모듈명 | atac_motif | atac_motif |
 | 서브 타이틀 | 접근성 변화 연관 모티프 분석 | Motif enrichment by accessibility change |
 | 버전 | 1.2 | |
-| 카테고리 대분류 | 유전자 조절 | Gene Regulation |
+| 카테고리 대분류 | Annotation | Annotation |
 | 카테고리 아이콘 | `docs/category_icons/gene_regulation.png` | |
-| 카테고리 중분류 | 모티프 분석 | Motif Analysis |
+| 카테고리 중분류 | Regulatory_Annotation (신규) | Regulatory_Annotation (new) |
 | 태그 | ATAC-seq, monaLisa, motif enrichment, JASPAR, k-mer | |
 | 레퍼런스 URL | https://bioconductor.org/packages/monaLisa/ | |
 | 컨테이너 이미지 | bx_atac_motif.1.0 | |
@@ -1101,9 +1101,9 @@ Rscript atac_motif.1.2.R \
 | 모듈명 | tf_footprinting | tf_footprinting |
 | 서브 타이틀 | 전사인자 footprint 분석 | Transcription factor footprinting |
 | 버전 | 1.1 | |
-| 카테고리 대분류 | 유전자 조절 | Gene Regulation |
+| 카테고리 대분류 | Annotation | Annotation |
 | 카테고리 아이콘 | `docs/category_icons/gene_regulation.png` | |
-| 카테고리 중분류 | 전사인자 footprint | TF Footprinting |
+| 카테고리 중분류 | Regulatory_Annotation (신규) | Regulatory_Annotation (new) |
 | 태그 | ATAC-seq, TOBIAS, footprinting, BINDetect, transcription factor | |
 | 레퍼런스 URL | https://github.com/loosolab/TOBIAS | |
 | 컨테이너 이미지 | bx_tf_footprinting.1.0 | |
@@ -1224,9 +1224,9 @@ bash tf_footprinting.1.1.sh \
 | 모듈명 | functional_enrichment | functional_enrichment |
 | 서브 타이틀 | GO 기능 농축 분석 | GO enrichment analysis |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | 기능 분석 | Functional Analysis |
+| 카테고리 대분류 | Statistics_and_Visualization | Statistics_and_Visualization |
 | 카테고리 아이콘 | 선택 예정(Functional Analysis 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
-| 카테고리 중분류 | 농축 분석 | Enrichment Analysis |
+| 카테고리 중분류 | Functional_Analysis (신규) | Functional_Analysis (new) |
 | 태그 | ATAC-seq, clusterProfiler, GO, enrichment, OrgDb | |
 | 레퍼런스 URL | https://bioconductor.org/packages/clusterProfiler/ | |
 | 컨테이너 이미지 | bx_functional_enrichment.1.0 | |
@@ -1366,9 +1366,9 @@ Rscript functional_enrichment.1.0.R \
 | 모듈명 | replicate_consistency | replicate_consistency |
 | 서브 타이틀 | 반복 실험 peak 재현성(IDR) | Replicate consistency (IDR) |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | 품질 관리 | Quality Control |
+| 카테고리 대분류 | Calling (신규) | Calling (new) |
 | 카테고리 아이콘 | 선택 예정(Quality Control 아이콘, Shutterstock UniconLabs 선 아이콘 세트에서 고름) | |
-| 카테고리 중분류 | 재현성 평가 | Reproducibility |
+| 카테고리 중분류 | Peak_Calling (신규) | Peak_Calling (new) |
 | 태그 | ATAC-seq, IDR, reproducibility, replicate, MACS3 | |
 | 레퍼런스 URL | https://github.com/nboley/idr | |
 | 컨테이너 이미지 | bx_replicate_consistency.1.0 | |

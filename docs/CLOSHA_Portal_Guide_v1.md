@@ -97,26 +97,29 @@ KOBIC 포탈의 파이프라인 페이지와 모듈 등록 화면에 넣을 원�
 ### 5.2 카테고리와 아이콘
 모듈 카테고리는 **CLOSHA 프로그램 목록(대분류 / 중분류)**에서 고른다. 분석 단계(기능) 기준이므로 다른 파이프라인의 모듈도 같은 목록에 넣을 수 있다. 목록은 `docs/ATAC-seq/CLOSHA_program_categories.xlsx`에 있다.
 
-| 대분류 | 중분류 | ATAC-seq 모듈 |
+| 대분류 | 중분류 | 모듈 (ATAC-seq, 공간 전사체) |
 |---|---|---|
-| Annotation | Gene_Prediction, Genome_Annotation | — |
-| | **Peak_Annotation** (신규) | peak_annotation |
-| Assembly | Hybrid_Assembly, Short_Read_Assembly | — |
-| Mapping | Short_Read_Alignment | bowtie2, GATK_MarkDuplicates, organellar_filter |
-| | Transcript_Alignment | — |
-| Omics | Amplicon_sequencing_analysis, Expression_Quantification, Genome_Classification, Genome_binning | — |
-| | **Differential_Analysis** (신규) | differential_accessibility |
-| | Functional_Analysis | functional_enrichment |
-| | **Gene_Regulation** (신규) | atac_motif, tf_footprinting |
-| | **Peak_Calling** (신규) | MACS3_callpeak_ATAC, replicate_consistency |
 | Quality_Control | **Alignment_QC** (신규) | ATAC_QC, ATAC_QC_plot |
 | | Assembly_QC, Raw_Data_QC | — |
-| Statistics_and_Visualization | Genomic_Visualization, Mathematical_based_Tool | — |
-| | **Functional_Analysis** (신규, 2026-11-02) | — (공간 전사체 spatial_de_enrichment: 조건 비교 결과의 경로 농축 GSEA. ATAC functional_enrichment도 여기로 옮기길 제안) |
+| **Preprocessing** (신규) | **Normalization** (신규) | spatial_prep, spatial_hd_prep |
+| Mapping | Short_Read_Alignment | bowtie2, GATK_MarkDuplicates, organellar_filter |
+| | Transcript_Alignment | — |
+| Assembly | Hybrid_Assembly, Short_Read_Assembly | — |
+| **Calling** (신규) | **Peak_Calling** (신규) | MACS3_callpeak_ATAC, replicate_consistency (나중에 CNV_Calling 등) |
+| **Clustering** (신규) | **Spatial_Clustering** (신규) | spatial_cluster, spatial_merge, spatial_hd_cluster, spatial_niche |
+| Statistics_and_Visualization | **Differential_Analysis** (신규) | differential_accessibility, spatial_condition_de |
+| | **Functional_Analysis** (신규) | functional_enrichment, spatial_de_enrichment |
+| | **Spatial_Omics** (신규) | spatial_svf, spatial_hd_svf, spatial_signature_score |
+| | Genomic_Visualization, Mathematical_based_Tool | — |
+| Annotation | Gene_Prediction, Genome_Annotation | — |
+| | **Peak_Annotation** (신규) | peak_annotation |
+| | **Regulatory_Annotation** (신규) | atac_motif, tf_footprinting |
+| | **Cell_Type_Annotation** (신규) | spatial_labelTransfer, spatial_rctd, spatial_hd_rctd |
 | Utility | Genomic_data_Utility | — |
-| | **Data_Inspection** (신규) | — (공간 전사체 check_reference. 입력 파일을 열어 구조·내용만 확인하는 모듈) |
+| | **Data_Inspection** (신규) | check_reference |
+| Omics_Data_Analysis (업체 임시안) | Amplicon_Sequencing_Analysis, Expression_Quantification, Genome_Binning, Genome_Classification | — (우리 모듈은 두지 않음. 업체가 목록을 정리할 때 단계별로 나눔) |
 
-- 기존 목록에 맞는 것이 있으면 쓰고, 억지로 끼워 넣지 않는다. 맞는 중분류가 없으면 중분류를, 맞는 대분류가 없으면 대분류도 새로 만든다(사용자 결정, 2026-10-27). 이름은 특정 분석(예: ATAC)이 아니라 일반 이름으로 짓는다(예: Differential_Analysis는 RNA-seq 차등 발현도 담을 수 있다).
+- 2026-11-03: 업체도 목록을 나중에 바꾼다고 하므로, 우리 모듈은 업체 임시 대분류(Omics_Data_Analysis)에 두지 않고 위 단계별 칸에 둔다(사용자 결정). 기존 목록에 맞는 것이 있으면 쓰고, 억지로 끼워 넣지 않는다. 맞는 중분류가 없으면 중분류를, 맞는 대분류가 없으면 대분류도 새로 만든다(사용자 결정, 2026-10-27). 이름은 특정 분석(예: ATAC)이 아니라 일반 이름으로 짓는다(예: Differential_Analysis는 RNA-seq 차등 발현도 담을 수 있다).
 - 새로 정하는 분류는 **대분류 = 분석 단계, 중분류 = 구체적 작업(또는 작업 대상)**으로 짓는다(사용자 결정, 2026-10-27). 데이터 종류는 모듈 이름이 보여 주므로 분류에 다시 넣지 않는다. 기존 목록에 맞는 칸이 없으면 대분류도 새로 만든다.
 - 단계 대분류 예: Quality_Control(품질 확인) → Preprocessing(정규화·필터링·배치 보정, 데이터를 바꿔 다음 단계로 넘김) → Mapping / Assembly → Clustering(묶기, 중분류는 묶는 대상: Spatial_Clustering, Cell_Clustering, Sample_Clustering, Sequence_Clustering) → Statistics_and_Visualization(통계량 계산과 검정: Differential_Analysis, Spatial_Omics) → Annotation(이름 붙이기, 중분류는 대상: Peak, Variants, Metabolite, Cell_Type) → Utility(보조 도구: 형식 변환, 입력 확인 Data_Inspection 등). 만든 주체(in-house 등)로는 나누지 않는다.
 - 군집은 통계 검정이 아니라 그래프 기반 묶기(비지도 학습)라 Statistics에 넣지 않고, 이름만 붙지 않은 번호를 내므로 Annotation에도 넣지 않는다.
