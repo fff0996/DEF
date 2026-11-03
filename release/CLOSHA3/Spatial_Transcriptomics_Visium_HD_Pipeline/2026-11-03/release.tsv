@@ -1,0 +1,4 @@
+module	release_file	closha2_file	work_file	image
+spatial_niche	spatial_niche.1.0.R	(new in 3.0)	scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_niche.1.0.R	bx_spatial 1.2 (defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.2.def)
+spatial_signature_score	spatial_signature_score.1.0.R	(new in 3.0)	scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_signature_score.1.0.R	bx_spatial 1.2 (defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.2.def)
+spatial_de_enrichment	spatial_de_enrichment.1.0.R	(new in 3.0)	scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_de_enrichment.1.0.R	bx_spatial 1.2 (defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.2.def)

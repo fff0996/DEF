@@ -1,6 +1,6 @@
 # Spatial transcriptomics 파이프라인 실행 이미지(DEF) 안내
 
-KOBIC 포탈 매뉴얼 웹페이지에 올릴 공간 전사체 실행 이미지 설명입니다. 이미지는 `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def`로 만듭니다. 1.0에 svf(Moran's I)용 ape를 더한 것이 1.1이며, 배포는 1.1만 합니다. DEF 작성 규칙은 `docs/CLOSHA_DEF_Generator_Agent_v1.md`, 스크립트 규칙은 `docs/CLOSHA_Script_Rules_v1.md`를 따릅니다.
+KOBIC 포탈 매뉴얼 웹페이지에 올릴 공간 전사체 실행 이미지 설명입니다. 이미지는 `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.1.def`로 만듭니다. 1.0에 svf(Moran's I)용 ape를 더한 것이 1.1입니다. 2026-11-03에 새 모듈 3개(spatial_niche, spatial_signature_score, spatial_de_enrichment)용으로 1.1에 msigdbr와 fgsea를 더한 1.2(`bx_spatial.1.2.def`)를 추가했습니다. 기존 모듈은 1.1, 새 모듈은 1.2를 쓰며, 다음 공간 배포 때 기존 모듈을 1.2에서 확인한 뒤 하나로 합칩니다. DEF 작성 규칙은 `docs/CLOSHA_DEF_Generator_Agent_v1.md`, 스크립트 규칙은 `docs/CLOSHA_Script_Rules_v1.md`를 따릅니다.
 
 등록 메모: 버전과 도구 목록은 2026-10-22 기준 DEF 파일에서 옮겼습니다. DEF를 고치면 이 문서도 함께 고칩니다.
 
@@ -39,6 +39,7 @@ Every module of the spatial transcriptomics pipeline runs inside one Apptainer i
 | 이미지 | 버전 | 사용하는 모듈 (스크립트) | 주요 도구 |
 |---|---|---|---|
 | bx_spatial | 1.1 | spatial_prep, spatial_cluster, spatial_svf, spatial_merge, spatial_labelTransfer, spatial_rctd, check_reference (배포 1.1), spatial_condition_de, spatial_hd_prep, spatial_hd_cluster, spatial_hd_svf, spatial_hd_rctd (배포 1.0). 작업 파일 번호는 `modules/Registration.md` 표 | R 4.3.3, Seurat 5.3.0, spacexr 2.2.1, DESeq2 1.42.0, harmony 1.2.3 |
+| bx_spatial | 1.2 | spatial_niche, spatial_signature_score, spatial_de_enrichment (배포 1.0) | 1.1 + msigdbr 7.5.1 (MSigDB 7.5.1 세트 내장), fgsea 1.28.0 |
 
 Bootstrap `docker`, From `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8), Miniforge3 26.7.2-0 (conda-forge, bioconda)입니다.
 
@@ -94,9 +95,41 @@ Bootstrap `docker`, From `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517be
 | patchwork | 1.3.2 | https://patchwork.data-imaginist.com/ |
 | Matrix | 1.6-5 | https://cran.r-project.org/package=Matrix |
 
-- **태그(키워드):** 공간전사체, Visium, VisiumHD, Seurat
+- **태그(키워드):** spatial transcriptomics, Visium, Visium HD, Seurat
 - **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경입니다. 정규화, 군집, 공간 가변 유전자, 슬라이스 통합(Harmony), 세포 유형 분해(RCTD), 조건 간 비교(DESeq2)에 필요한 도구가 들어 있습니다. Visium HD는 bin 수가 많아 슬라이드와 bin 크기에 맞춰 충분한 메모리가 필요합니다.
 - **내용(영문):** Runtime environment for analysing 10x Visium and Visium HD spatial transcriptomics data with Seurat. It holds the tools for normalisation, clustering, spatially variable genes, slice integration (Harmony), cell-type deconvolution (RCTD) and condition comparison (DESeq2). Visium HD has many bins, so it needs memory matched to the slides and the bin size.
+
+### 3.2 bx_spatial 1.2
+
+| 항목 / Item | 값 / Value |
+|---|---|
+| DEF 파일 | `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.2.def` |
+| DEF Bootstrap | `docker` |
+| DEF From | `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f` (Rocky Linux 9.8) |
+| conda 설치 도구 / installer | Miniforge3 26.7.2-0 (conda-forge, bioconda) |
+
+- **설명(국문):** bx_spatial 1.1과 같은 환경에 유전자 세트 분석 도구를 더했습니다. msigdbr 7.5.1은 MSigDB 7.5.1 유전자 세트(Hallmark, KEGG, Reactome, GO 등)를 패키지 안에 담고 있어 실행 중 내려받지 않고, fgsea 1.28.0은 순위 기반 유전자 세트 농축 분석(GSEA)을 합니다. 세포 유형 니치(spatial_niche), 유전자 세트 점수(spatial_signature_score), 조건 비교 결과의 경로 농축(spatial_de_enrichment)에 씁니다. 1.1의 고정 버전은 그대로입니다.
+- **Description (English):** The bx_spatial 1.1 environment plus gene set tools: msigdbr 7.5.1 bundles the MSigDB 7.5.1 gene sets (Hallmark, KEGG, Reactome, GO and others) so nothing is downloaded at run time, and fgsea 1.28.0 runs preranked gene set enrichment analysis (GSEA). Used for cell-type niches (spatial_niche), gene set scores (spatial_signature_score) and pathway enrichment of condition comparisons (spatial_de_enrichment). The pinned versions of 1.1 are unchanged.
+
+도구 버전은 3.1 표와 같고, 아래 두 개가 더해졌습니다.
+
+| 도구 | 버전 |
+|---|---|
+| msigdbr | 7.5.1 |
+| fgsea | 1.28.0 |
+
+**포탈 등록 (컨테이너) / Portal registration**
+
+3.1 표 전체에 아래 두 줄을 더합니다.
+
+| 분석도구 | 버전 | 홈페이지 |
+|---|---|---|
+| msigdbr | 7.5.1 | https://cran.r-project.org/package=msigdbr |
+| fgsea | 1.28.0 | https://bioconductor.org/packages/fgsea/ |
+
+- **태그(키워드):** spatial transcriptomics, Visium HD, Seurat, gene set enrichment
+- **내용(국문):** 10x Visium과 Visium HD 공간 전사체 데이터를 Seurat으로 분석하는 실행 환경(bx_spatial 1.1)에 유전자 세트 분석 도구(msigdbr, fgsea)를 더한 이미지입니다. 세포 유형 니치, 유전자 세트 점수, 경로 농축 분석에 씁니다. MSigDB 유전자 세트가 이미지 안에 있어 실행 중 인터넷이 필요 없습니다.
+- **내용(영문):** The Seurat runtime for 10x Visium and Visium HD spatial transcriptomics (bx_spatial 1.1) plus gene set tools (msigdbr, fgsea), used for cell-type niches, gene set scores and pathway enrichment. The MSigDB gene sets are inside the image, so no internet access is needed at run time.
 
 ---
 
@@ -108,6 +141,7 @@ Bootstrap `docker`, From `rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517be
 |---|---|---|---|---|
 | bx_spatial 1.0 | 성공 | 8분 | 1.29GB | Seurat 5.3.0 / R 4.3.3 runtime dependency checks passed |
 | bx_spatial 1.1 | 성공 | 8분 | 1.29GB | 같은 문구. 1.0 검사에 더해 작은 격자에서 Moran's I 계산 확인 |
+| bx_spatial 1.2 | 성공 (2026-11-02, fakeroot) | 8분 | 1.3GB | 같은 문구. 1.1 검사에 더해 fgsea, msigdbr 버전과 내장 Hallmark 50세트 확인 |
 
 - 호스트 영향 확인: 빌드 중 호스트의 `/proc`·`/sys` 쓰기 없음(strace), sysctl 변화 없음, `/__closha_build` 남지 않음. 호스트 `/tmp`·`/var/tmp`의 변화는 빌드와 무관한 프로그램(VS Code, SQLite 임시 파일)뿐이었습니다.
 - 빌드 기록: `/workspaces/.closha_build_test/root/logs/bx_spatial.root.summary`, `bx_spatial_1_1.root.summary`(저장소 밖).
