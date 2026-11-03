@@ -12,7 +12,7 @@ Visium HD 공간 전사체 파이프라인(`Spatial_Transcriptomics_Visium_HD_Pi
 | spatial_signature_score | `spatial_signature_score.1.0.R` | (3.0 신규) | `scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_signature_score.1.0.R` | bx_spatial 1.2 |
 | spatial_de_enrichment | `spatial_de_enrichment.1.0.R` | (3.0 신규) | `scripts/Spatial_Transcriptomics_Analysis_Pipeline/spatial_de_enrichment.1.0.R` | bx_spatial 1.2 |
 
-- 작업 파일 기준 커밋: `e4486a2`. 파이프라인 그림과 원고는 포탈 등록 전 같은 날 다시 복사했습니다(check_reference를 점선으로 잇지 않고 따로 실행하는 노드로 바꿈). 스크립트는 바뀌지 않았습니다.
+- 작업 파일 기준 커밋: `e4486a2`. 파이프라인 그림과 원고는 포탈 등록 전 같은 날 다시 복사했습니다(check_reference를 점선으로 잇지 않고 따로 실행하는 노드로 바꿈, BIO-EXPRESS 로고 뺌). 스크립트는 바뀌지 않았습니다.
 - 실행 이미지: 새 모듈 3개는 `bx_spatial 1.2`를 씁니다(`docs/bx_spatial.1.2.def`, 저장소 `defs/Spatial_Transcriptomics_Analysis_Pipeline/bx_spatial.1.2.def`). 1.2는 1.1에 msigdbr 7.5.1(MSigDB 7.5.1 유전자 세트 내장, 실행 중 인터넷 불필요)과 fgsea 1.28.0을 더한 이미지입니다. 첫 배포 모듈 6개는 1.1에 그대로 둡니다. 다음 공간 배포 때 기존 모듈을 1.2에서 확인한 뒤 이미지를 하나로 합칩니다.
 - 카테고리: spatial_niche는 Clustering / Spatial_Clustering, spatial_signature_score는 Statistics_and_Visualization / Spatial_Omics, spatial_de_enrichment는 Statistics_and_Visualization / Functional_Analysis(신규)입니다.
 - 실행 순서(파이프라인에 붙는 곳):

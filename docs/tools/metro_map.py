@@ -177,7 +177,7 @@ def label_width(text):
 
 def outputs(cx, cy, labels, above=True, gap=60, dx=0):
     """Output station with several format labels side by side, joined to the
-    station by a dashed bracket (as in the BIO-EXPRESS maps)."""
+    station by a dashed bracket (as in the reference metro maps)."""
     h = 47
     ws = [label_width(t) for t in labels]
     total = sum(ws) + 12 * (len(ws) - 1)
@@ -215,13 +215,9 @@ def refs(x, ny, items):
 
 
 def save(path, width, height, title, stages, legend_y):
-    """Write the SVG: BIO-EXPRESS title, routes, arrows, overlay and legend.
+    """Write the SVG: pipeline title, routes, arrows, overlay and legend.
     stages: [(color, text)] of the line colours."""
-    t = (f'<g transform="translate(60,62)">'
-         f'<rect width="88" height="52" rx="8" fill="url(#bx)"/>'
-         f'<text x="44" y="38" text-anchor="middle" font-family="{FONT}" font-size="34" font-weight="800" fill="#fff">BX</text>'
-         f'<text x="108" y="42" font-family="{FONT}" font-size="46" font-weight="800" fill="#3A3A3A">BIO-EXPRESS</text></g>'
-         f'<text x="60" y="172" font-family="{FONT}" font-size="38" font-weight="700" fill="{TEXT}">{title}</text>')
+    t = (f'<text x="60" y="100" font-family="{FONT}" font-size="44" font-weight="700" fill="{TEXT}">{title}</text>')
     lg = [f'<text x="60" y="{legend_y}" font-family="{FONT}" font-size="30" font-weight="700" fill="{TEXT}">Legend</text>']
     for i, (c, s) in enumerate(stages):
         y = legend_y + 42 + i * 42
