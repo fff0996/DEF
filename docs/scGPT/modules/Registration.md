@@ -40,7 +40,7 @@ CLOSHA에 scGPT 파이프라인 모듈을 등록할 때 쓰는 Input / Output / 
 | Option | `min_cells_per_sample` | Integer | 선택 | `50` | QC 뒤 세포가 이보다 적은 샘플은 제외 |
 | Option | `folds` | Integer | 선택 | `5` | 환자 단위 교차검증 fold 수 |
 | Option | `repeats` | Integer | 선택 | `3` | 교차검증 반복 수 |
-| Option | `checkpoint_dir` | Directory | 선택 | `builtin` | scGPT 체크포인트 폴더(vocab.json 사용). builtin은 이미지 안 whole-human |
+| Option | `checkpoint_dir` | Directory | 선택 | (비움) | scGPT 체크포인트 폴더(vocab.json 사용). 비우면 이미지 안 whole-human 체크포인트 |
 | Option | `seed` | Integer | 선택 | `1234` | 난수 시드 |
 
 ## 2. scgpt_embed (GPU)
@@ -51,7 +51,7 @@ CLOSHA에 scGPT 파이프라인 모듈을 등록할 때 쓰는 Input / Output / 
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | scgpt_prep의 output_dir |
 | Output | `output_dir` | Directory | 필수 | | `embeddings.h5ad`, `embed_info.json`, prep 표 복사본, `plots/embedding_umap` |
-| Option | `checkpoint_dir` | Directory | 선택 | `builtin` | scGPT 체크포인트 폴더(args.json, best_model.pt, vocab.json). builtin은 whole-human |
+| Option | `checkpoint_dir` | Directory | 선택 | (비움) | scGPT 체크포인트 폴더(args.json, best_model.pt, vocab.json). 비우면 이미지 안 whole-human 체크포인트 |
 | Option | `max_cells_per_patient` | Integer | 선택 | `500` | 환자당 무작위로 쓸 세포 수(0이면 전부) |
 | Option | `max_genes` | Integer | 선택 | `1200` | 세포당 모델 입력 유전자 수(모델 학습 길이) |
 | Option | `batch_size` | String | 선택 | `auto` | auto = GPU 64, CPU 16 |
@@ -85,7 +85,7 @@ CLOSHA에 scGPT 파이프라인 모듈을 등록할 때 쓰는 Input / Output / 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | 예측할 환자의 scgpt_embed output_dir |
-| Input | `model` | Directory | 선택 | `builtin` | scgpt_train의 output_dir. builtin은 이미지 안 기본 모델(1.0 이미지에는 없음: 지금은 model을 꼭 줘야 함) |
+| Input | `model` | Directory | 필수 | | scgpt_train의 output_dir. 1.0 이미지에는 기본 모델이 없어 포털에는 필수로 등록(스크립트는 비우면 이미지 안 기본 모델을 찾고, 없으면 오류로 멈춤) |
 | Output | `output_dir` | Directory | 필수 | | `predictions.tsv`, `cell_attention.tsv.gz`, `attention_by_cell_type.tsv`, `model_card.json`, `plots/` |
 | Option | `threshold` | Float | 선택 | `0.5` | 양성으로 부를 확률 기준 |
 
