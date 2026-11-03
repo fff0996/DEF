@@ -161,6 +161,17 @@ def positive_int(log, name, value, minimum=1):
     return int(value)
 
 
+def use_private_cache(out):
+    """Caches of matplotlib, numba, Hugging Face and PyTorch go to output_dir/.cache (removed at
+    the end), never to the user's home, which CLOSHA binds from the host. No network access."""
+    cache = out / ".cache"
+    cache.mkdir(exist_ok=True)
+    for var in ("XDG_CACHE_HOME", "MPLCONFIGDIR", "NUMBA_CACHE_DIR", "HF_HOME", "TORCH_HOME"):
+        os.environ[var] = str(cache / var.lower())
+    os.environ["HF_DATASETS_OFFLINE"] = "1"
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    return cache
+
 def save_plot(fig, path_stem):
     fig.savefig(f"{path_stem}.png", dpi=150, bbox_inches="tight", facecolor="white")
     fig.savefig(f"{path_stem}.pdf", bbox_inches="tight", facecolor="white")
@@ -214,6 +225,7 @@ def main():
         model_dirs.append((m, d))
     out = prepare_output(params["output_dir"], [in_dir] + [d for _, d in model_dirs])
     log = Log(out)
+    cache = use_private_cache(out)
     start = datetime.datetime.now()
     n_hvg = positive_int(log, "n_hvg", params["n_hvg"], 50)
     n_pcs = positive_int(log, "n_pcs", params["n_pcs"], 2)
@@ -496,6 +508,7 @@ def main():
     log.msg(f"Methods: {len(methods)}, patients: {len(y)}")
     log.step("Done")
     log.msg(f"Summary: {out / 'summary.md'}")
+    shutil.rmtree(cache, ignore_errors=True)
     log.msg(f"End time: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
 
 

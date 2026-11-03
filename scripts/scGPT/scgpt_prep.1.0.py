@@ -212,6 +212,17 @@ def sha256_file(path):
     return h.hexdigest()
 
 
+def use_private_cache(out):
+    """Caches of matplotlib, numba, Hugging Face and PyTorch go to output_dir/.cache (removed at
+    the end), never to the user's home, which CLOSHA binds from the host. No network access."""
+    cache = out / ".cache"
+    cache.mkdir(exist_ok=True)
+    for var in ("XDG_CACHE_HOME", "MPLCONFIGDIR", "NUMBA_CACHE_DIR", "HF_HOME", "TORCH_HOME"):
+        os.environ[var] = str(cache / var.lower())
+    os.environ["HF_DATASETS_OFFLINE"] = "1"
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    return cache
+
 def save_plot(fig, path_stem):
     fig.savefig(f"{path_stem}.png", dpi=150, bbox_inches="tight", facecolor="white")
     fig.savefig(f"{path_stem}.pdf", bbox_inches="tight", facecolor="white")
@@ -271,6 +282,7 @@ def main():
             early_fail(f"{what} not found: {p}")
     out = prepare_output(params["output_dir"], [input_dir, sheet_path])
     log = Log(out)
+    cache = use_private_cache(out)
     start = datetime.datetime.now()
 
     min_genes = positive_int(log, "min_genes", params["min_genes"], 0)
@@ -644,6 +656,7 @@ def main():
             f"({int(adata.var['in_vocab'].sum())} in scGPT vocabulary)")
     log.step("Done")
     log.msg(f"Dataset: {out / 'dataset.h5ad'}")
+    shutil.rmtree(cache, ignore_errors=True)
     log.msg(f"End time: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
 
 

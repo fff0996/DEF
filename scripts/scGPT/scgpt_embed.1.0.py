@@ -177,6 +177,17 @@ def sha256_file(path):
     return h.hexdigest()
 
 
+def use_private_cache(out):
+    """Caches of matplotlib, numba, Hugging Face and PyTorch go to output_dir/.cache (removed at
+    the end), never to the user's home, which CLOSHA binds from the host. No network access."""
+    cache = out / ".cache"
+    cache.mkdir(exist_ok=True)
+    for var in ("XDG_CACHE_HOME", "MPLCONFIGDIR", "NUMBA_CACHE_DIR", "HF_HOME", "TORCH_HOME"):
+        os.environ[var] = str(cache / var.lower())
+    os.environ["HF_DATASETS_OFFLINE"] = "1"
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    return cache
+
 def save_plot(fig, path_stem):
     fig.savefig(f"{path_stem}.png", dpi=150, bbox_inches="tight", facecolor="white")
     fig.savefig(f"{path_stem}.pdf", bbox_inches="tight", facecolor="white")
@@ -190,6 +201,7 @@ def main():
         early_fail(f"dataset.h5ad not found in input_dir {prep_dir}; give the scgpt_prep output folder")
     out = prepare_output(params["output_dir"], [prep_dir])
     log = Log(out)
+    cache = use_private_cache(out)
     start = datetime.datetime.now()
 
     max_cells = positive_int(log, "max_cells_per_patient", params["max_cells_per_patient"], 0)
@@ -389,6 +401,7 @@ def main():
     log.msg(f"Cells: {adata.n_obs}, patients: {len(per_patient)}, device: {device}, minutes: {elapsed / 60:.1f}")
     log.step("Done")
     log.msg(f"Embeddings: {out / 'embeddings.h5ad'}")
+    shutil.rmtree(cache, ignore_errors=True)
     log.msg(f"End time: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
 
 

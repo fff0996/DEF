@@ -144,6 +144,17 @@ def prepare_output(output_dir, inputs):
     return out
 
 
+def use_private_cache(out):
+    """Caches of matplotlib, numba, Hugging Face and PyTorch go to output_dir/.cache (removed at
+    the end), never to the user's home, which CLOSHA binds from the host. No network access."""
+    cache = out / ".cache"
+    cache.mkdir(exist_ok=True)
+    for var in ("XDG_CACHE_HOME", "MPLCONFIGDIR", "NUMBA_CACHE_DIR", "HF_HOME", "TORCH_HOME"):
+        os.environ[var] = str(cache / var.lower())
+    os.environ["HF_DATASETS_OFFLINE"] = "1"
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    return cache
+
 def save_plot(fig, path_stem):
     fig.savefig(f"{path_stem}.png", dpi=150, bbox_inches="tight", facecolor="white")
     fig.savefig(f"{path_stem}.pdf", bbox_inches="tight", facecolor="white")
@@ -209,6 +220,7 @@ def main():
         early_fail(f"model/model.pt not found in {params['model']}; give the scgpt_train output folder")
     out = prepare_output(params["output_dir"], [in_dir, model_dir])
     log = Log(out)
+    cache = use_private_cache(out)
     start = datetime.datetime.now()
     try:
         threshold = float(params["threshold"])
@@ -351,6 +363,7 @@ def main():
             f"{neg}: {int((pred['predicted'] == neg).sum())}")
     log.step("Done")
     log.msg(f"Predictions: {out / 'predictions.tsv'}")
+    shutil.rmtree(cache, ignore_errors=True)
     log.msg(f"End time: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}")
 
 
