@@ -1,0 +1,542 @@
+Bootstrap: docker
+From: rockylinux/rockylinux@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f
+
+# =============================================================================
+# bx_scgpt_gpu.1.0
+#
+#   Target scripts:
+#     - scgpt_embed.1.0.py (scGPT cell embeddings; registered on a GPU node)
+#   The same scripts also run in this image without a GPU (PyTorch falls back to
+#   the CPU), but scgpt_prep, scgpt_train, scgpt_predict and scgpt_compare are
+#   registered with the smaller CPU image bx_scgpt.1.0.
+#
+#   [MANDATORY BUILD RULES]
+#   1) Base OS must be Rocky Linux 9. Rocky 8 is not allowed: it causes
+#      environment conflicts on the customer's servers.
+#   2) Anaconda Inc. repositories are strictly prohibited. Specifically:
+#        - repo.anaconda.com and the defaults / main / r / anaconda channels
+#          are never used.
+#        - The Anaconda Distribution and the Miniconda installer are never
+#          used, because the Miniconda installer is served from
+#          repo.anaconda.com and ships defaults-channel packages.
+#      conda is therefore provided by Miniforge, which is published by the
+#      conda-forge project on GitHub and defaults to the conda-forge channel.
+#      Only conda-forge and bioconda (community channels, free-licence, merely
+#      hosted on conda.anaconda.org) plus Rocky 9 BaseOS / AppStream are used.
+#      Every conda command below passes --override-channels so that no channel
+#      outside this list can ever be consulted.
+#
+#   [TOOL LOCATION]
+#   This image installs its tools into the shared prefix /opt/bio (a conda
+#   environment), so a tool that appears in more than one image resolves to
+#   /opt/bio/bin/<tool>. /opt/bio/bin is first on PATH in %environment. The
+#   supplied script calls its tools by name through PATH and needs no
+#   change. Do not bind any host path over /opt/bio at runtime.
+#
+# [PURPOSE]
+#   scGPT (Cui et al., Nature Methods 2024) cell embeddings on a GPU for the
+#   CLOSHA scGPT patient-level prediction pipeline: the frozen pretrained model
+#   turns every cell of the scgpt_prep dataset into a 512-dimensional vector,
+#   which the CPU modules use to train and apply patient-level classifiers.
+#   The analysis scripts are supplied through CLOSHA's external bind paths,
+#   rather than embedded in the image. This DEF provides their runtime and the
+#   pretrained scGPT whole-human checkpoint.
+#
+# [INPUT AND OUTPUT STRUCTURE]
+#   Input: the scgpt_prep output folder (dataset.h5ad with raw counts, sample
+#   and patient tables). Output: embeddings.h5ad and tables as described in the
+#   script header.
+#
+# [REQUIRED RUNTIME DEPENDENCIES]
+#   Python 3.11 with conda-forge pytorch 2.6.0 (CUDA 12.6 build, MKL),
+#   torchtext 0.18.0 (scGPT's gene vocabulary class), scanpy 1.10.4, anndata
+#   0.10.9, datasets 2.21.0 (imported by scGPT at start), numba, ipython,
+#   seaborn, networkx, scikit-learn, h5py; scGPT 0.2.4 from its PyPI wheel
+#   (not on conda-forge), installed with --no-deps from a SHA256-checked file.
+#   scGPT's other declared dependencies (scvi-tools, scib, cell-gears, orbax,
+#   wandb, flash-attn) are not imported by the embedding path and are not
+#   installed. The scGPT whole-human checkpoint (33 million human cells;
+#   args.json, best_model.pt, vocab.json) is placed in
+#   /opt/bio/share/scgpt/checkpoints/whole_human after SHA256 checks.
+#   GPU use needs an NVIDIA driver for CUDA 12 on the node and apptainer --nv.
+#   Runtime analysis needs no network access.
+#
+# [BASE IMAGE AND INSTALLATION RULES FOR THIS DEF]
+#   Base image: the official Rocky Linux 9.8 image
+#   rockylinux/rockylinux:9.8.20260525.0, pinned by its index digest in From.
+#   conda: Miniforge3-26.7.2-0 (conda-forge project GitHub release),
+#   SHA256-checked, used only during the build.
+#   Packages: conda-forge only, with --override-channels and strict channel
+#   priority. Top-level packages are pinned to exact versions; the full
+#   resolved set with SHA256 values is recorded in
+#   /opt/bio/share/bx-scgpt/conda-explicit.txt and checked so that every URL
+#   is under conda.anaconda.org/conda-forge. CONDA_OVERRIDE_CUDA=12.6 lets the
+#   solver pick the CUDA build on a build node without a GPU.
+#   PyPI: one wheel (scgpt 0.2.4), fetched by URL and checked by SHA256,
+#   installed with pip --no-deps --no-index (no index lookup).
+#   scGPT checkpoint: fetched from the authors' public Google Drive folder by
+#   fixed file IDs and checked by SHA256 (no separate licence is stated for
+#   the weights; the scGPT repository is MIT).
+#   Building requires internet access to github.com, conda.anaconda.org,
+#   files.pythonhosted.org and drive.usercontent.google.com.
+#   The conda solve needs about 3 GB of memory on top of the build
+#   (2026-11-03: it was killed on an 8 GB Codespace and passed on 16 GB).
+#
+# [HPC BUILD REQUIREMENTS]
+#   Use a designated build environment and an unprivileged build account.
+#   Do not run the build as the host root user or through sudo.
+#   Do not bind production data or shared system directories into the build
+#   container.
+#   Host-side %pre and %setup sections are not used.
+#   Package installation and cleanup run inside %post.
+#   Build workspace: the fixed container-private path /__closha_build/work.
+#   /__closha_build and the workspace are created with plain mkdir (no -p),
+#   so the build stops if either already exists, including as a symlink or
+#   a bind mount point. The Miniforge installer and its base installation,
+#   the conda package cache (CONDA_PKGS_DIRS), the conda configuration file
+#   (CONDARC), the downloaded wheel and checkpoint files, temporary files
+#   (TMPDIR), and HOME for the install steps are all placed below it, so conda
+#   itself does not remain in the image; only the /opt/bio environment does.
+#   Cleanup removes only that exact workspace, after separate checks of the
+#   path constant, symlinks, canonical path, and root-filesystem device, and
+#   then removes the empty /__closha_build with rmdir. Any failed check stops
+#   the build without deleting anything.
+#   No wildcard cleanup of default paths is used.
+#   These checks reduce accidents but do not prove host isolation. The build
+#   system must keep host binds off /__closha_build, its parents, and children.
+#   No broad cleanup of /tmp, /var/tmp, /root, or user home directories is used.
+#   %test performs checks without creating or deleting data files.
+#   The Apptainer output SIF, image cache, and build temporary files are host
+#   artifacts; place them in an approved build workspace, separate from services.
+#   This DEF does not clean the host's Apptainer cache or build workspace.
+#   The build system must enforce account, workspace, and mount restrictions;
+#   comments in this DEF cannot enforce the host's bind configuration.
+#
+# [RUNTIME ENVIRONMENT ISOLATION]
+#   Apptainer binds the user's home directory by default. %environment puts
+#   /opt/bio/bin first on a PATH without home entries and sets
+#   PYTHONNOUSERSITE=1 so that packages in a host ~/.local are not imported.
+#   The scripts send matplotlib, numba, Hugging Face and PyTorch caches to
+#   output_dir/.cache (removed at the end) and set the Hugging Face libraries
+#   offline, so nothing is written to the bound home.
+#
+# [CHANGES FROM THE PREVIOUS SIF]
+#   No previous SIF or DEF; this is a new image (2026-11-03).
+#   This is a new image; nothing existing is modified or overwritten.
+#
+# [VALIDATION STATUS AND REPRODUCIBILITY]
+#   Checked: script imports, a solve of the package set from conda-forge only
+#   (Miniforge conda, CONDA_OVERRIDE_CUDA=12.6, 16 GB Codespace), the
+#   Miniforge installer, wheel and checkpoint SHA256 values, and DEF %post and
+#   %test shell syntax (sh -n). The CPU build of the same package set ran the
+#   five pipeline scripts on a small public PBMC test (Codespace, 2026-11-03);
+#   scgpt_embed matched scgpt.tasks.embed_data (cosine >= 0.997 per cell).
+#   The tmpfs, mount check, workspace and cleanup blocks are copied unchanged
+#   from bx_spatial.1.2.def (policy 1.7 sections 6 and 6.1), including the
+#   python3 fallback for the fakeroot "Is a directory" cleanup failure.
+#   Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
+#   %test checks the Python and package versions, the CUDA build of PyTorch,
+#   the checkpoint checksums, and embeds two synthetic cells with the real
+#   checkpoint on the CPU; a GPU run is checked on CLOSHA (no GPU in Codespace).
+#   Unresolved: the Miniforge and conda package recipe is not yet a
+#   registered approved recipe; the PyPI wheel and Google Drive checkpoint are
+#   new external assets.
+#
+# [CHANGELOG]
+#   2026-11-03 / 1.0: Created for scgpt_embed.1.0, following policy 1.7.
+# =============================================================================
+
+%labels
+    Maintainer       KOBIC Bio-Express
+    Pipeline         scGPT
+    Component        bx_scgpt_gpu
+    Version          1.0
+    BaseOS           RockyLinux9
+    CondaInstaller   Miniforge3-26.7.2-0
+    AnacondaRepoFree true
+    scGPTVersion     0.2.4
+    PyTorchVersion   2.6.0-cuda12.6
+    PythonVersion    3.11
+    Description      "scGPT 0.2.4 cell embeddings on GPU (PyTorch 2.6 CUDA 12.6) with the whole-human checkpoint"
+
+%environment
+    export PATH=/opt/bio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    # Keep packages from a host-bound ~/.local out of this runtime.
+    export PYTHONNOUSERSITE=1
+
+%post
+    set -eu
+    # Fixed container PATH; ignore any inherited PATH that may point into a
+    # host-bound home directory.
+    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LC_ALL=C.UTF-8
+
+    # Apptainer builds keep the admin "mount tmp = yes" setting, so %post sees
+    # the host /tmp and /var/tmp. Cover both with private tmpfs mounts in this
+    # container's mount namespace before any other command runs; the host
+    # directories are then unreachable. If mounting fails, the build stops.
+    mount -t tmpfs -o mode=1777,nosuid,nodev closha-tmp /tmp
+    mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
+    [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
+    [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+    # With "mount dev = yes" the build may see the host's /dev and its shared
+    # /dev/shm. Cover /dev/shm with a private tmpfs as well, then confirm from
+    # the mount table that the newest /dev/shm mount is this one.
+    if [ -d /dev/shm ]; then
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-shm /dev/shm
+        awk '$5 == "/dev/shm" { s = $0 } END { exit !(s ~ / - tmpfs closha-shm /) }' /proc/self/mountinfo ||
+            { echo "/dev/shm is not private" >&2; exit 1; }
+    fi
+    # Record the mount table in the build log for review.
+    cat /proc/self/mountinfo
+
+    # Stop before any install step if the build container has a mount other
+    # than those Apptainer creates for builds: the rootfs, /tmp and /var/tmp
+    # (now covered above), private /etc/hosts and /etc/resolv.conf copies, and
+    # kernel pseudo-filesystems under /dev, /proc, and /sys, plus, in builds
+    # that run %post under the fakeroot command (no /etc/subuid entry), the
+    # read-only fakeroot helpers Apptainer places under /.singularity.d/libs
+    # (fakeroot, faked, libfakeroot.so, and getopt, which the fakeroot wrapper
+    # script calls; getopt was seen in the 2026-10-14 production build log).
+    # This rejects host paths added through APPTAINER_BINDPATH or
+    # APPTAINER_MOUNT, which the build passes into %post from the caller's
+    # environment.
+    awk '
+        { split($0, sep, " - "); split(sep[2], f, " "); mp = $5; opt = $6; fs = f[1]; src = $4 }
+        mp == "/" || mp == "/tmp" || mp == "/var/tmp" { next }
+        (mp == "/etc/hosts" || mp == "/etc/resolv.conf") &&
+            src ~ /\/bundle-temp-[0-9]+\/(hosts|resolv\.conf)$/ { next }
+        (mp == "/dev" || mp ~ /^\/dev\//) && fs ~ /^(devtmpfs|tmpfs|devpts|mqueue|hugetlbfs)$/ { next }
+        (mp == "/proc" || mp ~ /^\/proc\//) && fs ~ /^(proc|binfmt_misc|autofs)$/ { next }
+        (mp == "/sys" || mp ~ /^\/sys\//) &&
+            fs ~ /^(sysfs|cgroup|cgroup2|securityfs|selinuxfs|debugfs|tracefs|bpf|fusectl|configfs|pstore|efivarfs)$/ { next }
+        mp == "/.singularity.d/libs" && fs == "tmpfs" && opt ~ /^ro(,|$)/ { next }
+        mp ~ /^\/\.singularity\.d\/libs\/(fakeroot|faked|libfakeroot\.so|getopt)$/ && opt ~ /^ro(,|$)/ { next }
+        { print "Unexpected mount in build container: " mp " (" fs ")" > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /proc/self/mountinfo || { echo "Build stopped: remove extra bind settings and rebuild" >&2; exit 1; }
+
+    fail() { echo "Build check failed: $*" >&2; exit 1; }
+
+    # Fixed container-private workspace from the approved profile.
+    # Plain mkdir (no -p) fails if a path already exists, including a symlink
+    # or a bind mount point, so the build stops instead of reusing it.
+    BUILD_ROOT=/__closha_build
+    WORK=/__closha_build/work
+    mkdir -m 0700 -- "$BUILD_ROOT"
+    mkdir -m 0700 -- "$WORK"
+    mkdir -p -- "$WORK/src" "$WORK/tmp" "$WORK/home" "$WORK/conda-pkgs"
+
+    # The admin config may bind the host home, and /tmp may be host-backed.
+    # Redirect HOME, TMPDIR, and XDG directories into the workspace before any
+    # other command runs, so no tool reads or writes host user files or /tmp.
+    export HOME="$WORK/home"
+    export TMPDIR="$WORK/tmp"
+    export XDG_CACHE_HOME="$WORK/home/.cache"
+    export XDG_CONFIG_HOME="$WORK/home/.config"
+    export XDG_DATA_HOME="$WORK/home/.local/share"
+
+    # The pinned conda packages below are for linux-64 only.
+    [ "$(uname -m)" = x86_64 ] || fail "unsupported architecture"
+    grep -q '^Rocky Linux release 9\.' /etc/rocky-release || fail "base OS is not Rocky Linux 9"
+
+    # Miniforge from the conda-forge project's GitHub release (never Miniconda
+    # or the Anaconda Distribution). SHA256 matches the published .sha256 file.
+    # It is installed into the workspace and removed with it after use.
+    curl --fail --location --retry 3 \
+        --connect-timeout 30 --max-time 600 \
+        --output "$WORK/src/Miniforge3-26.7.2-0-Linux-x86_64.sh" \
+        https://github.com/conda-forge/miniforge/releases/download/26.7.2-0/Miniforge3-26.7.2-0-Linux-x86_64.sh
+    printf '%s  %s\n' \
+        281b0ac7d550802efc81af633225a5e6116d29ae72f3ab4eae7168c3931a4c05 \
+        "$WORK/src/Miniforge3-26.7.2-0-Linux-x86_64.sh" | sha256sum --check -
+    bash "$WORK/src/Miniforge3-26.7.2-0-Linux-x86_64.sh" -b -p "$WORK/miniforge"
+
+    # conda configuration, package cache, and environments list stay in the
+    # workspace. Only conda-forge is configured, defaults is empty, and every
+    # command still passes --override-channels.
+    export CONDARC="$WORK/condarc"
+    export CONDA_PKGS_DIRS="$WORK/conda-pkgs"
+    printf '%s\n' \
+        'channels:' \
+        '  - conda-forge' \
+        'default_channels: []' \
+        'channel_priority: strict' \
+        'auto_update_conda: false' \
+        'notify_outdated_conda: false' \
+        'report_errors: false' \
+        > "$CONDARC"
+    CONDA="$WORK/miniforge/bin/conda"
+
+    # Create the /opt/bio environment from exact package versions.
+    # torchtext 0.18.0 is the last release and exists on conda-forge for
+    # PyTorch up to 2.6, so PyTorch is 2.6.0. The build node has no GPU, so the
+    # CUDA version is declared for the solver (CUDA 12.6 build of PyTorch).
+    CONDA_OVERRIDE_CUDA=12.6 "$CONDA" create --yes --prefix /opt/bio \
+        --override-channels --channel conda-forge \
+        --strict-channel-priority \
+        python=3.11.18 \
+        cuda-version=12.6 \
+        'pytorch=2.6.0=cuda126_mkl_py311_hcada2b2_304' \
+        torchtext=0.18.0 \
+        scanpy=1.10.4 \
+        anndata=0.10.9 \
+        datasets=2.21.0 \
+        numpy=2.2.6 \
+        pandas=2.3.3 \
+        scipy=1.14.1 \
+        scikit-learn=1.9.1 \
+        numba=0.68.1 \
+        matplotlib-base=3.10.9 \
+        seaborn=0.13.2 \
+        networkx=3.6.1 \
+        h5py=3.16.0 \
+        ipython=9.18.1 \
+        pip
+
+    # scGPT 0.2.4 is not on conda-forge: its PyPI wheel (pure Python) is fetched
+    # by URL, checked by SHA256 and installed without dependencies or an index.
+    curl --fail --location --retry 3 \
+        --connect-timeout 30 --max-time 600 \
+        --output "$WORK/src/scgpt-0.2.4-py3-none-any.whl" \
+        https://files.pythonhosted.org/packages/py3/s/scgpt/scgpt-0.2.4-py3-none-any.whl
+    printf '%s  %s\n' \
+        aafa4ac8dcb5a3d7b81ab71f136baf324b7dc6d83109781340ba601fd236759f \
+        "$WORK/src/scgpt-0.2.4-py3-none-any.whl" | sha256sum --check -
+    PIP_DISABLE_PIP_VERSION_CHECK=1 PIP_NO_CACHE_DIR=1 /opt/bio/bin/python -m pip install \
+        --no-deps --no-index "$WORK/src/scgpt-0.2.4-py3-none-any.whl"
+
+    # scGPT whole-human checkpoint from the authors' Google Drive folder
+    # (README "Pretrained scGPT checkpoints"), by fixed file IDs, SHA256-checked.
+    CKPT=/opt/bio/share/scgpt/checkpoints/whole_human
+    mkdir -p "$CKPT"
+    for item in \
+        "1hh2zGKyWAx3DyovD30GStZ3QlzmSqdk1 args.json c18e075e018140cb8b2d9029387b9de26607a5ce6a8ccabd6ead70cd76b95d60" \
+        "1H3E_MJ-Dl36AQV6jLbna2EdvgPaqvqcC vocab.json acca93d114ca62c3f0f50debbd23e8c87f0714f4737764454f6b2b13f2e8580f" \
+        "14AebJfGOUF047Eg40hk57HCtrb0fyDTm best_model.pt 6cb5d451ab5c4b33eb673adbe4fddc61d2389df1b89b7651a9fe2e557572b922"; do
+        set -- $item
+        curl --fail --location --retry 3 \
+            --connect-timeout 30 --max-time 1800 \
+            --output "$WORK/src/$2" \
+            "https://drive.usercontent.google.com/download?id=$1&export=download&confirm=t"
+        printf '%s  %s\n' "$3" "$WORK/src/$2" | sha256sum --check -
+        cp -- "$WORK/src/$2" "$CKPT/$2"
+    done
+    chmod 0644 "$CKPT"/*
+    ( cd "$CKPT" && sha256sum args.json best_model.pt vocab.json ) > /opt/bio/share/scgpt/checkpoints/whole_human.sha256
+
+    # Record the exact package set with SHA256 values, then check that every
+    # package came from conda-forge.
+    mkdir -p /opt/bio/share/bx-scgpt
+    "$CONDA" list --prefix /opt/bio --explicit --sha256 > /opt/bio/share/bx-scgpt/conda-explicit.txt
+    awk '
+        /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/conda-forge\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /opt/bio/share/bx-scgpt/conda-explicit.txt || fail "package from a disallowed channel"
+    "$CONDA" list --prefix /opt/bio > /opt/bio/share/bx-scgpt/conda-packages.txt
+    /opt/bio/bin/python -m pip list --format=freeze > /opt/bio/share/bx-scgpt/pip-freeze.txt
+    printf '%s  %s\n' aafa4ac8dcb5a3d7b81ab71f136baf324b7dc6d83109781340ba601fd236759f \
+        scgpt-0.2.4-py3-none-any.whl > /opt/bio/share/bx-scgpt/pypi-wheels.sha256
+    cp /etc/rocky-release /opt/bio/share/bx-scgpt/base-os-release.txt
+    rpm -qa --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' | sort > /opt/bio/share/bx-scgpt/rocky-packages.tsv
+    /opt/bio/bin/python --version > /opt/bio/share/bx-scgpt/python-version.txt
+    grep -F 'Python 3.11.18' /opt/bio/share/bx-scgpt/python-version.txt
+
+    # Remove only the exact workspace created above; stop on any doubt.
+    # Each check is a separate command so that set -e cannot skip a failure.
+    [ "$WORK" = /__closha_build/work ] || fail "unexpected workspace path"
+    [ ! -L "$BUILD_ROOT" ] || fail "parent is a symlink"
+    [ ! -L "$WORK" ] || fail "workspace is a symlink"
+    [ -d "$WORK" ] || fail "workspace is missing"
+    [ "$(realpath -e -- "$WORK")" = "$WORK" ] || fail "canonical path changed"
+    [ "$(stat -c %d -- "$WORK")" = "$(stat -c %d -- /)" ] || fail "workspace is on another filesystem"
+    # Under the fakeroot command (production builds by an account without
+    # /etc/subuid entries), a stale fakeroot record can report a directory as
+    # a regular file. A production build showed this for miniforge/pkgs: rm
+    # and Python's shutil.rmtree both called unlink on it and stopped with
+    # "Is a directory". If rm fails, the rest is removed with the base
+    # image's Python, which decides by the kernel's answer instead of stat:
+    # it unlinks each entry and only on EISDIR opens it as a directory
+    # (O_NOFOLLOW, same filesystem as the workspace), empties it, and removes
+    # it with rmdir. Symbolic links are removed, never followed.
+    if ! rm -rf --one-file-system -- "$WORK"; then
+        echo "rm could not remove all of $WORK; retrying with python3" >&2
+        /usr/bin/env python3 - "$WORK" <<'PYCLEAN' || fail "python3 could not remove the workspace"
+import os, sys
+# Remove the workspace without trusting file types from stat: under the
+# fakeroot command a stale record can report a directory as a file. Each
+# entry is unlinked; only when the kernel answers EISDIR is it opened as a
+# directory (no symlink following, same device as the workspace), emptied,
+# and removed with rmdir.
+root = sys.argv[1]
+dir_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+root_fd = os.open(root, dir_flags)
+root_dev = os.fstat(root_fd).st_dev
+removed = [0, 0]
+
+def empty(dir_fd, where):
+    for name in os.listdir(dir_fd):
+        try:
+            os.unlink(name, dir_fd=dir_fd)
+            removed[0] += 1
+            continue
+        except FileNotFoundError:
+            continue
+        except IsADirectoryError:
+            pass
+        fd = os.open(name, dir_flags, dir_fd=dir_fd)
+        try:
+            if os.fstat(fd).st_dev != root_dev:
+                sys.exit("not removing a different filesystem: %s/%s" % (where, name))
+            empty(fd, where + "/" + name)
+        finally:
+            os.close(fd)
+        os.rmdir(name, dir_fd=dir_fd)
+        removed[1] += 1
+
+try:
+    empty(root_fd, root)
+finally:
+    os.close(root_fd)
+os.rmdir(root)
+print("python3 removed %d files and %d directories" % tuple(removed), file=sys.stderr)
+PYCLEAN
+    fi
+    [ ! -e "$WORK" ] || fail "workspace could not be removed"
+    rmdir -- "$BUILD_ROOT"
+
+%runscript
+    exec /opt/bio/bin/python3 "$@"
+
+%test
+    set -eu
+    export PATH=/opt/bio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export LC_ALL=C.UTF-8
+    export PYTHONNOUSERSITE=1
+
+    # The build runs %test separately from %post, again with the host /tmp and
+    # /var/tmp bound (mount tmp = yes), and Python libraries create temporary
+    # files there. When running as root (a root or fakeroot build), cover both,
+    # and /dev/shm when present, with private tmpfs mounts first; if mounting
+    # fails, the build stops.
+    # Unprivileged runtime checks cannot mount and skip this step.
+    if [ "$(id -u)" = 0 ]; then
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-tmp /tmp
+        mount -t tmpfs -o mode=1777,nosuid,nodev closha-vartmp /var/tmp
+        [ "$(stat -f -c %T /tmp)" = tmpfs ] || { echo "/tmp is not private" >&2; exit 1; }
+        [ "$(stat -f -c %T /var/tmp)" = tmpfs ] || { echo "/var/tmp is not private" >&2; exit 1; }
+        if [ -d /dev/shm ]; then
+            mount -t tmpfs -o mode=1777,nosuid,nodev closha-shm /dev/shm
+            awk '$5 == "/dev/shm" { s = $0 } END { exit !(s ~ / - tmpfs closha-shm /) }' /proc/self/mountinfo ||
+                { echo "/dev/shm is not private" >&2; exit 1; }
+        fi
+    fi
+
+    for cmd in python3 nproc env; do
+        command -v "$cmd" >/dev/null || { echo "missing command: $cmd" >&2; exit 1; }
+    done
+    [ "$(command -v python3)" = /opt/bio/bin/python3 ]
+    python3 --version | grep -F 'Python 3.11.18'
+
+    # Checkpoint files as fetched in %post.
+    ( cd /opt/bio/share/scgpt/checkpoints/whole_human && sha256sum --check --quiet ../whole_human.sha256 )
+
+    # Library caches of this check go to a private temporary folder, never home.
+    T="$(mktemp -d)"
+    MPLCONFIGDIR="$T/mpl" NUMBA_CACHE_DIR="$T/numba" XDG_CACHE_HOME="$T/cache" HF_HOME="$T/hf" \
+    TORCH_HOME="$T/torch" HF_DATASETS_OFFLINE=1 HF_HUB_OFFLINE=1 python3 - <<'PYTEST'
+import json, warnings
+warnings.filterwarnings("ignore")
+import numpy as np, torch, torchtext, scanpy, anndata, sklearn, matplotlib, scgpt
+from importlib.metadata import version
+want = {"torch": "2.6.0", "torchtext": "0.18.0", "scanpy": "1.10.4", "anndata": "0.10.9",
+        "scgpt": "0.2.4", "datasets": "2.21.0", "numpy": "2.2.6", "scikit-learn": "1.9.1"}
+for pkg, v in want.items():
+    got = version(pkg)
+    if not got.startswith(v):
+        raise SystemExit(f"unexpected {pkg} version: {got}")
+if torch.version.cuda is None or not torch.version.cuda.startswith("12.6"):
+    raise SystemExit(f"PyTorch is not the CUDA 12.6 build: {torch.version.cuda}")
+from scgpt.model import TransformerModel
+from scgpt.tokenizer import GeneVocab
+from scgpt.utils import load_pretrained
+from scgpt.data_collator import DataCollator
+ck = "/opt/bio/share/scgpt/checkpoints/whole_human"
+vocab = GeneVocab.from_file(f"{ck}/vocab.json")
+for t in ["<pad>", "<cls>", "<eoc>"]:
+    if t not in vocab:
+        vocab.append_token(t)
+cfg = json.load(open(f"{ck}/args.json"))
+m = TransformerModel(ntoken=len(vocab), d_model=cfg["embsize"], nhead=cfg["nheads"], d_hid=cfg["d_hid"],
+                     nlayers=cfg["nlayers"], nlayers_cls=cfg["n_layers_cls"], n_cls=1, vocab=vocab,
+                     dropout=cfg["dropout"], pad_token=cfg["pad_token"], pad_value=cfg["pad_value"],
+                     do_mvc=True, do_dab=False, use_batch_labels=False, domain_spec_batchnorm=False,
+                     explicit_zero_prob=False, use_fast_transformer=False, pre_norm=False)
+load_pretrained(m, torch.load(f"{ck}/best_model.pt", map_location="cpu"), verbose=False)
+m.eval()
+# Two synthetic cells with 20 known genes each: the embedding must be finite and 512 long.
+genes = ["CD3D", "CD3E", "IL7R", "LTB", "MALAT1", "RPL13", "RPS27", "TPT1", "EEF1A1", "B2M",
+         "LYZ", "S100A8", "S100A9", "CD14", "FCN1", "VCAN", "CST3", "TYROBP", "FTL", "FTH1"]
+ids = [vocab[g] for g in genes]
+col = DataCollator(do_padding=True, pad_token_id=vocab["<pad>"], pad_value=cfg["pad_value"], do_mlm=False,
+                   do_binning=True, max_length=1201, sampling=True, keep_first_n_tokens=1)
+items = []
+for k in range(2):
+    vals = np.random.default_rng(k).integers(1, 20, len(ids)).astype(np.float32)
+    items.append({"genes": torch.tensor([vocab["<cls>"]] + ids), "expressions": torch.tensor([cfg["pad_value"], *vals])})
+d = col(items)
+with torch.no_grad():
+    h = m._encode(d["gene"], d["expr"], src_key_padding_mask=d["gene"].eq(vocab["<pad>"]))[:, 0, :]
+if h.shape != (2, 512) or not torch.isfinite(h).all():
+    raise SystemExit("scGPT embedding check failed")
+print("scGPT", scgpt.__version__, "torch", torch.__version__, "CUDA build", torch.version.cuda,
+      "GPU visible", torch.cuda.is_available())
+PYTEST
+    rm -rf -- "$T"
+
+    # Every recorded package URL must come from conda-forge.
+    awk '
+        /^https?:/ && $0 !~ /^https:\/\/conda\.anaconda\.org\/conda-forge\// { print "Package from a disallowed channel: " $0 > "/dev/stderr"; bad = 1 }
+        END { exit bad }
+    ' /opt/bio/share/bx-scgpt/conda-explicit.txt
+    [ "$(grep -c -E '^https://' /opt/bio/share/bx-scgpt/conda-explicit.txt)" -gt 0 ]
+
+    # The build workspace must not remain in the image.
+    if [ -e /__closha_build ]; then
+        echo 'Build workspace /__closha_build remains in the image' >&2
+        exit 1
+    fi
+
+    echo 'scGPT 0.2.4 / PyTorch 2.6.0 CUDA 12.6: bx_scgpt_gpu runtime dependency checks passed.'
+
+%help
+    CLOSHA scGPT GPU environment: Python 3.11, PyTorch 2.6.0 (CUDA 12.6),
+    scGPT 0.2.4 with the whole-human checkpoint in
+    /opt/bio/share/scgpt/checkpoints/whole_human, scanpy, anndata.
+    Base OS: Rocky Linux 9. Tools are installed in /opt/bio from conda-forge with
+    Miniforge (no Anaconda Inc. repository or Miniconda); scGPT from its
+    SHA256-checked PyPI wheel.
+
+    The CLOSHA build system builds this DEF with its fixed Slurm job (policy
+    section 6.2), on an internet-connected x86_64 node, without extra binds:
+        apptainer build bx_scgpt_gpu.1.0.sif bx_scgpt_gpu.1.0.def
+    It must pass both as root and with fakeroot. The conda solve needs about
+    3 GB of memory beyond the build itself.
+
+    Store the SIF, Apptainer cache, and build temporary files in an approved host
+    build workspace. APPTAINER_CACHEDIR and APPTAINER_TMPDIR select the cache and
+    temporary directories. Container cleanup must never target host-backed binds.
+    Build from a shell without APPTAINER_* or SINGULARITY_* bind variables.
+
+    Check the image:
+        apptainer test --cleanenv bx_scgpt_gpu.1.0.sif
+
+    The scripts are supplied externally through approved runtime binds; on a GPU
+    node apptainer needs --nv, e.g.:
+        apptainer exec --nv bx_scgpt_gpu.1.0.sif python3 scgpt_embed.1.0.py key=value ...
+    The node's NVIDIA driver must support CUDA 12.
+    The image holds no data besides the scGPT checkpoint. Writable runtime binds
+    can expose host data to the analysis scripts.
+    Runtime analysis requires no network access.
