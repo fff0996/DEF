@@ -1000,6 +1000,7 @@ normal_p5,normal
 | 세포 유형이 없는 bin(spatial_hd_rctd에서 UMI가 umi_min보다 적은 bin)은 이웃 세기와 니치에서 빠지고 지도에 NA(회색)로 보입니다. | Bins without a cell type (below umi_min in spatial_hd_rctd) are left out of the counts and niches and shown as NA (grey) on the maps. |
 | 니치 수(niches)는 자료에 맞춰 정합니다. 너무 적으면 다른 구역이 합쳐지고, 너무 많으면 같은 구역이 쪼개집니다. niche_composition의 heatmap에서 니치마다 구성이 뚜렷이 다른지 보고 조정합니다. | Choose niches for the data: too few merge distinct areas, too many split one area; adjust after checking that the niches differ clearly in the niche_composition heatmap. |
 | 니치 이름은 가장 많은 세포 유형(두 번째 유형이 20% 이상이면 함께)으로 붙습니다. 이름이 같아도 구성 비율이 다른 니치일 수 있으니 heatmap을 함께 봅니다. | Niches are named after their most frequent cell type (with the second when it is at least 20%); niches with the same name can still differ in composition, so read the heatmap as well. |
+| sample_data는 선택 입력입니다. 비우면 니치 지도와 구성만 만들고, 조건 비교(niche_by_condition, niche_test.tsv)는 sample_data를 넣어야 나옵니다. | sample_data is optional: without it only the niche maps and compositions are made; the condition comparison (niche_by_condition, niche_test.tsv) needs sample_data. |
 | 조건 비교는 슬라이드를 반복으로 삼습니다. 조건마다 2장 이하이면 p값은 탐색용입니다. | The condition comparison uses slides as replicates; with two or fewer slides per condition the p-values are exploratory. |
 
 ### 분석 개념 이미지
@@ -1185,6 +1186,8 @@ normal_p5,normal
 | 국문 | 영문 |
 |---|---|
 | 점수는 대조 유전자 대비 상대값입니다. 같은 실행 안에서 군집·슬라이드끼리 비교하는 데 쓰고, 다른 실행의 값과 직접 비교하지 않습니다. | Scores are relative to control genes; compare groups and slides of the same run, not values from other runs. |
+| 기본 제공 세트(builtin_sets, MSigDB Hallmark)는 항상 계산하고, gene_sets를 주면 그 세트를 더해 함께 계산합니다. 사용자 세트만 쓰려면 builtin_sets=none으로 둡니다. 기본 제공 세트는 Hallmark만 고를 수 있습니다(KEGG, Reactome, GO는 spatial_de_enrichment의 collection). | The built-in sets (builtin_sets, MSigDB Hallmark) are always scored, and sets in gene_sets are added to them; set builtin_sets=none to score only your own sets. Only Hallmark sets are built in (KEGG, Reactome and GO are in the collection option of spatial_de_enrichment). |
+| sample_data는 선택 입력입니다. 비우면 점수 지도와 군집·세포 유형별 점수만 만들고, 조건 비교(signature_by_condition, signature_test.tsv)는 sample_data를 넣어야 나옵니다. | sample_data is optional: without it only the score maps and group scores are made; the condition comparison (signature_by_condition, signature_test.tsv) needs sample_data. |
 | 세트 유전자가 데이터에 min_genes개보다 적으면 그 세트는 빠집니다. 데이터에 있는 유전자 수는 gene_sets_used.tsv에서 확인합니다. | A set with fewer than min_genes genes in the data is left out; gene_sets_used.tsv lists the genes found. |
 | 조직 그림은 앞의 12개 세트까지만 그립니다(all_hallmark처럼 세트가 많으면 표에만 남음). | Tissue plots are drawn for the first 12 sets (with many sets, such as all_hallmark, the rest are in the tables only). |
 | bin 하나하나의 점수라 조직 지도가 얼룩져 보일 수 있습니다. 군집·세포 유형별 heatmap과 슬라이드 평균으로 함께 해석합니다. | Single-bin scores can look speckled on the tissue; read them together with the group heatmap and slide means. |
