@@ -30,7 +30,7 @@ KOBIC 포탈의 파이프라인·모듈 페이지에 넣는 그림을 만드는 
 | 출력 역 | 흰 원 + 주황 테두리, 점선으로 라벨과 연결 | 라벨: 주황 상자 `#F07800`, 흰 글씨 |
 | 참조 입력 | 노드 위에 "라벨 +" 와 아이콘 (역 없음) | 예: `REF.FASTA +` |
 | 범례 | 단계 색 3~5개 + Input/Output format | |
-| 제목 | 파이프라인 이름만 (BIO-EXPRESS 로고·이름은 쓰지 않음, 사용자 결정 2026-11-03) | |
+| 제목 | 파이프라인 이름만: 포탈 Pipeline Name 그대로(예: Spatial_Transcriptomics_Visium_HD_Pipeline) (BIO-EXPRESS 로고·이름은 쓰지 않음, 사용자 결정 2026-11-03) | |
 
 단계 색(ATAC-seq 기준): Preprocessing `#A8509C`, QC & 보정 `#1269FF`, 분석 `#7CC744`, 시각화 `#FFB400`, 출력 `#F07800`. 단계 이름은 파이프라인에 맞게 바꾼다.
 

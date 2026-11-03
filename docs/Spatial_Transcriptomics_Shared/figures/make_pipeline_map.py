@@ -56,7 +56,7 @@ m.outputs(2270, y + 170, ["TSV", "PDF", "PNG"], above=False, gap=46)
 m.outputs(1500, yS + 150, ["RDS", "CSV", "PNG"], above=False, gap=30)
 m.outputs(1750, yL - 150, ["RDS", "CSV", "PNG"], above=True, gap=30)
 m.outputs(1750, yR - 150, ["RDS", "CSV", "PNG"], above=True, gap=30)
-m.save(DOCS / "Spatial_Transcriptomics_Visium_Pipeline" / "pipeline" / "figures" / "pipeline_visium.svg", W, 2030, "Spatial transcriptomics pipeline (Visium)", STAGES, 1790)
+m.save(DOCS / "Spatial_Transcriptomics_Visium_Pipeline" / "pipeline" / "figures" / "pipeline_visium.svg", W, 2030, "Spatial_Transcriptomics_Visium_Pipeline", STAGES, 1790)
 
 # ---------------------------------------------------------------- Visium HD
 # Rows in the order of the CLOSHA canvas: spatially variable genes (top), main line, cell-type
@@ -120,4 +120,4 @@ m.outputs(2050, yC + 150, ["RDS", "TSV", "PNG"], above=False, gap=30)
 m.outputs(2470, yC + 150, ["TSV", "PDF", "PNG"], above=False, gap=30)
 m.outputs(2910, yC + 150, ["TSV", "PNG", "PDF"], above=False, gap=30)
 m.outputs(2550, yN + 150, ["TSV", "PNG", "PDF"], above=False, gap=30)
-m.save(DOCS / "Spatial_Transcriptomics_Visium_HD_Pipeline" / "pipeline" / "figures" / "pipeline_visium_hd.svg", WH, 2650, "Spatial transcriptomics pipeline (Visium HD)", STAGES, 2300)
+m.save(DOCS / "Spatial_Transcriptomics_Visium_HD_Pipeline" / "pipeline" / "figures" / "pipeline_visium_hd.svg", WH, 2650, "Spatial_Transcriptomics_Visium_HD_Pipeline", STAGES, 2300)
