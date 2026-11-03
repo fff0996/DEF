@@ -47,20 +47,20 @@ scGPT를 실제로 돌리는 일(GPU가 필요한 일)만 `scgpt_embed`로 떼�
 새 환자 예측도 prep → embed → predict 순서다. predict와 compare는 임베딩을 만든 가중치가 모델 카드의 가중치와 같은지 확인한다.
 
 ## 4. 입력 규격: 샘플 시트
-CSV 한 장. 한 줄이 샘플(행렬 파일) 하나다.
+CSV 한 장(`sample_data`). 한 줄이 샘플(행렬 파일) 하나다. 파일 경로는 시트에 적지 않고, `input_dir`에서 SampleID로 찾는다(스크립트 규칙 8절): `<SampleID>.h5`(Cell Ranger), `<SampleID>.h5ad`(X 또는 layers["counts"]에 raw count), `<SampleID>/` 폴더(10x mtx 또는 filtered_feature_bc_matrix.h5). 정확히 같은 이름이 없으면 SampleID 뒤에 `.`, `_`, `-`가 오는 이름을 찾고, 여러 개면 멈춘다.
 
 | 열 | 필수 | 설명 |
 |---|---|---|
-| `sample_id` | 필수 | 샘플 이름. 중복 불가 |
-| `patient_id` | 필수 | 환자 이름. 같은 환자의 여러 샘플은 같은 값 |
-| `cohort` | 필수 | 코호트 이름(예: KBDS_KAP241028) |
-| `tissue` | 필수 | 조직(예: blood, tumor) |
-| `time` | 필수 | 채취 시점(예: Before, After) |
-| `file` | 필수 | 행렬 파일 또는 폴더 경로(입력 폴더 기준 상대 경로) |
-| `label` | train·compare에 필수 | 환자 라벨(예: PR, PD). predict에서는 비워도 됨 |
+| `SampleID` | 필수 | 샘플 이름. 중복 불가 |
+| `PatientID` | 필수 | 환자 이름. 같은 환자의 여러 샘플은 같은 값 |
+| `Cohort` | 필수 | 코호트 이름(예: KBDS_KAP241028) |
+| `Tissue` | 필수 | 조직(예: blood, tumor) |
+| `Time` | 필수 | 채취 시점(예: Before, After) |
+| `Label` | 열은 필수, 값은 비워도 됨 | 환자 라벨(예: PR, PD). 예측할 환자는 비움. train·compare에는 라벨 있는 환자가 필요 |
 
+- 라벨은 사용자가 임상 기록에서 가져와 적는다. prep는 라벨을 만들지 않고 세포에 연결하고 점검만 한다.
 - 라벨은 환자 단위다. 같은 환자의 샘플은 라벨이 같아야 하며, 다르면 멈춘다.
-- 임상 변수(약물, 치료 라인 등)는 시트에 열을 더해 두면 데이터셋에 그대로 옮긴다(모델 입력에는 넣지 않음).
+- 그 밖의 열(약물, 치료 라인 등)은 patients.tsv에 옮겨 두기만 하고 모델 입력에는 넣지 않는다.
 
 ## 5. 모듈 상세
 
@@ -112,7 +112,8 @@ CSV 한 장. 한 줄이 샘플(행렬 파일) 하나다.
   1. 사전학습 scGPT 그대로보다 AUC가 높은가
   2. 기준선 A·B보다 높은가
   3. 이전 모델(데이터를 더하기 전)보다 높은가
-- 신뢰구간이 겹치면 "차이가 뚜렷하지 않음"으로 적는다. 환자 수가 적으면(예: 100명 미만) 결론이 불확실하다는 문장을 함께 낸다.
+- 판단은 **같은 환자를 다시 뽑는 짝지은 부트스트랩(2,000번)의 AUC 차이**로 한다. 차이의 95% 신뢰구간이 0보다 위면 "better", 아래면 "worse", 0을 걸치면 "not clearly different"(`compare_delta.tsv`). 각 방법의 신뢰구간이 겹치는지로 판단하는 것보다 정확하다.
+- 환자 수가 100명 미만이면 결론이 불확실하다는 문장을 함께 낸다.
 
 ## 7. 공통 규칙
 - 스크립트는 `docs/CLOSHA_Script_Rules_v1.md`를 따른다: `key=value` 인자, 다시 실행하면 `output_dir/log/`만 남기고 지운 뒤 시작, 로그는 `output_dir/logs/`.
@@ -162,7 +163,7 @@ train이 모델마다 만든다. predict와 compare가 읽어 맞지 않는 입�
 
 ## 12. 작업 순서
 1. 이 설계 확정
-2. 모듈 5개(prep, embed, train, predict, compare) 작성, 공개 PBMC + 가짜 환자·라벨(세포 수십 개)로 Codespace에서 코드 경로 확인. Codespace에는 GPU가 없어 embed는 CPU로 아주 작게만 돌린다
+2. (2026-11-03 완료) 모듈 5개(prep, embed, train, predict, compare) 작성, 공개 PBMC + 가짜 환자·라벨(세포 수십 개)로 Codespace에서 코드 경로 확인. Codespace에는 GPU가 없어 embed는 CPU로 아주 작게만 돌린다
 3. `bx_scgpt` 1.0 DEF 작성과 Codespace 검증 빌드(GPU 노드 CUDA 버전 확인 후)
 4. CLOSHA에서 embed(GPU)와 전체 흐름 실행(사용자), K-BDS 78명 결과 확인과 원고 작성
 5. 다음 버전: `scgpt_adapt`(GPU) 추가
