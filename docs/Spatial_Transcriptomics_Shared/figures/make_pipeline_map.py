@@ -2,7 +2,7 @@
 """Metro-style schematics of the CLOSHA spatial transcriptomics pipelines (Visium, Visium HD) (SVG)."""
 # Run: python3 docs/Spatial_Transcriptomics_Shared/figures/make_pipeline_map.py, then
 # for f in docs/Spatial_Transcriptomics_Visium*_Pipeline/pipeline/figures/pipeline_*.svg; do
-#     rsvg-convert -w 2500 "$f" -o "${f%.svg}.png"; done  (Visium HD map: -w 3000)
+#     rsvg-convert -w 2500 "$f" -o "${f%.svg}.png"; done  (Visium HD map: -w 3150)
 import sys
 from pathlib import Path
 
@@ -59,26 +59,27 @@ m.outputs(1750, yR - 150, ["RDS", "CSV", "PNG"], above=True, gap=30)
 m.save(DOCS / "Spatial_Transcriptomics_Visium_Pipeline" / "pipeline" / "figures" / "pipeline_visium.svg", W, 2030, "Spatial transcriptomics pipeline (Visium)", STAGES, 1790)
 
 # ---------------------------------------------------------------- Visium HD
-# Rows: niche (top), cell-type branch, main line, spatially variable genes, gene set scores.
+# Rows in the order of the CLOSHA canvas: spatially variable genes (top), main line, cell-type
+# branch, niche, gene set scores (bottom); check_reference on its own at the left of the cell-type row.
 m.reset()
-WH = 3000
-y, yC, yN, yS, yG = 1200, 690, 330, 1660, 2050
+WH = 3150
+y, yS, yC, yN, yG = 940, 540, 1480, 1900, 2280
 m.route([(140, y), (550, y)], PURPLE)
-m.route([(1530, y), (1530, yC), (2760, yC)], TEAL)    # clustered slides to spatial_hd_rctd, condition_de, enrichment
-m.route([(2110, yC), (2110, yN), (2400, yN)], TEAL)   # cell types to spatial_niche
+m.route([(1700, y), (1700, yC), (2910, yC)], TEAL)    # clustered slides to spatial_hd_rctd, condition_de, enrichment
+m.route([(2260, yC), (2260, yN), (2550, yN)], TEAL)   # cell types to spatial_niche
 m.route([(550, y), (1350, y)], BLUE)
 m.route([(1350, y), (2560, y)], GREEN)
-m.route([(1700, y), (1700, yS), (1950, yS)], BLUE)      # clustered slides to spatial_hd_svf
+m.route([(1620, y), (1620, yS), (1950, yS)], BLUE)      # clustered slides to spatial_hd_svf
 m.route([(1620, y), (1620, yG), (1950, yG)], BLUE)      # clustered slides to spatial_signature_score
 for x in (550, 1350):
     m.route([(x, y), (x, y + 150)], YELLOW)
 for x in (2100, 2560):
     m.route([(x, y), (x, y + 170)], YELLOW)
-m.route([(1950, yS), (1950, yS + 150)], YELLOW)
+m.route([(1950, yS), (1950, yS - 150)], YELLOW)
 m.route([(1950, yG), (1950, yG + 150)], YELLOW)
-for x in (1900, 2320, 2760):
+for x in (2050, 2470, 2910):
     m.route([(x, yC), (x, yC + 150)], YELLOW)
-m.route([(2400, yN), (2400, yN - 150)], YELLOW)
+m.route([(2550, yN), (2550, yN + 150)], YELLOW)
 
 m.node(550, y, "spatial_hd_prep")
 m.node(1350, y, "spatial_hd_cluster")
@@ -86,19 +87,19 @@ m.node(2100, y, "spatial_\ncondition_de")
 m.node(2560, y, "spatial_de_\nenrichment")
 m.node(1950, yS, "spatial_hd_svf")
 m.node(1950, yG, "spatial_signature_\nscore")
-m.node(1900, yC, "spatial_hd_rctd")
-m.node(2320, yC, "spatial_\ncondition_de")
-m.node(2760, yC, "spatial_de_\nenrichment")
-m.node(2400, yN, "spatial_niche")
+m.node(2050, yC, "spatial_hd_rctd")
+m.node(2470, yC, "spatial_\ncondition_de")
+m.node(2910, yC, "spatial_de_\nenrichment")
+m.node(2550, yN, "spatial_niche")
 
 m.tag(140, y, "H5 + Parquet", "in", gap=50, icon="folder")
 m.tag(950, y, "RDS", "in", gap=50, icon="table")
 m.tag(1830, y, "RDS + TSV", "in", gap=50, icon="table")
-m.tag(1650, yC, "Reference RDS\n(optional)", "in", above=True, gap=50, icon="table")
+m.tag(1820, yC, "Reference RDS\n(optional)", "in", above=True, gap=50, icon="table")
 # check_reference is a separate pre-check of the reference, run on its own: it reads the same
 # reference file and prints its columns, and no module takes its output, so it is not joined to
 # the pipeline line; its own input, its column report below and a caption above
-yK, xK = yC - 86, 1170
+yK, xK = yC, 1170
 m.route([(xK - 380, yK), (xK, yK)], TEAL)
 m.node(xK, yK, "check_reference")
 m.tag(xK - 380, yK, "Reference RDS", "in", gap=50, icon="table")
@@ -113,10 +114,10 @@ m.outputs(550, y + 150, ["RDS", "TSV", "PNG", "PDF"], above=False, gap=30)
 m.outputs(1350, y + 150, ["RDS", "TSV", "PNG", "PDF"], above=False, gap=30)
 m.outputs(2100, y + 170, ["TSV", "PDF", "PNG"], above=False, gap=46)
 m.outputs(2560, y + 170, ["TSV", "PNG", "PDF"], above=False, gap=46)
-m.outputs(1950, yS + 150, ["TSV", "PNG", "PDF"], above=False, gap=30)
+m.outputs(1950, yS - 150, ["TSV", "PNG", "PDF"], above=True, gap=30)
 m.outputs(1950, yG + 150, ["TSV", "PNG", "PDF"], above=False, gap=30)
-m.outputs(1900, yC + 150, ["RDS", "TSV", "PNG"], above=False, gap=30)
-m.outputs(2320, yC + 150, ["TSV", "PDF", "PNG"], above=False, gap=30)
-m.outputs(2760, yC + 150, ["TSV", "PNG", "PDF"], above=False, gap=30)
-m.outputs(2400, yN - 150, ["TSV", "PNG", "PDF"], above=True, gap=30)
-m.save(DOCS / "Spatial_Transcriptomics_Visium_HD_Pipeline" / "pipeline" / "figures" / "pipeline_visium_hd.svg", WH, 2450, "Spatial transcriptomics pipeline (Visium HD)", STAGES, 2140)
+m.outputs(2050, yC + 150, ["RDS", "TSV", "PNG"], above=False, gap=30)
+m.outputs(2470, yC + 150, ["TSV", "PDF", "PNG"], above=False, gap=30)
+m.outputs(2910, yC + 150, ["TSV", "PNG", "PDF"], above=False, gap=30)
+m.outputs(2550, yN + 150, ["TSV", "PNG", "PDF"], above=False, gap=30)
+m.save(DOCS / "Spatial_Transcriptomics_Visium_HD_Pipeline" / "pipeline" / "figures" / "pipeline_visium_hd.svg", WH, 2650, "Spatial transcriptomics pipeline (Visium HD)", STAGES, 2300)
