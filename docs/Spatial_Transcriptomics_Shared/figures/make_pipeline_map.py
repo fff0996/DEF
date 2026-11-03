@@ -95,14 +95,17 @@ m.tag(140, y, "H5 + Parquet", "in", gap=50, icon="folder")
 m.tag(950, y, "RDS", "in", gap=50, icon="table")
 m.tag(1830, y, "RDS + TSV", "in", gap=50, icon="table")
 m.tag(1650, yC, "Reference RDS\n(optional)", "in", above=True, gap=50, icon="table")
-# check_reference is a separate pre-check of the reference, not on the pipeline line: a dashed
-# side link from the reference label to it, and its column report below
+# check_reference is a separate pre-check of the reference, run on its own: it reads the same
+# reference file and prints its columns, and no module takes its output, so it is not joined to
+# the pipeline line; its own input, its column report below and a caption above
 yK, xK = yC - 86, 1170
+m.route([(xK - 380, yK), (xK, yK)], TEAL)
 m.node(xK, yK, "check_reference")
-m.overlay.append(f'<path d="M{xK + 184},{yK} H{1650 - m.label_width("Reference RDS") / 2 - 6}" fill="none" '
-                 f'stroke="{TEAL}" stroke-width="6" stroke-dasharray="14,10"/>'
-                 f'<text x="{(xK + 184 + 1544) / 2}" y="{yK - 18}" text-anchor="middle" font-family="{m.FONT}" '
-                 f'font-size="19" font-weight="500" fill="{m.TEXT}">pre-check (optional)</text>')
+m.tag(xK - 380, yK, "Reference RDS", "in", gap=50, icon="table")
+m.overlay.append(f'<text x="{xK}" y="{yK - 92}" text-anchor="middle" font-family="{m.FONT}" font-size="19" '
+                 f'font-weight="500" fill="{m.TEXT}">Optional pre-check, run on its own</text>'
+                 f'<text x="{xK}" y="{yK - 66}" text-anchor="middle" font-family="{m.FONT}" font-size="19" '
+                 f'font-weight="500" fill="{m.TEXT}">(lists the cell-type columns)</text>')
 m.route([(xK, yK), (xK, yK + 150)], YELLOW)
 m.outputs(xK, yK + 150, ["TSV"], above=False, gap=30)
 
