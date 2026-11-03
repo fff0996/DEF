@@ -164,6 +164,6 @@ train이 모델마다 만든다. predict와 compare가 읽어 맞지 않는 입�
 ## 12. 작업 순서
 1. 이 설계 확정
 2. (2026-11-03 완료) 모듈 5개(prep, embed, train, predict, compare) 작성, 공개 PBMC + 가짜 환자·라벨(세포 수십 개)로 Codespace에서 코드 경로 확인. Codespace에는 GPU가 없어 embed는 CPU로 아주 작게만 돌린다
-3. `bx_scgpt` 1.0 DEF 작성과 Codespace 검증 빌드(GPU 노드 CUDA 버전 확인 후)
+3. (2026-11-03 완료) `bx_scgpt` 1.0(CPU)과 `bx_scgpt_gpu` 1.0(CUDA 12.6) DEF 작성, Codespace 검증 빌드와 SIF 안 전체 실행(`docs/scGPT/modules/Registration.md` 6.1). GPU 노드 드라이버가 CUDA 12를 지원하는지는 CLOSHA에서 확인
 4. CLOSHA에서 embed(GPU)와 전체 흐름 실행(사용자), K-BDS 78명 결과 확인과 원고 작성
 5. 다음 버전: `scgpt_adapt`(GPU) 추가

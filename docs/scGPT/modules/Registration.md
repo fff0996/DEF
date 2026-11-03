@@ -115,3 +115,6 @@ CLOSHA에 scGPT 파이프라인 모듈을 등록할 때 쓰는 Input / Output / 
 | scgpt_compare | 기준선 3개 + 모델 2개. 10명이라 모두 "not clearly different", 경고 출력 |
 
 인자 오류(필수 인자 없음, key=value 아님)는 종료 코드 1, stderr로만 나간다. 사이트 차단 명령어 없음.
+
+### 6.1 SIF 실행 확인 (2026-11-03)
+Codespace(4코어 16GB) fakeroot 빌드: `bx_scgpt` 1.0 5분, SIF 976MB / `bx_scgpt_gpu` 1.0 7분, SIF 5.3GB, 둘 다 `%test` 통과(실제 가중치로 세포 2개 임베딩; GPU판은 CUDA 12.6 빌드 확인, Codespace에 GPU가 없어 GPU 인식은 False). 공개 모듈과 같은 명령(`--cleanenv`, `OMP_NUM_THREADS=1` 등)으로 위 예제를 SIF 안에서 다섯 모듈 모두 실행해 종료 코드 0. embed는 GPU 이미지가 CPU로 돌아 132세포 2.2분. 로그의 코어 수는 `threads = 4 (allocated 4)`로 OMP_NUM_THREADS=1과 상관없이 할당 코어를 읽었다. 실행 중 사용자 홈에 쓴 파일 없음(바뀐 것은 다른 도구의 `~/.codex` 로그뿐), `output_dir/.cache`는 끝에 지워짐. 실행 스크립트와 로그: `/workspaces/.closha_build_test/scgpt/`(build.sh, run_sif_test.sh). GPU 실행은 CLOSHA에서 확인한다.
