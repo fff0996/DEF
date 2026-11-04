@@ -23,7 +23,8 @@
 #                                     in X or layers["counts"]), or a folder <SampleID>/ holding a
 #                                     10x matrix at any depth (filtered_feature_bc_matrix.h5, or
 #                                     matrix.mtx.gz + features.tsv.gz + barcodes.tsv.gz; filtered
-#                                     before raw, so a Cell Ranger output folder works). Without an
+#                                     before raw, so Cell Ranger count and multi output folders
+#                                     as delivered by sequencing providers work). Without an
 #                                     exact name, names starting with SampleID and . _ or - are
 #                                     used. Other files are ignored.
 #   sample_data          (required) - Sample sheet (CSV), one row per sample. Columns: SampleID,
@@ -234,9 +235,11 @@ def save_plot(fig, path_stem):
 
 # ----------------------------------------------------------------- module
 def matrices_in_folder(folder):
-    """10x matrices inside a sample folder at any depth (Cell Ranger outs/ included):
-    filtered_feature_bc_matrix.h5 first, else folders with matrix.mtx(.gz), filtered before raw."""
-    h5 = sorted(folder.rglob("filtered_feature_bc_matrix.h5"))
+    """10x matrices inside a sample folder at any depth, as delivered by sequencing providers:
+    cellranger count (<sample>/outs/filtered_feature_bc_matrix.h5) and cellranger multi
+    (per_sample_outs/<sample>/count/sample_filtered_feature_bc_matrix.h5). The filtered .h5 comes
+    first, else folders with matrix.mtx(.gz), filtered before raw."""
+    h5 = sorted(folder.rglob("*filtered_feature_bc_matrix.h5"))
     if h5:
         return h5
     mtx = sorted({p.parent for n in ("matrix.mtx.gz", "matrix.mtx") for p in folder.rglob(n)})

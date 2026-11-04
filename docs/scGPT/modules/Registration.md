@@ -29,7 +29,7 @@ CLOSHA에 scGPT 파이프라인 모듈을 등록할 때 쓰는 Input / Output / 
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 필수 | | 샘플마다 행렬 하나. 폴더 구조는 자유: 아래 어디에 있든 SampleID로 찾음. `<SampleID>.h5`(Cell Ranger), `<SampleID>.h5ad`(raw count), 또는 `<SampleID>/` 폴더 안 어디든 10x 행렬(`filtered_feature_bc_matrix.h5` 또는 mtx 3종, filtered 우선이라 Cell Ranger 결과 폴더 그대로 가능). 정확한 이름이 없으면 `SampleID` + `.`/`_`/`-`로 시작하는 이름. 같은 SampleID에 행렬이 둘 이상이면 멈춤. 다른 파일은 무시 |
+| Input | `input_dir` | Directory | 필수 | | 샘플마다 행렬 하나. 폴더 구조는 자유: 아래 어디에 있든 SampleID로 찾음. `<SampleID>.h5`(Cell Ranger), `<SampleID>.h5ad`(raw count), 또는 `<SampleID>/` 폴더 안 어디든 10x 행렬(`filtered_feature_bc_matrix.h5` 또는 mtx 3종, filtered 우선. 시퀀싱 회사 납품 형태인 Cell Ranger `count` 결과(`<Sample>/outs/`)와 `multi` 결과(`outs/per_sample_outs/<Sample>/`)를 그대로 넣어도 됨). 정확한 이름이 없으면 `SampleID` + `.`/`_`/`-`로 시작하는 이름. 같은 SampleID에 행렬이 둘 이상이면 멈춤. 다른 파일은 무시 |
 | Input | `sample_data` | File (CSV) | 필수 | | 샘플 시트. 열: `SampleID`, `PatientID`, `Cohort`, `Tissue`, `Time`, `Label`(예측할 환자는 비움). 다른 열은 메타데이터로만 보관 |
 | Output | `output_dir` | Directory | 필수 | | `dataset.h5ad`, `patients.tsv`, `samples.tsv`, `splits.tsv`, `splits_cohort.tsv`, `gene_match.tsv`, `cohort_labels.tsv`, `data_dictionary.tsv`, `prep_info.json`, `plots/` |
 | Option | `positive_label` | String | 선택 | | 양성(1)으로 볼 라벨 값(예: PR). 라벨이 있으면 필요(1/0이면 생략 가능) |
