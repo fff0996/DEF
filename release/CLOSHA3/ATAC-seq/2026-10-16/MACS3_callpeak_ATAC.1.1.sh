@@ -429,6 +429,8 @@ run_macs3_one() {
 	if [ "$exit_code" -ne 0 ]; then
 		echo "Error: MACS3 failed for $sample_id with exit code $exit_code" >&2
 		echo "Check logs: $sample_log, $sample_err" >&2
+		# MACS3 messages stay in the per-sample file; its last lines also go to stderr
+		if [ -s "$sample_err" ]; then echo "Last lines of $sample_err:" >&2; tail -n 20 "$sample_err" >&2; fi
 		return "$exit_code"
 	fi
 
@@ -442,6 +444,8 @@ run_macs3_one() {
 	if [ ! -s "$peak_file" ]; then
 		echo "Error: peak file not created or empty: $peak_file" >&2
 		echo "Check logs: $sample_log, $sample_err" >&2
+		# MACS3 messages stay in the per-sample file; its last lines also go to stderr
+		if [ -s "$sample_err" ]; then echo "Last lines of $sample_err:" >&2; tail -n 20 "$sample_err" >&2; fi
 		return 1
 	fi
 

@@ -41,3 +41,9 @@ CLOSHA 2.0의 ATAC-seq 파이프라인을 CLOSHA 3.0으로 옮긴 첫 배포입�
 공개(배포) 모듈의 실행 명령에는 CLOSHA가 항상 `--env OMP_NUM_THREADS=1`을 붙인다. 코어 수를 `nproc`으로 읽던 스크립트는 이 값을 따라 등록 코어 수와 상관없이 1코어로 돌았다(예: 2026-10-21 bowtie2 로그 `Threads: 1 (requested auto, allocated 1)`, 2026-10-28 spatial_hd_rctd `max_cores used = 1 (allocated 1)`). 코어 수를 읽는 줄만 `env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc`(Slurm이 묶어 준 CPU 수)으로 바꾸고, 그 줄을 설명하는 주석을 고쳤다. 사용자 결정으로 배포 번호는 올리지 않고 이 폴더의 파일과 작업 파일을 같은 내용으로 고쳤다(`tools/check_release.py` 일치 확인). 분석 결과는 바뀌지 않고 속도만 바뀐다. 근거는 `docs/CLOSHA_Script_Rules_v1.md` 2.1절과 11절.
 
 고친 파일: bowtie2.1.1.sh, organellar_filter.1.1.sh, MACS3_callpeak_ATAC.1.1.sh, atac_motif.1.2.R, tf_footprinting.1.1.sh, replicate_consistency.1.0.sh.
+
+## 2026-11-04 수정 (번호는 그대로)
+
+bowtie2, samtools, MACS3, IDR의 오류 메시지는 샘플별 로그 파일(`<sample>_bowtie.log`, MACS3 `*.stderr.log`, IDR `*.idr.stderr.log`)에만 쓰여, 실패했을 때 화면 stderr에는 "실패했다, 파일을 보라"만 나오고 원인은 보이지 않았다. 실패한 경우에만 그 파일의 마지막 20줄을 stderr로도 내보내게 했다(`docs/CLOSHA_Script_Rules_v1.md` 7절). 샘플별 로그 파일은 그대로 두고, 성공한 실행의 출력과 분석 결과는 바뀌지 않는다. 사용자 결정으로 배포 번호는 올리지 않고 이 폴더의 파일과 작업 파일을 같은 내용으로 고쳤다(`tools/check_release.py` 일치 확인).
+
+고친 파일: bowtie2.1.1.sh, MACS3_callpeak_ATAC.1.1.sh, replicate_consistency.1.0.sh.

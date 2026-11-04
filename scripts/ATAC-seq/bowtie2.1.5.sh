@@ -177,6 +177,13 @@ log_error_critical() {
     exit 1
 }
 
+# bowtie2 and samtools messages stay in the per-sample log; when a step fails, the
+# last lines of that log also go to stderr so the reason is on screen.
+show_tool_log() {
+    [ -s "$1" ] || return 0
+    { echo "Last lines of $1:"; tail -n 20 "$1"; } >&2
+}
+
 # =============================================================================
 # Parameter Validation Functions
 # =============================================================================
@@ -368,6 +375,7 @@ process_sam_to_bam() {
 
     if [ $view_exit_code -ne 0 ] || [ ! -f "$temp_unsorted_bam" ]; then
         log_error "SAM to BAM conversion failed (Exit code: $view_exit_code)"
+        show_tool_log "$log_file"
         # Do NOT remove SAM file if conversion failed
         return 1
     fi
@@ -381,6 +389,7 @@ process_sam_to_bam() {
 
     if [ $sort_exit_code -ne 0 ] || [ ! -f "$output_bam" ]; then
         log_error "BAM sorting failed (Exit code: $sort_exit_code)"
+        show_tool_log "$log_file"
         return 1
     fi
     log_message "Successfully sorted BAM."
@@ -392,6 +401,7 @@ process_sam_to_bam() {
 
     if [ $index_exit_code -ne 0 ] || [ ! -f "$output_bam".bai ]; then
         log_error "BAM indexing failed (Exit code: $index_exit_code)"
+        show_tool_log "$log_file"
         return 1
     fi
     log_message "Successfully created BAM index."
@@ -449,6 +459,7 @@ execute_paired_alignment() {
         fi
     else
         log_error "Bowtie2 paired-end alignment failed for $clean_name"
+        show_tool_log "$log_file"
         return 1
     fi
 }
@@ -505,6 +516,7 @@ execute_single_alignment() {
         fi
     else
         log_error "Bowtie2 single-end alignment failed for $clean_name"
+        show_tool_log "$log_file"
         return 1
     fi
 }

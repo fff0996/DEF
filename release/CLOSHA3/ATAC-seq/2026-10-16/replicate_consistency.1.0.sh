@@ -287,6 +287,10 @@ call_relaxed() {
 		--keep-dup all --nomodel -p "$pvalue" \
 		> "${prefix}_macs3.log" 2> "${prefix}_macs3.stderr.log"; then
 		echo "Error: MACS3 failed for $name; see ${prefix}_macs3.stderr.log" >&2
+		# MACS3 messages stay in that file; its last lines also go to stderr
+		if [ -s "${prefix}_macs3.stderr.log" ]; then
+			echo "Last lines of ${prefix}_macs3.stderr.log:" >&2; tail -n 20 "${prefix}_macs3.stderr.log" >&2
+		fi
 		return 1
 	fi
 	if [ ! -s "${prefix}_peaks.narrowPeak" ]; then
@@ -372,6 +376,9 @@ for condition in "${conditions[@]}"; do
 				fi
 			else
 				echo "Warning: IDR failed for ${pair}; see ${cond_idr}/${pair}.idr.stderr.log" >&2
+				if [ -s "${cond_idr}/${pair}.idr.stderr.log" ]; then
+					echo "Last lines of ${cond_idr}/${pair}.idr.stderr.log:" >&2; tail -n 20 "${cond_idr}/${pair}.idr.stderr.log" >&2
+				fi
 				n_pass="NA"
 				status="failed_idr"
 				pairs_failed=$((pairs_failed + 1))
