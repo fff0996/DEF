@@ -17,13 +17,15 @@
 #       positive_label=PR time=Before
 #
 # Arguments:
-#   input_dir            (required) - Folder with one count matrix per sample, found by SampleID:
+#   input_dir            (required) - Folder with one count matrix per sample, in any folder
+#                                     layout; each matrix is found by SampleID anywhere below it:
 #                                     <SampleID>.h5 (10x Cell Ranger), <SampleID>.h5ad (raw counts
-#                                     in X or layers["counts"]), or a folder <SampleID>/ with a 10x
-#                                     matrix (matrix.mtx.gz, features.tsv.gz, barcodes.tsv.gz or
-#                                     filtered_feature_bc_matrix.h5). <SampleID>.h5 and .h5ad are
-#                                     also found in subfolders (e.g. a K-BDS download, where
-#                                     each file sits in <KAS sample>/<KGD data>/).
+#                                     in X or layers["counts"]), or a folder <SampleID>/ holding a
+#                                     10x matrix at any depth (filtered_feature_bc_matrix.h5, or
+#                                     matrix.mtx.gz + features.tsv.gz + barcodes.tsv.gz; filtered
+#                                     before raw, so a Cell Ranger output folder works). Without an
+#                                     exact name, names starting with SampleID and . _ or - are
+#                                     used. Other files are ignored.
 #   sample_data          (required) - Sample sheet (CSV), one row per sample. Columns: SampleID,
 #                                     PatientID, Cohort, Tissue, Time, Label (Label may be empty
 #                                     for patients to be predicted). Other columns are kept as
@@ -231,25 +233,44 @@ def save_plot(fig, path_stem):
 
 
 # ----------------------------------------------------------------- module
+def matrices_in_folder(folder):
+    """10x matrices inside a sample folder at any depth (Cell Ranger outs/ included):
+    filtered_feature_bc_matrix.h5 first, else folders with matrix.mtx(.gz), filtered before raw."""
+    h5 = sorted(folder.rglob("filtered_feature_bc_matrix.h5"))
+    if h5:
+        return h5
+    mtx = sorted({p.parent for n in ("matrix.mtx.gz", "matrix.mtx") for p in folder.rglob(n)})
+    return [d for d in mtx if "raw" not in d.name.lower()] or mtx
+
+
 def find_matrix(log, input_dir, sample_id):
-    """The matrix of one sample: exact name first (<id>.h5, <id>.h5ad, <id>/), then the same
-    file names in subfolders (repository downloads such as K-BDS keep each file in
-    <sample>/<data>/), then names that start with the id followed by a separator. Several
-    candidates stop the run."""
-    exact = [input_dir / f"{sample_id}.h5", input_dir / f"{sample_id}.h5ad", input_dir / sample_id]
-    found = [p for p in exact if p.exists()]
-    if not found:
-        found = [p for n in (f"{sample_id}.h5", f"{sample_id}.h5ad")
-                 for p in sorted(input_dir.rglob(n)) if p.is_file()]
-    if not found:
-        pat = re.compile(re.escape(sample_id) + r"[._-]")
-        found = [p for p in sorted(input_dir.iterdir()) if pat.match(p.name)
-                 and (p.is_dir() or p.suffix in (".h5", ".h5ad"))]
-    if len(found) > 1:
-        log.fail(f"several matrices match SampleID {sample_id}: "
-                 + ", ".join(str(p.relative_to(input_dir)) for p in found)
-                 + "\nRename the files so that one starts with the SampleID.")
-    return found[0] if found else None
+    """The matrix of one sample, searched anywhere below input_dir, so any folder layout works
+    (flat folder, a folder per sample, repository downloads, Cell Ranger output): a file
+    <id>.h5 / <id>.h5ad or a folder <id>/ holding a 10x matrix; when none has the exact name,
+    names that start with the id followed by . _ or -. Several candidates stop the run."""
+    pat = re.compile(re.escape(sample_id) + r"[._-]")
+    entries = sorted(input_dir.rglob("*"))
+    for exact in (True, False):
+        def named(p, stem):
+            return stem == sample_id if exact else bool(pat.match(p.name))
+        files = [p for p in entries if p.is_file() and p.suffix in (".h5", ".h5ad")
+                 and named(p, p.stem)]
+        folders = [p for p in entries if p.is_dir() and named(p, p.name)]
+        found = list(files)
+        for d in folders:
+            inner = matrices_in_folder(d)
+            if len(inner) > 1:
+                log.fail(f"several 10x matrices in the folder of SampleID {sample_id}: "
+                         + ", ".join(str(p.relative_to(input_dir)) for p in inner))
+            if inner and not any(f.is_relative_to(d) for f in files):
+                found.append(inner[0])
+        if len(found) > 1:
+            log.fail(f"several matrices match SampleID {sample_id}: "
+                     + ", ".join(str(p.relative_to(input_dir)) for p in found)
+                     + "\nKeep one matrix per SampleID below input_dir, or rename the files.")
+        if found:
+            return found[0]
+    return None
 
 
 def read_matrix(log, sc, path):
