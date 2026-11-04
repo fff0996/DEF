@@ -20,7 +20,7 @@ CLOSHA에 scGPT 파이프라인 모듈을 등록할 때 쓰는 Input / Output / 
                                                                                  ├─> [scgpt_predict] <───────────────┤
                                                                                  └─> [scgpt_compare] <───────────────┘
 ```
-- train, predict, compare는 모두 embed의 output_dir를 `input_dir`로 받는다. predict와 compare는 train의 output_dir를 `model`/`models`로 받는다.
+- train, predict, compare는 모두 embed의 output_dir를 `input_dir`로 받는다. predict와 compare는 train의 output_dir를 `model`/`models`로 받는다. 캔버스에서는 train의 output_dir를 predict의 `model` 포트와 compare의 `models` 포트에 잇는다(`input_dir`에 이으면 embeddings.h5ad가 없어 멈춤).
 - 새 환자 예측: 새 데이터로 prep → embed를 돌리고, predict에 학습된 모델(train output_dir)을 준다.
 
 ## 1. scgpt_prep
@@ -96,7 +96,7 @@ CLOSHA에 scGPT 파이프라인 모듈을 등록할 때 쓰는 Input / Output / 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
 | Input | `input_dir` | Directory | 필수 | | 라벨 있는 scgpt_embed output_dir(PCA 기준선은 embed_info.json에 적힌 prep 폴더도 읽음) |
-| Input | `models` | String | 선택 | | scgpt_train output_dir들(쉼표 구분). 비우면 기준선만 |
+| Input | `models` | Directory | 선택 | | scgpt_train의 output_dir. 비우면 기준선만. 포털에서는 폴더 하나로 등록(스크립트는 쉼표로 여러 폴더도 받음: 명령줄 실행용) |
 | Output | `output_dir` | Directory | 필수 | | `compare_metrics.tsv`, `compare_delta.tsv`, `compare_cohort.tsv`, `compare_predictions.tsv`, `summary.md`, `plots/` |
 | Option | `n_hvg` | Integer | 선택 | `2000` | PCA 기준선의 고변동 유전자 수 |
 | Option | `n_pcs` | Integer | 선택 | `30` | PCA 기준선의 주성분 수 |
