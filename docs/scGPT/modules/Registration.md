@@ -29,7 +29,7 @@ CLOSHA에 scGPT 파이프라인 모듈을 등록할 때 쓰는 Input / Output / 
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 필수 | | 샘플마다 행렬 하나: `<SampleID>.h5`(Cell Ranger), `<SampleID>.h5ad`(raw count), 또는 `<SampleID>/` 폴더(10x mtx) |
+| Input | `input_dir` | Directory | 필수 | | 샘플마다 행렬 하나: `<SampleID>.h5`(Cell Ranger), `<SampleID>.h5ad`(raw count), 또는 `<SampleID>/` 폴더(10x mtx). `.h5`·`.h5ad`는 하위 폴더에 있어도 찾음(K-BDS 내려받기 구조 `KAS…/KGD…/<SampleID>.h5` 그대로 가능). 같은 이름이 두 곳에 있으면 멈춤 |
 | Input | `sample_data` | File (CSV) | 필수 | | 샘플 시트. 열: `SampleID`, `PatientID`, `Cohort`, `Tissue`, `Time`, `Label`(예측할 환자는 비움). 다른 열은 메타데이터로만 보관 |
 | Output | `output_dir` | Directory | 필수 | | `dataset.h5ad`, `patients.tsv`, `samples.tsv`, `splits.tsv`, `splits_cohort.tsv`, `gene_match.tsv`, `cohort_labels.tsv`, `data_dictionary.tsv`, `prep_info.json`, `plots/` |
 | Option | `positive_label` | String | 선택 | | 양성(1)으로 볼 라벨 값(예: PR). 라벨이 있으면 필요(1/0이면 생략 가능) |

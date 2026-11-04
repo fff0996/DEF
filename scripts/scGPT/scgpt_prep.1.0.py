@@ -21,7 +21,9 @@
 #                                     <SampleID>.h5 (10x Cell Ranger), <SampleID>.h5ad (raw counts
 #                                     in X or layers["counts"]), or a folder <SampleID>/ with a 10x
 #                                     matrix (matrix.mtx.gz, features.tsv.gz, barcodes.tsv.gz or
-#                                     filtered_feature_bc_matrix.h5)
+#                                     filtered_feature_bc_matrix.h5). <SampleID>.h5 and .h5ad are
+#                                     also found in subfolders (e.g. a K-BDS download, where
+#                                     each file sits in <KAS sample>/<KGD data>/).
 #   sample_data          (required) - Sample sheet (CSV), one row per sample. Columns: SampleID,
 #                                     PatientID, Cohort, Tissue, Time, Label (Label may be empty
 #                                     for patients to be predicted). Other columns are kept as
@@ -230,16 +232,22 @@ def save_plot(fig, path_stem):
 
 # ----------------------------------------------------------------- module
 def find_matrix(log, input_dir, sample_id):
-    """The matrix of one sample: exact name first (<id>.h5, <id>.h5ad, <id>/), then names that
-    start with the id followed by a separator. Several candidates stop the run."""
+    """The matrix of one sample: exact name first (<id>.h5, <id>.h5ad, <id>/), then the same
+    file names in subfolders (repository downloads such as K-BDS keep each file in
+    <sample>/<data>/), then names that start with the id followed by a separator. Several
+    candidates stop the run."""
     exact = [input_dir / f"{sample_id}.h5", input_dir / f"{sample_id}.h5ad", input_dir / sample_id]
     found = [p for p in exact if p.exists()]
+    if not found:
+        found = [p for n in (f"{sample_id}.h5", f"{sample_id}.h5ad")
+                 for p in sorted(input_dir.rglob(n)) if p.is_file()]
     if not found:
         pat = re.compile(re.escape(sample_id) + r"[._-]")
         found = [p for p in sorted(input_dir.iterdir()) if pat.match(p.name)
                  and (p.is_dir() or p.suffix in (".h5", ".h5ad"))]
     if len(found) > 1:
-        log.fail(f"several matrices match SampleID {sample_id}: " + ", ".join(p.name for p in found)
+        log.fail(f"several matrices match SampleID {sample_id}: "
+                 + ", ".join(str(p.relative_to(input_dir)) for p in found)
                  + "\nRename the files so that one starts with the SampleID.")
     return found[0] if found else None
 
