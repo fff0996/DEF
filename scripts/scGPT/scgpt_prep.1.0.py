@@ -143,8 +143,32 @@ def allocated_cores():
         return max(1, len(os.sched_getaffinity(0)))
 
 
+class _Tee:
+    """Text stream that writes to the screen stream and to a log file."""
+
+    def __init__(self, screen, fh):
+        self.screen, self.fh = screen, fh
+
+    def write(self, text):
+        self.screen.write(text)
+        self.fh.write(text)
+        return len(text)
+
+    def flush(self):
+        self.screen.flush()
+        self.fh.flush()
+
+    def isatty(self):
+        return False
+
+    def __getattr__(self, name):
+        return getattr(self.screen, name)
+
+
 class Log:
-    """stdout -> <stamp>.log, stderr -> <stamp>.error.log, both also on screen."""
+    """stdout -> <stamp>.log, stderr -> <stamp>.error.log, both also on screen. sys.stdout and
+    sys.stderr are replaced, so library messages and uncaught errors (tracebacks) reach the same
+    files (docs/CLOSHA_Script_Rules_v1.md 7)."""
 
     def __init__(self, output_dir):
         logs_dir = output_dir / "logs"
@@ -154,32 +178,32 @@ class Log:
         self.err_file = logs_dir / f"{stamp}.error.log"
         self.out = self.log_file.open("a", encoding="utf-8")
         self.err = self.err_file.open("a", encoding="utf-8")
+        sys.stdout = _Tee(sys.__stdout__, self.out)
+        sys.stderr = _Tee(sys.__stderr__, self.err)
         warnings.showwarning = self._python_warning
+        sys.excepthook = self._uncaught
 
     def msg(self, text=""):
         print(text, flush=True)
-        self.out.write(text + "\n")
-        self.out.flush()
 
     def warn(self, text):
         print(f"Warning: {text}", file=sys.stderr, flush=True)
-        self.err.write(f"Warning: {text}\n")
-        self.err.flush()
 
     def fail(self, text):
         print(f"Error: {text}", file=sys.stderr, flush=True)
-        self.err.write(f"Error: {text}\n")
-        self.err.flush()
         sys.exit(1)
 
     def step(self, text):
         self.msg(f"############################## {text}")
 
     def _python_warning(self, message, category, filename, lineno, file=None, line=None):
-        text = f"Warning: {category.__name__}: {message} ({Path(filename).name}:{lineno})"
-        print(text, file=sys.stderr, flush=True)
-        self.err.write(text + "\n")
-        self.err.flush()
+        print(f"Warning: {category.__name__}: {message} ({Path(filename).name}:{lineno})",
+              file=sys.stderr, flush=True)
+
+    def _uncaught(self, etype, value, tb):
+        import traceback
+        print(f"Error: unexpected failure ({etype.__name__}: {value})\n"
+              + "".join(traceback.format_exception(etype, value, tb)), end="", file=sys.stderr, flush=True)
 
 
 def prepare_output(output_dir, inputs):
