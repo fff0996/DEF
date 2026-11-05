@@ -22,8 +22,11 @@ def reset():
         x.clear()
 
 
-PURPLE, BLUE, GREEN, YELLOW = "#A8509C", "#1269FF", "#7CC744", "#FFB400"
-ORANGE, DARK, GRAY_BG, TEXT = "#F07800", "#3D3D3D", "#EEEEEE", "#2B2B2B"
+# Style 2026-11-05 (user's revised ATAC-seq map): softer line colours, light nodes with a
+# border in their line colour, title at the top right.
+PURPLE, BLUE, GREEN, YELLOW = "#A86CC1", "#3D7FD9", "#66C48F", "#F6C54A"
+ORANGE, DARK, GRAY_BG, TEXT = "#F47B20", "#3D3D3D", "#EEEEEE", "#2B2B2B"
+NODE_FILL = {PURPLE: "#FBF5FC", BLUE: "#F3F7FE", GREEN: "#F2FAF5", YELLOW: "#FFFAEC"}
 LW = 15
 
 svg = []
@@ -105,18 +108,20 @@ def place_arrows():
     return "".join(out)
 
 
-def node(x, y, label, w=None):
+def node(x, y, label, w=None, color=DARK):
+    """Module box: light fill with a border in the colour of its line (color)."""
     rows = label.split("\n")
     w = w or max(len(t) for t in rows) * 15.5 + 120
-    h = 80
+    h = 80 if len(rows) == 1 else 92
     blocks.append((x - w / 2 - 8, y - h / 2, x + w / 2 + 8, y + h / 2))
-    s = (f'<rect x="{x - w / 2}" y="{y - h / 2}" width="{w}" height="{h}" rx="{h / 2}" fill="{DARK}"/>'
-         f'<rect x="{x - w / 2 + 30}" y="{y - 12}" width="24" height="22" rx="3" fill="#6B6B6B"/>'
-         f'<text x="{x - w / 2 + 34}" y="{y + 4}" font-family="monospace" font-size="11" fill="#fff">&gt;_</text>')
+    s = (f'<rect x="{x - w / 2}" y="{y - h / 2}" width="{w}" height="{h}" rx="16" '
+         f'fill="{NODE_FILL.get(color, "#FFFFFF")}" stroke="{color}" stroke-width="3"/>'
+         f'<rect x="{x - w / 2 + 26}" y="{y - 12}" width="24" height="22" rx="3" fill="#5A5A5A"/>'
+         f'<text x="{x - w / 2 + 30}" y="{y + 4}" font-family="monospace" font-size="11" fill="#fff">&gt;_</text>')
     ty = y + 9 - (len(rows) - 1) * 13
     for i, t in enumerate(rows):
         s += (f'<text x="{x + 18}" y="{ty + i * 26}" text-anchor="middle" font-family="{FONT}" '
-              f'font-size="24" font-weight="600" fill="#fff">{t}</text>')
+              f'font-size="26" font-weight="500" fill="{TEXT}">{t}</text>')
     overlay.append(s)
     return w
 
@@ -217,7 +222,8 @@ def refs(x, ny, items):
 def save(path, width, height, title, stages, legend_y):
     """Write the SVG: pipeline title, routes, arrows, overlay and legend.
     stages: [(color, text)] of the line colours."""
-    t = (f'<text x="60" y="100" font-family="{FONT}" font-size="44" font-weight="700" fill="{TEXT}">{title}</text>')
+    t = (f'<text x="{width - 60}" y="100" text-anchor="end" font-family="{FONT}" font-size="44" '
+         f'font-weight="700" fill="{TEXT}">{title}</text>')
     lg = [f'<text x="60" y="{legend_y}" font-family="{FONT}" font-size="30" font-weight="700" fill="{TEXT}">Legend</text>']
     for i, (c, s) in enumerate(stages):
         y = legend_y + 42 + i * 42

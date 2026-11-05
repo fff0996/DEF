@@ -29,10 +29,10 @@ m.route([(700, yT), (700, yT + 150)], YELLOW)
 m.route([(700, yM), (700, yM + 150)], YELLOW)
 m.route([(1520, yM), (1520, yM + 170)], YELLOW)
 
-m.node(700, yT, "cnv_facets")
-m.node(700, yM, "cnvkit_\nreference")
-m.node(1450, yM, "cnvkit_call")
-m.node(2150, yM, "cnv_summary")
+m.node(700, yT, "cnv_facets", color=BLUE)
+m.node(700, yM, "cnvkit_\nreference", color=PURPLE)
+m.node(1450, yM, "cnvkit_call", color=GREEN)
+m.node(2150, yM, "cnv_summary", color=GREEN)
 
 m.refs(700, yT, [("SNP sites (.vcf.gz)", "vcf")])
 m.refs(700, yM, [("REF.FASTA", "fasta"), ("Targets (.bed)", "doc"), ("refFlat (.txt)", "fasta")])
@@ -48,7 +48,7 @@ m.outputs(700, yT + 150, ["TSV", "PDF", "PNG"], above=False, gap=30)
 m.outputs(700, yM + 150, ["CNN", "BED", "TSV"], above=False, gap=30)
 m.outputs(1520, yM + 170, ["TSV", "SEG", "PDF", "PNG"], above=False, gap=46, dx=170)
 m.outputs(2150, yM + 170, ["TSV", "SEG", "PDF", "PNG", "HTML"], above=False, gap=46)
-m.save(HERE / "pipeline_tumor_normal.svg", W, 1800, "CNV pipeline (tumor-normal)", STAGES, 1620)
+m.save(HERE / "pipeline_tumor_normal.svg", W, 1800, "CNV_Tumor_Normal_Pipeline", STAGES, 1620)
 
 # ---------------------------------------------------------------- tumor-only
 m.reset()
@@ -60,9 +60,9 @@ m.route([(2150, yM), (2150, yM + 170)], YELLOW)
 m.route([(700, yM), (700, yM + 150)], YELLOW)
 m.route([(1520, yM), (1520, yM + 170)], YELLOW)
 
-m.node(700, yM, "cnvkit_\nreference")
-m.node(1450, yM, "cnvkit_call")
-m.node(2150, yM, "cnv_summary")
+m.node(700, yM, "cnvkit_\nreference", color=PURPLE)
+m.node(1450, yM, "cnvkit_call", color=GREEN)
+m.node(2150, yM, "cnv_summary", color=GREEN)
 m.refs(700, yM, [("REF.FASTA", "fasta"), ("Targets (.bed)", "doc"), ("refFlat (.txt)", "fasta")])
 m.refs(1400, yM, [("Genes (.txt)", "doc")])
 
@@ -74,5 +74,5 @@ m.tag(850, yM + 340, "BAM", "in", above=False, gap=50, icon="bam")
 m.outputs(700, yM + 150, ["CNN", "BED", "TSV"], above=False, gap=30)
 m.outputs(1520, yM + 170, ["TSV", "SEG", "PDF", "PNG"], above=False, gap=46, dx=170)
 m.outputs(2150, yM + 170, ["TSV", "SEG", "PDF", "PNG", "HTML"], above=False, gap=46)
-m.save(HERE / "pipeline_tumor_only.svg", W, 1300, "CNV pipeline (tumor-only)",
+m.save(HERE / "pipeline_tumor_only.svg", W, 1300, "CNV_Tumor_Only_Pipeline",
        [s for s in STAGES if s[0] != BLUE], 1100)
