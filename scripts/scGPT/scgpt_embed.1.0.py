@@ -413,6 +413,8 @@ def main():
     u = e.copy()
     sc.pp.neighbors(u, n_neighbors=min(15, max(2, u.n_obs - 1)), use_rep="X", random_state=seed)
     sc.tl.umap(u, random_state=seed)
+    # patients without a label (to be predicted) get a named legend entry
+    u.obs["Label"] = u.obs["Label"].astype(str).replace({"": "unlabeled", "nan": "unlabeled"})
     cols = ["Label", "Cohort", "cell_type"]
     fig, axes = plt.subplots(1, 3, figsize=(16, 4.8))
     for ax, c in zip(axes, cols):
