@@ -3,8 +3,8 @@
 
 Usage:
     python cnv_summary.1.0.py input_dir="..." output_dir="..."
-        [facets_dir="..."] [genes="..."] [genome="hg38"] [cytoband=""] [bin_size="1000000"]
-        [top_genes="30"]
+        [facets_dir="..."] [genes="..."] [sample_data="..."] [genome="hg38"] [cytoband=""]
+        [bin_size="1000000"] [top_genes="30"]
 
 Example:
     apptainer exec bx_cnvkit.1.0.sif python cnv_summary.1.0.py \
@@ -22,6 +22,9 @@ Arguments (key=value):
                             Adds purity, ploidy, LOH and WGD. Empty: CNVkit only.
     genes      (optional) - Genes of interest, one symbol per line (or the first column
                             of a TSV). Empty: the most frequently altered genes.
+    sample_data (optional) - Sample annotations (CSV or TSV) with a SampleID column; every
+                            other column (up to 8) is drawn as a track under the oncoprint
+                            (text: categories, numbers: colour scale). Empty: FACETS tracks only.
     genome     (optional) - hg38 or hg19; selects the bundled UCSC cytoband table for
                             chromosome arms. default: hg38
     cytoband   (optional) - UCSC cytoBand file (plain or .gz) instead of the bundled one.
@@ -57,7 +60,7 @@ import threading
 
 MODULE = "cnv_summary"
 REQUIRED = ["input_dir", "output_dir"]
-OPTIONAL = {"facets_dir": "", "genes": "", "genome": "hg38", "cytoband": "", "bin_size": "1000000",
+OPTIONAL = {"facets_dir": "", "genes": "", "sample_data": "", "genome": "hg38", "cytoband": "", "bin_size": "1000000",
             "top_genes": "30"}
 CATEGORY_COLORS = {"AMP": "#B2182B", "GAIN": "#EF8A62", "NEUTRAL": "#F0F0F0",
                    "LOSS": "#67A9CF", "DEEPDEL": "#2166AC", "NA": "#FFFFFF"}
@@ -231,6 +234,9 @@ def main():
     genes_path = Path(params["genes"]) if params["genes"] else None
     if genes_path and not genes_path.is_file():
         fail(f"genes file not found: {genes_path}")
+    meta_path = Path(params["sample_data"]) if params["sample_data"] else None
+    if meta_path and not meta_path.is_file():
+        fail(f"sample_data file not found: {meta_path}")
     if params["genome"] not in ("hg38", "hg19"):
         fail(f"genome must be hg38 or hg19: {params['genome']}")
     if params["cytoband"]:
@@ -244,7 +250,7 @@ def main():
         if not params[name].isdigit() or int(params[name]) < 1:
             fail(f"{name} must be a positive integer: {params[name]}")
     bin_size, top_n = int(params["bin_size"]), int(params["top_genes"])
-    check_outside(output_dir, input_dir, facets_dir, genes_path, params["cytoband"])
+    check_outside(output_dir, input_dir, facets_dir, genes_path, meta_path, params["cytoband"])
 
     import numpy as np
     import pandas as pd
@@ -282,6 +288,22 @@ def main():
                                       "CN": "Int64"}) if g.is_file() else pd.DataFrame()
     facets = pd.read_csv(facets_dir / "04_summary" / "facets_summary.tsv", sep="\t", dtype=str) if facets_dir else None
     gene_set = read_gene_list(genes_path) if genes_path else []
+    meta = None
+    if meta_path:
+        try:
+            meta = pd.read_csv(meta_path, sep=None, engine="python", dtype=str, keep_default_na=False,
+                               encoding="utf-8-sig")
+        except Exception as exc:  # noqa: BLE001 - any parse error is reported the same way
+            fail(f"cannot read sample_data {meta_path}: {exc}")
+        meta.columns = [c.strip() for c in meta.columns]
+        if "SampleID" not in meta.columns:
+            fail(f"sample_data needs a SampleID column: {meta_path}",
+                 f"Columns found: {', '.join(meta.columns)}")
+        meta = meta.drop_duplicates("SampleID").set_index("SampleID")
+        missing = [s for s in samples if s not in meta.index]
+        if missing:
+            warn(f"{len(missing)} sample(s) not in sample_data (blank in the annotation tracks): "
+                 + ", ".join(missing[:20]) + (" ..." if len(missing) > 20 else ""))
     info(f"Samples: {len(samples)} ({', '.join(samples)})")
     info(f"FACETS: {'yes' if facets is not None else 'no'}")
     plt = plotting()
@@ -495,38 +517,166 @@ def main():
         ax2.set_title("Aneuploidy\nscore", fontsize=8)
         save_figure(plt, fig, d_plot, "arm_heatmap", made)
 
-    # Gene oncoprint.
+    # Gene oncoprint (as in cBioPortal or maftools): genes sorted by the number of altered samples
+    # with the percentage on the left, samples sorted by their alterations (memo sort), stacked
+    # counts per sample on top and per gene on the right, annotation tracks below (FACETS purity,
+    # ploidy and WGD; sample_data columns).
     genes_in = [g for g in gene_set if g in set(gl["Gene"])]
     if genes_in:
-        piv = gl[gl["Gene"].isin(genes_in)].pivot(index="Gene", columns="SampleID", values="Call").reindex(
-            index=genes_in, columns=samples)
-        loh = gl[gl["Gene"].isin(genes_in)].pivot(index="Gene", columns="SampleID", values="LOH").reindex(
+        sub = gl[gl["Gene"].isin(genes_in)]
+        piv = sub.pivot(index="Gene", columns="SampleID", values="Call").reindex(index=genes_in, columns=samples)
+        loh = sub.pivot(index="Gene", columns="SampleID", values="LOH").reindex(
             index=genes_in, columns=samples) if "LOH" in gl.columns else None
-        fig, ax = plt.subplots(figsize=(max(4, 0.45 * len(samples) + 2.5), 0.3 * len(genes_in) + 1.6))
+        altered = piv.isin(CATEGORIES)
+        genes_in = list(altered.sum(axis=1).sort_values(ascending=False, kind="stable").index)
+        piv, altered = piv.loc[genes_in], altered.loc[genes_in]
+        s_order = sorted(samples, key=lambda x: tuple(-int(altered.loc[g, x]) for g in genes_in))
+        n_s, n_g = len(s_order), len(genes_in)
+
+        tracks = []   # (name, {sample: value}, "cat" or "num")
+        if facets is not None:
+            fi = facets.drop_duplicates("SampleID").set_index("SampleID")
+            for col in ("Purity", "Ploidy"):
+                if col in fi.columns:
+                    tracks.append((col, pd.to_numeric(fi[col], errors="coerce").to_dict(), "num"))
+            if "WGD" in fi.columns:
+                tracks.append(("WGD", fi["WGD"].to_dict(), "cat"))
+        if meta is not None:
+            cols = [c for c in meta.columns if (meta[c].str.strip() != "").any()]
+            if len(cols) > 8:
+                warn(f"sample_data has {len(cols)} annotation columns; the first 8 are drawn: {', '.join(cols[:8])}")
+                cols = cols[:8]
+            for c in cols:
+                v = meta[c].str.strip()
+                num = pd.to_numeric(v.replace("", np.nan), errors="coerce")
+                if num.notna().sum() == (v != "").sum() and num.nunique() > 8:
+                    tracks.append((c, num.to_dict(), "num"))
+                else:
+                    tracks.append((c, v.to_dict(), "cat"))
+
+        cw = min(0.32, max(0.06, 9.0 / n_s))           # cell width (inches)
+        ch, th, top_h = 0.24, 0.2, 0.9
+        main_w, bar_w, leg_w = n_s * cw, 1.3, 2.4
+        fig = plt.figure(figsize=(0.9 + main_w + 1.2 + bar_w + leg_w, top_h + n_g * ch + len(tracks) * th + 1.4))
+        gs = fig.add_gridspec(3, 3, width_ratios=[main_w, bar_w + 1.2, leg_w],
+                              height_ratios=[top_h, n_g * ch, max(len(tracks) * th, 0.01)], hspace=0.04, wspace=0.02)
+        ax_top, ax = fig.add_subplot(gs[0, 0]), fig.add_subplot(gs[1, 0])
+        ax_bar, ax_leg = fig.add_subplot(gs[1, 1]), fig.add_subplot(gs[:, 2])
+        ax_leg.axis("off")
+
+        # top: altered genes per sample, stacked by call
+        bottom = np.zeros(n_s)
+        for cat in CATEGORIES:
+            v = np.array([(piv[x] == cat).sum() for x in s_order], dtype=float)
+            ax_top.bar(np.arange(n_s) + 0.5, v, width=0.85, bottom=bottom, color=CATEGORY_COLORS[cat], lw=0)
+            bottom += v
+        ax_top.set_xlim(0, n_s)
+        ax_top.set_xticks([])
+        ax_top.spines["bottom"].set_visible(False)
+        ax_top.set_ylabel("Genes", fontsize=7)
+        from matplotlib.ticker import MaxNLocator
+        ax_top.yaxis.set_major_locator(MaxNLocator(integer=True, nbins=4))
+        ax_top.tick_params(labelsize=7)
+        ax_top.set_title("Gene-level copy number" + ("" if params["genes"] else " (most frequently altered genes)"),
+                         loc="left")
+
+        # matrix: gray cell for no change, call colour for an alteration, dot for LOH
         for yi, g in enumerate(genes_in):
-            for xi, s in enumerate(samples):
-                cat = piv.loc[g, s] if isinstance(piv.loc[g, s], str) else "NA"
-                ax.add_patch(plt.Rectangle((xi + 0.05, yi + 0.08), 0.9, 0.84, fc=CATEGORY_COLORS.get(cat, "#FFFFFF"),
-                                           ec="#DDDDDD", lw=0.4))
-                if loh is not None and loh.loc[g, s] == "yes":
-                    ax.plot(xi + 0.5, yi + 0.5, marker="o", ms=3.5, color=LOH_COLOR, mec="white", mew=0.4)
-        ax.set_xlim(0, len(samples))
-        ax.set_ylim(len(genes_in), 0)
-        ax.set_xticks(np.arange(len(samples)) + 0.5)
-        ax.set_xticklabels(samples, rotation=90, fontsize=7)
-        ax.set_yticks(np.arange(len(genes_in)) + 0.5)
-        ax.set_yticklabels(genes_in, fontsize=7, style="italic")
-        ax.tick_params(length=0)
-        for side in ("left", "bottom"):
-            ax.spines[side].set_visible(False)
+            for xi, x in enumerate(s_order):
+                cat = piv.loc[g, x]
+                fc = CATEGORY_COLORS[cat] if cat in CATEGORIES else "#E4E4E4"
+                ax.add_patch(plt.Rectangle((xi + 0.06, yi + 0.08), 0.88, 0.84, fc=fc, lw=0))
+                if loh is not None and loh.loc[g, x] == "yes":
+                    ax.plot(xi + 0.5, yi + 0.5, marker="o", ms=min(3.5, cw * 12), color=LOH_COLOR, mec="white", mew=0.3)
+        ax.set_xlim(0, n_s)
+        ax.set_ylim(n_g, 0)
+        ax.set_xticks([])
+        ax.set_yticks(np.arange(n_g) + 0.5)
+        ax.set_yticklabels([f"{100 * altered.loc[g].sum() / n_s:.0f}%" for g in genes_in], fontsize=7)
+        ax2 = ax.twinx()
+        ax2.set_ylim(n_g, 0)
+        ax2.set_yticks(np.arange(n_g) + 0.5)
+        ax2.set_yticklabels(genes_in, fontsize=7, style="italic")
+        for a in (ax, ax2):
+            a.tick_params(length=0)
+            for side in a.spines.values():
+                side.set_visible(False)
+
+        # right: altered samples per gene, stacked by call
+        left = np.zeros(n_g)
+        for cat in CATEGORIES:
+            v = np.array([(piv.loc[g] == cat).sum() for g in genes_in], dtype=float)
+            ax_bar.barh(np.arange(n_g) + 0.5, v, height=0.8, left=left, color=CATEGORY_COLORS[cat], lw=0)
+            left += v
+        ax_bar.set_ylim(n_g, 0)
+        ax_bar.set_xlim(-0.75 * max(left.max(), 1), max(left.max(), 1) * 1.05)   # room for the gene names
+        ax_bar.set_yticks([])
+        ax_bar.spines["left"].set_visible(False)
+        ax_bar.spines["bottom"].set_visible(False)
+        ax_bar.xaxis.set_ticks_position("top")
+        ax_bar.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=4))
+        ax_bar.tick_params(labelsize=7)
+        x_hi = ax_bar.get_xlim()[1]
+        ax_bar.set_xticks([t for t in ax_bar.get_xticks() if 0 <= t <= x_hi])
+        ax_bar.set_xlim(-0.75 * max(left.max(), 1), x_hi)
+
+        # tracks under the matrix
+        handles_extra = []
         from matplotlib.patches import Patch
         from matplotlib.lines import Line2D
+        palette = ["#4E79A7", "#F28E2B", "#59A14F", "#E15759", "#76B7B2", "#EDC948", "#B07AA1", "#FF9DA7",
+                   "#9C755F", "#BAB0AC", "#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02",
+                   "#A6761D", "#1F78B4", "#B2DF8A", "#FB9A99"]
+        used = 0   # categorical tracks take consecutive palette colours, so tracks do not share colours
+        if tracks:
+            ax_tr = fig.add_subplot(gs[2, 0])
+            from matplotlib import cm, colors as mcolors
+            for ti, (name, vals, kind) in enumerate(tracks):
+                if kind == "cat":
+                    levels = sorted({str(vals.get(x, "")) for x in s_order} - {"", "nan", "None", "NA"})
+                    cmap = {lv: palette[(used + i) % len(palette)] for i, lv in enumerate(levels)}
+                    used += len(levels)
+                    for xi, x in enumerate(s_order):
+                        c = cmap.get(str(vals.get(x, "")), "#FFFFFF")
+                        ax_tr.add_patch(plt.Rectangle((xi, ti + 0.1), 1, 0.8, fc=c, lw=0))
+                    handles_extra.append(Line2D([], [], ls="", label=name))
+                    handles_extra += [Patch(color=cmap[lv], label=lv) for lv in levels]
+                else:
+                    arr = np.array([vals.get(x, np.nan) for x in s_order], dtype=float)
+                    lo, hi = np.nanmin(arr) if np.isfinite(arr).any() else 0, np.nanmax(arr) if np.isfinite(arr).any() else 1
+                    norm = mcolors.Normalize(lo, hi if hi > lo else lo + 1)
+                    for xi, v in enumerate(arr):
+                        c = cm.viridis(norm(v)) if np.isfinite(v) else "#FFFFFF"
+                        ax_tr.add_patch(plt.Rectangle((xi, ti + 0.1), 1, 0.8, fc=c, lw=0))
+                    handles_extra.append(Line2D([], [], ls="", label=f"{name}: {lo:.2g} (dark) - {hi:.2g} (yellow)"))
+            ax_tr.set_xlim(0, n_s)
+            ax_tr.set_ylim(len(tracks), 0)
+            ax_tr.set_yticks([])
+            ax_tr3 = ax_tr.twinx()
+            ax_tr3.set_ylim(len(tracks), 0)
+            ax_tr3.set_yticks(np.arange(len(tracks)) + 0.5)
+            ax_tr3.set_yticklabels([t[0] for t in tracks], fontsize=7)
+            for a in (ax_tr, ax_tr3):
+                a.tick_params(length=0)
+                for side in a.spines.values():
+                    side.set_visible(False)
+            ax_x = ax_tr
+        else:
+            ax_x = ax
+        if n_s <= 80:
+            ax_x.set_xticks(np.arange(n_s) + 0.5)
+            ax_x.set_xticklabels(s_order, rotation=90, fontsize=6 if n_s > 30 else 7)
+        fig.add_subplot(gs[2, 1]).axis("off")
+
         handles = [Patch(color=CATEGORY_COLORS[c], label=c) for c in CATEGORIES]
+        handles.append(Patch(color="#E4E4E4", label="No change"))
         if loh is not None:
             handles.append(Line2D([0], [0], marker="o", color="w", markerfacecolor=LOH_COLOR, ms=6, label="LOH"))
-        ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.01, 1), fontsize=7, frameon=False)
-        ax.set_title("Gene-level copy number" + ("" if params["genes"] else " (most frequently altered genes)"),
-                     loc="left")
+        leg = ax_leg.legend(handles=handles + handles_extra, loc="upper left", fontsize=7, frameon=False,
+                            title="Copy number", title_fontsize=8, alignment="left")
+        for t in leg.get_texts():
+            if t.get_text() in {name for name, _, _ in tracks} or ":" in t.get_text():
+                t.set_fontweight("bold")
         save_figure(plt, fig, d_plot, "gene_oncoprint", made)
 
     # Instability.

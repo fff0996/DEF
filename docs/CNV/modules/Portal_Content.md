@@ -517,6 +517,7 @@ Collects the per-sample copy-number calls into cohort tables, cohort figures and
 | Output | Required | Directory | output_dir | /data/cnv_summary | 결과 폴더(01_tables/, 02_seg/cohort.seg·gistic_segments.txt, 03_plots/, 04_report/cnv_report.html) | Output folder (01_tables/, 02_seg/cohort.seg and gistic_segments.txt, 03_plots/, 04_report/cnv_report.html) |
 | Input | Optional | Directory | facets_dir | | FACETS 결과 폴더. 안에 04_summary/facets_summary.tsv, 02_segments/, 03_plots/가 있어야 함. 비우면 CNVkit 결과만 요약(순도, LOH, WGD, 일치 그림 없음) | FACETS folder with 04_summary/facets_summary.tsv, 02_segments/, and 03_plots/. Empty: CNVkit only (no purity, LOH, WGD, or concordance) |
 | Input | Optional | File | genes | | 관심 유전자 목록(한 줄에 하나, 또는 TSV 첫 열). 비우면 자주 변한 유전자 top_genes개를 oncoprint에 넣음 | Genes of interest (one per line, or the first column of a TSV). Empty: the top_genes most frequently altered genes go into the oncoprint |
+| Input | Optional | File | sample_data | | 샘플 정보(CSV 또는 TSV). SampleID 열 필수, 나머지 열(최대 8개: 조직형, 병기, 치료 반응 등)을 oncoprint 아래 주석 줄로 그림 | Sample annotations (CSV or TSV) with a SampleID column; the other columns (up to 8: histology, stage, response and so on) are drawn as tracks under the oncoprint |
 | Option | Optional | List | genome | hg38 | 내장 UCSC cytoband 표 선택(hg38, hg19). 염색체 팔 경계에 사용 | Bundled UCSC cytoband table (hg38, hg19) for chromosome arms |
 | Input | Optional | File | cytoband | | 내장 표 대신 쓸 UCSC cytoBand 파일(일반 또는 .gz). 비우면 genome의 내장 표 사용 | UCSC cytoBand file (plain or .gz) used instead of the bundled one. Empty: the bundled table of genome |
 | Option | Optional | Integer | bin_size | 1000000 | 코호트 heatmap, 빈도 그림, 샘플 유사도의 bin 크기(bp) | Bin size (bp) of the cohort heatmap, frequency plot and sample similarity |
@@ -557,8 +558,8 @@ python cnv_summary.1.0.py \
 
 그림: `docs/CNV/modules/figures/results/cnv_summary_result_1.png`
 
-- 레전드(국문): **관심 유전자 × 샘플 판정 행렬.** 칸 색은 판정(AMP, GAIN, LOSS, DEEPDEL, 회색은 중립)이고, 분홍 점은 FACETS LOH입니다. genes를 비우면 코호트에서 자주 변한 유전자 top_genes개를 보여 줍니다. 예시 데이터에서는 TP53, ERBB2, BRCA1, NF1, ESR1이 LOSS·LOH, RUNX1이 LOSS, BRCA2와 CCND3가 GAIN, RB1과 SMAD4가 중립이었습니다.
-- 레전드(영문): **Gene-of-interest × sample call matrix.** Cell colours are calls (AMP, GAIN, LOSS, DEEPDEL; gray neutral), and pink dots mark FACETS LOH. With genes empty, the top_genes most frequently altered genes are shown. In the example data TP53, ERBB2, BRCA1, NF1 and ESR1 are LOSS with LOH, RUNX1 is LOSS, BRCA2 and CCND3 GAIN, and RB1 and SMAD4 neutral.
+- 레전드(국문): **관심 유전자 × 샘플 판정 행렬(oncoprint).** 칸 색은 판정(AMP, GAIN, LOSS, DEEPDEL, 회색은 변화 없음)이고, 분홍 점은 FACETS LOH입니다. 유전자는 변한 샘플이 많은 순서이고 왼쪽 %는 변한 샘플 비율, 오른쪽 막대는 판정별 샘플 수, 위쪽 막대는 샘플마다 변한 유전자 수입니다. 샘플은 변화 패턴 순으로 정렬하고, 아래 주석 줄은 FACETS 순도·배수성·WGD와 sample_data의 열입니다. genes를 비우면 코호트에서 자주 변한 유전자 top_genes개를 보여 줍니다. 예시 데이터에서는 TP53, ERBB2, BRCA1, NF1, ESR1이 LOSS·LOH, RUNX1이 LOSS, BRCA2와 CCND3가 GAIN, RB1과 SMAD4가 중립이었습니다.
+- 레전드(영문): **Gene-of-interest × sample call matrix (oncoprint).** Cell colours are calls (AMP, GAIN, LOSS, DEEPDEL; gray no change), and pink dots mark FACETS LOH. Genes are ordered by the number of altered samples, with the percentage on the left, counts per call on the right and altered genes per sample on top; samples are sorted by their alteration pattern, and the tracks below show FACETS purity, ploidy and WGD and the sample_data columns. With genes empty, the top_genes most frequently altered genes are shown. In the example data TP53, ERBB2, BRCA1, NF1 and ESR1 are LOSS with LOH, RUNX1 is LOSS, BRCA2 and CCND3 GAIN, and RB1 and SMAD4 neutral.
 
 **결과 2. 코호트 복제수 heatmap**
 - 결과 파일: `03_plots/cohort_heatmap.png` (PDF도 있음)

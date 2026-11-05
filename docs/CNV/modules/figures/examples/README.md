@@ -1,1 +1,3 @@
-`gene_oncoprint.png` / `.pdf`: cnv_summary oncoprint의 **10명 모양 예시**(2026-11-05). `tools/cnv/make_oncoprint_example.py`가 `scripts/CNV/cnv_summary.1.0.py`의 oncoprint 그리는 코드를 그대로 읽어 실행한다. **판정 값은 모의(simulated, 고정 seed) 데이터**로, 실제 환자나 세포주 결과가 아니다. 그림을 쓸 때는 "모의 데이터 예시"라고 밝힌다. 실제 10명을 cnv_summary에 넣으면 `03_plots/gene_oncoprint.png`로 같은 모양이 나온다.
+`gene_oncoprint.png` / `.pdf`: cnv_summary oncoprint의 **10명 예시**(2026-11-05). `tools/cnv/make_simulated_cohort.py`로 만든 **모의(simulated, 고정 seed) 10명 입력**(cnvkit_call·cnv_facets 출력 형태, sample_data.csv, genes.txt)을 `scripts/CNV/cnv_summary.1.0.py`에 그대로 넣어 실행한 실제 출력(`03_plots/gene_oncoprint.png`)이다. 판정 값과 임상 정보는 실제 환자나 세포주 결과가 아니므로, 그림을 쓸 때는 "모의 데이터 예시"라고 밝힌다.
+
+재현: `python3 tools/cnv/make_simulated_cohort.py <dir>` 후 `python3 scripts/CNV/cnv_summary.1.0.py input_dir=<dir>/cnvkit_call facets_dir=<dir>/cnv_facets genes=<dir>/genes.txt sample_data=<dir>/sample_data.csv output_dir=<out>` (numpy, pandas, scipy, matplotlib 필요).
