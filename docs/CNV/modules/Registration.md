@@ -103,6 +103,7 @@ CNV 파이프라인은 CLOSHA 3.0에서 처음 배포하므로 모든 모듈의 
 | Input | `facets_dir` | Directory | 선택 | | FACETS 결과 폴더(`04_summary/facets_summary.tsv`, `02_segments/`, `03_plots/`). 순도, 배수성, LOH, WGD를 더함. 비우면 CNVkit 결과만 |
 | Input | `genes` | File | 선택 | | 관심 유전자 목록. 비우면 자주 변한 유전자 top_genes개 |
 | Input | `sample_data` | File (CSV/TSV) | 선택 | | 샘플 정보. `SampleID` 열 필수, 나머지 열(최대 8개)을 oncoprint 아래 주석 줄로 그림(글자: 범주 색, 숫자: 색 막대). 비우면 FACETS 줄(Purity, Ploidy, WGD)만 |
+| Input | `maf` | File (MAF) | 선택 | | 같은 샘플의 체세포 돌연변이(MAF). `Tumor_Sample_Barcode`가 SampleID와 같아야 함, `Hugo_Symbol`·`Variant_Classification` 사용. 단백질을 바꾸는 돌연변이(Missense, Truncating, In-frame)를 oncoprint 칸 안 막대로 그리고 변이로 셈. 비우면 복제수만 |
 | Option | `genome` | List (`hg38`, `hg19`) | 선택 | `hg38` | 이미지에 든 UCSC cytoband 표 선택(염색체 팔 경계) |
 | Input | `cytoband` | File | 선택 | | 이미지에 든 표 대신 쓸 UCSC cytoBand 파일. 비우면 genome의 내장 표 |
 | Option | `bin_size` | Integer | 선택 | `1000000` | 코호트 heatmap, 빈도 그림, 유사도의 bin 크기(bp) |

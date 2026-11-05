@@ -3,8 +3,8 @@
 
 Usage:
     python cnv_summary.1.0.py input_dir="..." output_dir="..."
-        [facets_dir="..."] [genes="..."] [sample_data="..."] [genome="hg38"] [cytoband=""]
-        [bin_size="1000000"] [top_genes="30"]
+        [facets_dir="..."] [genes="..."] [sample_data="..."] [maf="..."] [genome="hg38"]
+        [cytoband=""] [bin_size="1000000"] [top_genes="30"]
 
 Example:
     apptainer exec bx_cnvkit.1.0.sif python cnv_summary.1.0.py \
@@ -25,6 +25,10 @@ Arguments (key=value):
     sample_data (optional) - Sample annotations (CSV or TSV) with a SampleID column; every
                             other column (up to 8) is drawn as a track under the oncoprint
                             (text: categories, numbers: colour scale). Empty: FACETS tracks only.
+    maf        (optional) - Somatic mutations (MAF) of the same samples: Tumor_Sample_Barcode must
+                            equal SampleID; Hugo_Symbol and Variant_Classification are used.
+                            Protein-changing mutations are drawn in the oncoprint over the
+                            copy-number calls and count as alterations. Empty: copy number only.
     genome     (optional) - hg38 or hg19; selects the bundled UCSC cytoband table for
                             chromosome arms. default: hg38
     cytoband   (optional) - UCSC cytoBand file (plain or .gz) instead of the bundled one.
@@ -35,7 +39,8 @@ Arguments (key=value):
 
 Outputs (output_dir):
     01_tables/  gene_calls.tsv (gene x sample category), gene_cn.tsv (gene x sample copy
-                number), interest_genes.tsv, arm_calls.tsv, instability.tsv
+                number), interest_genes.tsv, arm_calls.tsv, instability.tsv, and with maf
+                gene_mutations.tsv (gene x sample mutation class)
     02_seg/     cohort.seg (IGV), gistic_segments.txt (GISTIC2 segmentation input)
     03_plots/   cohort_heatmap, frequency, arm_heatmap, gene_oncoprint, instability,
                 purity_ploidy and concordance (with FACETS), sample_similarity
@@ -60,12 +65,18 @@ import threading
 
 MODULE = "cnv_summary"
 REQUIRED = ["input_dir", "output_dir"]
-OPTIONAL = {"facets_dir": "", "genes": "", "sample_data": "", "genome": "hg38", "cytoband": "", "bin_size": "1000000",
+OPTIONAL = {"facets_dir": "", "genes": "", "sample_data": "", "maf": "", "genome": "hg38", "cytoband": "", "bin_size": "1000000",
             "top_genes": "30"}
 CATEGORY_COLORS = {"AMP": "#B2182B", "GAIN": "#EF8A62", "NEUTRAL": "#F0F0F0",
                    "LOSS": "#67A9CF", "DEEPDEL": "#2166AC", "NA": "#FFFFFF"}
 CATEGORIES = ["AMP", "GAIN", "LOSS", "DEEPDEL"]
 LOH_COLOR = "#CC79A7"
+# MAF Variant_Classification -> mutation class in the oncoprint (protein-changing only; silent,
+# UTR, intron and other non-coding classes are left out, as in cBioPortal and maftools).
+MUT_CLASS = {"Missense_Mutation": "Missense", "Nonsense_Mutation": "Truncating", "Frame_Shift_Del": "Truncating",
+             "Frame_Shift_Ins": "Truncating", "Splice_Site": "Truncating", "Nonstop_Mutation": "Truncating",
+             "Translation_Start_Site": "Truncating", "In_Frame_Del": "In-frame", "In_Frame_Ins": "In-frame"}
+MUT_COLORS = {"Missense": "#2CA02C", "Truncating": "#111111", "In-frame": "#A65628", "Multi_hit": "#7B3294"}
 
 
 # ---------------------------------------------------------------- messages and logs
@@ -237,6 +248,9 @@ def main():
     meta_path = Path(params["sample_data"]) if params["sample_data"] else None
     if meta_path and not meta_path.is_file():
         fail(f"sample_data file not found: {meta_path}")
+    maf_path = Path(params["maf"]) if params["maf"] else None
+    if maf_path and not maf_path.is_file():
+        fail(f"maf file not found: {maf_path}")
     if params["genome"] not in ("hg38", "hg19"):
         fail(f"genome must be hg38 or hg19: {params['genome']}")
     if params["cytoband"]:
@@ -250,7 +264,7 @@ def main():
         if not params[name].isdigit() or int(params[name]) < 1:
             fail(f"{name} must be a positive integer: {params[name]}")
     bin_size, top_n = int(params["bin_size"]), int(params["top_genes"])
-    check_outside(output_dir, input_dir, facets_dir, genes_path, meta_path, params["cytoband"])
+    check_outside(output_dir, input_dir, facets_dir, genes_path, meta_path, maf_path, params["cytoband"])
 
     import numpy as np
     import pandas as pd
@@ -304,8 +318,32 @@ def main():
         if missing:
             warn(f"{len(missing)} sample(s) not in sample_data (blank in the annotation tracks): "
                  + ", ".join(missing[:20]) + (" ..." if len(missing) > 20 else ""))
+    muts = {}   # (SampleID, gene) -> mutation class
+    if maf_path:
+        try:
+            maf = pd.read_csv(maf_path, sep="\t", comment="#", dtype=str, keep_default_na=False, low_memory=False)
+        except Exception as exc:  # noqa: BLE001 - any parse error is reported the same way
+            fail(f"cannot read maf {maf_path}: {exc}")
+        lack = [c for c in ("Hugo_Symbol", "Tumor_Sample_Barcode", "Variant_Classification") if c not in maf.columns]
+        if lack:
+            fail(f"maf lacks the column(s) {', '.join(lack)}: {maf_path}",
+                 "A MAF needs Hugo_Symbol, Tumor_Sample_Barcode (= SampleID) and Variant_Classification.")
+        maf["Class"] = maf["Variant_Classification"].map(MUT_CLASS)
+        coding = maf[maf["Class"].notna()]
+        other = sorted(set(coding["Tumor_Sample_Barcode"]) - set(samples))
+        if other:
+            warn(f"{len(other)} MAF sample(s) are not CNV samples and are left out "
+                 "(Tumor_Sample_Barcode must equal SampleID): " + ", ".join(other[:10]) + (" ..." if len(other) > 10 else ""))
+        coding = coding[coding["Tumor_Sample_Barcode"].isin(samples)]
+        if coding.empty and len(maf):
+            warn("no protein-changing mutation of the CNV samples in the maf; the oncoprint shows copy number only")
+        for (smp, gene), cls in coding.groupby(["Tumor_Sample_Barcode", "Hugo_Symbol"])["Class"]:
+            muts[(smp, gene)] = cls.iloc[0] if cls.nunique() == 1 else "Multi_hit"
     info(f"Samples: {len(samples)} ({', '.join(samples)})")
     info(f"FACETS: {'yes' if facets is not None else 'no'}")
+    if maf_path:
+        info(f"MAF: {len(muts)} mutated gene-sample pairs (protein-changing) in "
+             f"{len({s for s, _ in muts})} of {len(samples)} samples")
     plt = plotting()
     made = []
     notes = []
@@ -336,12 +374,18 @@ def main():
     else:
         alt = gl[gl["Call"].isin(CATEGORIES)]
         score = alt.assign(w=alt["Call"].map({"AMP": 3, "DEEPDEL": 3, "GAIN": 1, "LOSS": 1})).groupby("Gene")["w"].sum()
+        if muts:   # a mutated sample weighs like a high-level copy-number change
+            score = score.add(pd.Series([g for _, g in muts]).value_counts() * 3, fill_value=0)
         top = list(score.sort_values(ascending=False).head(top_n).index)
         sel = gl[gl["Gene"].isin(top)]
         gene_set = top
     keep_cols = [c for c in ["SampleID", "Gene", "Chromosome", "Start", "End", "CN", "Call", "Log2",
                              "FACETS_TCN", "FACETS_LCN", "LOH"] if c in sel.columns]
     sel[keep_cols].to_csv(d_tab / "interest_genes.tsv", sep="\t", index=False)
+    if maf_path:
+        mut_genes = sorted({g for _, g in muts})
+        pd.DataFrame({s: [muts.get((s, g), "") for g in mut_genes] for s in samples}, index=pd.Index(
+            mut_genes, name="Gene")).to_csv(d_tab / "gene_mutations.tsv", sep="\t")
 
     seg_frames = []
     for s in samples:
@@ -520,16 +564,17 @@ def main():
     # Gene oncoprint (as in cBioPortal or maftools): genes sorted by the number of altered samples
     # with the percentage on the left, samples sorted by their alterations (memo sort), stacked
     # counts per sample on top and per gene on the right, annotation tracks below (FACETS purity,
-    # ploidy and WGD; sample_data columns).
-    genes_in = [g for g in gene_set if g in set(gl["Gene"])]
+    # ploidy and WGD; sample_data columns). With a maf, mutations are drawn as a bar inside the cell.
+    genes_in = [g for g in gene_set if g in set(gl["Gene"]) or any(k[1] == g for k in muts)]
     if genes_in:
         sub = gl[gl["Gene"].isin(genes_in)]
         piv = sub.pivot(index="Gene", columns="SampleID", values="Call").reindex(index=genes_in, columns=samples)
         loh = sub.pivot(index="Gene", columns="SampleID", values="LOH").reindex(
             index=genes_in, columns=samples) if "LOH" in gl.columns else None
-        altered = piv.isin(CATEGORIES)
+        mpiv = pd.DataFrame([[muts.get((x, g), "") for x in samples] for g in genes_in], index=genes_in, columns=samples)
+        altered = piv.isin(CATEGORIES) | (mpiv != "")
         genes_in = list(altered.sum(axis=1).sort_values(ascending=False, kind="stable").index)
-        piv, altered = piv.loc[genes_in], altered.loc[genes_in]
+        piv, altered, mpiv = piv.loc[genes_in], altered.loc[genes_in], mpiv.loc[genes_in]
         s_order = sorted(samples, key=lambda x: tuple(-int(altered.loc[g, x]) for g in genes_in))
         n_s, n_g = len(s_order), len(genes_in)
 
@@ -570,14 +615,19 @@ def main():
             v = np.array([(piv[x] == cat).sum() for x in s_order], dtype=float)
             ax_top.bar(np.arange(n_s) + 0.5, v, width=0.85, bottom=bottom, color=CATEGORY_COLORS[cat], lw=0)
             bottom += v
+        for cls in MUT_COLORS if muts else []:
+            v = np.array([(mpiv[x] == cls).sum() for x in s_order], dtype=float)
+            ax_top.bar(np.arange(n_s) + 0.5, v, width=0.85, bottom=bottom, color=MUT_COLORS[cls], lw=0)
+            bottom += v
         ax_top.set_xlim(0, n_s)
         ax_top.set_xticks([])
         ax_top.spines["bottom"].set_visible(False)
-        ax_top.set_ylabel("Genes", fontsize=7)
+        ax_top.set_ylabel("Alterations", fontsize=7)
         from matplotlib.ticker import MaxNLocator
         ax_top.yaxis.set_major_locator(MaxNLocator(integer=True, nbins=4))
         ax_top.tick_params(labelsize=7)
-        ax_top.set_title("Gene-level copy number" + ("" if params["genes"] else " (most frequently altered genes)"),
+        ax_top.set_title("Gene-level copy number" + (" and mutations" if muts else "")
+                         + ("" if params["genes"] else " (most frequently altered genes)"),
                          loc="left")
 
         # matrix: gray cell for no change, call colour for an alteration, dot for LOH
@@ -586,6 +636,8 @@ def main():
                 cat = piv.loc[g, x]
                 fc = CATEGORY_COLORS[cat] if cat in CATEGORIES else "#E4E4E4"
                 ax.add_patch(plt.Rectangle((xi + 0.06, yi + 0.08), 0.88, 0.84, fc=fc, lw=0))
+                if mpiv.loc[g, x]:
+                    ax.add_patch(plt.Rectangle((xi + 0.06, yi + 0.34), 0.88, 0.32, fc=MUT_COLORS[mpiv.loc[g, x]], lw=0))
                 if loh is not None and loh.loc[g, x] == "yes":
                     ax.plot(xi + 0.5, yi + 0.5, marker="o", ms=min(3.5, cw * 12), color=LOH_COLOR, mec="white", mew=0.3)
         ax.set_xlim(0, n_s)
@@ -607,6 +659,10 @@ def main():
         for cat in CATEGORIES:
             v = np.array([(piv.loc[g] == cat).sum() for g in genes_in], dtype=float)
             ax_bar.barh(np.arange(n_g) + 0.5, v, height=0.8, left=left, color=CATEGORY_COLORS[cat], lw=0)
+            left += v
+        for cls in MUT_COLORS if muts else []:
+            v = np.array([(mpiv.loc[g] == cls).sum() for g in genes_in], dtype=float)
+            ax_bar.barh(np.arange(n_g) + 0.5, v, height=0.8, left=left, color=MUT_COLORS[cls], lw=0)
             left += v
         ax_bar.set_ylim(n_g, 0)
         ax_bar.set_xlim(-0.75 * max(left.max(), 1), max(left.max(), 1) * 1.05)   # room for the gene names
@@ -672,10 +728,18 @@ def main():
         handles.append(Patch(color="#E4E4E4", label="No change"))
         if loh is not None:
             handles.append(Line2D([0], [0], marker="o", color="w", markerfacecolor=LOH_COLOR, ms=6, label="LOH"))
+        if muts:
+            present = set(mpiv.to_numpy().ravel()) - {""}
+            handles.append(Line2D([], [], ls="", label="Mutation"))
+            handles += [Line2D([0], [0], marker="s", ls="", color=MUT_COLORS[c], ms=7, label=f"{c} (bar)")
+                        for c in MUT_COLORS if c in present]
+            track_names = {name for name, _, _ in tracks} | {"Mutation"}
+        else:
+            track_names = {name for name, _, _ in tracks}
         leg = ax_leg.legend(handles=handles + handles_extra, loc="upper left", fontsize=7, frameon=False,
                             title="Copy number", title_fontsize=8, alignment="left")
         for t in leg.get_texts():
-            if t.get_text() in {name for name, _, _ in tracks} or ":" in t.get_text():
+            if t.get_text() in track_names or ":" in t.get_text():
                 t.set_fontweight("bold")
         save_figure(plt, fig, d_plot, "gene_oncoprint", made)
 

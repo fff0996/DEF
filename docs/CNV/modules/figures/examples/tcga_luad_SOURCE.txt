@@ -1,2 +1,2 @@
 TCGA luad_tcga_pan_can_atlas_2018 via https://www.cbioportal.org/api (public; TCGA, Cell 2018). Samples (seed 7): TCGA-05-5423-01, TCGA-49-AAR4-01, TCGA-53-7624-01, TCGA-69-7980-01, TCGA-75-5146-01, TCGA-78-7163-01, TCGA-86-A456-01, TCGA-95-7562-01, TCGA-97-A4M2-01, TCGA-L9-A5IP-01.
-Gene calls: GISTIC2 thresholded; segments: TCGA hg19. Not produced by our CNVkit modules.
+Gene calls: GISTIC2 thresholded; segments: TCGA hg19; mutations: TCGA MC3 (cBioPortal). Not produced by our CNVkit modules.

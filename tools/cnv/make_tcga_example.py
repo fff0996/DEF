@@ -2,7 +2,8 @@
 """Real public example input for cnv_summary: TCGA lung adenocarcinoma (PanCancer Atlas) from the
 cBioPortal public API (open access; TCGA, Cell 2018). For n randomly chosen tumour samples it
 writes folders shaped like the cnvkit_call output (segments, gene table, summary), a sample_data
-CSV with clinical tracks and a gene list.
+CSV with clinical tracks, a gene list and a MAF of the same samples (TCGA MC3 somatic mutations in
+those genes).
 
 The gene calls are TCGA GISTIC2 thresholded calls (-2 DEEPDEL, -1 LOSS, 0, 1 GAIN, 2 AMP) with the
 TCGA log2 values, and the segments are the TCGA segments (hg19); they were NOT made by our CNVkit
@@ -105,9 +106,15 @@ def main():
                      "Fraction genome altered": smp.loc[s].get("FRACTION_GENOME_ALTERED", "") if s in smp.index else ""})
     pd.DataFrame(meta).to_csv(out / "sample_data.csv", index=False)
     (out / "genes.txt").write_text("\n".join(GENES) + "\n")
+    mut = post(f"/molecular-profiles/{STUDY}_mutations/mutations/fetch?projection=DETAILED",
+               {"sampleIds": samples, "entrezGeneIds": ids})
+    pd.DataFrame([{"Hugo_Symbol": m["gene"]["hugoGeneSymbol"], "Tumor_Sample_Barcode": m["sampleId"],
+                   "Variant_Classification": m["mutationType"], "HGVSp_Short": "p." + m.get("proteinChange", "")}
+                  for m in mut]).to_csv(out / "mutations.maf", sep="\t", index=False)
     (out / "SOURCE.txt").write_text(
         f"TCGA {STUDY} via {API} (public; TCGA, Cell 2018). Samples (seed {seed}): {', '.join(samples)}.\n"
-        "Gene calls: GISTIC2 thresholded; segments: TCGA hg19. Not produced by our CNVkit modules.\n")
+        "Gene calls: GISTIC2 thresholded; segments: TCGA hg19; mutations: TCGA MC3 (cBioPortal). "
+        "Not produced by our CNVkit modules.\n")
     print("samples:", ", ".join(samples))
 
 
