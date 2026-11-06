@@ -47,3 +47,9 @@ CLOSHA 2.0의 ATAC-seq 파이프라인을 CLOSHA 3.0으로 옮긴 첫 배포입�
 bowtie2, samtools, MACS3, IDR의 오류 메시지는 샘플별 로그 파일(`<sample>_bowtie.log`, MACS3 `*.stderr.log`, IDR `*.idr.stderr.log`)에만 쓰여, 실패했을 때 화면 stderr에는 "실패했다, 파일을 보라"만 나오고 원인은 보이지 않았다. 실패한 경우에만 그 파일의 마지막 20줄을 stderr로도 내보내게 했다(`docs/CLOSHA_Script_Rules_v1.md` 7절). 샘플별 로그 파일은 그대로 두고, 성공한 실행의 출력과 분석 결과는 바뀌지 않는다. 사용자 결정으로 배포 번호는 올리지 않고 이 폴더의 파일과 작업 파일을 같은 내용으로 고쳤다(`tools/check_release.py` 일치 확인).
 
 고친 파일: bowtie2.1.1.sh, MACS3_callpeak_ATAC.1.1.sh, replicate_consistency.1.0.sh.
+
+## 2026-11-06 수정 (번호는 그대로)
+
+입력 옆에 인덱스를 만들지 않는다. 입력 인덱스(.bai, .fai, .bt2)가 없으면 모듈이 오류(종료 코드 1, stderr)로 멈춘다. 공유 데이터 폴더에 쓰지 않기 위한 변경이다(사용자 결정). 출력 BAM의 인덱스는 전처럼 `output_dir`에 만든다. organellar_filter는 인덱스 없는 샘플을 실패로 기록하고 나머지를 처리하며, 모두 실패하면 멈춘다.
+
+고친 파일: bowtie2.1.1.sh, organellar_filter.1.1.sh, ATAC_QC.1.1.R, MACS3_callpeak_ATAC.1.1.sh, replicate_consistency.1.0.sh, tf_footprinting.1.1.sh.

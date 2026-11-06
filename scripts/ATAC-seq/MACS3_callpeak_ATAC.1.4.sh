@@ -403,16 +403,14 @@ run_macs3_one() {
 	echo "  MACS3 params  = $macs3_params"
 	echo ""
 
-	if command -v samtools >/dev/null 2>&1; then
-		if [ ! -f "${treatment_bam}.bai" ] && [ ! -f "${treatment_bam%.*}.bai" ]; then
-			echo "BAM index not found for treatment. Creating index..."
-			samtools index -@ "$threads" "$treatment_bam"
-		fi
+	if [ ! -f "${treatment_bam}.bai" ] && [ ! -f "${treatment_bam%.*}.bai" ]; then
+		echo "Error: BAM index (.bai) not found: $treatment_bam. Index it first (samtools index)." >&2
+		exit 1
+	fi
 
-		if [ -n "$control_bam" ] && [ ! -f "${control_bam}.bai" ] && [ ! -f "${control_bam%.*}.bai" ]; then
-			echo "BAM index not found for control. Creating index..."
-			samtools index -@ "$threads" "$control_bam"
-		fi
+	if [ -n "$control_bam" ] && [ ! -f "${control_bam}.bai" ] && [ ! -f "${control_bam%.*}.bai" ]; then
+		echo "Error: BAM index (.bai) not found: $control_bam. Index it first (samtools index)." >&2
+		exit 1
 	fi
 
 	echo "running MACS3..."

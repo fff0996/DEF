@@ -406,6 +406,13 @@ resolve_bam <- function(input_dir, sample_id) {
 	bam
 }
 
+# Inputs are never written to: a missing index stops the run.
+require_bam_index <- function(bam) {
+	if (!file.exists(paste0(bam, ".bai")) && !file.exists(sub("\\.bam$", ".bai", bam, ignore.case = TRUE))) {
+		stop_err("BAM index (.bai) not found: ", bam, ". Index it first (samtools index).")
+	}
+}
+
 ensure_bam_index <- function(bam) {
 	bai1 <- paste0(bam, ".bai")
 	bai2 <- sub("\\.bam$", ".bai", bam, ignore.case = TRUE)
@@ -528,8 +535,7 @@ check_genome_fasta_seqlevels <- function(genome_fasta, bam_seq) {
 	fai_path <- paste0(genome_fasta, ".fai")
 	
 	if (!file.exists(fai_path)) {
-		msg("indexing genome_fasta: ", genome_fasta)
-		Rsamtools::indexFa(genome_fasta)
+		stop_err("FASTA index (.fai) not found: ", fai_path, ". Create it first (samtools faidx).")
 	}
 	
 	fa_seq <- as.character(GenomeInfoDb::seqnames(Rsamtools::scanFaIndex(genome_fasta)))
@@ -624,7 +630,7 @@ msg("############################## Step 2: Resolve pre-shift BAM files")
 ss$BAM <- vapply(ss$SampleID, function(sid) resolve_bam(input_dir, sid), character(1))
 
 for (bam in ss$BAM) {
-	ensure_bam_index(bam)
+	require_bam_index(bam)
 }
 
 write.table(

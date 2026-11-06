@@ -251,14 +251,11 @@ do
 	echo ""
 
 	if [ ! -f "${bam_path}.bai" ] && [ ! -f "${bam_path%.*}.bai" ]; then
-		echo "BAM index not found. Creating BAM index..."
-		if ! samtools index -@ "$threads" "$bam_path"; then
-			error_msg "samtools index failed: $bam_path"
-			status="FAILED_INDEX_INPUT"
-			echo -e "${sample_name}\t${bam_path}\tNA\tNA\tNA\tNA\tNA\t${status}" >> "$summary_tsv"
-			fail_count=$((fail_count + 1))
-			continue
-		fi
+		error_msg "BAM index (.bai) not found: $bam_path. Index it first (samtools index)."
+		status="FAILED_INDEX_INPUT"
+		echo -e "${sample_name}\t${bam_path}\tNA\tNA\tNA\tNA\tNA\t${status}" >> "$summary_tsv"
+		fail_count=$((fail_count + 1))
+		continue
 	else
 		echo "BAM index found."
 	fi

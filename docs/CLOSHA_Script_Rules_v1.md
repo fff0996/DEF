@@ -112,7 +112,7 @@ apptainer exec \
 #   organellar_pattern  (optional) - Regex pattern for organellar contigs
 ```
 - 선택 인자는 `[key="기본값"]`으로 Usage에 표시하고, Arguments에 `default:`를 적는다.
-- 필요하면 Examples, 입력 표(sample sheet) 형식, 처리 단계(Method), 주의할 동작(입력 옆 인덱스 생성, 이전 결과 삭제)을 덧붙인다.
+- 필요하면 Examples, 입력 표(sample sheet) 형식, 처리 단계(Method), 주의할 동작(이전 결과 삭제)을 덧붙인다.
 
 ## 4. 인자
 - 형식은 **`key=value`**다. 그 외 형식은 `Invalid argument format: <arg> (must be key=value format)`로 멈춘다(종료 코드 1).
@@ -245,7 +245,7 @@ msg      <- function(...) { cat(..., "\n") }
 - 샘플 시트는 CSV이고 필수 컬럼(`SampleID`, `Condition`, 필요 시 `Replicate`)을 확인한다. 빈 값이 있으면 멈춘다.
 - 입력 파일은 `SampleID`로 찾는다(이름이 `SampleID`로 시작하는 파일 우선, 없으면 포함하는 파일). 여러 개가 맞으면 멈추고 후보를 보여 준다.
 - 염색체 이름(seqlevels)이 입력 사이에서 맞는지 확인하고, 맞지 않으면 양쪽 미리보기를 보여 주고 멈춘다.
-- 인덱스(.bai, .fai)가 없으면 만들 수 있다. 이 경우 입력 옆에 파일이 생기므로 머리 주석에 적는다.
+- 입력 인덱스(.bai, .fai, .bt2 등)가 없으면 오류로 멈춘다. 입력 옆에 만들지 않는다(공유 데이터 보호, 2026-11-06 사용자 결정). 출력 파일의 인덱스는 `output_dir`에 만들 수 있다.
 - 입력은 인자로 받는 폴더(필수)에서 찾는다. 샘플 시트 안에 파일 경로를 적게 하지 않는다. 같은 입력을 두 인자(폴더와 파일)로 받지 않는다.
 - 정렬 결과 BAM에는 read group(@RG: ID, SM, LB, PL)을 붙인다. GATK 4.6 MarkDuplicates는 @RG가 없으면 NullPointerException으로 멈춘다(4.5 이하는 "Unknown Library"로 처리).
 - 결과를 실제로 쓰는 데 꼭 필요한 후처리(예: SAM → 정렬 BAM + 인덱스)는 기본값을 켜 둔다. 포탈에 인자를 등록하지 않으면 기본값으로만 실행된다.
@@ -261,7 +261,7 @@ msg      <- function(...) { cat(..., "\n") }
 - 외부 명령은 종료 코드를 확인한다(`if ! samtools index ...; then error_msg ...`). Bash는 `set -u`, `set -o pipefail`을 쓴다.
 
 ## 10. 호스트 보호와 금지 명령
-- `output_dir` 밖에는 쓰지 않는다(예외: 입력 옆 인덱스. 8절 참고).
+- `output_dir` 밖에는 쓰지 않는다. 예외 없음(입력 옆 인덱스도 만들지 않는다. 8절 참고).
 - 삭제는 6절의 `output_dir` 정리만 한다. 다른 경로를 지우지 않는다.
 - 사이트 명령 차단 목록(Java 정규식, 줄 단위, 주석 줄도 검사)에 걸리지 않게 쓴다. 2026-10-07 기준:
   | 패턴 | 대신 쓰는 방법 |

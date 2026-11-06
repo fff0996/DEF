@@ -360,8 +360,8 @@ echo "  path: $genome_fasta"
 echo "  size: $(du -h "$genome_fasta" | awk '{print $1}')"
 
 if [ ! -f "${genome_fasta}.fai" ]; then
-	echo "  fasta index: not found; creating ${genome_fasta}.fai"
-	samtools faidx "$genome_fasta"
+	echo "Error: FASTA index (.fai) not found: ${genome_fasta}.fai. Create it first (samtools faidx)." >&2
+	exit 1
 else
 	echo "  fasta index: found"
 fi
@@ -534,7 +534,7 @@ cat "$resolved_tsv" | sed 's/^/    /'
 echo ""
 
 # ------------------------------------------------------------
-# BAM shape check and indexing
+# BAM shape check and index check
 # ------------------------------------------------------------
 echo "############################## BAM shape check"
 
@@ -545,8 +545,8 @@ do
 	echo "  size: $(du -h "$bam" | awk '{print $1}')"
 
 	if [ ! -f "${bam}.bai" ] && [ ! -f "${bam%.*}.bai" ]; then
-		echo "  index: not found; creating"
-		samtools index "$bam"
+		echo "Error: BAM index (.bai) not found: $bam. Index it first (samtools index)." >&2
+		exit 1
 	else
 		echo "  index: found"
 	fi

@@ -37,7 +37,7 @@ CLOSHA에 ATAC-seq 모듈을 등록할 때 쓰는 Input / Output / Option 정리
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 필수 | | 정렬된 BAM이 있는 폴더. `*.unsorted.bam`은 제외. BAM은 좌표 정렬되어 있어야 함. 인덱스(.bai)가 없으면 BAM 옆에 만든다 |
+| Input | `input_dir` | Directory | 필수 | | 정렬된 BAM이 있는 폴더. `*.unsorted.bam`은 제외. BAM은 좌표 정렬되어 있어야 함. 인덱스(.bai)가 미리 있어야 함(없으면 오류) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. 다음 모듈(ATAC_QC)의 `input_dir` |
 | Option | `threads` | String | 선택 | `auto` | 스레드 수. auto = 실행 환경에 할당된 코어 수. 숫자는 할당량 이하로 줄임. **포탈에 등록하지 않음**(Processor Core 선택으로 결정). 할당보다 크면 줄이고 경고 |
 | Option | `organellar_pattern` | String | 선택 | `(^chrM$\|^MT$\|^Mt$\|mitochond\|...\|^Pt$\|^PT$\|^chrC$)` | 세포소기관 contig 이름 정규식(대소문자 무시) |
@@ -52,7 +52,7 @@ fragment 크기 분포, bamQC, Tn5 shift, 뉴클레오솜 위치별 BAM 분할(A
 | Input | `input_dir` | Directory | 필수 | | shift 전 BAM 폴더. organellar_filter의 `output_dir` 권장(`*_organellar_removed.bam`) |
 | Input | `sample_data` | File (CSV) | 필수 | | 샘플 시트. 컬럼: `SampleID`, `Condition`, `Replicate`. BAM 파일 이름에 SampleID가 들어 있어야 함 |
 | Input | `txs_bed` | File (BED) | 필수 | | 전사체/TSS 영역 BED(3열 이상, 6열 권장: chr start end name score strand) |
-| Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. .fai가 없으면 FASTA 옆에 만든다 |
+| Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. .fai 인덱스가 미리 있어야 함(없으면 오류) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더. ATAC_QC_plot, MACS3, differential_accessibility, tf_footprinting의 `input_dir` |
 | Option | `seqlev` | String | 선택 | `auto` | 사용할 염색체(쉼표 구분). auto = BAM과 txs_bed에 공통으로 있는 염색체 전부 |
 | Option | `tss_flank` | Integer | 선택 | `1000` | TSS enrichment 점수를 계산할 TSS 앞뒤 범위(bp, 200 이상) |
@@ -159,9 +159,9 @@ TOBIAS로 조건별 전사인자 footprint와 비교(BINDetect).
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|
-| Input | `input_dir` | Directory | 필수 | | BAM 폴더(파일 이름에 SampleID 포함). ATAC_QC의 `output_dir`이면 `03_shifted_bam`의 `*.shifted.bam` 사용. 인덱스가 없으면 BAM 옆에 만든다 |
+| Input | `input_dir` | Directory | 필수 | | BAM 폴더(파일 이름에 SampleID 포함). ATAC_QC의 `output_dir`이면 `03_shifted_bam`의 `*.shifted.bam` 사용. 인덱스(.bai)가 미리 있어야 함(없으면 오류) |
 | Input | `sample_data` | File (CSV/TSV) | 필수 | | 샘플 정보. `SampleID`, `Condition` 컬럼, 조건 2개 이상. ATAC_QC의 `sample_data`를 그대로 써도 된다(1.2까지는 이름이 `metadata`) |
-| Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. .fai가 없으면 FASTA 옆에 만든다 |
+| Input | `genome_fasta` | File (FASTA) | 필수 | | 참조 유전체. .fai 인덱스가 미리 있어야 함(없으면 오류) |
 | Input | `motif_db` | File | 필수 | | 모티프 데이터베이스 |
 | Input | `macs_dir` | Directory | 필수 | | MACS3의 `output_dir`. 그 안의 peak를 합쳐 공통 peak를 만든다(CLOSHA 2.0의 `peak_file` 인자는 없어짐) |
 | Output | `output_dir` | Directory | 필수 | | 결과 폴더 |
@@ -213,5 +213,5 @@ GO 농축 분석(clusterProfiler). 종별 데이터는 이미지에 없고, `too
 
 ## 11. 공통 참고
 - `threads`/`cores`는 포탈에 등록하지 않는다. 실행 환경의 Processor Core 선택(싱글 코어 또는 최대 4코어)을 스크립트가 `nproc`으로 읽어 쓴다. 로그에 `requested`, `allocated`가 함께 남고, 할당보다 큰 값은 줄이면서 오류 로그에 경고를 남긴다. bowtie2 1.2, MACS3_callpeak_ATAC 1.3, replicate_consistency 1.1도 내부 인자 `threads`(기본 `auto`)로 같은 방식을 쓴다. 1코어만 쓰는 도구(MACS3, idr, ChIPseeker, edgeR, clusterProfiler 등)가 중심인 모듈은 싱글 코어로 실행한다.
-- 입력 옆에 인덱스(.bai, .fai)를 만드는 모듈(organellar_filter, ATAC_QC, MACS3, tf_footprinting, replicate_consistency)은 입력 위치에 쓰기 권한이 있거나 인덱스가 미리 있어야 한다.
+- 입력 인덱스(.bai, .fai, .bt2)는 미리 있어야 한다. 없으면 모듈이 오류로 멈추고 입력 옆에 만들지 않는다(bowtie2, organellar_filter, ATAC_QC, MACS3, tf_footprinting, replicate_consistency).
 - 빈 값으로 두는 선택 인자는 기본값으로 동작한다.

@@ -255,8 +255,8 @@ while IFS=$'\t' read -r sample_id condition replicate; do
 		exit 1
 	fi
 	if [ ! -f "${hits[0]}.bai" ] && [ ! -f "${hits[0]%.bam}.bai" ]; then
-		echo "BAM index not found; creating: ${hits[0]}.bai"
-		samtools index -@ "$threads" "${hits[0]}"
+		echo "Error: BAM index (.bai) not found: ${hits[0]}. Index it first (samtools index)." >&2
+		exit 1
 	fi
 	printf '%s\t%s\t%s\t%s\n' "$sample_id" "$condition" "$replicate" "${hits[0]}" >> "$samples_tsv"
 done < "${samples_tsv}.tmp"

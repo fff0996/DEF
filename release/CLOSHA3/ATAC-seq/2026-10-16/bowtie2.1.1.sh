@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version 1.1 (changes from bowtie2_1.0.sh, CLOSHA 2.0):
-#   Tools are called from /opt/bio/bin (bowtie2, bowtie2-build, samtools)
+#   Tools are called from /opt/bio/bin (bowtie2, samtools)
 #     instead of /opt/apps/<tool>/current/..., which the images do not have.
 #   Threads: bowtie2 -p and samtools sort -@ use the cores allocated to the job
 #     (threads=auto, nproc) instead of a fixed 4; a larger threads value is
@@ -111,7 +111,6 @@ fi
 # Constants
 # =============================================================================
 readonly program_bowtie2='/opt/bio/bin/bowtie2'
-readonly program_bowtie2_build='/opt/bio/bin/bowtie2-build'
 readonly program_samtools='/opt/bio/bin/samtools'
 readonly supported_extensions=("fastq" "fastq.gz" "fq" "fq.gz")
 
@@ -237,28 +236,9 @@ build_index_if_needed() {
         return 0
     fi
     
-    # If index doesn't exist, check if the path is a FASTA file
+    # If index doesn't exist, stop: this module does not write next to the reference
     if [ -f "$ref_path" ]; then
-        log_message_header "Bowtie2 index not found. Building index from FASTA file..."
-        log_message "FASTA file: $ref_path"
-        log_message "Index base name: $ref_path"
-        
-        if [ ! -f "$program_bowtie2_build" ]; then
-            log_error_critical "Bowtie2-build program not found: $program_bowtie2_build. Cannot build index."
-        fi
-
-        # Build the index
-        if ! "$program_bowtie2_build" -f "$ref_path" "$ref_path"; then
-            log_error_critical "Failed to build Bowtie2 index from $ref_path."
-        fi
-
-        # Verify the index was built successfully
-        if [ ! -f "${ref_path}.1.bt2" ]; then
-            log_error_critical "Index build completed, but required files were not found. Check permissions or disk space."
-        fi
-        
-        log_message "Bowtie2 index build successful."
-        return 0
+        log_error_critical "Bowtie2 index not found for FASTA: $ref_path. Build it first (bowtie2-build) and keep the .bt2 files next to it."
     else
         log_error_critical "Provided reference genome path is neither a FASTA file nor a valid Bowtie2 index base name: $ref_path"
     fi
