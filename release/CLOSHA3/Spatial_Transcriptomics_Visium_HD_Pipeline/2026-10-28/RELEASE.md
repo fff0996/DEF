@@ -63,3 +63,6 @@ Visium HD 공간 전사체 파이프라인(`Spatial_Transcriptomics_Visium_HD_Pi
 공개(배포) 모듈의 실행 명령에는 CLOSHA가 항상 `--env OMP_NUM_THREADS=1`을 붙인다. 코어 수를 `nproc`으로 읽던 스크립트는 이 값을 따라 등록 코어 수와 상관없이 1코어로 돌았다(예: 2026-10-21 bowtie2 로그 `Threads: 1 (requested auto, allocated 1)`, 2026-10-28 spatial_hd_rctd `max_cores used = 1 (allocated 1)`). 코어 수를 읽는 줄만 `env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT nproc`(Slurm이 묶어 준 CPU 수)으로 바꾸고, 그 줄을 설명하는 주석을 고쳤다. 사용자 결정으로 배포 번호는 올리지 않고 이 폴더의 파일과 작업 파일을 같은 내용으로 고쳤다(`tools/check_release.py` 일치 확인). 분석 결과는 바뀌지 않고 속도만 바뀐다. 근거는 `docs/CLOSHA_Script_Rules_v1.md` 2.1절과 11절.
 
 고친 파일: spatial_hd_rctd.1.0.R.
+
+## 2026-11-06 수정 (번호는 그대로)
+- spatial_condition_de: `run_deseq` 안의 변수 이름 `cd`를 `coldata`로 바꿈(사이트 명령 차단 패턴 `\bcd\b`에 걸리지 않게). 동작은 같음: 같은 입력에서 수정 전후 `run_deseq` 결과가 일치(bx_spatial 1.2, 짝 설계 있음/없음).

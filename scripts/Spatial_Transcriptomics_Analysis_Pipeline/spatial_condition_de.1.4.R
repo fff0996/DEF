@@ -426,14 +426,14 @@ pb_spots <- as.vector(spot_tab[colnames(pb)])
 rm(pb_list)
 
 run_deseq <- function(mat, cond, patient) {
-	cd <- data.frame(Condition = factor(cond, levels = unique(c(reference, cond))), row.names = colnames(mat))
+	coldata <- data.frame(Condition = factor(cond, levels = unique(c(reference, cond))), row.names = colnames(mat))
 	form <- ~Condition
 	if (!is.null(patient)) {
-		cd$Patient <- factor(patient)
-		paired <- all(table(cd$Patient, cd$Condition) <= 1) && any(rowSums(table(cd$Patient, cd$Condition) > 0) > 1)
-		if (paired && nlevels(cd$Patient) < ncol(mat)) form <- ~Patient + Condition
+		coldata$Patient <- factor(patient)
+		paired <- all(table(coldata$Patient, coldata$Condition) <= 1) && any(rowSums(table(coldata$Patient, coldata$Condition) > 0) > 1)
+		if (paired && nlevels(coldata$Patient) < ncol(mat)) form <- ~Patient + Condition
 	}
-	dds <- DESeq2::DESeqDataSetFromMatrix(round(as.matrix(mat)), colData = cd, design = form)
+	dds <- DESeq2::DESeqDataSetFromMatrix(round(as.matrix(mat)), colData = coldata, design = form)
 	keep <- rowSums(DESeq2::counts(dds) >= 10) >= min(table(cond))
 	dds <- dds[keep, ]
 	if (nrow(dds) < 10) return(list(status = "too_few_genes", res = NULL, design = deparse(form)))
@@ -441,7 +441,7 @@ run_deseq <- function(mat, cond, patient) {
 				tryCatch(DESeq2::DESeq(dds, quiet = TRUE, fitType = "mean"), error = function(e2) e2)
 			})
 	if (inherits(fit, "error")) return(list(status = paste0("deseq2_failed: ", conditionMessage(fit)), res = NULL, design = deparse(form)))
-	res <- DESeq2::results(fit, contrast = c("Condition", setdiff(levels(cd$Condition), reference)[1], reference))
+	res <- DESeq2::results(fit, contrast = c("Condition", setdiff(levels(coldata$Condition), reference)[1], reference))
 	list(status = "ok", design = deparse(form), res = data.frame(Gene = rownames(res), BaseMean = res$baseMean,
 					Log2FC = res$log2FoldChange, LfcSE = res$lfcSE, Stat = res$stat, PValue = res$pvalue, Padj = res$padj,
 					stringsAsFactors = FALSE))
