@@ -2,7 +2,7 @@ CLOSHA scGPT 환자 단위 예측 파이프라인 설계안 0.2
 
 작성일: 2026-11-03, 갱신: 2026-11-03 (0.2: GPU가 필요한 scGPT 실행을 scgpt_embed로 분리, 1.0은 frozen만)
 상태: 설계 초안. 스크립트, DEF, 이미지 빌드, 테스트는 아직 없다. 이 문서를 확정한 뒤 작업 번호 1.0으로 스크립트를 만든다.
-파이프라인 이름(가칭): `scGPT_Single_Cell_Classification_Pipeline`
+파이프라인 이름: `scGPT_Single_Cell_Phenotype_Classification_Pipeline`
 
 ## 1. 목표
 사전학습된 단일세포 파운데이션 모델 **scGPT**를 가져와, 사용자가 가진 단일세포 데이터와 환자 단위 라벨로 **더 나은 예측 모델을 만들고, 실제로 나아졌는지 확인까지** 하는 범용 파이프라인이다.

@@ -47,6 +47,6 @@ m.outputs(xE, yT + 150, ["H5AD", "JSON", "PDF", "PNG"], above=False, gap=30)
 m.outputs(xT, yT + 150, ["PT", "JSON", "TSV", "PDF", "PNG"], above=False, gap=30)
 m.outputs(xR, yM + 150, ["TSV", "JSON", "PDF", "PNG"], above=False, gap=30)
 m.outputs(xR, yB + 150, ["TSV", "MD", "PDF", "PNG"], above=False, gap=30)
-m.save(HERE / "pipeline.svg", W, H, "scGPT_Single_Cell_Classification_Pipeline",
+m.save(HERE / "pipeline.svg", W, H, "scGPT_Single_Cell_Phenotype_Classification_Pipeline",
        [(PURPLE, "Data preparation"), (BLUE, "scGPT cell embedding (GPU)"),
         (GREEN, "Patient model: train, predict, compare"), (YELLOW, "Results")], 1560)
