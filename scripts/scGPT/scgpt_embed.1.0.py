@@ -16,7 +16,7 @@
 #   apptainer exec --nv bx_scgpt.1.0.sif python3 scgpt_embed.1.0.py \
 #       input_dir=/data/scgpt_prep output_dir=/data/scgpt_embed
 #
-# Arguments:
+# Arguments (key=value, --key=value or --key value):
 #   input_dir             (required) - scgpt_prep output folder (dataset.h5ad, patients.tsv, ...)
 #   output_dir            (required) - Output directory
 #   checkpoint_dir        (optional) - scGPT checkpoint folder with args.json, best_model.pt and
@@ -75,11 +75,26 @@ def early_fail(message):
 
 
 def parse_args(argv):
+    """Parse key=value, --key=value or --key value. CLOSHA passes Python modules --key value;
+    a --key with no value (next token is another --option, or nothing) keeps its default."""
     params = dict(OPTIONAL)
-    for arg in argv:
-        if "=" not in arg:
-            early_fail(f"Invalid argument format: {arg} (must be key=value format)")
-        key, value = arg.split("=", 1)
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        i += 1
+        if arg.startswith("--"):
+            arg = arg[2:]
+            if "=" in arg:
+                key, value = arg.split("=", 1)
+            else:
+                key, value = arg, ""
+                if i < len(argv) and not argv[i].startswith("--"):
+                    value = argv[i]
+                    i += 1
+        elif "=" in arg:
+            key, value = arg.split("=", 1)
+        else:
+            early_fail(f"Invalid argument format: {arg} (use key=value or --key value)")
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
             early_fail(f"Invalid key: {key}")
         if key not in REQUIRED and key not in OPTIONAL:

@@ -16,7 +16,7 @@
 #       input_dir=/data/kbds_h5 sample_data=/data/samples.csv output_dir=/data/scgpt_prep \
 #       positive_label=PR time=Before
 #
-# Arguments:
+# Arguments (key=value, --key=value or --key value):
 #   input_dir            (required) - Folder with one count matrix per sample, in any folder
 #                                     layout; each matrix is found by SampleID anywhere below it:
 #                                     <SampleID>.h5 (10x Cell Ranger), <SampleID>.h5ad (raw counts
@@ -115,11 +115,26 @@ def early_fail(message):
 
 
 def parse_args(argv):
+    """Parse key=value, --key=value or --key value. CLOSHA passes Python modules --key value;
+    a --key with no value (next token is another --option, or nothing) keeps its default."""
     params = dict(OPTIONAL)
-    for arg in argv:
-        if "=" not in arg:
-            early_fail(f"Invalid argument format: {arg} (must be key=value format)")
-        key, value = arg.split("=", 1)
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        i += 1
+        if arg.startswith("--"):
+            arg = arg[2:]
+            if "=" in arg:
+                key, value = arg.split("=", 1)
+            else:
+                key, value = arg, ""
+                if i < len(argv) and not argv[i].startswith("--"):
+                    value = argv[i]
+                    i += 1
+        elif "=" in arg:
+            key, value = arg.split("=", 1)
+        else:
+            early_fail(f"Invalid argument format: {arg} (use key=value or --key value)")
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
             early_fail(f"Invalid key: {key}")
         if key not in REQUIRED and key not in OPTIONAL:

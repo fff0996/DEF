@@ -116,6 +116,7 @@ apptainer exec \
 
 ## 4. 인자
 - 형식은 **`key=value`**다. 그 외 형식은 `Invalid argument format: <arg> (must be key=value format)`로 멈춘다(종료 코드 1).
+- **Python 모듈은 `--key value`도 받는다.** 포탈이 `.py` 모듈에는 `--input_dir 값`처럼 두 칸으로 넘긴 기록이 있다(2026-10-07 Retip, 2026-11-06 scGPT, 같은 오류 `Invalid argument format: --input_dir`). 그래서 Python 스크립트는 `key=value`, `--key=value`, `--key value`를 모두 받고, 값 없는 `--key`는 기본값을 쓴다. 등록 화면의 이름은 `input_dir`로 맞고 고칠 칸이 없다.
 - 값 양끝의 따옴표(`"`, `'`)를 제거한다. 값 안의 `=`는 유지한다(R: `paste(parts[-1], collapse = "=")`).
 - 키는 `^[a-zA-Z_][a-zA-Z0-9_]*$`만 허용한다.
 - Bash는 `declare "$key=$value"`로 변수를 만들되 보호 변수(`IFS`, `UID`, `EUID`, `PPID`, `BASHOPTS`, `BASHPID`)를 막는다. R은 `assign(key, value)`.

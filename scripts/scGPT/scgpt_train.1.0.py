@@ -16,7 +16,7 @@
 #   apptainer exec bx_scgpt.1.0.sif python3 scgpt_train.1.0.py \
 #       input_dir=/data/scgpt_embed output_dir=/data/scgpt_train model_name=KBDS_lung_ICI
 #
-# Arguments:
+# Arguments (key=value, --key=value or --key value):
 #   input_dir     (required) - scgpt_embed output folder (embeddings.h5ad, patients.tsv, splits.tsv)
 #   output_dir    (required) - Output directory
 #   pooling       (optional) - attention (gated attention over cells; also shows which cells
@@ -76,11 +76,26 @@ def early_fail(message):
 
 
 def parse_args(argv):
+    """Parse key=value, --key=value or --key value. CLOSHA passes Python modules --key value;
+    a --key with no value (next token is another --option, or nothing) keeps its default."""
     params = dict(OPTIONAL)
-    for arg in argv:
-        if "=" not in arg:
-            early_fail(f"Invalid argument format: {arg} (must be key=value format)")
-        key, value = arg.split("=", 1)
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        i += 1
+        if arg.startswith("--"):
+            arg = arg[2:]
+            if "=" in arg:
+                key, value = arg.split("=", 1)
+            else:
+                key, value = arg, ""
+                if i < len(argv) and not argv[i].startswith("--"):
+                    value = argv[i]
+                    i += 1
+        elif "=" in arg:
+            key, value = arg.split("=", 1)
+        else:
+            early_fail(f"Invalid argument format: {arg} (use key=value or --key value)")
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
             early_fail(f"Invalid key: {key}")
         if key not in REQUIRED and key not in OPTIONAL:
