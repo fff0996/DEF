@@ -426,7 +426,10 @@ def main():
     log.step("Step 5: UMAP of embeddings")
     (out / "plots").mkdir()
     u = e.copy()
-    sc.pp.neighbors(u, n_neighbors=min(15, max(2, u.n_obs - 1)), use_rep="X", random_state=seed)
+    # transformer="sklearn": from about 8,000 cells scanpy 1.10.4 otherwise uses pynndescent 0.7,
+    # whose csr_array result it cannot read with scipy 1.14 (no attribute getnnz).
+    sc.pp.neighbors(u, n_neighbors=min(15, max(2, u.n_obs - 1)), use_rep="X", random_state=seed,
+                    transformer="sklearn")
     sc.tl.umap(u, random_state=seed)
     # patients without a label (to be predicted) get a named legend entry
     u.obs["Label"] = u.obs["Label"].astype(str).replace({"": "unlabeled", "nan": "unlabeled"})
