@@ -8,7 +8,7 @@
 #
 # Usage:
 #   python3 scgpt_diagnose.py input_dir="..." train_dir="..." output_dir="..." [variants="all"]
-#       [seed="1234"]
+#       [seed="1234"] [epochs=""]
 #
 # Arguments (key=value, --key=value or --key value):
 #   input_dir   (required) - scgpt_embed output folder
@@ -16,6 +16,9 @@
 #   output_dir  (required) - New folder for the results; must be empty or not exist
 #   variants    (optional) - Comma separated names, or all. default: all
 #   seed        (optional) - The seed of the scgpt_train run. default: 1234
+#   epochs      (optional) - Epochs of the nn variants without e1000; empty uses the value of the
+#                            scgpt_train run, and only then the refit is compared with its
+#                            stored predictions. default: empty
 #
 # Outputs (output_dir):
 #   summary.tsv              per variant: AUC of patient-mean predictions (95% CI), fold AUCs
@@ -33,7 +36,7 @@ import sys
 from pathlib import Path
 
 REQUIRED = ["input_dir", "train_dir", "output_dir"]
-OPTIONAL = {"variants": "all", "seed": "1234"}
+OPTIONAL = {"variants": "all", "seed": "1234", "epochs": ""}
 # name: (classifier, pooling, standardize, epochs or None for the trained value, what changed)
 VARIANTS = {
     "lr_mean_std": ("lr", "mean", True, None, "reference: must match scgpt_mean of scgpt_compare"),
@@ -203,6 +206,8 @@ def main():
     if not re.fullmatch(r"\d+", params["seed"]):
         fail(f"seed must be an integer: {params['seed']}")
     seed = int(params["seed"])
+    if params["epochs"] and not re.fullmatch(r"[1-9]\d*", params["epochs"]):
+        fail(f"epochs must be a positive integer: {params['epochs']}")
     names = list(VARIANTS) if params["variants"] == "all" else \
         [v.strip() for v in params["variants"].split(",") if v.strip()]
     unknown = [v for v in names if v not in VARIANTS]
@@ -243,8 +248,12 @@ def main():
     splits = splits[splits["PatientID"].isin(y_of)]
     saved = torch.load(train_dir / "model" / "model.pt", map_location="cpu", weights_only=False)
     base = dict(saved["config"])
+    stored_epochs = base["epochs"]
+    if params["epochs"]:
+        base["epochs"] = int(params["epochs"])
     print(f"Patients: {len(patients)}, cells: {e.n_obs}, embedding size: {emb.shape[1]}")
-    print("Trained settings: " + ", ".join(f"{k}={base[k]}" for k in sorted(base)), flush=True)
+    print(f"Epochs of the scgpt_train run: {stored_epochs}")
+    print("Settings used: " + ", ".join(f"{k}={base[k]}" for k in sorted(base)), flush=True)
 
     cv = check_cv_table(pd, train_dir / "cv_predictions.tsv", splits, y_of)
 
@@ -299,7 +308,8 @@ def main():
         print(f"{name:<20} AUC {auc:.3f} ({lo:.3f}-{hi:.3f})  train {row['train_auc_fold_mean']:.3f}  "
               f"val fold {row['val_auc_fold_mean']:.3f} +- {row['val_auc_fold_sd']:.3f}  "
               f"[{row['minutes']} min]", flush=True)
-        if name == "nn_attention" and base.get("pooling") == "attention":
+        if name == "nn_attention" and saved["config"].get("pooling") == "attention" \
+                and base["epochs"] == stored_epochs:
             m = part.merge(cv, left_on=["repeat", "fold", "patient_id"], right_on=["Repeat", "Fold", "PatientID"])
             largest = float((m["prob_x"] - m["prob_y"]).abs().max())
             print(f"  Refit vs stored cv_predictions: {len(m)} rows, largest probability difference "
