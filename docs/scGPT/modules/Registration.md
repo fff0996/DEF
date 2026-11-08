@@ -68,6 +68,7 @@ CLOSHA에 scGPT 파이프라인 모듈을 등록할 때 쓰는 Input / Output / 
 | Input | `init_model` | Directory | 선택 | | 이어서 학습할 기존 scgpt_train output_dir |
 | Output | `output_dir` | Directory | 필수 | | `model/`(model.pt, model_card.json/.md), `cv_predictions.tsv`, `cv_cohort_predictions.tsv`, `cv_metrics.tsv`, `plots/` |
 | Option | `pooling` | List (`attention`, `mean`) | 선택 | `attention` | 세포를 환자로 묶는 방법 |
+| Option | `standardize` | String | 선택 | `yes` | `yes`면 학습 환자의 환자별 평균 임베딩으로 차원마다 평균과 표준편차를 맞춘다. 값은 모델에 저장되어 predict와 compare가 같이 쓴다. `no`는 임베딩을 그대로 쓴다(2026-11-08 이전 모델과 같음) |
 | Option | `hidden` | Integer | 선택 | `64` | attention 층 크기 |
 | Option | `epochs` | Integer | 선택 | `200` | 학습 반복 |
 | Option | `learning_rate` | Float | 선택 | `0.001` | 학습률 |

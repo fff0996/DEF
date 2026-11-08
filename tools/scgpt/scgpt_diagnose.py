@@ -41,8 +41,8 @@ OPTIONAL = {"variants": "all", "seed": "1234", "epochs": ""}
 VARIANTS = {
     "lr_mean_std": ("lr", "mean", True, None, "reference: must match scgpt_mean of scgpt_compare"),
     "lr_mean_nostd": ("lr", "mean", False, None, "lr_mean_std without standardization"),
-    "nn_attention": ("nn", "attention", False, None, "reference: must match scgpt_train"),
-    "nn_attention_std": ("nn", "attention", True, None, "nn_attention with standardization"),
+    "nn_attention": ("nn", "attention", False, None, "scgpt_train before standardize (standardize=no)"),
+    "nn_attention_std": ("nn", "attention", True, None, "scgpt_train default (standardize=yes)"),
     "nn_attention_e1000": ("nn", "attention", False, 1000, "nn_attention with 1000 epochs"),
     "nn_mean": ("nn", "mean", False, None, "nn_attention with mean pooling"),
     "nn_mean_std": ("nn", "mean", True, None, "nn_mean with standardization"),
@@ -91,6 +91,9 @@ def build_model(torch, cfg):
     nn = torch.nn
 
     class PatientModel(nn.Module):
+        """Bag of cell embeddings -> logit of the positive label.
+        attention: gated attention pooling (Ilse et al., ICML 2018); mean: average of the cells."""
+
         def __init__(self):
             super().__init__()
             d, h = cfg["embedding_size"], cfg["hidden"]
@@ -101,8 +104,17 @@ def build_model(torch, cfg):
                 self.att_w = nn.Linear(h, 1)
             self.drop = nn.Dropout(cfg["dropout"])
             self.out = nn.Linear(d, 1)
+            if cfg.get("standardize"):
+                # Mean and SD of the training patients' mean embeddings, set before training and
+                # saved with the weights. scGPT embeddings have length 1, so patients differ by
+                # small amounts that an unscaled model hardly uses.
+                self.register_buffer("center", torch.zeros(d))
+                self.register_buffer("scale", torch.ones(d))
 
         def forward(self, x, mask):
+            # x: patients x cells x d, mask: patients x cells (True = real cell)
+            if hasattr(self, "center"):
+                x = (x - self.center) / self.scale
             if self.pooling == "attention":
                 s = self.att_w(torch.tanh(self.att_v(x)) * torch.sigmoid(self.att_u(x))).squeeze(-1)
                 s = s.masked_fill(~mask, float("-inf"))
@@ -132,6 +144,12 @@ def fit(torch, cfg, x, m, y, seed):
     """Same as scgpt_train.1.0.py."""
     torch.manual_seed(seed)
     model = build_model(torch, cfg)
+    if cfg.get("standardize"):
+        w = m.float() / m.float().sum(dim=1, keepdim=True)
+        patient_means = (w.unsqueeze(-1) * x).sum(dim=1)
+        sd = patient_means.std(dim=0, unbiased=False)
+        model.center.copy_(patient_means.mean(dim=0))
+        model.scale.copy_(torch.where(sd > 0, sd, torch.ones_like(sd)))
     opt = torch.optim.AdamW(model.parameters(), lr=cfg["learning_rate"], weight_decay=cfg["weight_decay"])
     yt = torch.tensor(y, dtype=torch.float32)
     pos = max(float(y.sum()), 1.0)
@@ -263,7 +281,7 @@ def main():
     print("############################## Step 2-3: refit folds, one change at a time", flush=True)
     for name in names:
         kind, pooling, standardize, epochs, change = VARIANTS[name]
-        cfg = dict(base, pooling=pooling)
+        cfg = dict(base, pooling=pooling, standardize=standardize)
         if epochs:
             cfg["epochs"] = epochs
         begin = time.time()
@@ -282,11 +300,6 @@ def main():
                 ptr, pte = clf.predict_proba(xm[itr])[:, 1], clf.predict_proba(xm[ite])[:, 1]
             else:
                 data = emb
-                if standardize:
-                    train_means = emb_mean.values[[pidx[p] for p in tr]]
-                    sd = train_means.std(axis=0)
-                    sd[sd == 0] = 1.0
-                    data = ((emb - train_means.mean(axis=0)) / sd).astype(np.float32)
                 xtr, mtr = make_bags(np, torch, data, cell_patient, tr)
                 model = fit(torch, cfg, xtr, mtr, ytr, seed + 100 * int(rep) + int(fold))
                 xte, mte = make_bags(np, torch, data, cell_patient, te)
@@ -308,8 +321,9 @@ def main():
         print(f"{name:<20} AUC {auc:.3f} ({lo:.3f}-{hi:.3f})  train {row['train_auc_fold_mean']:.3f}  "
               f"val fold {row['val_auc_fold_mean']:.3f} +- {row['val_auc_fold_sd']:.3f}  "
               f"[{row['minutes']} min]", flush=True)
-        if name == "nn_attention" and saved["config"].get("pooling") == "attention" \
-                and base["epochs"] == stored_epochs:
+        trained = saved["config"]
+        if trained.get("pooling") == pooling and bool(trained.get("standardize")) == standardize \
+                and kind == "nn" and not epochs and base["epochs"] == stored_epochs:
             m = part.merge(cv, left_on=["repeat", "fold", "patient_id"], right_on=["Repeat", "Fold", "PatientID"])
             largest = float((m["prob_x"] - m["prob_y"]).abs().max())
             print(f"  Refit vs stored cv_predictions: {len(m)} rows, largest probability difference "

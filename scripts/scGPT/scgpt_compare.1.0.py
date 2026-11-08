@@ -234,9 +234,17 @@ def build_model(torch, cfg):
                 self.att_w = nn.Linear(h, 1)
             self.drop = nn.Dropout(cfg["dropout"])
             self.out = nn.Linear(d, 1)
+            if cfg.get("standardize"):
+                # Mean and SD of the training patients' mean embeddings, set before training and
+                # saved with the weights. scGPT embeddings have length 1, so patients differ by
+                # small amounts that an unscaled model hardly uses.
+                self.register_buffer("center", torch.zeros(d))
+                self.register_buffer("scale", torch.ones(d))
 
         def forward(self, x, mask):
             # x: patients x cells x d, mask: patients x cells (True = real cell)
+            if hasattr(self, "center"):
+                x = (x - self.center) / self.scale
             if self.pooling == "attention":
                 s = self.att_w(torch.tanh(self.att_v(x)) * torch.sigmoid(self.att_u(x))).squeeze(-1)
                 s = s.masked_fill(~mask, float("-inf"))

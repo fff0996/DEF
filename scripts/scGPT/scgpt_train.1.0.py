@@ -8,7 +8,7 @@
 #
 # Usage:
 #   python3 scgpt_train.1.0.py input_dir="..." output_dir="..."
-#       [pooling="attention"] [init_model=""] [hidden="64"] [epochs="200"]
+#       [pooling="attention"] [standardize="yes"] [init_model=""] [hidden="64"] [epochs="200"]
 #       [learning_rate="0.001"] [weight_decay="0.01"] [dropout="0.25"] [cell_dropout="0.2"]
 #       [model_name=""] [data_terms=""] [seed="1234"]
 #
@@ -22,6 +22,10 @@
 #   pooling       (optional) - attention (gated attention over cells; also shows which cells
 #                              weigh most) or mean (average embedding + logistic layer).
 #                              default: attention
+#   standardize   (optional) - yes scales each embedding dimension by the mean and SD of the
+#                              training patients' mean embeddings (saved in the model and used by
+#                              scgpt_predict and scgpt_compare); no uses the embeddings as they are.
+#                              default: yes
 #   init_model    (optional) - scgpt_train output folder of an earlier model to continue from
 #                              (same scGPT checkpoint and settings). Empty starts from random
 #                              weights. default: empty
@@ -63,7 +67,7 @@ from pathlib import Path
 
 MODULE = "scgpt_train"
 REQUIRED = ["input_dir", "output_dir"]
-OPTIONAL = {"pooling": "attention", "init_model": "", "hidden": "64", "epochs": "200",
+OPTIONAL = {"pooling": "attention", "standardize": "yes", "init_model": "", "hidden": "64", "epochs": "200",
             "learning_rate": "0.001", "weight_decay": "0.01", "dropout": "0.25", "cell_dropout": "0.2",
             "model_name": "", "data_terms": "", "seed": "1234"}
 
@@ -261,9 +265,17 @@ def build_model(torch, cfg):
                 self.att_w = nn.Linear(h, 1)
             self.drop = nn.Dropout(cfg["dropout"])
             self.out = nn.Linear(d, 1)
+            if cfg.get("standardize"):
+                # Mean and SD of the training patients' mean embeddings, set before training and
+                # saved with the weights. scGPT embeddings have length 1, so patients differ by
+                # small amounts that an unscaled model hardly uses.
+                self.register_buffer("center", torch.zeros(d))
+                self.register_buffer("scale", torch.ones(d))
 
         def forward(self, x, mask):
             # x: patients x cells x d, mask: patients x cells (True = real cell)
+            if hasattr(self, "center"):
+                x = (x - self.center) / self.scale
             if self.pooling == "attention":
                 s = self.att_w(torch.tanh(self.att_v(x)) * torch.sigmoid(self.att_u(x))).squeeze(-1)
                 s = s.masked_fill(~mask, float("-inf"))
@@ -292,6 +304,12 @@ def make_bags(np, torch, emb, patient_of_cell, patients):
 def fit(torch, np, cfg, x, m, y, seed, init_state=None, record=None):
     torch.manual_seed(seed)
     model = build_model(torch, cfg)
+    if cfg.get("standardize"):
+        w = m.float() / m.float().sum(dim=1, keepdim=True)
+        patient_means = (w.unsqueeze(-1) * x).sum(dim=1)
+        sd = patient_means.std(dim=0, unbiased=False)
+        model.center.copy_(patient_means.mean(dim=0))
+        model.scale.copy_(torch.where(sd > 0, sd, torch.ones_like(sd)))
     if init_state is not None:
         model.load_state_dict(init_state)
     opt = torch.optim.AdamW(model.parameters(), lr=cfg["learning_rate"], weight_decay=cfg["weight_decay"])
@@ -353,8 +371,10 @@ def main():
 
     if params["pooling"] not in ("attention", "mean"):
         log.fail(f"pooling must be attention or mean: {params['pooling']}")
+    if params["standardize"] not in ("yes", "no"):
+        log.fail(f"standardize must be yes or no: {params['standardize']}")
     seed = positive_int(log, "seed", params["seed"], 0)
-    cfg = {"pooling": params["pooling"], "hidden": positive_int(log, "hidden", params["hidden"], 1),
+    cfg = {"pooling": params["pooling"], "standardize": params["standardize"] == "yes", "hidden": positive_int(log, "hidden", params["hidden"], 1),
            "epochs": positive_int(log, "epochs", params["epochs"], 1),
            "learning_rate": number(log, "learning_rate", params["learning_rate"], 1e-6, 1.0),
            "weight_decay": number(log, "weight_decay", params["weight_decay"], 0.0, 10.0),
@@ -418,9 +438,9 @@ def main():
         if init_card["scgpt_checkpoint_sha256"] != info["checkpoint_sha256"]:
             log.fail("init_model was trained on embeddings of another scGPT checkpoint "
                      f"({init_card['scgpt_checkpoint']}); embed this data with the same checkpoint")
-        for k in ("pooling", "hidden", "embedding_size"):
-            if saved["config"][k] != cfg[k]:
-                log.fail(f"init_model has {k}={saved['config'][k]}, this run {k}={cfg[k]}; use the same setting")
+        for k in ("pooling", "standardize", "hidden", "embedding_size"):
+            if saved["config"].get(k, False) != cfg[k]:
+                log.fail(f"init_model has {k}={saved['config'].get(k, False)}, this run {k}={cfg[k]}; use the same setting")
         init_state = saved["state_dict"]
         log.msg(f"Continuing from model {init_card['model_name']} ({init_card['model_id']})")
 
@@ -510,7 +530,8 @@ def main():
     (out / "model" / "model_card.json").write_text(json.dumps(card, indent=2, ensure_ascii=False))
     md = [f"# Model card: {name}", "", f"- Model ID: {card['model_id']}", f"- Created: {card['created']}",
           f"- scGPT checkpoint: {card['scgpt_checkpoint']} (frozen), SHA256 {card['scgpt_checkpoint_sha256'][:16]}...",
-          f"- Pooling: {cfg['pooling']}, hidden {cfg['hidden']}, epochs {cfg['epochs']}",
+          f"- Pooling: {cfg['pooling']}, standardize {cfg['standardize']}, hidden {cfg['hidden']}, "
+          f"epochs {cfg['epochs']}",
           f"- Label: positive = {card['positive_label']}, negative = {card['negative_label']}",
           f"- Tissue / time: {card['tissue']} / {card['time']}",
           f"- Training patients: {len(allp)} (positive {n_pos}, negative {n_neg}), cohorts: "
