@@ -30,7 +30,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 SUFFIX = re.compile(r"(?:sample\d+)+$")
-FLUSH_ROWS = 2000
+FLUSH_ROWS = 500
 
 
 def fail(message):
