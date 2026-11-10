@@ -103,7 +103,7 @@ KOBIC 포탈의 파이프라인 페이지와 모듈 등록 화면에 넣을 원�
 | | Assembly_QC, Raw_Data_QC | — |
 | **Preprocessing** (신규) | **Normalization** (신규) | spatial_prep, spatial_hd_prep |
 | | **Data_Preparation** (신규) | scgpt_prep |
-| | **Cell_Embedding** (신규) | scgpt_embed |
+| | **Embedding** (신규) | scgpt_embed (세포 외 유전자·샘플 임베딩도 같은 칸) |
 | **Classification** (신규) | **Sample_Classification** (신규) | scgpt_train, scgpt_predict, scgpt_compare (세포 유형 분류 모델이 생기면 Cell_Classification) |
 | Mapping | Short_Read_Alignment | bowtie2, GATK_MarkDuplicates, organellar_filter |
 | | Transcript_Alignment | — |
