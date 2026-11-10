@@ -10,7 +10,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 - 포탈 등록 화면의 기반 이미지 출처(Bootstrap) 칸은 `Apptainer`입니다(작업이 SIF로 실행되므로). 모듈별 "실행 이미지" 절의 DEF Bootstrap(`docker`)은 이미지를 만들 때 쓴 DEF 파일의 값이라 다릅니다. 기반 이미지(From)는 모든 모듈이 Rocky Linux 9.8(`rockylinux/rockylinux:9.8.20260525.0`)입니다.
 - scGPT 파이프라인은 CLOSHA 3.0에서 처음 배포하므로 모든 모듈의 버전은 1.0입니다.
 - 모든 모듈은 `output_dir/logs/`에 실행 로그(`.log`)와 오류 로그(`.error.log`)를 남기고, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지웁니다.
-- 카테고리: CLOSHA 프로그램 목록에 기계학습 단계가 없어 대분류 Machine_Learning(신규)을 만들고, 중분류는 작업별로 Embedding, Model_Training, Prediction, Model_Evaluation(모두 신규)으로 둡니다. scgpt_prep은 데이터를 다음 단계 입력으로 바꾸는 단계라 Preprocessing / Data_Preparation(신규)입니다. 다른 기계학습 파이프라인(예: 다른 foundation model)의 모듈도 담을 수 있는 일반 이름입니다.
+- 카테고리: 대분류 = 분석 단계, 중분류 = 구체적 작업 또는 대상이라는 규칙(`docs/CLOSHA_Portal_Guide_v1.md` 5.2)에 맞췄습니다. scgpt_prep과 scgpt_embed는 데이터를 바꿔 다음 단계로 넘기는 단계라 Preprocessing 아래 Data_Preparation(신규)과 Cell_Embedding(신규)입니다. 학습·예측·비교 세 모듈은 개체(샘플)를 분류하는 작업이라 Classification(신규) / Sample_Classification(신규)입니다. 군집을 기법 이름이 아니라 하는 일인 Clustering으로, 중분류를 묶는 대상(Spatial_Clustering 등)으로 지은 것과 같은 방식입니다. 기계학습(Machine Learning)은 기법 이름이라 대분류로 쓰지 않았습니다(2026-11-10 결정). 나중에 세포 유형 분류 모델은 Classification / Cell_Classification으로 둡니다.
 - 결과 그림의 예시 데이터: K-BDS KAP241712 심장 단일핵 아틀라스 중 Chaffin 외(Nature 2022) 좌심실 샘플을 원 논문 메타데이터(Broad Single Cell Portal SCP1303)로 연결한 데이터입니다. 확장성 심근병증(DCM) 11명과 비후성 심근병증(HCM) 15명, 모두 26명이며 `positive_label=DCM`, `time=all`로 실행했습니다(2026-11-09, CLOSHA).
 
 ---
@@ -155,8 +155,8 @@ python3 scgpt_prep.1.0.py \
 | 모듈명 | scgpt_embed | scgpt_embed |
 | 서브 타이틀 | 사전학습 scGPT 세포 임베딩 | Pretrained scGPT cell embedding |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Machine_Learning (신규) | Machine_Learning (new) |
-| 카테고리 중분류 | Embedding (신규) | Embedding (new) |
+| 카테고리 대분류 | Preprocessing | Preprocessing |
+| 카테고리 중분류 | Cell_Embedding (신규) | Cell_Embedding (new) |
 | 태그 | scGPT, foundation model, cell embedding, single-cell RNA-seq, GPU | |
 | 레퍼런스 URL | https://github.com/bowang-lab/scGPT | |
 | 컨테이너 이미지 | bx_scgpt_gpu.1.0 | |
@@ -274,8 +274,8 @@ python3 scgpt_embed.1.0.py \
 | 모듈명 | scgpt_train | scgpt_train |
 | 서브 타이틀 | 개체 단위 표현형 분류 학습 | Individual-level classifier training |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Machine_Learning (신규) | Machine_Learning (new) |
-| 카테고리 중분류 | Model_Training (신규) | Model_Training (new) |
+| 카테고리 대분류 | Classification (신규) | Classification (new) |
+| 카테고리 중분류 | Sample_Classification (신규) | Sample_Classification (new) |
 | 태그 | classification, multiple instance learning, attention pooling, cross-validation, model card | |
 | 레퍼런스 URL | https://github.com/bowang-lab/scGPT | |
 | 컨테이너 이미지 | bx_scgpt.1.0 | |
@@ -394,8 +394,8 @@ python3 scgpt_train.1.0.py \
 | 모듈명 | scgpt_predict | scgpt_predict |
 | 서브 타이틀 | 학습 모델로 표현형 예측 | Phenotype prediction |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Machine_Learning (신규) | Machine_Learning (new) |
-| 카테고리 중분류 | Prediction (신규) | Prediction (new) |
+| 카테고리 대분류 | Classification (신규) | Classification (new) |
+| 카테고리 중분류 | Sample_Classification (신규) | Sample_Classification (new) |
 | 태그 | prediction, classification, attention, single-cell RNA-seq, model card | |
 | 레퍼런스 URL | https://github.com/bowang-lab/scGPT | |
 | 컨테이너 이미지 | bx_scgpt.1.0 | |
@@ -489,8 +489,8 @@ python3 scgpt_predict.1.0.py \
 | 모듈명 | scgpt_compare | scgpt_compare |
 | 서브 타이틀 | 기준 방법과 성능 비교 | Comparison with baselines |
 | 버전 | 1.0 | |
-| 카테고리 대분류 | Machine_Learning (신규) | Machine_Learning (new) |
-| 카테고리 중분류 | Model_Evaluation (신규) | Model_Evaluation (new) |
+| 카테고리 대분류 | Classification (신규) | Classification (new) |
+| 카테고리 중분류 | Sample_Classification (신규) | Sample_Classification (new) |
 | 태그 | model evaluation, AUC, ROC, baseline comparison, bootstrap, permutation test | |
 | 레퍼런스 URL | https://github.com/bowang-lab/scGPT | |
 | 컨테이너 이미지 | bx_scgpt.1.0 | |
