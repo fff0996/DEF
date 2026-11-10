@@ -3,7 +3,7 @@
 
 A: drawn from scratch (no CC BY figure shows a frozen single-cell foundation model turning a
    cell into an embedding; the scGPT paper, Cui et al. 2024 Nat Methods, has no open licence).
-B: redrawn and simplified from Do & Lahdesmaki, Bioinformatics 2025, 41(Suppl 1):i490,
+B: redrawn and simplified from Do & Lahdesmaki, Bioinformatics 2025, 41(Suppl 1):i96-i104,
    Figure 1 (CC BY 4.0, doi:10.1093/bioinformatics/btaf241): only the cell-level attention is
    kept (the cell-type level is removed), and the patient label and the comparison are added.
 Values are schematic.

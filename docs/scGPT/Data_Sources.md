@@ -48,5 +48,5 @@
 
 ## 5. 그림과 방법 참고
 - scGPT: Cui H, et al. scGPT: toward building a foundation model for single-cell multi-omics using generative AI. *Nat Methods* 2024 (공개 라이선스 없음, 그림 사용 안 함). 체크포인트 whole_human.
-- 개념 그림 B: Do M, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 2025;41(Suppl 1). doi:10.1093/bioinformatics/btaf241, PMC12261414, CC BY 4.0, Figure 1.
+- 개념 그림 B: Do C, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 2025;41(Suppl 1):i96-i104. doi:10.1093/bioinformatics/btaf241, PMC12261414, CC BY 4.0, Figure 1.
 - 사전학습 임베딩 평가: Kedzierska KZ, et al. Zero-shot evaluation reveals limitations of single-cell foundation models. *Genome Biol* 2025. doi:10.1186/s13059-025-03574-x
