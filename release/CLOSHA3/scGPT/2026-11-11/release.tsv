@@ -1,0 +1,6 @@
+module	release_file	closha2_file	work_file	image
+scgpt_prep	scgpt_prep.1.0.py	(new in 3.0)	scripts/scGPT/scgpt_prep.1.0.py	bx_scgpt 1.0
+scgpt_embed	scgpt_embed.1.0.py	(new in 3.0)	scripts/scGPT/scgpt_embed.1.0.py	bx_scgpt_gpu 1.0
+scgpt_train	scgpt_train.1.0.py	(new in 3.0)	scripts/scGPT/scgpt_train.1.0.py	bx_scgpt 1.0
+scgpt_predict	scgpt_predict.1.0.py	(new in 3.0)	scripts/scGPT/scgpt_predict.1.0.py	bx_scgpt 1.0
+scgpt_compare	scgpt_compare.1.0.py	(new in 3.0)	scripts/scGPT/scgpt_compare.1.0.py	bx_scgpt 1.0

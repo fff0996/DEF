@@ -1,0 +1,6 @@
+# Models, embeddings and data sets are not kept in git (size; K-BDS controlled-access data)
+*.h5ad
+*.pt
+*.h5
+*.gz
+model/

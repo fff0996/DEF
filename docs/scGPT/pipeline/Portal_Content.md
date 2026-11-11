@@ -10,20 +10,22 @@ KOBIC 포탈의 scGPT 파이프라인 상세 페이지에 들어갈 국문/영�
 
 | 항목 | 값 |
 |---|---|
-| Pipeline Name | `scGPT_Single_Cell_Phenotype_Classification_Pipeline` |
+| Pipeline Name | `scGPT_Phenotype_Classification_Pipeline` |
 | 서브 타이틀(국문) | 단일세포 표현형 분류 |
 | 서브 타이틀(영문) | Single-cell phenotype classification |
 | 구성 모듈 | scgpt_prep → scgpt_embed (GPU) → scgpt_train → scgpt_predict, scgpt_compare |
 | Version | 1.0 (CLOSHA 3.0 첫 배포) |
 | Reference | https://doi.org/10.1038/s41592-024-02201-0 |
-| Keyword(태그) | single-cell RNA-seq, single-cell foundation model, cell embedding, phenotype classification, patient classification, multiple instance learning, attention pooling, machine learning, AI-ready dataset |
-| 대분류 / 중분류 | Transcriptomics / Single_Cell_Transcriptomics (포탈 파이프라인 목록에 없으면 신규로 제안) |
+| Keyword(태그) | single-cell RNA-seq, single-cell foundation model, cell embedding, phenotype classification, patient classification, multiple instance learning, attention pooling, machine learning, deep learning, disease classification, AI-ready dataset |
+| 대분류 / 중분류 | Bio-AI / Single_Cell_Foundation_Model (중분류 신규) |
 | 대표 이미지 | `docs/scGPT/pipeline/figures/thumbnail.png`: scgpt_compare의 ROC 곡선(K-BDS KAP241712 심장, DCM 대 HCM 26명) |
 
 등록 메모:
 - Reference는 파이프라인이 쓰는 사전학습 모델의 원논문입니다: Cui H, Wang C, Maan H, Pang K, Luo F, Duan N, Wang B. scGPT: toward building a foundation model for single-cell multi-omics using generative AI. *Nat Methods* 21, 1470-1480 (2024)(Europe PMC로 서지 확인, 2026-11-10).
 - 대표 이미지는 2026-11-09 CLOSHA 실행의 `scgpt_compare/plots/roc.png`를 그대로 쓴 것입니다. scGPT 임베딩 평균(0.939)과 학습 모델(0.927)이 PCA(0.824)와 세포 유형 비율(0.697)보다 위에 있는 그림이라 파이프라인의 목적(사전학습 모델이 단순한 방법보다 나은지)을 한눈에 보여 줍니다.
 - Keyword에는 도구 이름(scGPT)을 넣지 않았습니다. 모듈 태그에 있습니다.
+- 이름은 2026-11-11에 `scGPT_Single_Cell_Phenotype_Classification_Pipeline`에서 줄였습니다(scGPT가 단일세포 모델이라 Single_Cell이 겹침). 단일세포라는 말은 서브 타이틀에 있습니다.
+- 분류는 AI 파이프라인을 모으는 대분류 Bio-AI 아래, 사전학습 단일세포 모델을 쓰는 파이프라인 칸으로 정했습니다(2026-11-11). 다른 단일세포 foundation model 파이프라인도 같은 칸에 둡니다.
 
 ---
 
