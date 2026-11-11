@@ -37,12 +37,11 @@ CLOSHA 3.0 신규 파이프라인이므로 다섯 모듈 모두 1.0입니다. �
 
 - `docs/`: 모듈 원고(`Portal_Content.md`, `.docx`), 등록 정보(`Registration.md`), 실행 이미지 안내(`Container_Manual.md`), 예제 데이터 출처(`Data_Sources.md`)
 - `docs/pipeline/`: 파이프라인 원고(`Portal_Content.md`, `.docx`)와 분석 흐름·개념·대표 그림(PNG, 원본 SVG)
-- `portal_images/`, `portal_images.zip`: 포탈에 올리는 PNG
+- `portal_images/`, `portal_images.zip`: 포탈에 올리는 PNG(모듈 개념도 5개 포함: prep·predict·compare는 직접 그린 모듈 개념도 `docs/scGPT/modules/figures/module_concepts/`, embed·train은 파이프라인 개념도)
 - `results/`: 배포본으로 실행한 결과를 올리는 곳(올릴 파일 목록은 `results/README.md`)
 
 ## 남은 일 (다음 배포)
 
 - scgpt_prep, scgpt_train, scgpt_predict의 결과 그림과 레전드, scgpt_compare 요약표 그림
-- scgpt_prep, scgpt_predict, scgpt_compare의 모듈 개념도
 - scgpt_prep 세포 유형 마커에 심장 등 비혈액 조직 세포를 더하거나 사용자 세포 유형 열을 받는 방안
 - scgpt_embed UMAP 가운데 패널의 범례 글자가 잘리는 문제
