@@ -126,7 +126,7 @@ P05_LV1,P05,COHORT_A,LeftVentricle,Baseline,
 
 - 레전드(국문): **그림. 단일세포 데이터를 AI 학습용 데이터셋으로 만들고 개체 단위로 나눕니다.** (A) 샘플마다 count 행렬과 샘플 시트(SampleID, PatientID, Label)를 받아, 세포를 검출 유전자 수와 미토콘드리아 비율로 거르고, 유전자 이름을 scGPT 어휘와 맞추고, 개체마다 라벨이 하나인지 확인하고, 마커로 대략의 세포 유형을 붙여 dataset.h5ad를 만듭니다. (B) 교차검증 분할은 세포가 아니라 개체 단위로 만듭니다. 한 사람의 세포가 학습과 평가에 나뉘어 들어가면 성능이 실제보다 좋게 나오기 때문입니다. fold마다 양성(주황)과 음성(파랑) 비율을 맞추며(stratified), 기본 5 fold × 3회 반복입니다. 색이 찬 칸이 그 fold에서 평가에 쓰는 개체입니다. 분할은 splits.tsv에 저장되어 이후 모든 모듈이 같은 개체로 채점합니다. 값은 모식적인 값입니다.
 - 레전드(영문): **Figure. Single-cell data become an AI-ready dataset split by individual.** (A) From a count matrix per sample and a sample sheet (SampleID, PatientID, Label), cells are filtered by detected genes and mitochondrial fraction, gene names are matched to the scGPT vocabulary, each individual is checked for one label, and coarse cell types are assigned from markers into dataset.h5ad. (B) Cross-validation splits are made by individual, not by cell, because one person's cells on both the training and the evaluation side make performance look better than it is. Each fold keeps the ratio of positives (orange) and negatives (blue) (stratified), with 5 folds × 3 repeats by default; filled boxes are the individuals held out in that fold. The splits are saved in splits.tsv so that every later module scores the same individuals. Values are schematic.
-- 출처: 직접 작성한 모식도(외부 그림 사용 안 함). 개체 단위 분할이나 분류기 비교의 원리를 보여 주는 CC BY 논문 그림을 Europe PMC에서 찾지 못했습니다(2026-11-11).
+등록 메모: 출처 전체(포탈에는 위 레전드 끝의 짧은 출처만 붙여 넣습니다). 직접 작성한 모식도(외부 그림 사용 안 함). 개체 단위 분할이나 분류기 비교의 원리를 보여 주는 CC BY 논문 그림을 Europe PMC에서 찾지 못했습니다(2026-11-11).
 
 ### 스크립트 사용 예제
 ```
@@ -238,9 +238,9 @@ Keeps the pretrained scGPT fixed and turns each cell into 512 numbers (an embedd
 
 등록 메모: 파이프라인 개념도의 (A) 패널이 이 모듈의 원리입니다. 모듈 전용 그림을 따로 만들지 않고 같은 그림을 씁니다. 필요하면 (A)만 잘라 씁니다.
 
-- 레전드(국문): **그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 사전학습된 scGPT에 넣어 512개의 숫자(임베딩)로 바꿉니다. scGPT의 가중치는 바뀌지 않으며, 비슷한 세포는 비슷한 임베딩을 갖습니다. 이 모듈은 (A)를 수행합니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 값은 모식적인 값입니다.
-- 레전드(영문): **Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) go into pretrained scGPT, which turns the cell into 512 numbers (an embedding). The scGPT weights do not change, and similar cells get similar embeddings. This module performs (A). (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. Values are schematic.
-- 출처: (A) 직접 작성한 모식도(외부 그림 사용 안 함). (B) Do C, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 41(Suppl 1), i96-i104 (2025). https://doi.org/10.1093/bioinformatics/btaf241, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+- 레전드(국문): **그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 사전학습된 scGPT에 넣어 512개의 숫자(임베딩)로 바꿉니다. scGPT의 가중치는 바뀌지 않으며, 비슷한 세포는 비슷한 임베딩을 갖습니다. 이 모듈은 (A)를 수행합니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 값은 모식적인 값입니다. (B)는 Do & Lähdesmäki, Bioinformatics 2025, Fig. 1을 수정한 그림입니다(CC BY 4.0).
+- 레전드(영문): **Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) go into pretrained scGPT, which turns the cell into 512 numbers (an embedding). The scGPT weights do not change, and similar cells get similar embeddings. This module performs (A). (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. Values are schematic. Panel B is adapted from Do & Lähdesmäki, Bioinformatics 2025, Fig. 1 (CC BY 4.0).
+등록 메모: 출처 전체(포탈에는 위 레전드 끝의 짧은 출처만 붙여 넣습니다). (A) 직접 작성한 모식도(외부 그림 사용 안 함). (B) Do C, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 41(Suppl 1), i96-i104 (2025). https://doi.org/10.1093/bioinformatics/btaf241, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ### 스크립트 사용 예제
 ```
@@ -362,9 +362,9 @@ Trains a model that pools cell embeddings per individual to classify a phenotype
 
 등록 메모: 파이프라인 개념도의 (B) 패널이 이 모듈의 원리입니다. 모듈 전용 그림을 따로 만들지 않고 같은 그림을 씁니다. 필요하면 (B)만 잘라 씁니다.
 
-- 레전드(국문): **그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 사전학습된 scGPT에 넣어 512개의 숫자(임베딩)로 바꿉니다. scGPT의 가중치는 바뀌지 않습니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 이 모듈은 (B)의 attention과 분류기를 학습합니다. 값은 모식적인 값입니다.
-- 레전드(영문): **Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) go into pretrained scGPT, which turns the cell into 512 numbers (an embedding); the scGPT weights do not change. (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. This module trains the attention and the classifier in (B). Values are schematic.
-- 출처: (A) 직접 작성한 모식도(외부 그림 사용 안 함). (B) Do C, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 41(Suppl 1), i96-i104 (2025). https://doi.org/10.1093/bioinformatics/btaf241, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+- 레전드(국문): **그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 사전학습된 scGPT에 넣어 512개의 숫자(임베딩)로 바꿉니다. scGPT의 가중치는 바뀌지 않습니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 이 모듈은 (B)의 attention과 분류기를 학습합니다. 값은 모식적인 값입니다. (B)는 Do & Lähdesmäki, Bioinformatics 2025, Fig. 1을 수정한 그림입니다(CC BY 4.0).
+- 레전드(영문): **Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) go into pretrained scGPT, which turns the cell into 512 numbers (an embedding); the scGPT weights do not change. (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. This module trains the attention and the classifier in (B). Values are schematic. Panel B is adapted from Do & Lähdesmäki, Bioinformatics 2025, Fig. 1 (CC BY 4.0).
+등록 메모: 출처 전체(포탈에는 위 레전드 끝의 짧은 출처만 붙여 넣습니다). (A) 직접 작성한 모식도(외부 그림 사용 안 함). (B) Do C, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 41(Suppl 1), i96-i104 (2025). https://doi.org/10.1093/bioinformatics/btaf241, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ### 스크립트 사용 예제
 ```
@@ -473,7 +473,7 @@ Computes, for each individual, the probability of the positive phenotype with a 
 
 - 레전드(국문): **그림. 학습된 모델로 새 개체의 표현형 확률을 계산합니다.** (A) 라벨이 없는 새 개체의 세포 임베딩(학습 때와 같은 scGPT 체크포인트로 만든 것)을 학습된 모델(attention과 분류기, 학습 때의 표준화 값)에 넣어 양성 라벨의 확률을 계산합니다. threshold(기본 0.5) 이상이면 양성으로 판정합니다. (B) attention 모델은 세포마다 가중치를 냅니다. 세포 유형별로 attention 비율(보라)과 세포 비율(회색)을 비교하면, 모델이 세포 수보다 더 무게를 둔 세포 유형(그림에서는 Monocyte)을 볼 수 있습니다. 무게가 크다는 것이 그 세포가 원인이라는 뜻은 아닙니다. 값은 모식적인 값입니다.
 - 레전드(영문): **Figure. A trained model gives the phenotype probability of new individuals.** (A) Cell embeddings of a new, unlabeled individual (made with the same scGPT checkpoint as in training) go into the trained model (attention and classifier, with the training standardization) to give the probability of the positive label; at or above the threshold (0.5 by default) the call is positive. (B) An attention model gives each cell a weight. Comparing the share of attention (purple) with the share of cells (gray) per cell type shows the cell types the model weighs more than their numbers (Monocyte in the figure). A large weight does not mean those cells are the cause. Values are schematic.
-- 출처: 직접 작성한 모식도(외부 그림 사용 안 함). 개체 단위 분할이나 분류기 비교의 원리를 보여 주는 CC BY 논문 그림을 Europe PMC에서 찾지 못했습니다(2026-11-11).
+등록 메모: 출처 전체(포탈에는 위 레전드 끝의 짧은 출처만 붙여 넣습니다). 직접 작성한 모식도(외부 그림 사용 안 함). 개체 단위 분할이나 분류기 비교의 원리를 보여 주는 CC BY 논문 그림을 Europe PMC에서 찾지 못했습니다(2026-11-11).
 
 ### 스크립트 사용 예제
 ```
@@ -577,7 +577,7 @@ Compares, on the same individuals and splits, whether classification with the pr
 
 - 레전드(국문): **그림. 같은 개체, 같은 분할에서 사전학습 모델과 단순한 방법을 비교합니다.** (A) splits.tsv의 같은 분할로 네 방법을 채점합니다. 세포 유형 비율, 고변동 유전자 PCA의 개체 평균, scGPT 임베딩의 개체 평균은 각각 로지스틱 회귀로 학습하고, 학습 모델은 자기 교차검증 예측을 씁니다. 방법마다 학습에 쓰지 않은 개체에서의 AUC와 95% 신뢰구간을 내며, 점선은 무작위 수준(0.5)입니다. (B) 개체를 복원 추출한 부트스트랩 표본마다 두 방법을 같이 채점해 AUC 차이(학습 모델 − 기준 방법)를 구합니다. 차이의 95% 구간이 0보다 위에 있으면 "더 좋음(better)", 0을 포함하면 "차이 불분명(not clearly different)"으로 요약합니다. 값은 모식적인 값입니다.
 - 레전드(영문): **Figure. The pretrained model and simpler methods are compared on the same individuals and folds.** (A) Four methods are scored on the same splits from splits.tsv. Cell type fractions, the individual mean of a PCA of highly variable genes, and the individual mean of the scGPT embeddings are each fitted with logistic regression, and the trained model uses its own cross-validation predictions. Each method gets an AUC with a 95% confidence interval on individuals not used for training; the dashed line is chance (0.5). (B) In each bootstrap sample of individuals drawn with replacement, both methods are scored together to give the AUC difference (trained model − baseline). An interval above 0 is summarized as better, and an interval including 0 as not clearly different. Values are schematic.
-- 출처: 직접 작성한 모식도(외부 그림 사용 안 함). 개체 단위 분할이나 분류기 비교의 원리를 보여 주는 CC BY 논문 그림을 Europe PMC에서 찾지 못했습니다(2026-11-11).
+등록 메모: 출처 전체(포탈에는 위 레전드 끝의 짧은 출처만 붙여 넣습니다). 직접 작성한 모식도(외부 그림 사용 안 함). 개체 단위 분할이나 분류기 비교의 원리를 보여 주는 CC BY 논문 그림을 Europe PMC에서 찾지 못했습니다(2026-11-11).
 
 ### 스크립트 사용 예제
 ```

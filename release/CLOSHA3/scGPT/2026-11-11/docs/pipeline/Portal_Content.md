@@ -88,16 +88,18 @@ On the same individuals and folds, cell-type fractions, PCA of variable genes an
 그림: `docs/scGPT/pipeline/figures/concept.png` (원본 `concept.svg`, `make_concept.py`)
 
 ### 국문 (그림 설명)
-**그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 사전학습된 scGPT에 넣어 512개의 숫자(임베딩)로 바꿉니다. scGPT의 가중치는 바뀌지 않으며, 비슷한 세포는 비슷한 임베딩을 갖습니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 학습은 이 부분만 합니다. scgpt_compare는 같은 개체와 분할에서 세포 유형 비율, 변이 유전자 PCA, scGPT 임베딩 평균과 학습 모델의 AUC를 비교합니다. 값은 모식적인 값입니다.
+**그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 사전학습된 scGPT에 넣어 512개의 숫자(임베딩)로 바꿉니다. scGPT의 가중치는 바뀌지 않으며, 비슷한 세포는 비슷한 임베딩을 갖습니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 학습은 이 부분만 합니다. scgpt_compare는 같은 개체와 분할에서 세포 유형 비율, 변이 유전자 PCA, scGPT 임베딩 평균과 학습 모델의 AUC를 비교합니다. 값은 모식적인 값입니다. (B)는 Do & Lähdesmäki, Bioinformatics 2025, Fig. 1을 수정한 그림입니다(CC BY 4.0).
 
 ### English (figure legend)
-**Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) go into pretrained scGPT, which turns the cell into 512 numbers (an embedding). The scGPT weights do not change, and similar cells get similar embeddings. (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. Only this part is trained. scgpt_compare compares the AUC of cell-type fractions, PCA of variable genes, the mean scGPT embedding and the trained model on the same individuals and folds. Values are schematic.
+**Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) go into pretrained scGPT, which turns the cell into 512 numbers (an embedding). The scGPT weights do not change, and similar cells get similar embeddings. (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. Only this part is trained. scgpt_compare compares the AUC of cell-type fractions, PCA of variable genes, the mean scGPT embedding and the trained model on the same individuals and folds. Values are schematic. Panel B is adapted from Do & Lähdesmäki, Bioinformatics 2025, Fig. 1 (CC BY 4.0).
 
 ### 대체 텍스트 (alt)
 - 국문: scGPT 개념도. 위: 세포의 유전자 발현이 고정된 scGPT를 거쳐 임베딩이 되고 비슷한 세포끼리 모임. 아래: 개체마다 세포 임베딩에 attention을 주어 개체 임베딩과 예측 확률을 만들고, 같은 분할에서 다른 방법과 AUC를 비교함.
 - English: scGPT concept. Top: a cell's gene expression passes through frozen scGPT into an embedding, and similar cells group together. Bottom: attention over each individual's cell embeddings gives an individual embedding and a predicted probability, compared with other methods by AUC on the same folds.
 
 ### 출처 / Reference
+
+등록 메모: 포탈의 이미지 설명 칸에는 위 레전드 끝의 짧은 출처만 들어갑니다. 아래 전체 서지는 기록용입니다.
 - (A) 직접 작성한 모식도(외부 그림 사용 안 함). scGPT 원 논문(Cui et al., Nat Methods 2024)은 공개 라이선스가 없어 그림을 쓰지 않음.
 - (B) Do C, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 41(Suppl 1), i96-i104 (2025). https://doi.org/10.1093/bioinformatics/btaf241, Fig. 1을 수정(다시 그리고 세포 유형 단계를 빼고 라벨과 비교 상자를 더함). CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). 서지와 라이선스는 Europe PMC로 확인(2026-11-10).
 
