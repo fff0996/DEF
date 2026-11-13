@@ -478,7 +478,7 @@ def main():
 
     # ------------------------------------------------------------- Step 2: read and filter cells
     log.step("Step 2: Read matrices and filter cells")
-    rows, parts = [], []
+    rows, parts, no_mito = [], [], []
     for _, r in sheet.iterrows():
         sid = r["SampleID"]
         row = {"SampleID": sid, "PatientID": r["PatientID"], "Cohort": r["Cohort"], "Tissue": r["Tissue"],
@@ -519,6 +519,8 @@ def main():
         row["cells_qc"] = a.n_obs
         log.msg(f"  {path.name}: {row['cells_raw']} cells, {row['genes']} genes "
                 f"({row['genes_in_vocab']} in scGPT vocabulary); after QC {row['cells_qc']} cells")
+        if not mito.any():
+            no_mito.append(sid)
         if a.n_obs < min_cells:
             log.warn(f"sample skipped: {sid} / {a.n_obs} cells after QC (< min_cells_per_sample {min_cells})")
             row["status"] = "too_few_cells"
@@ -536,6 +538,9 @@ def main():
         log.fail("no sample was usable; see samples.tsv statuses in the log above")
     log.msg(f"Samples used: {len(parts)} / {len(sheet)}")
 
+    if no_mito:
+        log.msg(f"Note: no mitochondrial (MT-) genes in {len(no_mito)} sample matrices, so max_mito "
+                f"filtered no cells there: {', '.join(no_mito[:10])}{' ...' if len(no_mito) > 10 else ''}")
     # Union of genes; a gene missing in a sample is zero there (scGPT reads only non-zero genes).
     adata = ad.concat(parts, join="outer", fill_value=0, merge="first")
     adata.X = sp.csr_matrix(adata.X, dtype=np.float32)
@@ -696,13 +701,20 @@ def main():
     plt.close(fig)
     used_s = samples[samples["status"] == "used"]["SampleID"].tolist()
     obs = adata.obs
-    fig, axes = plt.subplots(1, 2, figsize=(max(8, 0.12 * len(used_s) + 4), 4))
+    # constrained layout keeps the right panel's y label off the left panel
+    fig, axes = plt.subplots(1, 2, figsize=(max(8, 0.12 * len(used_s) + 4), 4), layout="constrained")
+    fig.get_layout_engine().set(wspace=0.08)
     for ax, col, lab_ in zip(axes, ["n_genes", "pct_mito"], ["Detected genes", "Mitochondrial UMI %"]):
         data = [obs.loc[obs["SampleID"] == s, col].values for s in used_s]
         ax.boxplot(data, showfliers=False)
         ax.set_xticks(range(1, len(used_s) + 1))
         ax.set_xticklabels(used_s, rotation=90, fontsize=6)
         ax.set_ylabel(lab_)
+    if used_s and all(s in no_mito for s in used_s):
+        axes[1].text(0.5, 0.78, "No mitochondrial (MT-) genes in the matrices:\n"
+                     "all values are 0 and max_mito filtered no cells",
+                     transform=axes[1].transAxes, ha="center", va="center", fontsize=9, color="#555555",
+                     bbox=dict(facecolor="white", edgecolor="#CCCCCC", boxstyle="round,pad=0.4"))
     fig.suptitle("Cell QC by sample (after filtering)")
     save_plot(fig, pdir / "qc_by_sample")
     plt.close(fig)

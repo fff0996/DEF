@@ -40,8 +40,18 @@ CLOSHA 3.0 신규 파이프라인이므로 다섯 모듈 모두 1.0입니다. �
 - `portal_images/`, `portal_images.zip`: 포탈에 올리는 PNG(모듈 개념도 5개 포함: prep·predict·compare는 직접 그린 모듈 개념도 `docs/scGPT/modules/figures/module_concepts/`, embed·train은 파이프라인 개념도)
 - `results/`: 배포본으로 실행한 결과를 올리는 곳(올릴 파일 목록은 `results/README.md`)
 
+## 제자리 수정 (2026-11-13, 버전 번호 유지)
+
+그림 표시만 바꾼 수정이라 사용자 결정으로 1.0 번호를 그대로 두고 이 폴더의 두 파일을 바꿨습니다. 계산과 결과 파일 내용은 같습니다. 실행 이미지(SIF)는 바꾸지 않습니다.
+
+| 모듈 | 파일 | 바뀐 점 |
+|---|---|---|
+| scgpt_prep | scgpt_prep.1.0.py | `plots/qc_by_sample`: 자동 간격(constrained layout)으로 오른쪽 패널의 축 이름이 왼쪽 패널과 겹치지 않게 함. 행렬에 미토콘드리아(MT-) 유전자가 없으면 오른쪽 패널에 안내 상자를 넣고, 로그(stdout)에 해당 샘플을 알림 |
+| scgpt_embed | scgpt_embed.1.0.py | `plots/embedding_umap`: 자동 간격과 그림 폭 18로 범례(긴 코호트 이름)가 옆 패널로 넘어가지 않게 함 |
+
+확인: Codespace에서 bx_scgpt 1.0(CPU)을 fakeroot로 다시 빌드하고, PBMC 3k 가짜 환자 데이터(원본, MT- 유전자 제거·긴 코호트 이름)로 prep 2회와 embed 1회를 실행했습니다. 모두 종료 코드 0이었고, stderr에는 기존 경고만 나왔으며 그림의 겹침이 없어졌습니다. GPU 이미지와 실제 크기 데이터(49 샘플)로는 확인하지 않았습니다.
+
 ## 남은 일 (다음 배포)
 
 - scgpt_prep, scgpt_train, scgpt_predict의 결과 그림과 레전드, scgpt_compare 요약표 그림
 - scgpt_prep 세포 유형 마커에 심장 등 비혈액 조직 세포를 더하거나 사용자 세포 유형 열을 받는 방안
-- scgpt_embed UMAP 가운데 패널의 범례 글자가 잘리는 문제

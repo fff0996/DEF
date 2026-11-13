@@ -147,7 +147,33 @@ python3 scgpt_prep.1.0.py \
 ```
 
 ### 주요 결과 이미지
-등록 메모: 예제 데이터(KAP241712 DCM 대 HCM)의 prep 그림(`plots/cells_per_patient.png`, `plots/qc_by_sample.png`, `plots/cell_types_by_patient.png`)과 `samples.tsv`·`gene_match.tsv`를 CLOSHA에서 받아 그림을 직접 본 뒤 결과 1~3을 씁니다.
+예시 데이터는 K-BDS KAP241712 심장(좌심실) 단일핵 데이터의 DCM 11명, HCM 15명, 49개 샘플입니다(2026-11-11 실행). 모든 유전자(16,152개)가 scGPT 어휘에 있었고, 세포는 394,749개입니다.
+
+**결과 1. 개체별 세포 수**
+- 결과 파일: `plots/cells_per_patient.png`
+
+그림: `docs/scGPT/modules/figures/results_kap241712/scgpt_prep_result_1.png`
+
+- 레전드(국문): **개체마다 QC를 통과한 세포 수.** 막대 하나가 개체 하나이며, 색은 라벨입니다(주황 DCM, 파랑 HCM, 회색 라벨 없음). 개체의 세포 수 차이가 너무 크면 세포가 많은 개체가 학습을 좌우할 수 있어, 이후 임베딩에서는 개체마다 같은 수(기본 500개)를 뽑아 씁니다. 예시 데이터에서는 개체당 7,311~23,411개로 모든 개체가 500개보다 많았고, DCM과 HCM의 세포 수 분포가 비슷했습니다. 개체 ID는 가렸습니다.
+- 레전드(영문): **Cells per individual after QC.** Each bar is one individual, colored by label (orange DCM, blue HCM, gray unlabeled). Large differences between individuals could let those with many cells dominate training, so the embedding step later samples the same number per individual (500 by default). In the example data individuals had 7,311 to 23,411 cells, all above 500, with similar distributions for DCM and HCM. Individual IDs are hidden.
+
+**결과 2. 샘플별 검출 유전자 수**
+- 결과 파일: `plots/qc_by_sample.png`
+
+그림: `docs/scGPT/modules/figures/results_kap241712/scgpt_prep_result_2.png`
+
+- 레전드(국문): **QC 후 샘플별 세포당 검출 유전자 수.** 상자 하나가 샘플 하나이며, 상자는 세포의 가운데 50%, 주황 선은 중앙값, 수염은 범위입니다. 특정 샘플만 크게 낮거나 높으면 그 샘플의 품질을 확인합니다. 예시 데이터에서는 샘플마다 세포당 중앙값 약 400~1,500개로 크게 벗어난 샘플이 없었습니다. 샘플 이름은 가렸습니다.
+- 레전드(영문): **Detected genes per cell in each sample after QC.** Each box is one sample: the box spans the middle 50% of cells, the orange line is the median and the whiskers the range. A sample far lower or higher than the others should be checked. In the example data the median was about 400 to 1,500 genes per cell, with no sample far off. Sample names are hidden.
+
+등록 메모: 원래 그림의 오른쪽 패널(미토콘드리아 UMI %)은 예시 데이터에서 모두 0이라 잘라 냈습니다. 제공된 행렬에 미토콘드리아 유전자(MT-)가 없고 이미 세포 QC가 되어 있던 것으로 보입니다(QC 전후 세포 수가 같음; 행렬 유전자 목록은 직접 확인 안 함). 원 그림은 `_incoming/scgpt_prep/output/plots/`에만 있고 샘플 ID가 있어 git에 넣지 않습니다.
+
+**결과 3. 개체별 세포 유형 구성**
+- 결과 파일: `plots/cell_types_by_patient.png`
+
+그림: `docs/scGPT/modules/figures/results_kap241712/scgpt_prep_result_3.png`
+
+- 레전드(국문): **개체마다 큰 세포 유형의 비율.** 막대 하나가 개체 하나이며, 왼쪽부터 양성(DCM), 음성(HCM) 순서입니다. 세포 유형은 마커 유전자로 붙인 대략적인 이름으로, 기준 방법(baseline_celltype)의 입력과 attention 해석에 쓰입니다. 예시 데이터에서는 섬유모세포(빨강)와 내피세포(살구색)가 많았고, 마커가 혈액·종양 미세환경용이라 심근세포 같은 심장 고유 세포는 Unassigned(갈색)로 나왔습니다. 두 질환 사이에 세포 유형 구성의 뚜렷한 차이는 보이지 않았습니다. 개체 ID는 가렸습니다.
+- 레전드(영문): **Fraction of coarse cell types in each individual.** Each bar is one individual, positives (DCM) first, then negatives (HCM). Cell types are rough names from marker genes, used as the input of the baseline_celltype method and to interpret attention. In the example data fibroblasts (red) and endothelial cells (light orange) were common, and because the markers are for blood and the tumor microenvironment, heart cells such as cardiomyocytes appear as Unassigned (brown). No clear difference in cell type composition was seen between the two diseases. Individual IDs are hidden.
 
 ---
 
@@ -238,9 +264,9 @@ Keeps the pretrained scGPT fixed and turns each cell into 512 numbers (an embedd
 
 등록 메모: 파이프라인 개념도의 (A) 패널이 이 모듈의 원리입니다. 모듈 전용 그림을 따로 만들지 않고 같은 그림을 씁니다. 필요하면 (A)만 잘라 씁니다.
 
-- 레전드(국문): **그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 사전학습된 scGPT에 넣어 512개의 숫자(임베딩)로 바꿉니다. scGPT의 가중치는 바뀌지 않으며, 비슷한 세포는 비슷한 임베딩을 갖습니다. 이 모듈은 (A)를 수행합니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 값은 모식적인 값입니다. (B)는 Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1을 수정(CC BY 4.0).
-- 레전드(영문): **Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) go into pretrained scGPT, which turns the cell into 512 numbers (an embedding). The scGPT weights do not change, and similar cells get similar embeddings. This module performs (A). (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. Values are schematic. Panel B adapted from Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1 (CC BY 4.0).
-등록 메모: 출처 전체(포탈에는 위 레전드 끝의 짧은 출처만 붙여 넣습니다). (A) 직접 작성한 모식도(외부 그림 사용 안 함). (B) Do C, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 41(Suppl 1), i96-i104 (2025). https://doi.org/10.1093/bioinformatics/btaf241, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+- 레전드(국문): **그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 고르고, 유전자 이름과 구간으로 나눈 발현값(bin)을 토큰으로 바꿔 사전학습된 scGPT transformer에 넣습니다. 맨 앞 CLS 토큰의 출력이 그 세포의 임베딩(512개의 숫자)입니다. scGPT의 가중치는 바뀌지 않으며, 비슷한 세포는 비슷한 임베딩을 갖습니다. 이 모듈은 (A)를 수행합니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 값은 모식적인 값입니다. (A)는 Tejada-Lapuerta A. et al., Nat. Methods 22, 2525 (2025), Fig. 1c-e를, (B)는 Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1을 수정(CC BY 4.0).
+- 레전드(영문): **Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) are turned into tokens of gene names and binned expression values and passed through the pretrained scGPT transformer. The output of the leading CLS token is the cell embedding (512 numbers). The scGPT weights do not change, and similar cells get similar embeddings. This module performs (A). (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. Values are schematic. Panel A adapted from Tejada-Lapuerta A. et al., Nat. Methods 22, 2525 (2025), Fig. 1c-e, and panel B from Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1 (CC BY 4.0).
+등록 메모: 출처 전체(포탈에는 위 레전드 끝의 짧은 출처만 붙여 넣습니다). (A) Tejada-Lapuerta A, Schaar AC, Gutgesell R, et al. Nicheformer: a foundation model for single-cell and spatial omics. *Nat Methods* 22(12), 2525-2538 (2025). https://doi.org/10.1038/s41592-025-02814-z, Fig. 1c-e를 수정(세포와 발현값, 토크나이저, 토큰 임베딩, transformer, 출력의 구성을 따르고 scGPT 방식(유전자와 bin 값 토큰, CLS 출력, 가중치 고정)으로 바꿈; 메타데이터 토큰, 위치 임베딩, 마스킹은 뺌; Fig. 1e의 임베딩 UMAP은 모식적으로 그림). CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). 서지와 라이선스는 Europe PMC로 확인(2026-11-13, PMC12695652). (B) Do C, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 41(Suppl 1), i96-i104 (2025). https://doi.org/10.1093/bioinformatics/btaf241, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ### 스크립트 사용 예제
 ```
@@ -362,9 +388,9 @@ Trains a model that pools cell embeddings per individual to classify a phenotype
 
 등록 메모: 파이프라인 개념도의 (B) 패널이 이 모듈의 원리입니다. 모듈 전용 그림을 따로 만들지 않고 같은 그림을 씁니다. 필요하면 (B)만 잘라 씁니다.
 
-- 레전드(국문): **그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 사전학습된 scGPT에 넣어 512개의 숫자(임베딩)로 바꿉니다. scGPT의 가중치는 바뀌지 않습니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 이 모듈은 (B)의 attention과 분류기를 학습합니다. 값은 모식적인 값입니다. (B)는 Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1을 수정(CC BY 4.0).
-- 레전드(영문): **Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) go into pretrained scGPT, which turns the cell into 512 numbers (an embedding); the scGPT weights do not change. (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. This module trains the attention and the classifier in (B). Values are schematic. Panel B adapted from Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1 (CC BY 4.0).
-등록 메모: 출처 전체(포탈에는 위 레전드 끝의 짧은 출처만 붙여 넣습니다). (A) 직접 작성한 모식도(외부 그림 사용 안 함). (B) Do C, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 41(Suppl 1), i96-i104 (2025). https://doi.org/10.1093/bioinformatics/btaf241, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+- 레전드(국문): **그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 사전학습된 scGPT에 넣어 512개의 숫자(임베딩)로 바꿉니다. scGPT의 가중치는 바뀌지 않습니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 이 모듈은 (B)의 attention과 분류기를 학습합니다. 값은 모식적인 값입니다. (A)는 Tejada-Lapuerta A. et al., Nat. Methods 22, 2525 (2025), Fig. 1c-e를, (B)는 Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1을 수정(CC BY 4.0).
+- 레전드(영문): **Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) go into pretrained scGPT, which turns the cell into 512 numbers (an embedding); the scGPT weights do not change. (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. This module trains the attention and the classifier in (B). Values are schematic. Panel A adapted from Tejada-Lapuerta A. et al., Nat. Methods 22, 2525 (2025), Fig. 1c-e, and panel B from Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1 (CC BY 4.0).
+등록 메모: 출처 전체(포탈에는 위 레전드 끝의 짧은 출처만 붙여 넣습니다). (A) Tejada-Lapuerta A, Schaar AC, Gutgesell R, et al. Nicheformer: a foundation model for single-cell and spatial omics. *Nat Methods* 22(12), 2525-2538 (2025). https://doi.org/10.1038/s41592-025-02814-z, Fig. 1c-e를 수정(세포와 발현값, 토크나이저, 토큰 임베딩, transformer, 출력의 구성을 따르고 scGPT 방식(유전자와 bin 값 토큰, CLS 출력, 가중치 고정)으로 바꿈; 메타데이터 토큰, 위치 임베딩, 마스킹은 뺌; Fig. 1e의 임베딩 UMAP은 모식적으로 그림). CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). 서지와 라이선스는 Europe PMC로 확인(2026-11-13, PMC12695652). (B) Do C, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 41(Suppl 1), i96-i104 (2025). https://doi.org/10.1093/bioinformatics/btaf241, Fig. 1을 수정. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 ### 스크립트 사용 예제
 ```
@@ -386,7 +412,23 @@ python3 scgpt_train.1.0.py \
 ```
 
 ### 주요 결과 이미지
-등록 메모: 예제 데이터(KAP241712 DCM 대 HCM, 2026-11-09 실행)의 `plots/roc_cv.png`, `plots/training_loss.png`, `cv_metrics.tsv`를 CLOSHA에서 받아 그림을 직접 본 뒤 결과 1~3을 씁니다. 같은 실행의 기준 비교(scgpt_compare)에서 이 모델의 교차검증 AUC는 0.927(95% CI 0.812~1.000)이었습니다.
+예시 데이터는 K-BDS KAP241712 심장 단일핵 데이터의 DCM 11명, HCM 15명(개체당 500세포, 2026-11-11 실행)입니다. 5겹 교차검증을 3번 반복했습니다(학습 20~21명, 평가 5~6명).
+
+**결과 1. 교차검증 ROC 곡선**
+- 결과 파일: `plots/roc_cv.png`, `cv_metrics.tsv`
+
+그림: `docs/scGPT/modules/figures/results_kap241712/scgpt_train_result_1.png`
+
+- 레전드(국문): **학습에 쓰지 않은 개체에서의 ROC 곡선.** 각 개체는 자기가 빠진 겹(fold)에서 학습한 모델로만 점수를 받고, 3번 반복한 점수를 개체별로 평균해 그렸습니다. 가로축은 음성 개체를 양성으로 잘못 부른 비율, 세로축은 양성 개체를 맞게 찾은 비율이며, 회색 점선은 무작위 수준(AUC 0.5)입니다. 예시 데이터에서 AUC는 0.855(95% CI 0.68~0.98)였고, 반복별로는 0.836, 0.915, 0.715로 개체를 어떻게 나누느냐에 따라 차이가 컸습니다. 26명으로는 신뢰구간이 넓으므로, 기준 방법과의 차이는 scgpt_compare로 확인합니다.
+- 레전드(영문): **ROC curve on individuals not used for training.** Each individual is scored only by the model trained without its fold, and the scores of the three repeats are averaged per individual. The horizontal axis is the rate of negatives called positive and the vertical axis the rate of positives found; the gray dashed line is chance (AUC 0.5). In the example data the AUC was 0.855 (95% CI 0.68-0.98), and 0.836, 0.915 and 0.715 per repeat, so the split of individuals mattered a lot. With 26 individuals the interval is wide; check the difference from baselines with scgpt_compare.
+
+**결과 2. 최종 모델 학습 손실**
+- 결과 파일: `plots/training_loss.png`
+
+그림: `docs/scGPT/modules/figures/results_kap241712/scgpt_train_result_2.png`
+
+- 레전드(국문): **모든 개체로 최종 모델을 학습할 때의 손실.** 가로축은 학습 반복 횟수(epoch), 세로축은 학습 손실입니다. 손실이 내려가 평평해지면 학습이 끝까지 진행된 것입니다. 예시 데이터에서는 처음 몇 번 크게 흔들린 뒤 50번 무렵 0 근처로 내려갔습니다. 손실이 0에 가깝다는 것은 학습한 개체를 거의 완벽히 맞힌다는 뜻일 뿐이며, 새 개체에서의 성능은 결과 1의 교차검증 AUC로 판단합니다.
+- 레전드(영문): **Loss while training the final model on all individuals.** The horizontal axis is the epoch and the vertical axis the training loss. A loss that falls and flattens means training ran to the end. In the example data it jumped in the first epochs and then fell close to 0 by about epoch 50. A loss near 0 only means the training individuals are fitted almost perfectly; performance on new individuals is judged from the cross-validation AUC in result 1.
 
 ---
 
@@ -485,7 +527,23 @@ python3 scgpt_predict.1.0.py \
 ```
 
 ### 주요 결과 이미지
-등록 메모: 예제 데이터로 predict를 실행한 `plots/predictions.png`, `plots/attention_by_cell_type.png`를 CLOSHA에서 받아 그림을 직접 본 뒤 결과 1~2를 씁니다. 예제 데이터에서는 학습에 쓴 개체를 다시 예측하게 되므로, 레전드에 "학습한 개체라 확률이 실제 성능보다 좋게 나옴"을 적습니다.
+예시 데이터는 K-BDS KAP241712 심장 단일핵 데이터의 DCM 11명, HCM 15명이며, scgpt_train 결과 모델(scgpt_20261111)을 같은 26명에 적용했습니다(2026-11-11 실행). 사용 방법을 보여 주기 위한 실행으로, 학습에 쓴 개체를 다시 예측한 것입니다.
+
+**결과 1. 개체별 예측 확률**
+- 결과 파일: `plots/predictions.png`, `predictions.tsv`
+
+그림: `docs/scGPT/modules/figures/results_kap241712/scgpt_predict_result_1.png`
+
+- 레전드(국문): **개체마다 양성(DCM)일 확률.** 막대 하나가 개체 하나이며, 색은 입력에 적힌 라벨(주황 DCM, 파랑 HCM, 회색 라벨 없음)입니다. 점선(0.5, threshold)보다 높으면 DCM, 낮으면 HCM으로 예측합니다. 예시 데이터에서는 DCM 11명이 모두 0.999 이상, HCM 15명이 모두 0.002 이하로 26명 전원이 라벨과 같게 예측되었습니다(HCM 막대는 0에 가까워 보이지 않음). **학습에 쓴 개체를 다시 예측했기 때문에 실제 성능보다 훨씬 좋게 나온 것**이며, 새 개체에서의 성능은 scgpt_train의 교차검증 AUC(0.855)나 scgpt_compare로 판단합니다. 개체 ID는 가렸습니다.
+- 레전드(영문): **Probability of the positive label (DCM) for each individual.** Each bar is one individual, colored by the label given in the input (orange DCM, blue HCM, gray none). Above the dashed line (0.5, threshold) the prediction is DCM, below it HCM. In the example data all 11 DCM individuals scored 0.999 or more and all 15 HCM individuals 0.002 or less, so all 26 matched their labels (the HCM bars are too close to 0 to see). **These individuals were used for training, so this is far better than real performance**; judge performance on new individuals from the cross-validation AUC of scgpt_train (0.855) or from scgpt_compare. Individual IDs are hidden.
+
+**결과 2. 세포 유형별 attention**
+- 결과 파일: `plots/attention_by_cell_type.png`, `attention_by_cell_type.tsv`
+
+그림: `docs/scGPT/modules/figures/results_kap241712/scgpt_predict_result_2.png`
+
+- 레전드(국문): **모델이 어떤 세포 유형에 더 무게를 두었는지.** 세로축은 세포 유형이 받은 attention 몫을 그 유형의 세포 비율로 나눈 값을 개체끼리 평균한 것입니다. 1(회색 점선)보다 크면 세포 수에 비해 더 많이 참고했다는 뜻입니다. 예시 데이터에서는 NK(2.0), CD8 T(1.7), cDC(1.5), CD4 T(1.3) 세포가 1보다 컸고, 적혈구와 형질세포는 거의 참고하지 않았습니다. 다만 이 유형들은 개체당 세포가 몇 개뿐이라 값이 흔들리기 쉽고, attention은 모델이 무엇을 참고했는지를 보여 줄 뿐 질환의 원인을 뜻하지 않습니다.
+- 레전드(영문): **Which cell types the model weighed more.** The vertical axis is the attention share of a cell type divided by its cell fraction, averaged over individuals. Above 1 (gray dashed line) means the type was used more than its cell count suggests. In the example data NK (2.0), CD8 T (1.7), cDC (1.5) and CD4 T (1.3) cells were above 1, while erythrocytes and plasma cells were hardly used. These types have only a few cells per individual, so the values are unstable, and attention shows what the model looked at, not what causes the disease.
 
 ---
 
@@ -592,22 +650,38 @@ python3 scgpt_compare.1.0.py \
 ```
 
 ### 주요 결과 이미지
-예시 데이터는 K-BDS KAP241712 심장 단일핵 데이터의 DCM 11명, HCM 15명입니다(positive_label=DCM). 학습 모델(attention, 기본 옵션)을 models에 넣어 실행했습니다.
+예시 데이터는 K-BDS KAP241712 심장 단일핵 데이터의 DCM 11명, HCM 15명입니다(positive_label=DCM, 2026-11-11 실행). scgpt_train 결과 모델(scgpt_20261111, attention, 기본 옵션)을 models에 넣어 실행했습니다.
 
 **결과 1. 학습에 쓰지 않은 개체에서의 ROC 곡선**
 - 결과 파일: `plots/roc.png`
 
 그림: `docs/scGPT/modules/figures/results_kap241712/scgpt_compare_result_1.png`
 
-- 레전드(국문): **방법별 ROC 곡선.** 가로축은 False positive rate(음성 개체를 양성으로 잘못 부른 비율), 세로축은 True positive rate(양성 개체를 맞게 찾은 비율)입니다. 곡선이 왼쪽 위에 가까울수록 잘 분류한 것이며, 회색 점선 대각선은 무작위 수준(AUC 0.5)입니다. 범례의 괄호 안 숫자가 AUC이고, baseline_celltype은 세포 유형 비율, baseline_pca는 고변동 유전자 PCA, scgpt_mean은 scGPT 임베딩 평균, scgpt_<날짜>(굵은 주황 선)는 학습 모델입니다. 예시 데이터에서는 scGPT 임베딩 평균 0.939, 학습 모델 0.927로 PCA 0.824와 세포 유형 비율 0.697보다 높았습니다. HCM을 약 7%만 DCM으로 잘못 부르는 지점에서 학습 모델은 DCM의 82%를, PCA는 64%를 찾았습니다.
-- 레전드(영문): **ROC curves of each method.** The horizontal axis is the false positive rate (negatives called positive) and the vertical axis the true positive rate (positives found). Curves closer to the top left classify better, and the gray dashed diagonal is chance (AUC 0.5). The numbers in the legend are AUCs; baseline_celltype is cell type fractions, baseline_pca the PCA of highly variable genes, scgpt_mean the mean scGPT embedding, and scgpt_<date> (thick orange line) the trained model. In the example data the mean scGPT embedding reached 0.939 and the trained model 0.927, above PCA (0.824) and cell type fractions (0.697). At the point where about 7% of HCM individuals were called DCM, the trained model found 82% of DCM individuals and PCA 64%.
+- 레전드(국문): **방법별 ROC 곡선.** 가로축은 False positive rate(음성 개체를 양성으로 잘못 부른 비율), 세로축은 True positive rate(양성 개체를 맞게 찾은 비율)입니다. 곡선이 왼쪽 위에 가까울수록 잘 분류한 것이며, 회색 점선 대각선은 무작위 수준(AUC 0.5)입니다. 범례의 괄호 안 숫자가 AUC이고, baseline_celltype은 세포 유형 비율, baseline_pca는 고변동 유전자 PCA, scgpt_mean은 scGPT 임베딩 평균, scgpt_<날짜>(굵은 주황 선)는 학습 모델입니다. 예시 데이터에서는 scGPT 임베딩 평균 0.939, 학습 모델 0.855, PCA 0.824, 세포 유형 비율 0.697 순이었습니다. HCM을 약 13%(15명 중 2명)만 DCM으로 잘못 부르는 지점에서 scGPT 임베딩 평균과 학습 모델은 DCM의 82%를, PCA는 64%를 찾았습니다.
+- 레전드(영문): **ROC curves of each method.** The horizontal axis is the false positive rate (negatives called positive) and the vertical axis the true positive rate (positives found). Curves closer to the top left classify better, and the gray dashed diagonal is chance (AUC 0.5). The numbers in the legend are AUCs; baseline_celltype is cell type fractions, baseline_pca the PCA of highly variable genes, scgpt_mean the mean scGPT embedding, and scgpt_<date> (thick orange line) the trained model. In the example data the order was the mean scGPT embedding 0.939, the trained model 0.855, PCA 0.824 and cell type fractions 0.697. At the point where about 13% of HCM individuals (2 of 15) were called DCM, the mean scGPT embedding and the trained model found 82% of DCM individuals and PCA 64%.
 
 **결과 2. 방법별 AUC와 95% 신뢰구간**
 - 결과 파일: `plots/auc.png`
 
 그림: `docs/scGPT/modules/figures/results_kap241712/scgpt_compare_result_2.png`
 
-- 레전드(국문): **학습에 쓰지 않은 개체에서의 AUC.** 막대는 방법별 AUC, 검은 선은 95% 신뢰구간, 회색 점선은 무작위 수준(0.5)입니다. 신뢰구간이 0.5 위에 있으면 무작위보다 낫다는 뜻입니다. 두 방법의 차이는 막대가 아니라 compare_delta.tsv와 summary.md의 짝지은 차이로 판단합니다. 예시 데이터에서는 학습 모델(0.927, 95% CI 0.812~1.000)이 세포 유형 비율보다 유의하게 높았고(차이 +0.230, 95% CI +0.036~+0.461), PCA보다 높았지만 26명이라 차이의 신뢰구간이 0을 포함했습니다(차이 +0.103, 95% CI -0.058~+0.280). 독립 코호트로 확인이 필요합니다.
-- 레전드(영문): **AUC on individuals not used for training.** Bars are the AUC of each method, black lines the 95% confidence intervals, and the gray dashed line chance (0.5). An interval above 0.5 means better than chance. Differences between two methods are judged from the paired differences in compare_delta.tsv and summary.md, not from the bars. In the example data the trained model (0.927, 95% CI 0.812-1.000) was clearly above cell type fractions (difference +0.230, 95% CI +0.036 to +0.461) and above PCA, but with 26 individuals the interval of that difference included 0 (difference +0.103, 95% CI -0.058 to +0.280); an independent cohort is needed to confirm it.
+- 레전드(국문): **학습에 쓰지 않은 개체에서의 AUC.** 막대는 방법별 AUC, 검은 선은 95% 신뢰구간, 회색 점선은 무작위 수준(0.5)입니다. 신뢰구간 아래 끝이 0.5보다 높으면 무작위보다 낫다는 뜻입니다. 두 방법의 차이는 막대가 아니라 결과 4(compare_delta.tsv)의 짝지은 차이로 판단합니다. 예시 데이터에서는 scGPT 임베딩 평균(0.939, 95% CI 0.840~1.000), 학습 모델(0.855, 0.680~0.980), PCA(0.824, 0.636~0.972)가 무작위보다 나았고, 세포 유형 비율(0.697, 0.459~0.883)은 신뢰구간이 0.5를 포함했습니다.
+- 레전드(영문): **AUC on individuals not used for training.** Bars are the AUC of each method, black lines the 95% confidence intervals, and the gray dashed line chance (0.5). A lower interval end above 0.5 means better than chance. Differences between two methods are judged from the paired differences in result 4 (compare_delta.tsv), not from the bars. In the example data the mean scGPT embedding (0.939, 95% CI 0.840-1.000), the trained model (0.855, 0.680-0.980) and PCA (0.824, 0.636-0.972) were better than chance, while the interval of cell type fractions (0.697, 0.459-0.883) included 0.5.
 
-등록 메모: 요약표(결과 3, `compare_metrics.tsv`·`compare_delta.tsv`를 `docs/tools/tsv_to_png.py`로 표 그림)는 CLOSHA에서 파일을 받아 만듭니다.
+**결과 3. 방법별 성능 요약표**
+- 결과 파일: `compare_metrics.tsv`
+
+그림: `docs/scGPT/modules/figures/results_kap241712/scgpt_compare_result_3.png`
+
+- 레전드(국문): **방법별 성능 요약(compare_metrics.tsv).** Method는 방법 이름, Kind는 기준 방법(baseline) 또는 학습 모델(model), Patients는 평가한 개체 수입니다. AUC와 95% CI는 결과 2와 같고, SD (repeats)는 교차검증 반복 사이의 AUC 표준편차, Permutation p는 라벨을 무작위로 섞었을 때 이 AUC 이상이 나올 확률입니다. 예시 데이터에서 permutation p는 세포 유형 비율만 0.05를 넘었고(0.053), 학습 모델은 반복 사이 표준편차가 0.082로 가장 커서 개체를 나누는 방식에 따라 성능이 가장 많이 흔들렸습니다.
+- 레전드(영문): **Performance summary of each method (compare_metrics.tsv).** Method is the method name, Kind a baseline or a trained model, and Patients the number of individuals evaluated. AUC and 95% CI are as in result 2; SD (repeats) is the standard deviation of the AUC across cross-validation repeats, and Permutation p the chance of an AUC this high when labels are shuffled. In the example data only cell type fractions had a permutation p above 0.05 (0.053), and the trained model had the largest standard deviation across repeats (0.082), so its performance depended most on how individuals were split.
+
+**결과 4. 학습 모델과 기준 방법의 AUC 차이**
+- 결과 파일: `compare_delta.tsv`, `summary.md`
+
+그림: `docs/scGPT/modules/figures/results_kap241712/scgpt_compare_result_4.png`
+
+- 레전드(국문): **같은 개체에서 짝지어 계산한 AUC 차이(compare_delta.tsv).** ΔAUC는 학습 모델의 AUC에서 기준 방법의 AUC를 뺀 값이고, 95% CI는 같은 개체를 다시 뽑는 부트스트랩으로 구했습니다. 신뢰구간이 0을 포함하면 Verdict가 "not clearly different"(뚜렷한 차이 없음)입니다. 예시 데이터에서 학습 모델은 세포 유형 비율보다 0.158, PCA보다 0.030 높고 scGPT 임베딩 평균보다 0.085 낮았지만, 세 차이 모두 신뢰구간이 0을 포함했습니다. 즉 이 데이터에서는 attention 모델을 따로 학습해도 scGPT 임베딩을 그냥 평균한 것보다 낫다고 할 수 없었습니다. 26명이라 신뢰구간이 넓으므로, 차이를 판단하려면 더 많은 개체나 독립 코호트가 필요합니다.
+- 레전드(영문): **Paired AUC differences on the same individuals (compare_delta.tsv).** ΔAUC is the AUC of the trained model minus that of a baseline, and the 95% CI comes from a bootstrap that resamples the same individuals. When the interval includes 0 the verdict is "not clearly different". In the example data the trained model was 0.158 above cell type fractions, 0.030 above PCA and 0.085 below the mean scGPT embedding, but all three intervals included 0. So in these data a separately trained attention model could not be shown to beat simply averaging the scGPT embeddings. With 26 individuals the intervals are wide; more individuals or an independent cohort are needed to judge the differences.
+
+등록 메모: 결과 3, 4의 표 그림은 `compare_metrics.tsv`, `compare_delta.tsv`를 `docs/tools/tsv_to_png.py`로 그렸습니다. 이전 원고의 compare 그림과 숫자(scgpt_20261109, AUC 0.927)는 11-11 실행으로 모두 바꿨습니다. 모듈 결과가 모두 같은 실행(2026-11-11)에서 나왔습니다.

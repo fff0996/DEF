@@ -434,7 +434,9 @@ def main():
     # patients without a label (to be predicted) get a named legend entry
     u.obs["Label"] = u.obs["Label"].astype(str).replace({"": "unlabeled", "nan": "unlabeled"})
     cols = ["Label", "Cohort", "cell_type"]
-    fig, axes = plt.subplots(1, 3, figsize=(16, 4.8))
+    # constrained layout makes room for each panel's legend so it does not run into the next panel
+    fig, axes = plt.subplots(1, 3, figsize=(18, 4.8), layout="constrained")
+    fig.get_layout_engine().set(wspace=0.05)
     for ax, c in zip(axes, cols):
         sc.pl.umap(u, color=c, ax=ax, show=False, frameon=False, title=f"scGPT embedding: {c}",
                    size=max(3, 120000 / max(u.n_obs, 1) ** 1.0) if u.n_obs < 20000 else None)

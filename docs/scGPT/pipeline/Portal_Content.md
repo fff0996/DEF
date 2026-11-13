@@ -18,11 +18,11 @@ KOBIC 포탈의 scGPT 파이프라인 상세 페이지에 들어갈 국문/영�
 | Reference | https://doi.org/10.1038/s41592-024-02201-0 |
 | Keyword(태그) | single-cell RNA-seq, single-cell foundation model, cell embedding, phenotype classification, patient classification, multiple instance learning, attention pooling, machine learning, deep learning, disease classification, AI-ready dataset |
 | 대분류 / 중분류 | Bio-AI / Single_Cell_Foundation_Model (중분류 신규) |
-| 대표 이미지 | `docs/scGPT/pipeline/figures/thumbnail.png`: scgpt_compare의 ROC 곡선(K-BDS KAP241712 심장, DCM 대 HCM 26명) |
+| 대표 이미지 | 디자인 팀장님이 제작(2026-11-13 요청). 제작 전 임시 파일: `docs/scGPT/pipeline/figures/thumbnail.png` |
 
 등록 메모:
 - Reference는 파이프라인이 쓰는 사전학습 모델의 원논문입니다: Cui H, Wang C, Maan H, Pang K, Luo F, Duan N, Wang B. scGPT: toward building a foundation model for single-cell multi-omics using generative AI. *Nat Methods* 21, 1470-1480 (2024)(Europe PMC로 서지 확인, 2026-11-10).
-- 대표 이미지는 2026-11-09 CLOSHA 실행의 `scgpt_compare/plots/roc.png`를 그대로 쓴 것입니다. scGPT 임베딩 평균(0.939)과 학습 모델(0.927)이 PCA(0.824)와 세포 유형 비율(0.697)보다 위에 있는 그림이라 파이프라인의 목적(사전학습 모델이 단순한 방법보다 나은지)을 한눈에 보여 줍니다.
+- 대표 이미지는 디자인 팀장님이 만들기로 했습니다(2026-11-13). 임시 파일 thumbnail.png는 2026-11-09 실행의 ROC 곡선(학습 모델 AUC 0.927)이라, 모듈 원고의 결과(2026-11-11 실행, 학습 모델 AUC 0.855)와 숫자가 다릅니다. 포탈에 임시로 올린 UMAP 3패널 그림은 썸네일 크기에서 잘 보이지 않았습니다.
 - Keyword에는 도구 이름(scGPT)을 넣지 않았습니다. 모듈 태그에 있습니다.
 - 이름은 2026-11-11에 `scGPT_Single_Cell_Phenotype_Classification_Pipeline`에서 줄였습니다(scGPT가 단일세포 모델이라 Single_Cell이 겹침). 단일세포라는 말은 서브 타이틀에 있습니다.
 - 분류는 AI 파이프라인을 모으는 대분류 Bio-AI 아래, 사전학습 단일세포 모델을 쓰는 파이프라인 칸으로 정했습니다(2026-11-11). 다른 단일세포 foundation model 파이프라인도 같은 칸에 둡니다.
@@ -88,19 +88,19 @@ On the same individuals and folds, cell-type fractions, PCA of variable genes an
 그림: `docs/scGPT/pipeline/figures/concept.png` (원본 `concept.svg`, `make_concept.py`)
 
 ### 국문 (그림 설명)
-**그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 사전학습된 scGPT에 넣어 512개의 숫자(임베딩)로 바꿉니다. scGPT의 가중치는 바뀌지 않으며, 비슷한 세포는 비슷한 임베딩을 갖습니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 학습은 이 부분만 합니다. scgpt_compare는 같은 개체와 분할에서 세포 유형 비율, 변이 유전자 PCA, scGPT 임베딩 평균과 학습 모델의 AUC를 비교합니다. 값은 모식적인 값입니다. (B)는 Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1을 수정(CC BY 4.0).
+**그림. 사전학습 모델로 세포를 읽고, 세포를 모아 개체를 분류합니다.** (A) 세포마다 발현량이 높은 유전자(최대 1,200개)를 고르고, 유전자 이름과 구간으로 나눈 발현값(bin)을 토큰으로 바꿔 사전학습된 scGPT transformer에 넣습니다. 맨 앞 CLS 토큰의 출력이 그 세포의 임베딩(512개의 숫자)입니다. scGPT의 가중치는 바뀌지 않으며, 비슷한 세포는 비슷한 임베딩을 갖습니다. (B) 한 개체의 세포 임베딩마다 attention 가중치를 매겨 가중 평균한 개체 임베딩(표준화)에서 양성 라벨의 확률을 계산합니다. 학습은 이 부분만 합니다. scgpt_compare는 같은 개체와 분할에서 세포 유형 비율, 변이 유전자 PCA, scGPT 임베딩 평균과 학습 모델의 AUC를 비교합니다. 값은 모식적인 값입니다. (A)는 Tejada-Lapuerta A. et al., Nat. Methods 22, 2525 (2025), Fig. 1c-e를, (B)는 Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1을 수정(CC BY 4.0).
 
 ### English (figure legend)
-**Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) go into pretrained scGPT, which turns the cell into 512 numbers (an embedding). The scGPT weights do not change, and similar cells get similar embeddings. (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. Only this part is trained. scgpt_compare compares the AUC of cell-type fractions, PCA of variable genes, the mean scGPT embedding and the trained model on the same individuals and folds. Values are schematic. Panel B adapted from Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1 (CC BY 4.0).
+**Figure. A pretrained model reads the cells, and pooled cells classify each individual.** (A) The most expressed genes of each cell (up to 1,200) are turned into tokens of gene names and binned expression values and passed through the pretrained scGPT transformer. The output of the leading CLS token is the cell embedding (512 numbers). The scGPT weights do not change, and similar cells get similar embeddings. (B) Each cell embedding of an individual gets an attention weight, and the weighted average (standardized) gives the probability of the positive label. Only this part is trained. scgpt_compare compares the AUC of cell-type fractions, PCA of variable genes, the mean scGPT embedding and the trained model on the same individuals and folds. Values are schematic. Panel A adapted from Tejada-Lapuerta A. et al., Nat. Methods 22, 2525 (2025), Fig. 1c-e, and panel B from Do C. et al., Bioinformatics 41, i96 (2025), Fig. 1 (CC BY 4.0).
 
 ### 대체 텍스트 (alt)
-- 국문: scGPT 개념도. 위: 세포의 유전자 발현이 고정된 scGPT를 거쳐 임베딩이 되고 비슷한 세포끼리 모임. 아래: 개체마다 세포 임베딩에 attention을 주어 개체 임베딩과 예측 확률을 만들고, 같은 분할에서 다른 방법과 AUC를 비교함.
-- English: scGPT concept. Top: a cell's gene expression passes through frozen scGPT into an embedding, and similar cells group together. Bottom: attention over each individual's cell embeddings gives an individual embedding and a predicted probability, compared with other methods by AUC on the same folds.
+- 국문: scGPT 개념도. 위: 세포의 유전자 발현이 토큰으로 바뀌어 고정된 scGPT transformer를 거쳐 임베딩이 되고 비슷한 세포끼리 모임. 아래: 개체마다 세포 임베딩에 attention을 주어 개체 임베딩과 예측 확률을 만들고, 같은 분할에서 다른 방법과 AUC를 비교함.
+- English: scGPT concept. Top: a cell's gene expression is tokenized and passes through the frozen scGPT transformer into an embedding, and similar cells group together. Bottom: attention over each individual's cell embeddings gives an individual embedding and a predicted probability, compared with other methods by AUC on the same folds.
 
 ### 출처 / Reference
 
 등록 메모: 포탈의 이미지 설명 칸에는 위 레전드 끝의 짧은 출처만 들어갑니다. 아래 전체 서지는 기록용입니다.
-- (A) 직접 작성한 모식도(외부 그림 사용 안 함). scGPT 원 논문(Cui et al., Nat Methods 2024)은 공개 라이선스가 없어 그림을 쓰지 않음.
+- (A) Tejada-Lapuerta A, Schaar AC, Gutgesell R, et al. Nicheformer: a foundation model for single-cell and spatial omics. *Nat Methods* 22(12), 2525-2538 (2025). https://doi.org/10.1038/s41592-025-02814-z, Fig. 1c-e를 수정(세포와 발현값, 토크나이저, 토큰 임베딩, transformer, 출력의 구성을 따르고 scGPT 방식(유전자와 bin 값 토큰, CLS 출력, 가중치 고정)으로 바꿈; 메타데이터 토큰, 위치 임베딩, 마스킹은 뺌; Fig. 1e의 임베딩 UMAP은 모식적으로 그림). CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). 서지와 라이선스는 Europe PMC로 확인(2026-11-13, PMC12695652). scGPT 원 논문(Cui et al., Nat Methods 2024)은 공개 라이선스가 없어 그림을 쓰지 않음.
 - (B) Do C, Lähdesmäki H. Incorporating hierarchical information into multiple instance learning for patient phenotype prediction with single-cell RNA-sequencing data. *Bioinformatics* 41(Suppl 1), i96-i104 (2025). https://doi.org/10.1093/bioinformatics/btaf241, Fig. 1을 수정(다시 그리고 세포 유형 단계를 빼고 라벨과 비교 상자를 더함). CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). 서지와 라이선스는 Europe PMC로 확인(2026-11-10).
 
 ---
