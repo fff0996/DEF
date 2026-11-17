@@ -16,7 +16,7 @@ Example:
         targets_bed="/ref/exome_targets.bed" \
         annotation="/ref/refFlat.txt"
 
-Arguments (key=value):
+Arguments (key=value, --key=value or --key value):
     input_dir           (required) - Directory with coordinate-sorted, duplicate-marked
                                      BAM files and their indexes (.bai); searched
                                      recursively.
@@ -153,11 +153,26 @@ def run(cmd, label, threads=None):
 
 # ---------------------------------------------------------------- arguments
 def parse_args(argv):
+    """Parse key=value, --key=value or --key value. CLOSHA passes Python modules --key value;
+    a --key with no value (next token is another --option, or nothing) keeps its default."""
     params = dict(OPTIONAL)
-    for arg in argv:
-        if "=" not in arg:
-            fail(f"Invalid argument format: {arg} (must be key=value format)")
-        key, value = arg.split("=", 1)
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        i += 1
+        if arg.startswith("--"):
+            arg = arg[2:]
+            if "=" in arg:
+                key, value = arg.split("=", 1)
+            else:
+                key, value = arg, ""
+                if i < len(argv) and not argv[i].startswith("--"):
+                    value = argv[i]
+                    i += 1
+        elif "=" in arg:
+            key, value = arg.split("=", 1)
+        else:
+            fail(f"Invalid argument format: {arg} (use key=value or --key value)")
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
             fail(f"Invalid key: {key}")
         if key not in REQUIRED and key not in OPTIONAL:

@@ -12,7 +12,7 @@ Example:
         facets_dir="/out/cnv_facets" \
         output_dir="/out/cnv_summary"
 
-Arguments (key=value):
+Arguments (key=value, --key=value or --key value):
     input_dir  (required) - CNVkit call folder with 02_calls/<SampleID>.segments.tsv and .seg,
                             03_genes/<SampleID>.genes.tsv, 04_plots/ and
                             05_summary/cnvkit_summary.tsv (as written by cnvkit_call).
@@ -125,11 +125,26 @@ def start_logs(output_dir):
 
 
 def parse_args(argv):
+    """Parse key=value, --key=value or --key value. CLOSHA passes Python modules --key value;
+    a --key with no value (next token is another --option, or nothing) keeps its default."""
     params = dict(OPTIONAL)
-    for arg in argv:
-        if "=" not in arg:
-            fail(f"Invalid argument format: {arg} (must be key=value format)")
-        key, value = arg.split("=", 1)
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        i += 1
+        if arg.startswith("--"):
+            arg = arg[2:]
+            if "=" in arg:
+                key, value = arg.split("=", 1)
+            else:
+                key, value = arg, ""
+                if i < len(argv) and not argv[i].startswith("--"):
+                    value = argv[i]
+                    i += 1
+        elif "=" in arg:
+            key, value = arg.split("=", 1)
+        else:
+            fail(f"Invalid argument format: {arg} (use key=value or --key value)")
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
             fail(f"Invalid key: {key}")
         if key not in REQUIRED and key not in OPTIONAL:
@@ -301,6 +316,10 @@ def main():
                                dtype={"Chromosome": str, "FACETS_TCN": str, "FACETS_LCN": str, "LOH": str,
                                       "CN": "Int64"}) if g.is_file() else pd.DataFrame()
     facets = pd.read_csv(facets_dir / "04_summary" / "facets_summary.tsv", sep="\t", dtype=str) if facets_dir else None
+    # A tumor-only run leaves a header-only facets_summary.tsv: same as no FACETS.
+    facets_empty = facets is not None and facets.empty
+    if facets_empty:
+        facets, facets_dir = None, None
     gene_set = read_gene_list(genes_path) if genes_path else []
     meta = None
     if meta_path:
@@ -340,7 +359,7 @@ def main():
         for (smp, gene), cls in coding.groupby(["Tumor_Sample_Barcode", "Hugo_Symbol"])["Class"]:
             muts[(smp, gene)] = cls.iloc[0] if cls.nunique() == 1 else "Multi_hit"
     info(f"Samples: {len(samples)} ({', '.join(samples)})")
-    info(f"FACETS: {'yes' if facets is not None else 'no'}")
+    info(f"FACETS: {'yes' if facets is not None else ('no (tumor-only run: facets_dir has no pair)' if facets_empty else 'no')}")
     if maf_path:
         info(f"MAF: {len(muts)} mutated gene-sample pairs (protein-changing) in "
              f"{len({s for s, _ in muts})} of {len(samples)} samples")

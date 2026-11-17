@@ -2,20 +2,22 @@ CNV 모듈 등록 정보 (스크립트 최신 버전 기준)
 
 작성일: 2026-10-22
 
-CLOSHA에 CNV 모듈을 등록할 때 쓰는 Input / Output / Option 정리다. 기준은 `scripts/CNV/`의 모듈별 최신 버전(아래 표)이고, 모든 스크립트는 `key=value` 인자를 받는다. 모든 모듈은 `output_dir/logs/`에 `<시각>_<PID>.log`(stdout)와 `<시각>_<PID>.error.log`(stderr)를 남기며, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지우고 시작한다. 입력이 `output_dir` 안에 있으면 지우기 전에 멈춘다.
+CLOSHA에 CNV 모듈을 등록할 때 쓰는 Input / Output / Option 정리다. 기준은 `scripts/CNV/`의 모듈별 최신 버전(아래 표)이고, 모든 스크립트는 `key=value` 인자를 받고, Python 모듈(cnvkit_reference, cnvkit_call, cnv_summary)은 `--key=value`, `--key value`도 받는다(CLOSHA는 Python 모듈에 `--key value`로 넘긴다; 2026-11-17 CLOSHA 첫 실행 오류 `Invalid argument format: --input_dir`로 고침). 모든 모듈은 `output_dir/logs/`에 `<시각>_<PID>.log`(stdout)와 `<시각>_<PID>.error.log`(stderr)를 남기며, 실행할 때마다 `output_dir`에서 `logs/`를 뺀 나머지를 지우고 시작한다. 입력이 `output_dir` 안에 있으면 지우기 전에 멈춘다.
 
 CNV 파이프라인은 CLOSHA 3.0에서 처음 배포하므로 모든 모듈의 배포 번호는 1.0이다.
 
 ## 0. 파이프라인 흐름
 ```
-종양-정상 쌍 (CNV_Tumor_Normal_Pipeline):
+파이프라인 하나로 종양-정상 쌍과 종양 단독을 모두 처리한다(2026-11-17 합침). 샘플 시트의 NormalID로 갈린다.
   BAM 폴더 ─┬─> [cnv_facets] ──────────── output_dir ─────────┬─> [cnvkit_call] (facets_dir)
-            │                                                └─> [cnv_summary] (facets_dir)
+            │   (NormalID가 모두 비면 FACETS를 건너뛰고         └─> [cnv_summary] (facets_dir)
+            │    빈 요약표만 쓰고 종료 코드 0)
             ├─> [cnvkit_reference] ─ output_dir ─> [cnvkit_call] (reference_dir) ─ output_dir ─> [cnv_summary] (input_dir)
+            │   (정상이 없으면 flat 기준)
             └──────────────────────────────────> [cnvkit_call] (input_dir)
 
-종양만 (CNV_Tumor_Only_Pipeline):
-  BAM 폴더 ─> [cnvkit_reference] (정상 없음: flat 기준) ─> [cnvkit_call] ─> [cnv_summary]
+- 종양-정상 쌍: FACETS 순도·배수성으로 CNVkit 판정을 보정한다.
+- 종양 단독(NormalID 빈칸): flat 기준, FACETS 없음, 보정 없는 판정. 쌍과 단독이 섞인 시트는 쌍만 FACETS로 보정한다.
 ```
 | 모듈 | 스크립트 | 실행 이미지 | 실행 명령 |
 |---|---|---|---|
@@ -50,7 +52,7 @@ CNV 파이프라인은 CLOSHA 3.0에서 처음 배포하므로 모든 모듈의 
 결과: `01_reference/`(reference.cnn, targets.bed, antitargets.bed, access.bed), `02_normal_coverage/`, `03_qc/`(정상별 .cnr, normal_qc.tsv), `04_metadata/reference_info.tsv`.
 
 ## 2. cnv_facets
-종양-정상 쌍에서 FACETS로 순도, 배수성, 대립유전자별 복제수를 추정한다. 종양-정상 쌍 파이프라인만 쓴다.
+종양-정상 쌍에서 FACETS로 순도, 배수성, 대립유전자별 복제수를 추정한다. NormalID가 빈 행은 건너뛰고, 모든 행이 비면(종양 단독) 머리줄만 있는 `04_summary/facets_summary.tsv`를 쓰고 종료 코드 0으로 끝낸다. 이때 cnvkit_call과 cnv_summary는 FACETS 없이(보정 없이) 진행한다.
 
 | 구분 | 이름 | 형식 | 필수 | 기본값 | 설명 |
 |---|---|---|---|---|---|

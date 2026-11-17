@@ -198,7 +198,7 @@ Estimates tumor purity (the fraction of tumor cells), ploidy (the mean copy numb
 | 탭 | 필수 | 형식 | Name | Value | Description | English Description |
 |---|---|---|---|---|---|---|
 | Input | Required | Directory | input_dir | /data/bam | 정렬·중복 표시를 마친 BAM과 인덱스(.bai) 폴더(하위 폴더 포함). 파일 이름이 샘플 ID로 시작해야 함 | Folder of coordinate-sorted, duplicate-marked BAM files with .bai indexes (subfolders included); file names start with the sample ID |
-| Input | Required | File | sample_data | /data/samples.csv | 샘플 시트(CSV). 열: SampleID(종양), NormalID(짝 정상). NormalID가 빈 행은 건너뜀 | Sample sheet (CSV) with SampleID (tumor) and NormalID (matched normal); rows without NormalID are skipped |
+| Input | Required | File | sample_data | /data/samples.csv | 샘플 시트(CSV). 열: SampleID(종양), NormalID(짝 정상). NormalID가 빈 행은 건너뜀(모두 비면 FACETS 생략) | Sample sheet (CSV) with SampleID (tumor) and NormalID (matched normal); rows without NormalID are skipped (all empty: FACETS is skipped) |
 | Input | Required | File | snp_vcf | /ref/dbsnp_common.vcf.gz | 일반 생식세포 SNP 위치 VCF(dbSNP common 등, bgzip 또는 일반 VCF). 염색체 이름이 BAM과 같아야 함 | Common germline SNP sites (VCF, for example dbSNP common; bgzip or plain), with the same chromosome names as the BAM files |
 | Output | Required | Directory | output_dir | /data/cnv_facets | 결과 폴더(01_pileup/, 02_segments/<SampleID>.facets_segments.tsv, 03_plots/, 04_summary/facets_summary.tsv) | Output folder (01_pileup/, 02_segments/<SampleID>.facets_segments.tsv, 03_plots/, 04_summary/facets_summary.tsv) |
 | Option | Optional | List | genome | hg38 | 유전체 버전(hg38, hg19) | Genome build (hg38, hg19) |
@@ -223,7 +223,7 @@ Estimates tumor purity (the fraction of tumor cells), ploidy (the mean copy numb
 ### 주요 사항
 | 국문 | 영문 |
 |---|---|
-| 종양과 정상이 짝을 이룬 시료에서만 실행합니다. 종양만 있는 데이터는 이 모듈을 쓰지 않고 cnvkit_call에서 facets_dir를 비워 둡니다. | Runs on tumor-normal pairs only. For tumor-only data, skip this module and leave facets_dir empty in cnvkit_call. |
+| FACETS는 짝을 이룬 정상 시료가 필요해 NormalID가 있는 행만 분석합니다. 모든 행의 NormalID가 비어 있으면(종양 단독) 분석을 건너뛰고 빈 요약표만 남긴 채 정상 종료하며, cnvkit_call과 cnv_summary는 순도 보정 없이 진행합니다. 종양-정상과 종양 단독을 같은 파이프라인으로 실행할 수 있습니다. | FACETS needs a matched normal, so only rows with a NormalID are analysed. When every NormalID is empty (tumor-only), the analysis is skipped, an empty summary is written and the module ends normally; cnvkit_call and cnv_summary then run without purity correction. Tumor-normal and tumor-only data run through the same pipeline. |
 | snp_vcf의 염색체 이름(chr1 또는 1)과 참조 버전이 BAM과 같아야 합니다. 다르면 SNP가 잡히지 않아 그 쌍은 실패 상태(pileup_failed 또는 fit_failed)로 끝납니다. | The chromosome names (chr1 or 1) and build of snp_vcf must match the BAM files; otherwise no SNP is counted and the pair ends with a failed status (pileup_failed or fit_failed). |
 | 순도가 min_purity보다 낮거나 적합이 수렴하지 않으면 오류가 아니라 상태(low_purity, fit_failed)로 기록하고 종료 코드 0으로 끝납니다. 이 샘플은 cnvkit_call에서 보정 없이 처리됩니다. 모든 쌍이 실패할 때만 실패(종료 코드 1)입니다. | Purity below min_purity or a fit that does not converge is recorded as a status (low_purity, fit_failed) with exit code 0, and cnvkit_call then handles the sample without correction. The run fails (exit code 1) only when no pair is fitted. |
 | WGS는 snp_nbhd를 1000 정도로 올려 주세요. 기본값 250은 WES 기준이라 WGS에서는 SNP가 너무 많아 시간이 오래 걸립니다. | For WGS raise snp_nbhd to about 1000; the default of 250 suits WES, and WGS then keeps too many SNPs and runs long. |

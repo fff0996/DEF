@@ -17,7 +17,7 @@ Example:
         facets_dir="/out/cnv_facets" \
         output_dir="/out/cnvkit_call"
 
-Arguments (key=value):
+Arguments (key=value, --key=value or --key value):
     input_dir      (required) - Directory with coordinate-sorted, duplicate-marked BAM
                                 files and their indexes (.bai); searched recursively.
     sample_data    (required) - Sample sheet (CSV): SampleID (tumor), NormalID, optional
@@ -164,11 +164,26 @@ def run(cmd, label, threads=None, capture=False):
 
 # ---------------------------------------------------------------- arguments and inputs
 def parse_args(argv):
+    """Parse key=value, --key=value or --key value. CLOSHA passes Python modules --key value;
+    a --key with no value (next token is another --option, or nothing) keeps its default."""
     params = dict(OPTIONAL)
-    for arg in argv:
-        if "=" not in arg:
-            fail(f"Invalid argument format: {arg} (must be key=value format)")
-        key, value = arg.split("=", 1)
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        i += 1
+        if arg.startswith("--"):
+            arg = arg[2:]
+            if "=" in arg:
+                key, value = arg.split("=", 1)
+            else:
+                key, value = arg, ""
+                if i < len(argv) and not argv[i].startswith("--"):
+                    value = argv[i]
+                    i += 1
+        elif "=" in arg:
+            key, value = arg.split("=", 1)
+        else:
+            fail(f"Invalid argument format: {arg} (use key=value or --key value)")
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
             fail(f"Invalid key: {key}")
         if key not in REQUIRED and key not in OPTIONAL:
@@ -750,6 +765,14 @@ def main():
     if facets_dir and not (facets_dir / "04_summary" / "facets_summary.tsv").is_file():
         fail(f"facets_dir does not hold FACETS results: {facets_dir}",
              "Expected: 04_summary/facets_summary.tsv and 02_segments/<SampleID>.facets_segments.tsv")
+    # A tumor-only run leaves a header-only facets_summary.tsv (cnv_facets with no NormalID):
+    # treat it as "no FACETS" so that no per-sample warning is written.
+    facets_empty = False
+    if facets_dir:
+        with open(facets_dir / "04_summary" / "facets_summary.tsv") as fh:
+            facets_empty = sum(1 for _ in csv.DictReader(fh, delimiter="\t")) == 0
+        if facets_empty:
+            facets_dir = None
     genes_path = Path(params["genes"]) if params["genes"] else None
     if genes_path and not genes_path.is_file():
         fail(f"genes file not found: {genes_path}")
@@ -790,6 +813,8 @@ def main():
             info(f"  {key:14s} = {params[key]}")
     info(f"  reference      = {ref_info.get('reference_type', '?')} ({method}; normals: {ref_info.get('normals') or 'none'})")
     info(f"  genes of interest = {len(gene_set)}")
+    if facets_empty:
+        info("  FACETS         = no tumor-normal pair in facets_dir (tumor-only run); no purity correction")
     info("")
 
     summary_rows, all_seg = [], []

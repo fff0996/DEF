@@ -16,7 +16,10 @@
 #   input_dir    (required) - Directory with coordinate-sorted, duplicate-marked BAM files
 #                             (searched recursively).
 #   sample_data  (required) - Sample sheet (CSV) with SampleID (tumor) and NormalID
-#                             (matched normal). Rows without NormalID are skipped.
+#                             (matched normal). Rows without NormalID are skipped. When no
+#                             row has a NormalID (tumor-only run), FACETS is skipped: an
+#                             empty 04_summary/facets_summary.tsv (header only) is written
+#                             and the module ends with exit 0.
 #   snp_vcf      (required) - Common germline SNP sites (VCF, bgzip-compressed or plain),
 #                             with the same chromosome names as the BAM files
 #                             (for example dbSNP common).
@@ -178,10 +181,10 @@ bad_id <- bad_id[!grepl("^[A-Za-z0-9][A-Za-z0-9._-]*$", bad_id)]
 if (length(bad_id)) stop_err("invalid ID in sample_data (use letters, digits, dot, underscore, hyphen): ", bad_id[1])
 pairs <- sheet[nzchar(sheet$NormalID), c("SampleID", "NormalID")]
 skipped <- sheet$SampleID[!nzchar(sheet$NormalID)]
-if (nrow(pairs) == 0) {
-	stop_err("no tumor-normal pair in sample_data (NormalID is empty in every row); ",
-			"FACETS needs a matched normal. Use the tumor-only pipeline (cnvkit_call without facets_dir).")
-}
+# Tumor-only runs (NormalID empty in every row) are a normal mode of the pipeline: FACETS needs a
+# matched normal, so this module then writes an empty summary and ends with exit 0, and
+# cnvkit_call / cnv_summary carry on without purity correction.
+no_pairs <- nrow(pairs) == 0
 
 bams <- list.files(input_dir, pattern = "\\.bam$", recursive = TRUE, full.names = TRUE)
 if (nzchar(params$bam_suffix)) bams <- bams[endsWith(basename(bams), params$bam_suffix)]
@@ -207,6 +210,8 @@ find_bam <- function(id) {
 }
 pairs$TumorBAM <- vapply(pairs$SampleID, find_bam, character(1))
 pairs$NormalBAM <- vapply(pairs$NormalID, find_bam, character(1))
+summary_columns <- c("SampleID", "NormalID", "Status", "Purity", "Ploidy", "DipLogR", "Emflags", "Segments",
+		"SNPs", "HetSNPs", "LOH_fraction", "FGA", "WGD")
 
 for (cmd in c("snp-pileup")) {
 	if (!nzchar(Sys.which(cmd))) stop_err("required command not found in PATH: ", cmd)
@@ -270,6 +275,17 @@ msg("FACETS ", as.character(utils::packageVersion("facets")), ", ", R.version.st
 msg("Tumor-normal pairs: ", nrow(pairs))
 for (i in seq_len(nrow(pairs))) {
 	msg("  ", pairs$SampleID[i], " (", pairs$TumorBAM[i], ") / ", pairs$NormalID[i], " (", pairs$NormalBAM[i], ")")
+}
+if (no_pairs) {
+	writeLines(paste(summary_columns, collapse = "\t"), file.path(summary_dir, "facets_summary.tsv"))
+	msg("No tumor-normal pair in sample_data (NormalID is empty in every row): tumor-only run.")
+	msg("FACETS needs a matched normal, so it is skipped for all ", length(skipped), " sample(s); ",
+			"cnvkit_call and cnv_summary run without purity correction.")
+	msg("")
+	msg("############################## Done")
+	msg("Summary (header only): ", file.path(summary_dir, "facets_summary.tsv"))
+	msg("End time: ", format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
+	quit(status = 0)
 }
 if (length(skipped)) warn_msg("samples without NormalID are skipped by FACETS: ", paste(skipped, collapse = ", "))
 
