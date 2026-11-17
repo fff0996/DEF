@@ -1,0 +1,11 @@
+SampleID,Stage,Sex,Vital status,Fraction genome altered
+TCGA-05-5423-01,II,Male,Alive,0.3749
+TCGA-49-AAR4-01,III,Male,Dead,0.0166
+TCGA-53-7624-01,IV,Female,Dead,0.6673
+TCGA-69-7980-01,I,Female,Alive,0.4262
+TCGA-75-5146-01,I,Male,Alive,0.3219
+TCGA-78-7163-01,I,Male,Alive,0.3872
+TCGA-86-A456-01,I,Female,Alive,0.03
+TCGA-95-7562-01,II,Male,Dead,0.4101
+TCGA-97-A4M2-01,I,Male,Alive,2.0E-4
+TCGA-L9-A5IP-01,IV,Female,Dead,0.2286

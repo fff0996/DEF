@@ -5,3 +5,5 @@
 - 재현: `python3 tools/cnv/make_tcga_example.py <dir> 10 7` 후 `cnv_summary.1.0.py input_dir=<dir>/cnvkit_call genes=<dir>/genes.txt sample_data=<dir>/sample_data.csv maf=<dir>/mutations.maf genome=hg19 output_dir=<out>`.
 
 모의 데이터 입력(`tools/cnv/make_simulated_cohort.py`)은 테스트용으로만 쓴다.
+
+**CLOSHA에서 돌려 볼 입력**(2026-11-17): `tcga_luad_input/` 폴더(또는 같은 내용의 `tcga_luad_input.zip`, 164KB)는 위 그림을 만든 cnv_summary 입력이다(같은 10명, `make_tcga_example.py <dir> 10 7`로 다시 만듦). cnv_summary 단독으로 `input_dir=tcga_luad_input/cnvkit_call`, `genes=tcga_luad_input/genes.txt`, `sample_data=tcga_luad_input/sample_data.csv`, `maf=tcga_luad_input/mutations.maf`, `genome=hg19`(TCGA 구간이 hg19), facets_dir은 비움.
