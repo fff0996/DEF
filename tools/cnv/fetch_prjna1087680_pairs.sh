@@ -10,10 +10,10 @@
 # a tumor and a blood run, the 10 with the most tumor sequence (base count). Patients are renamed P01-P10
 # (P01 = most tumor sequence); _T = tumor, _N = matched blood.
 #
-# Writes <output folder>/fastq/<ID>_1.fastq.gz, <ID>_2.fastq.gz (about 80 GB with the default tumor subsample, 175 GB whole), checks each file
+# Writes <output folder>/fastq/<ID>_1.fastq.gz, <ID>_2.fastq.gz (about 175 GB), checks each file
 # against the ENA md5, and writes <output folder>/sample_data.csv (SampleID,NormalID,Sex) and
-# SOURCE.tsv (ID -> SRA run). JOBS=4 files download at the same time (set JOBS=8 for more).
-# Tumor files are cut to the first TUMOR_PAIRS reads while streaming (default 50M; 0 = whole file).
+# SOURCE.tsv (ID -> SRA run). JOBS=6 files download at the same time.
+# Interrupted transfers resume automatically (up to 30 attempts per file).
 # curl -C - resumes: run the same command again after an interruption; checked files are skipped.
 # Next step: align on CLOSHA (BWA-MEM to GRCh38, sort, MarkDuplicates, index); BAM names must start with
 # the ID (for example P01_T.bam), then run the CNV pipeline.
@@ -50,10 +50,11 @@ P10_N SRR31264112 ftp.sra.ebi.ac.uk/vol1/fastq/SRR312/012/SRR31264112/SRR3126411
 "
 printf 'ID\tSRA_run\n' > "$O/SOURCE.tsv"
 # One line per file: output path, URL path, md5. JOBS files download at the same time (default 4).
-JOBS=${JOBS:-4}
-# Tumor read pairs to keep (default 50,000,000, about 10 Gb or 70-80x on target); TUMOR_PAIRS=0 keeps
-# the whole file. Blood (normal) files are always downloaded whole and md5-checked.
-TUMOR_PAIRS=${TUMOR_PAIRS:-50000000}
+JOBS=${JOBS:-6}
+# Tumor read pairs to keep while streaming (default 0 = whole file, resumable). A cut stream cannot resume
+# and long transfers do get dropped, so the subsample is better made from the whole files afterwards
+# (zcat <file> | head -n $((4 * pairs)) | gzip > <out>). Blood (normal) files are always downloaded whole and md5-checked.
+TUMOR_PAIRS=${TUMOR_PAIRS:-0}
 echo "$TABLE" | while read -r id run u1 m1 u2 m2; do
 	[ -n "$id" ] || continue
 	printf '%s\t%s\n' "$id" "$run" >> "$O/SOURCE.tsv"
@@ -79,9 +80,18 @@ fetch_one() {
 		return 0
 	fi
 	echo "start $(basename "$f")"
-	curl -sS -fL -C - --retry 5 -o "$f" "https://$ENA_HOST/$u" || { echo "FAILED download $(basename "$f")"; return 1; }
-	if echo "$m  $f" | md5sum -c --status -; then echo ok > "$f.md5ok"; echo "done  $(basename "$f")"
-	else echo "FAILED md5 $(basename "$f") (delete it and run again)"; return 1; fi
+	# The server drops long transfers now and then: resume (-C -) until the file is complete, up to
+	# 30 attempts; a complete file with a wrong md5 is deleted and fetched again.
+	for attempt in $(seq 1 30); do
+		if curl -sS -fL -C - --retry 5 --retry-delay 20 -o "$f" "https://$ENA_HOST/$u"; then
+			if echo "$m  $f" | md5sum -c --status -; then echo ok > "$f.md5ok"; echo "done  $(basename "$f")"; return 0; fi
+			echo "md5 mismatch $(basename "$f") (attempt $attempt): fetching again"; rm -f "$f"
+		else
+			echo "interrupted $(basename "$f") (attempt $attempt): resuming in 30 s"
+		fi
+		sleep 30
+	done
+	echo "FAILED download $(basename "$f") after 30 attempts (run again)"; return 1
 }
 export -f fetch_one
 status=0
