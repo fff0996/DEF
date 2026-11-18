@@ -45,7 +45,7 @@ CLOSHA 체세포 CNV 파이프라인 설계안 0.4
 종양만:
   BAM 폴더 ─▶ cnvkit_reference(정상 묶음 또는 flat) ─▶ cnvkit_call ─▶ cnv_summary
 ```
-CLOSHA에는 두 파이프라인("종양-정상 쌍", "종양만")으로 등록한다.
+CLOSHA에는 한 파이프라인 `Somatic_CNV_Pipeline`으로 등록한다(2026-11-17 합침, 2026-11-18 이름 결정). 샘플 시트의 NormalID가 모두 비면 cnv_facets가 헤더만 있는 요약표를 쓰고 종료 코드 0으로 끝나 종양만 흐름이 된다.
 
 ## 5. 모듈
 공통: `docs/CLOSHA_Script_Rules_v1.md` 규칙을 따른다(`key=value` 인자, 입력은 폴더, stdout과 stderr 분리, 코어 수 자동, 데이터 결과와 오류 구분).

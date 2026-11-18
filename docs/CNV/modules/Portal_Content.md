@@ -29,7 +29,7 @@ KOBIC 포탈의 "파이프라인 모듈" 등록 화면에 들어갈 모듈별 �
 | 레퍼런스 URL | https://cnvkit.readthedocs.io/ | |
 | 컨테이너 이미지 | bx_cnvkit.1.0 | |
 | 실행 스크립트 파일 | cnvkit_reference.1.0.py | |
-| Processor Core (제안) | 4코어, 메모리 8GB(WGS는 16GB) | 4 cores, 8 GB of memory (16 GB for WGS) |
+| Processor Core | 4코어, 메모리 16GB | 4 cores, 16 GB of memory |
 
 ### 실행 이미지
 이미지: bx_cnvkit 1.0
@@ -157,7 +157,7 @@ python cnvkit_reference.1.0.py \
 | 레퍼런스 URL | https://github.com/mskcc/facets | |
 | 컨테이너 이미지 | bx_facets.1.0 | |
 | 실행 스크립트 파일 | cnv_facets.1.0.R | |
-| Processor Core (제안) | 4코어(쌍을 동시에 처리), 메모리 8GB(WGS는 16~32GB) | 4 cores (pairs run in parallel), 8 GB of memory (16-32 GB for WGS) |
+| Processor Core | 4코어(쌍을 동시에 처리), 메모리 32GB | 4 cores (pairs run in parallel), 32 GB of memory |
 
 ### 실행 이미지
 이미지: bx_facets 1.0
@@ -306,7 +306,7 @@ Rscript cnv_facets.1.0.R \
 | 레퍼런스 URL | https://cnvkit.readthedocs.io/ | |
 | 컨테이너 이미지 | bx_cnvkit.1.0 | |
 | 실행 스크립트 파일 | cnvkit_call.1.0.py | |
-| Processor Core (제안) | 4코어, 메모리 8GB(WGS는 16GB) | 4 cores, 8 GB of memory (16 GB for WGS) |
+| Processor Core | 4코어, 메모리 16GB | 4 cores, 16 GB of memory |
 
 등록 메모: 작업 파일 `scripts/CNV/cnvkit_call.1.1.py`(염색체 모식도 범례 수정)를 배포 번호 1.0으로 올립니다.
 
@@ -467,7 +467,7 @@ python cnvkit_call.1.0.py \
 | 레퍼런스 URL | https://cnvkit.readthedocs.io/ | |
 | 컨테이너 이미지 | bx_cnvkit.1.0 | |
 | 실행 스크립트 파일 | cnv_summary.1.0.py | |
-| Processor Core (제안) | 싱글 코어, 메모리 8GB | Single core, 8 GB of memory |
+| Processor Core | 싱글 코어, 메모리 8GB | Single core, 8 GB of memory |
 
 ### 실행 이미지
 이미지: bx_cnvkit 1.0

@@ -8,7 +8,7 @@ CNV 파이프라인은 CLOSHA 3.0에서 처음 배포하므로 모든 모듈의 
 
 ## 0. 파이프라인 흐름
 ```
-파이프라인 하나로 종양-정상 쌍과 종양 단독을 모두 처리한다(2026-11-17 합침). 샘플 시트의 NormalID로 갈린다.
+파이프라인 하나(`Somatic_CNV_Pipeline`)로 종양-정상 쌍과 종양 단독을 모두 처리한다(2026-11-17 합침). 샘플 시트의 NormalID로 갈린다.
   BAM 폴더 ─┬─> [cnv_facets] ──────────── output_dir ─────────┬─> [cnvkit_call] (facets_dir)
             │   (NormalID가 모두 비면 FACETS를 건너뛰고         └─> [cnv_summary] (facets_dir)
             │    빈 요약표만 쓰고 종료 코드 0)
@@ -113,12 +113,12 @@ CNV 파이프라인은 CLOSHA 3.0에서 처음 배포하므로 모든 모듈의 
 
 결과: `01_tables/`(gene_calls.tsv, gene_cn.tsv, interest_genes.tsv, arm_calls.tsv, instability.tsv), `02_seg/`(cohort.seg, gistic_segments.txt), `03_plots/`(cohort_heatmap, frequency, arm_heatmap, gene_oncoprint, instability, purity_ploidy·concordance(FACETS 있을 때), sample_similarity(2개 이상)), `04_report/cnv_report.html`.
 
-## 5. 권장 자원 (포탈: 코어 1/4/8/16, 메모리 8~128GB)
-Codespace 측정(WES, 염색체 5개, 쌍 1개)은 모두 1GB 미만이었다. 아래는 전체 유전체 기준 추정이며 CLOSHA에서 실측이 필요하다.
+## 5. 등록 자원 (포탈: 코어 1/4/8/16, 메모리 8~128GB)
+포탈에는 모듈마다 값 하나만 등록하며 사용자는 바꿀 수 없다. WES와 WGS를 모두 덮는 값으로 정했다(2026-11-18 사용자 결정). Codespace 측정(WES, 염색체 5개, 쌍 1개)은 모두 1GB 미만이었고, 최종 값은 2026-11-30 자원 정리 날 CLOSHA sacct MaxRSS로 다시 맞춘다.
 
-| 모듈 | WES·패널 | WGS | Core |
-|---|---|---|---|
-| cnvkit_reference | 8GB | 16GB | 4 |
-| cnv_facets | 8GB | 16~32GB | 4 (쌍을 동시에 처리) |
-| cnvkit_call | 8GB | 16GB | 4 |
-| cnv_summary | 8GB | 8GB | 1 |
+| 모듈 | Core | 메모리 |
+|---|---|---|
+| cnvkit_reference | 4 | 16GB |
+| cnv_facets | 4 (쌍을 동시에 처리) | 32GB |
+| cnvkit_call | 4 | 16GB |
+| cnv_summary | 1 | 8GB |
