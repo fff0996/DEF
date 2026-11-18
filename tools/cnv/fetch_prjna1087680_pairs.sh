@@ -10,9 +10,10 @@
 # a tumor and a blood run, the 10 with the most tumor sequence (base count). Patients are renamed P01-P10
 # (P01 = most tumor sequence); _T = tumor, _N = matched blood.
 #
-# Writes <output folder>/fastq/<ID>_1.fastq.gz, <ID>_2.fastq.gz (about 175 GB), checks each file
+# Writes <output folder>/fastq/<ID>_1.fastq.gz, <ID>_2.fastq.gz (about 80 GB with the default tumor subsample, 175 GB whole), checks each file
 # against the ENA md5, and writes <output folder>/sample_data.csv (SampleID,NormalID,Sex) and
 # SOURCE.tsv (ID -> SRA run). JOBS=4 files download at the same time (set JOBS=8 for more).
+# Tumor files are cut to the first TUMOR_PAIRS reads while streaming (default 50M; 0 = whole file).
 # curl -C - resumes: run the same command again after an interruption; checked files are skipped.
 # Next step: align on CLOSHA (BWA-MEM to GRCh38, sort, MarkDuplicates, index); BAM names must start with
 # the ID (for example P01_T.bam), then run the CNV pipeline.
@@ -50,16 +51,33 @@ P10_N SRR31264112 ftp.sra.ebi.ac.uk/vol1/fastq/SRR312/012/SRR31264112/SRR3126411
 printf 'ID\tSRA_run\n' > "$O/SOURCE.tsv"
 # One line per file: output path, URL path, md5. JOBS files download at the same time (default 4).
 JOBS=${JOBS:-4}
+# Tumor read pairs to keep (default 50,000,000, about 10 Gb or 70-80x on target); TUMOR_PAIRS=0 keeps
+# the whole file. Blood (normal) files are always downloaded whole and md5-checked.
+TUMOR_PAIRS=${TUMOR_PAIRS:-50000000}
 echo "$TABLE" | while read -r id run u1 m1 u2 m2; do
 	[ -n "$id" ] || continue
 	printf '%s\t%s\n' "$id" "$run" >> "$O/SOURCE.tsv"
-	echo "$O/fastq/${id}_1.fastq.gz ${u1#*/} $m1"
-	echo "$O/fastq/${id}_2.fastq.gz ${u2#*/} $m2"
+	n=0; case $id in *_T) n=$TUMOR_PAIRS ;; esac
+	echo "$O/fastq/${id}_1.fastq.gz ${u1#*/} $m1 $n"
+	echo "$O/fastq/${id}_2.fastq.gz ${u2#*/} $m2 $n"
 done > "$O/files.txt"
 export ENA_HOST
 fetch_one() {
-	f=$1; u=$2; m=$3
+	f=$1; u=$2; m=$3; n=$4
 	[ -s "$f.md5ok" ] && return 0
+	if [ "$n" -gt 0 ]; then
+		# Subsample: stream the file and keep the first n reads (read order in a FASTQ is unrelated to
+		# genome position, so this is effectively a random subsample; R1 and R2 keep the same reads).
+		# No resume and no md5 (the file is cut); the read count is checked instead.
+		[ -s "$f.subok" ] && return 0
+		echo "start $(basename "$f") (first $n reads)"
+		( set +o pipefail; curl -sS -fL --retry 5 "https://$ENA_HOST/$u" 2>/dev/null | gzip -dc 2>/dev/null |
+			head -n $((4 * n)) | gzip -1 > "$f.part" )
+		got=$(( $(gzip -dc "$f.part" | wc -l) / 4 ))
+		if [ "$got" -eq "$n" ]; then mv "$f.part" "$f"; echo "$n reads" > "$f.subok"; echo "done  $(basename "$f") ($n reads)"
+		else echo "FAILED subsample $(basename "$f") ($got of $n reads; run again)"; rm -f "$f.part"; return 1; fi
+		return 0
+	fi
 	echo "start $(basename "$f")"
 	curl -sS -fL -C - --retry 5 -o "$f" "https://$ENA_HOST/$u" || { echo "FAILED download $(basename "$f")"; return 1; }
 	if echo "$m  $f" | md5sum -c --status -; then echo ok > "$f.md5ok"; echo "done  $(basename "$f")"
@@ -67,7 +85,7 @@ fetch_one() {
 }
 export -f fetch_one
 status=0
-xargs -P "$JOBS" -L 1 bash -c 'fetch_one "$0" "$1" "$2"' < "$O/files.txt" || status=1
+xargs -P "$JOBS" -L 1 bash -c 'fetch_one "$0" "$1" "$2" "$3"' < "$O/files.txt" || status=1
 {
 	echo "SampleID,NormalID,Sex"
 	for i in $(seq -w 1 10); do echo "P${i}_T,P${i}_N,female"; done
