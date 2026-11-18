@@ -20,6 +20,9 @@
 set -euo pipefail
 O=${1:?usage: fetch_prjna1087680_pairs.sh <output folder>}
 mkdir -p "$O/fastq"
+# ENA serves the same files under ftp.sra.ebi.ac.uk and ftp.ebi.ac.uk; some networks resolve only the
+# second (CLOSHA login node, 2026-11-18). Override with ENA_HOST=ftp.sra.ebi.ac.uk if needed.
+ENA_HOST=${ENA_HOST:-ftp.ebi.ac.uk}
 # ID  SRA_run  read1_url  read1_md5  read2_url  read2_md5
 TABLE="
 P01_T SRR31264126 ftp.sra.ebi.ac.uk/vol1/fastq/SRR312/026/SRR31264126/SRR31264126_1.fastq.gz acb42066b9d3e5e76eedddb195d858b8 ftp.sra.ebi.ac.uk/vol1/fastq/SRR312/026/SRR31264126/SRR31264126_2.fastq.gz a98d06a8d653dc5d616797c13970e76b
@@ -52,7 +55,7 @@ echo "$TABLE" | while read -r id run u1 m1 u2 m2; do
 		f="$O/fastq/${id}_${k}.fastq.gz"
 		if [ -s "$f.md5ok" ]; then continue; fi
 		echo "== $id read $k ($run)"
-		curl -fL -C - --retry 5 -o "$f" "https://$u"
+		curl -fL -C - --retry 5 -o "$f" "https://$ENA_HOST/${u#*/}"
 		echo "$m  $f" | md5sum -c - && echo ok > "$f.md5ok"
 	done
 done
