@@ -12,7 +12,8 @@
 #
 # Writes <output folder>/fastq/<ID>_1.fastq.gz, <ID>_2.fastq.gz (about 175 GB), checks each file
 # against the ENA md5, and writes <output folder>/sample_data.csv (SampleID,NormalID,Sex) and
-# SOURCE.tsv (ID -> SRA run). curl -C - resumes: run the same command again after an interruption.
+# SOURCE.tsv (ID -> SRA run). JOBS=4 files download at the same time (set JOBS=8 for more).
+# curl -C - resumes: run the same command again after an interruption; checked files are skipped.
 # Next step: align on CLOSHA (BWA-MEM to GRCh38, sort, MarkDuplicates, index); BAM names must start with
 # the ID (for example P01_T.bam), then run the CNV pipeline.
 #
@@ -47,21 +48,30 @@ P10_T SRR31264111 ftp.sra.ebi.ac.uk/vol1/fastq/SRR312/011/SRR31264111/SRR3126411
 P10_N SRR31264112 ftp.sra.ebi.ac.uk/vol1/fastq/SRR312/012/SRR31264112/SRR31264112_1.fastq.gz 2ca77664f7fdb240ad63afb097bc0896 ftp.sra.ebi.ac.uk/vol1/fastq/SRR312/012/SRR31264112/SRR31264112_2.fastq.gz 3e16b01cf4e15110986ce58e096e5109
 "
 printf 'ID\tSRA_run\n' > "$O/SOURCE.tsv"
+# One line per file: output path, URL path, md5. JOBS files download at the same time (default 4).
+JOBS=${JOBS:-4}
 echo "$TABLE" | while read -r id run u1 m1 u2 m2; do
 	[ -n "$id" ] || continue
 	printf '%s\t%s\n' "$id" "$run" >> "$O/SOURCE.tsv"
-	for k in 1 2; do
-		if [ "$k" = 1 ]; then u=$u1; m=$m1; else u=$u2; m=$m2; fi
-		f="$O/fastq/${id}_${k}.fastq.gz"
-		if [ -s "$f.md5ok" ]; then continue; fi
-		echo "== $id read $k ($run)"
-		curl -fL -C - --retry 5 -o "$f" "https://$ENA_HOST/${u#*/}"
-		echo "$m  $f" | md5sum -c - && echo ok > "$f.md5ok"
-	done
-done
+	echo "$O/fastq/${id}_1.fastq.gz ${u1#*/} $m1"
+	echo "$O/fastq/${id}_2.fastq.gz ${u2#*/} $m2"
+done > "$O/files.txt"
+export ENA_HOST
+fetch_one() {
+	f=$1; u=$2; m=$3
+	[ -s "$f.md5ok" ] && return 0
+	echo "start $(basename "$f")"
+	curl -sS -fL -C - --retry 5 -o "$f" "https://$ENA_HOST/$u" || { echo "FAILED download $(basename "$f")"; return 1; }
+	if echo "$m  $f" | md5sum -c --status -; then echo ok > "$f.md5ok"; echo "done  $(basename "$f")"
+	else echo "FAILED md5 $(basename "$f") (delete it and run again)"; return 1; fi
+}
+export -f fetch_one
+status=0
+xargs -P "$JOBS" -L 1 bash -c 'fetch_one "$0" "$1" "$2"' < "$O/files.txt" || status=1
 {
 	echo "SampleID,NormalID,Sex"
 	for i in $(seq -w 1 10); do echo "P${i}_T,P${i}_N,female"; done
 } > "$O/sample_data.csv"
 ls -lh "$O/fastq"
-echo "done"
+[ "$status" = 0 ] || { echo "some files failed: run the same command again" >&2; exit 1; }
+echo "all files downloaded and checked"
