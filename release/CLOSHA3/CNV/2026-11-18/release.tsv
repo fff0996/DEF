@@ -1,0 +1,5 @@
+module	release_file	closha2_file	work_file	image
+cnvkit_reference	cnvkit_reference.1.0.py	(new in 3.0)	scripts/CNV/cnvkit_reference.1.0.py	bx_cnvkit 1.0
+cnv_facets	cnv_facets.1.0.R	(new in 3.0)	scripts/CNV/cnv_facets.1.0.R	bx_facets 1.0
+cnvkit_call	cnvkit_call.1.0.py	(new in 3.0)	scripts/CNV/cnvkit_call.1.1.py	bx_cnvkit 1.0
+cnv_summary	cnv_summary.1.0.py	(new in 3.0)	scripts/CNV/cnv_summary.1.0.py	bx_cnvkit 1.0

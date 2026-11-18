@@ -20,9 +20,11 @@ def body(lines):
     if not idx:
         return lines
     end = idx[-1] + 1
-    while end < len(lines) and lines[end].strip() not in ("#", ""):
+    while end < len(lines) and lines[end].startswith("#") and lines[end].strip() != "#":
         end += 1
-    return lines[:idx[0]] + lines[end + 1:]
+    if end < len(lines) and lines[end].strip() in ("#", ""):
+        end += 1  # the separator line after the block
+    return lines[:idx[0]] + lines[end:]
 
 
 def main(release_dir):
