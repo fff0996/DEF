@@ -33,7 +33,9 @@ while :; do
 	ls "$RAW"/fastq/P*_T_[12].fastq.gz 2>/dev/null | xargs -r -P "$JOBS" -I{} bash -c 'cut_one "$0" "$1" "$2"' {} "$SUB" "$PAIRS"
 	for f in "$RAW"/fastq/P*_N_[12].fastq.gz; do
 		[ -e "$f" ] || continue
-		[ -s "$f.md5ok" ] && ln -sf "$(readlink -f "$f")" "$SUB/fastq/$(basename "$f")"
+		# relative link: it must resolve inside the container too, where the user folder is mounted
+		# under another path (for example /bio-workflow on CLOSHA), so no absolute host path
+		[ -s "$f.md5ok" ] && ln -sfn "$(realpath --relative-to="$SUB/fastq" "$f")" "$SUB/fastq/$(basename "$f")"
 	done
 	t=$(ls "$SUB"/fastq/P*_T_*.subok 2>/dev/null | wc -l)
 	n=$(find "$SUB/fastq" -maxdepth 1 -type l -name 'P*_N_*.fastq.gz' | wc -l)
