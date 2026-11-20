@@ -28,6 +28,10 @@ cut_one() {
 	( set +o pipefail; zcat "$f" 2>/dev/null | head -n "$lines" | gzip -1 > "$o.tmp" )
 	got=$(zcat "$o.tmp" | wc -l)
 	if [ "$got" -eq "$lines" ]; then mv "$o.tmp" "$o"; echo "$3 reads" > "$o.subok"; echo "cut   $(basename "$f") ($3 reads)"
+	elif [ "$got" -gt 0 ] && [ $((got % 4)) -eq 0 ] && [ "$got" -eq "$(zcat "$f" | wc -l)" ]; then
+		# The whole (md5-checked) file holds fewer reads than asked: keep all of it.
+		mv "$o.tmp" "$o"; echo "$((got / 4)) reads (whole file)" > "$o.subok"
+		echo "whole $(basename "$f") ($((got / 4)) reads, fewer than $3)"
 	else rm -f "$o.tmp"; fi
 }
 export -f cut_one
